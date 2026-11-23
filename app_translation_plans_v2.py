@@ -7,6 +7,7 @@ The separate admin HTTP boundary enforces session, origin and CSRF.
 import hashlib
 import json
 import re
+import time
 from collections import Counter
 
 import app_translation_admin_v2 as admin
@@ -163,7 +164,8 @@ def _quantity_hint(source):
     if match is None:
         return None
     number, weight, unit = match.groups()
-    suggestion = number + " units"
+    singular = float(number.replace(",", ".")) == 1.0
+    suggestion = number + (" unit" if singular else " units")
     if weight:
         suggestion += " / " + weight + " " + unit
     return suggestion if suggestion != source else None
@@ -459,18 +461,43 @@ def _common_groups(c):
     return groups
 
 
+
+def _common_stage_map(c):
+    return {str(r["entity_id"]):r for r in c.execute("""
+        SELECT entity_id,source_hash,translated_text,status
+        FROM v2_content_translations
+        WHERE entity_kind='plan_common' AND field_path='text' AND language='en'
+    """).fetchall()}
+
+
+def _csv_eligible(group):
+    # No snapshots, players, prescriptions, notes or alternatives are exported.
+    # Shared titles require at least two identical occurrences; ordinary
+    # presentation units can be exported even when they occur only once.
+    return (group["field_kind"] == "display_quantity" or
+            (group["field_kind"] == "option_title" and group["total"] >= 2))
+
+
+def _missing_stamp(targets):
+    return _hash(json.dumps(
+        [(r["publication_ref"],r["field_path"],r["source_hash"])
+         for r in targets], separators=(",", ":"), ensure_ascii=False))
+
+
 def common_preview(c, actor):
     admin._admin(c, actor)
     groups = _common_groups(c)
+    stages = _common_stage_map(c)
     items = []
     for group in groups.values():
         targets = sorted(group["missing"],
                          key=lambda r:(r["publication_ref"],r["field_path"]))
         if not targets:
             continue
-        stamp = _hash(json.dumps(
-            [(r["publication_ref"],r["field_path"],r["source_hash"])
-             for r in targets], separators=(",", ":"), ensure_ascii=False))
+        stamp = _missing_stamp(targets)
+        stage = stages.get(group["group_id"])
+        if stage is not None and stage["source_hash"] != group["source_hash"]:
+            stage = None
         items.append({
             "group_id":group["group_id"], "field_kind":group["field_kind"],
             "meal_context":group["meal_context"],
@@ -482,12 +509,105 @@ def common_preview(c, actor):
             "outdated_count":group["outdated_count"],
             "expected_group_hash":stamp,
             "suggestion":group["suggestion"], "batch_limit":MAX_COMMON_BATCH,
+            "csv_eligible":_csv_eligible(group),
+            "imported_status":stage["status"] if stage else None,
+            "imported_text":stage["translated_text"] if stage else None,
+            "expected_stage_hash":_hash(stage["translated_text"]) if stage else "",
         })
     items.sort(key=lambda item:(-item["missing_count"],
                                 item["field_kind"],item["source_text"].casefold()))
     return {"items":items, "total_groups":len(items),
             "policy":"admin_private_identical_text_same_meal_no_clinical_auto",
             "max_batch":MAX_COMMON_BATCH}
+
+
+
+def import_common(c, actor, body):
+    """Store up to 100 CSV proposals as plan_common, not as plan approvals.
+
+    Data are limited to grouped generic titles and simple presentation units.
+    Nothing writes into athlete plans or approves any position during import.
+    """
+    actor_id = admin._admin(c, actor)
+    if (not isinstance(body, dict) or set(body) != {"rows"} or
+            not isinstance(body["rows"], list) or not 1 <= len(body["rows"]) <= 100):
+        raise PlanTranslationError(400, "invalid_common_import")
+    groups = _common_groups(c)
+    stages = _common_stage_map(c)
+    pending = []
+    seen = set()
+    skipped = 0
+    for row in body["rows"]:
+        expected = {"group_id","source_hash","expected_group_hash",
+                    "expected_stage_hash","translated_text"}
+        if not isinstance(row, dict) or set(row) != expected:
+            raise PlanTranslationError(400, "invalid_common_import")
+        group_id = row.get("group_id")
+        if not isinstance(group_id, str) or not _REF.fullmatch(group_id) or group_id in seen:
+            raise PlanTranslationError(400, "invalid_common_import")
+        seen.add(group_id)
+        group = groups.get(group_id)
+        if group is None or not _csv_eligible(group):
+            raise PlanTranslationError(409, "common_import_group_changed")
+        if row.get("source_hash") != group["source_hash"]:
+            raise PlanTranslationError(409, "common_import_source_changed")
+        targets = sorted(group["missing"],
+                         key=lambda item:(item["publication_ref"], item["field_path"]))
+        if not targets or row.get("expected_group_hash") != _missing_stamp(targets):
+            raise PlanTranslationError(409, "common_import_group_changed")
+        stage = stages.get(group_id)
+        if stage is not None and stage["source_hash"] != group["source_hash"]:
+            raise PlanTranslationError(409, "common_import_source_changed")
+        stage_hash = _hash(stage["translated_text"]) if stage else ""
+        if row.get("expected_stage_hash") != stage_hash:
+            raise PlanTranslationError(409, "common_import_proposal_changed")
+        translated = row.get("translated_text")
+        if not isinstance(translated, str) or not 1 <= len(translated.strip()) <= 10000:
+            raise PlanTranslationError(400, "invalid_common_translation")
+        translated = translated.strip()
+        if _numbers(translated) != _numbers(group["source_text"]):
+            raise PlanTranslationError(400, "plan_translation_numbers_changed")
+        if _units(translated) != _units(group["source_text"]):
+            raise PlanTranslationError(400, "plan_translation_units_changed")
+        if stage is not None and stage["status"] == "approved" and translated != stage["translated_text"]:
+            raise PlanTranslationError(409, "common_import_approved_locked")
+        if stage is not None and translated == stage["translated_text"]:
+            skipped += 1
+            continue
+        pending.append((group_id, group["source_text"], translated, stage))
+    try:
+        for group_id, original, translated, stage in pending:
+            now = int(time.time())
+            source_hash = _hash(original)
+            if stage is None:
+                inserted = c.execute("""
+                    INSERT INTO v2_content_translations
+                        (entity_kind,entity_id,field_path,language,source_hash,
+                         translated_text,status,updated_at,updated_by,approved_at,approved_by)
+                    VALUES('plan_common',?,'text','en',?,?,'pending',?,?,NULL,NULL)
+                    ON CONFLICT (entity_kind,entity_id,field_path,language) DO NOTHING
+                    RETURNING entity_id
+                """, (group_id,source_hash,translated,now,actor_id)).fetchone()
+            else:
+                inserted = c.execute("""
+                    UPDATE v2_content_translations
+                    SET translated_text=?,status='pending',updated_at=?,updated_by=?,
+                        approved_at=NULL,approved_by=NULL
+                    WHERE entity_kind='plan_common' AND entity_id=?
+                      AND field_path='text' AND language='en'
+                      AND status='pending' AND source_hash=? AND translated_text=?
+                    RETURNING entity_id
+                """, (translated,now,actor_id,group_id,
+                      source_hash,stage["translated_text"])).fetchone()
+            if inserted is None:
+                raise PlanTranslationError(409, "common_import_proposal_changed")
+            store._history(c,("plan_common",group_id,"text","en"),source_hash,
+                           translated,"submitted",actor_id,now)
+    except Exception:
+        c.rollback()
+        raise
+    return {"imported":len(pending), "unchanged":skipped,
+            "status":"pending", "approved":0}
 
 
 def approve_common(c, actor, body):
@@ -523,12 +643,21 @@ def approve_common(c, actor, body):
     if not targets or stamp != body["expected_group_hash"]:
         raise PlanTranslationError(409,"common_translation_changed")
     candidate = body["translated_text"].strip()
+    stage = _common_stage_map(c).get(group["group_id"])
+    if stage is not None:
+        if (stage["source_hash"] != group["source_hash"]
+                or stage["translated_text"] != candidate):
+            raise PlanTranslationError(409,"common_import_proposal_changed")
     source = group["source_text"]
     if _numbers(candidate) != _numbers(source):
         raise PlanTranslationError(400,"plan_translation_numbers_changed")
     if _units(candidate) != _units(source):
         raise PlanTranslationError(400,"plan_translation_units_changed")
     try:
+        if stage is not None and stage["status"] == "pending":
+            store.approve(c, entity_kind="plan_common",entity_id=group["group_id"],
+                          field_path="text",source_text=source,reviewer_id=actor_id,
+                          expected_candidate_hash=_hash(candidate))
         for target in targets[:MAX_COMMON_BATCH]:
             # Fail closed if this publication was replaced after preview.
             field = _source(c,target["publication_ref"],target["field_path"])

@@ -1,6 +1,7 @@
 /* Browser regression: PT/EN Central must be part of the native Admin shell.
    Fake login, fake content, no connection to any production service. */
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
 import { chromium } from "playwright";
 
 const origin="http://127.0.0.1:8765";
@@ -25,6 +26,7 @@ try{
     const requests=[];
     const publicRef="a".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
+    let commonImported=false,importApprovals=0,importRequests=0;
     const makePlanField=()=>({field_path:"meals/0/options/0/title",
       field_label:"Título da opção",group:"Pequeno almoço · Opção 1",
       sensitive:false,source_text:"Opção 1",source_hash:"b".repeat(64),
@@ -53,24 +55,55 @@ try{
             alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1},
           scope:"published_versions_only",csv_export:false}));
       }else if(path==="/api/v2/admin/i18n/plans/common"){
-        await route.fulfill(fmt({total_groups:commonApprovals?0:1,
-          max_batch:100,items:commonApprovals?[]:[{
-            group_id:"d".repeat(64),source_hash:"e".repeat(64),
-            expected_group_hash:"f".repeat(64),field_kind:"display_quantity",
-            meal_context:"",source_text:"2 un / 120 g",
-            occurrences:2,missing_count:2,pending_count:0,approved_count:0,
-            outdated_count:0,batch_limit:100,
-            suggestion:{text:"2 units / 120 g",origin:"simple_unit_rule",
-              requires_review:true}
-          }]}));
+        const unit={
+          group_id:"d".repeat(64),source_hash:"e".repeat(64),
+          expected_group_hash:"f".repeat(64),expected_stage_hash:"",
+          field_kind:"display_quantity",meal_context:"",source_text:"2 un / 120 g",
+          occurrences:2,missing_count:2,pending_count:0,approved_count:0,
+          outdated_count:0,batch_limit:100,csv_eligible:true,
+          imported_status:null,imported_text:null,
+          suggestion:{text:"2 units / 120 g",origin:"simple_unit_rule",
+            requires_review:true}
+        };
+        const title={
+          group_id:"a".repeat(64),source_hash:"b".repeat(64),
+          expected_group_hash:"c".repeat(64),
+          expected_stage_hash:commonImported?"f".repeat(64):"",
+          field_kind:"option_title",meal_context:"Pequeno almoço / lanche",
+          source_text:"Bowl de iogurte",occurrences:2,missing_count:2,
+          pending_count:0,approved_count:0,outdated_count:0,batch_limit:100,
+          csv_eligible:true,
+          imported_status:commonImported?"pending":null,
+          imported_text:commonImported?"Yoghurt bowl":null,
+          suggestion:{text:"Yoghurt bowl",origin:"approved_exact_title",
+            requires_review:true}
+        };
+        const items=!commonApprovals?[unit]:!importApprovals?[title]:[];
+        await route.fulfill(fmt({total_groups:items.length,max_batch:100,items}));
+      }else if(path==="/api/v2/admin/i18n/plans/common/import"){
+        const payload=route.request().postDataJSON();
+        assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
+        assert.equal(payload.rows.length,1);
+        assert.equal(payload.rows[0].group_id,"a".repeat(64));
+        assert.equal(payload.rows[0].translated_text,"Yoghurt bowl");
+        assert.equal(payload.rows[0].expected_stage_hash,"");
+        commonImported=true;importRequests++;
+        await route.fulfill(fmt({imported:1,unchanged:0,approved:0,status:"pending"},201));
       }else if(path==="/api/v2/admin/i18n/plans/common/approve"){
         const payload=route.request().postDataJSON();
         assert.equal(payload.acknowledged,true);
-        assert.equal(payload.translated_text,"2 units / 120 g");
         assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
-        commonApprovals++;
+        if(payload.group_id==="d".repeat(64)){
+          assert.equal(payload.translated_text,"2 units / 120 g");
+          commonApprovals++;
+        }else{
+          assert.equal(payload.group_id,"a".repeat(64));
+          assert.equal(payload.translated_text,"Yoghurt bowl");
+          assert.equal(commonImported,true);
+          importApprovals++;
+        }
         await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
-          group_id:"d".repeat(64)}));
+          group_id:payload.group_id}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
         assert.equal(url.searchParams.get("publication_ref"),publicRef);
         await route.fulfill(fmt({publication:planPublication,fields:[makePlanField()],
@@ -192,6 +225,31 @@ try{
     await page.locator(".i18n-plan-common-detail .i18n-primary").click();
     await page.getByText("2 ocorrências aprovadas. Grupo concluído.").waitFor();
     assert.equal(commonApprovals,1);
+    await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
+    const downloadEvent=page.waitForEvent("download");
+    await page.locator(".i18n-plan-csv-tools .i18n-plan-csv-actions button").first().click();
+    const exported=await downloadEvent;
+    assert.equal(exported.suggestedFilename(),"the-mile-traducoes-planos-comuns.csv");
+    const csv=await fs.readFile(await exported.path(),"utf8");
+    assert.ok(csv.includes("Bowl de iogurte"));
+    assert.ok(csv.includes("Yoghurt bowl"));
+    assert.equal(csv.includes("Atleta fictício"),false);
+    assert.equal(csv.includes("Tomar 2 vezes"),false);
+    await page.locator(".i18n-plan-csv-upload input[type=file]").setInputFiles({
+      name:"the-mile-traducoes-planos-comuns.csv",mimeType:"text/csv",
+      buffer:Buffer.from(csv,"utf8")
+    });
+    await page.locator(".i18n-plan-csv-actions button").nth(1).click();
+    await page.getByText(/1 propostas prontas a importar/).waitFor();
+    assert.equal(importApprovals,0);
+    await page.locator(".i18n-plan-csv-actions button").nth(2).click();
+    await page.getByText(/1 propostas importadas/).waitFor();
+    assert.equal(importRequests,1);
+    assert.equal(importApprovals,0,"CSV import cannot automatically approve plans");
+    await page.locator(".i18n-plan-csv-tools > .i18n-bulk-attestation input").check();
+    await page.locator(".i18n-plan-csv-tools > button.i18n-primary").click();
+    await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
+    assert.equal(importApprovals,1);
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));

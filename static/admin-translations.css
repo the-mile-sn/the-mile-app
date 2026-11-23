@@ -183,3 +183,17 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-plan-common-detail .i18n-bulk-attestation{font-size:12px;flex:1;display:flex;align-items:flex-start;gap:8px}
 .i18n-plan-common-detail .i18n-feedback{font-size:12px;margin:9px 0 0}
 @media(max-width:720px){.i18n-plan-common-list{grid-template-columns:1fr}.i18n-plan-common{padding:12px}}
+
+
+/* Planos CSV: neutral, explicit preview/import/approval controls. */
+.i18n-plan-csv-tools{display:grid;gap:10px;margin:10px 0 18px;padding:13px;border-radius:11px;background:var(--tm-ui-subcard);min-width:0}
+.i18n-plan-csv-tools>strong{font-size:13px;font-weight:600}
+.i18n-plan-csv-tools>.i18n-plan-policy{margin:0}
+.i18n-plan-csv-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.i18n-plan-csv-actions button{min-height:38px}
+.i18n-plan-csv-upload{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:12px;color:var(--tm-ui-text);min-height:40px}
+.i18n-plan-csv-upload input{max-width:235px;min-width:0;font-size:11px}
+.i18n-plan-csv-tools>.i18n-bulk-attestation{font-size:12px;margin:3px 0 0;display:flex;align-items:start;gap:8px}
+.i18n-plan-csv-tools>button{justify-self:start;min-height:38px}
+.i18n-plan-csv-tools>.i18n-feedback{font-size:12px;line-height:1.5;margin:0}
+@media(max-width:720px){.i18n-plan-csv-actions{align-items:stretch;flex-direction:column}.i18n-plan-csv-actions button,.i18n-plan-csv-tools>button{width:100%}.i18n-plan-csv-upload{width:100%}}

@@ -347,6 +347,137 @@ class PlanTranslationsTests(unittest.TestCase):
                      WHERE field_path LIKE ?""",("%/notes/%",)).fetchone()[0],0)
 
 
+    def _csv_row(self, group, english):
+        return {"group_id":group["group_id"],
+                "source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "expected_stage_hash":group["expected_stage_hash"],
+                "translated_text":english}
+
+    def test_simple_unit_suggestions_agree_with_singular_and_plural(self):
+        import app_translation_plans_v2 as plan_reviews
+        self.assertEqual(plan_reviews._quantity_hint("1 un"), "1 unit")
+        self.assertEqual(plan_reviews._quantity_hint("2 un"), "2 units")
+        self.assertEqual(plan_reviews._quantity_hint("1 un / 120 g"),
+                         "1 unit / 120 g")
+
+    def test_common_csv_import_is_private_staged_and_not_approved(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            self.assertTrue(group["csv_eligible"])
+            self.assertEqual(group["expected_stage_hash"],"")
+            row=self._csv_row(group,"Option 1")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[row]},csrf=False)["status"],403)
+            self.assertEqual(Client().request(ROOT+"/common")["status"],401)
+            self.assertEqual(Client().request(ROOT+"/common/import","POST",
+                {"rows":[row]})["status"],401)
+            result=self.call(ROOT+"/common/import","POST",{"rows":[row]})
+            self.assertEqual(result["status"],201,result)
+            self.assertEqual(result["body"]["imported"],1)
+            self.assertEqual(result["body"]["approved"],0)
+            state=next(x for x in self._common()["body"]["items"]
+                       if x["group_id"]==group["group_id"])
+            self.assertEqual(state["imported_status"],"pending")
+            self.assertEqual(state["imported_text"],"Option 1")
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan'""").fetchone()[0],0)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan_common' AND status='pending'""").fetchone()[0],1)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translation_history
+                    WHERE entity_kind='plan_common' AND action='submitted'""").fetchone()[0],1)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",{
+                "group_id":group["group_id"],"source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "translated_text":"Option 2","acknowledged":True})["status"],409)
+            result=self.call(ROOT+"/common/approve","POST",{
+                "group_id":group["group_id"],"source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "translated_text":"Option 1","acknowledged":True})
+            self.assertEqual(result["status"],200,result)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                   WHERE entity_kind='plan' AND status='approved'""").fetchone()[0],2)
+                self.assertEqual(c.execute("""SELECT status FROM v2_content_translations
+                   WHERE entity_kind='plan_common'""").fetchone()["status"],"approved")
+                self.assertEqual(c.execute("""SELECT snapshot_json FROM
+                   v2_food_plan_editor_publications WHERE draft_id=?""",
+                   (self.draft_id,)).fetchone()["snapshot_json"],self.original)
+
+    def test_common_csv_import_prevents_stale_or_clinical_changes(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            row=self._csv_row(group,"Option 1")
+            for invalid in (
+                {**row,"source_hash":"a"*64},
+                {**row,"expected_group_hash":"f"*64},
+                {**row,"translated_text":"Option 2"},
+                {**row,"expected_stage_hash":"c"*64},
+                {**row,"extra":"test"},
+            ):
+                self.assertNotEqual(self.call(ROOT+"/common/import","POST",
+                    {"rows":[invalid]})["status"],201)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[row,row]})["status"],400)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[row for _ in range(101)]})["status"],400)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[row]})["status"],201)
+            approved_staged=next(x for x in self._common()["body"]["items"]
+                if x["group_id"]==group["group_id"])
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(approved_staged,"Option 1")]}
+                )["body"]["unchanged"],1)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[row]})["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan_common'""").fetchone()[0],1)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan'""").fetchone()[0],0)
+            # Clinical notes are not eligible for importing into common memory.
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{"rows":[{
+                **row,"group_id":"a"*64}]})["status"],409)
+            with patch.object(app,"SITE_ROLE","player"):
+                self.assertEqual(self.call(ROOT+"/common/import","POST",
+                    {"rows":[row]})["status"],404)
+
+    def test_common_csv_stage_revision_never_overwrites_approved(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            first=self._csv_row(group,"Option 1")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[first]})["status"],201)
+            current=next(x for x in self._common()["body"]["items"]
+                if x["group_id"]==group["group_id"])
+            revised=self._csv_row(current,"Option 1 revised")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",
+                {"rows":[revised]})["status"],201)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",{
+                "group_id":group["group_id"],"source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "translated_text":"Option 1 revised","acknowledged":True})["status"],200)
+            # Add another matching publication so this previously approved
+            # common memory becomes relevant to a new version.
+            self._add_publication(3)
+            newer=next(x for x in self._common()["body"]["items"]
+                if x["group_id"]==group["group_id"])
+            self.assertEqual(newer["imported_status"],"approved")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(newer,"Option 1")]})["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT translated_text FROM
+                    v2_content_translations WHERE entity_kind='plan_common'
+                    """).fetchone()["translated_text"],"Option 1 revised")
+
     def test_common_approval_caps_each_transaction_at_100(self):
         with patch.dict(os.environ,FLAG):
             # 102 identical title occurrences, but only up to 100 are
