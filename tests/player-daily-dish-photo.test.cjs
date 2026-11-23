@@ -7,7 +7,8 @@ const backend=fs.readFileSync("app.py","utf8");
 test("daily thumbnails only for assigned lunch/dinner dishes",()=>{
  assert.match(js,/if\(\(meal==="lunch"\|\|meal==="dinner"\)\&\&menu\.kind==="dish"\)/);
  assert.match(js,/attachDailyDishPhoto\(section,p,menu,epoch,requestId\)/);
- assert.match(js,/name\.textContent=menu\.value/);
+ assert.match(js,/name\.textContent=playerMenuCategoryLabel\(menu\)/);
+ assert.match(js,/if\(\(meal==="lunch"\|\|meal==="dinner"\)\&\&menu\.kind==="dish"\)/);
  assert.match(js,/p\.append\(name\)/);
  assert.match(js,/photo\.className="daily-meal-dish-photo"/);
 });
