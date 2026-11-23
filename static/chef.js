@@ -716,11 +716,11 @@ function chefMenuPhoto(item){
  frame.append(zoom);
  photo.onerror=()=>frame.remove();
  frame.setAttribute("role","button");frame.tabIndex=0;
- frame.setAttribute("aria-label","Ampliar fotografia do prato");
+ frame.setAttribute("aria-label",lang==="pt"?"Ampliar fotografia do prato":"Enlarge dish photo");
  const open=()=>{
   const overlay=node("div","chef-photo-overlay");
   const close=node("button","chef-photo-close","×");close.type="button";
-  close.setAttribute("aria-label","Fechar fotografia");
+  close.setAttribute("aria-label",lang==="pt"?"Fechar fotografia":"Close photo");
   const large=node("img","chef-photo-large");large.src=photo.src;large.alt=photo.alt;
   const dismiss=()=>{document.removeEventListener("keydown",onKey);overlay.remove();};
   const onKey=event=>{if(event.key==="Escape")dismiss();};
@@ -890,7 +890,7 @@ function renderChefWeekly(root){
    const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(active?" selected":""));
    cell.type="button";cell.disabled=!available;
    cell.append(iconForMeal(meal));
-   cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
+   cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?(lang==="pt"?"abrir detalhes":"open details"):(lang==="pt"?"não prevista":"not scheduled")));
    if(available)cell.onclick=()=>{
     selectChefWeekDay(new Date(key+"T12:00:00"),active?null:{date:key,meal});
    };
