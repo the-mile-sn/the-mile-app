@@ -186,7 +186,8 @@ def _option_items(option,library,language="pt"):
 def _options(meal,library,language="pt"):
     result=[]
     for index,option in enumerate(meal.get("options") or [],1):
-        canonical=option.get("__tm_canonical_option_ref")
+        canonical=(option.get("__tm_canonical_option_ref")
+                   if language=="en" else None)
         result.append({"number":index,
                        "option_ref":canonical if isinstance(canonical,str) and
                             len(canonical)==64 else option_ref(option),
