@@ -206,6 +206,25 @@ def _approved_food_names(c):
             if len(values)==1}
 
 
+def _approved_supplement_names(c):
+    """Approved exact supplement names, not doses or prescriptions."""
+    found={}
+    for row in c.execute("""
+        SELECT s.name AS source_text,t.source_hash,t.translated_text
+        FROM v2_content_translations t
+        JOIN v2_supplement_library s ON s.id=t.entity_id
+        WHERE t.entity_kind='supplement' AND t.field_path='name'
+          AND t.language='en' AND t.status='approved'
+    """).fetchall():
+        source,english=row["source_text"],row["translated_text"]
+        if (not isinstance(source,str) or not isinstance(english,str)
+                or _hash(source)!=row["source_hash"] or not english.strip()):
+            continue
+        found.setdefault(_hash(source),set()).add(english)
+    return {source_hash:next(iter(values)) for source_hash,values in found.items()
+            if len(values)==1}
+
+
 def _language_neutral_quantity(source):
     """Leave standard symbols untouched; preserve numeric notation exactly."""
     return bool(_PLAIN_QUANTITY.fullmatch(source.strip()))
@@ -225,14 +244,17 @@ def _quantity_hint(source):
 
 
 def _safe_suggestion(field, approved_titles, approved_quantities=None,
-                     approved_food_names=None):
+                     approved_food_names=None, approved_supplement_names=None):
     source = field["source_text"]
     if field["field_kind"] == "option_title":
         candidate = approved_titles.get(_hash(source))
         origin = "approved_exact_title"
-    elif field["field_kind"] == "food_override":
+    elif field["field_kind"] in ("food_override", "alternative_override"):
         candidate = (approved_food_names or {}).get(_hash(source))
         origin = "approved_exact_food_name"
+    elif field["field_kind"] == "supplement_label":
+        candidate = (approved_supplement_names or {}).get(_hash(source))
+        origin = "approved_exact_supplement_name"
     elif field["field_kind"] == "display_quantity":
         candidate = (approved_quantities or {}).get(_hash(source))
         origin = "approved_exact_quantity"
@@ -270,6 +292,7 @@ def _reuse_audit(c, items, published):
     accepted_titles = _approved_titles(c)
     accepted_quantities = _approved_quantities(c)
     accepted_food_names = _approved_food_names(c)
+    accepted_supplements = _approved_supplement_names(c)
     reusable_overrides = 0
     approved_linked = 0
     for row in published:
@@ -292,7 +315,8 @@ def _reuse_audit(c, items, published):
             if field_status != "missing":
                 continue
             suggestion = _safe_suggestion(
-                field, accepted_titles, accepted_quantities, accepted_food_names)
+                field, accepted_titles, accepted_quantities,
+                accepted_food_names, accepted_supplements)
             if suggestion and suggestion["origin"] == "approved_exact_food_name":
                 reusable_overrides += 1
             if suggestion and suggestion["origin"] == "approved_exact_title":
@@ -394,6 +418,7 @@ def inspect(c, actor, public_ref):
     approved_titles = _approved_titles(c)
     approved_quantities = _approved_quantities(c)
     approved_food_names = _approved_food_names(c)
+    approved_supplements = _approved_supplement_names(c)
     displayed = []
     for f in fields:
         candidate = existing.get(f["field_path"])
@@ -404,7 +429,7 @@ def inspect(c, actor, public_ref):
                           "candidate_hash":_hash(candidate["translated_text"]) if candidate else None,
                           "suggestion":_safe_suggestion(
                               f, approved_titles, approved_quantities,
-                              approved_food_names)
+                              approved_food_names, approved_supplements)
                                        if state == "missing" else None})
     return {"publication":_summary(c,row,value,_name_map(c)),
             "fields":displayed,
