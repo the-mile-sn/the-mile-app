@@ -69,6 +69,73 @@ class PresentationTranslationTests(unittest.TestCase):
             return i18n.localise_published_plans(
                 self.c,self.plans,self.library,language="en")
 
+    def test_recipe_catalogue_and_detail_translate_text_only(self):
+        recipe={
+            "id":"recipe-a","name":"Panquecas de aveia",
+            "category_id":"category-a","category":"Pequeno-almoço",
+            "notes":"Servir quente.","servings":4,
+            "photo_key":"private-photo","has_photo":True,
+            "sections":[{"id":"section-a","title":"Massa",
+                "ingredients":[{"id":"ingredient-a","name":"Farinha de aveia",
+                                 "unit":"colher de sopa","quantity":2,
+                                 "food_id":"food-1"}]}],
+            "steps":["Misturar os ingredientes.","Cozer numa frigideira."]
+        }
+        before=copy.deepcopy(recipe)
+        self._put("recipe","recipe-a","name",
+                  "Panquecas de aveia","Oat pancakes")
+        self._put("recipe","recipe-a","notes",
+                  "Servir quente.","Serve warm.")
+        self._put("recipe","recipe-a","sections/section-a/title",
+                  "Massa","Batter")
+        self._put("recipe","recipe-a",
+                  "sections/section-a/ingredients/ingredient-a/name",
+                  "Farinha de aveia","Oat flour")
+        self._put("recipe","recipe-a",
+                  "sections/section-a/ingredients/ingredient-a/unit",
+                  "colher de sopa","tablespoon")
+        self._put("recipe","recipe-a","steps/0",
+                  "Misturar os ingredientes.","Mix the ingredients.")
+        self._put("recipe","recipe-a","steps/1",
+                  "Cozer numa frigideira.","Cook in a frying pan.")
+        self._put("recipe_category","category-a","name",
+                  "Pequeno-almoço","Breakfast")
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            result=i18n.localise_recipe_detail(self.c,recipe,language="en")
+            self.assertEqual(result["name"],"Oat pancakes")
+            self.assertEqual(result["category"],"Breakfast")
+            self.assertEqual(result["notes"],"Serve warm.")
+            self.assertEqual(result["sections"][0]["title"],"Batter")
+            ingredient=result["sections"][0]["ingredients"][0]
+            self.assertEqual(ingredient["name"],"Oat flour")
+            self.assertEqual(ingredient["unit"],"tablespoon")
+            self.assertEqual(ingredient["quantity"],2)
+            self.assertEqual(ingredient["food_id"],"food-1")
+            self.assertEqual(result["steps"],[
+                "Mix the ingredients.","Cook in a frying pan."])
+            self.assertEqual(result["photo_key"],"private-photo")
+            self.assertEqual(result["servings"],4)
+            self.assertEqual(recipe,before,"Canonical PT recipe must not mutate")
+            summary=i18n.localise_recipe_summaries(self.c,[{
+                "id":"recipe-a","name":"Panquecas de aveia",
+                "category_id":"category-a","category":"Pequeno-almoço",
+                "servings":4}],language="en")
+            self.assertEqual(summary[0]["name"],"Oat pancakes")
+            self.assertEqual(summary[0]["category"],"Breakfast")
+            self.c.execute("""UPDATE v2_content_translations
+                SET status='pending' WHERE entity_kind='recipe'
+                  AND field_path='steps/1'""")
+            self.assertEqual(i18n.localise_recipe_detail(
+                self.c,recipe,language="en")["steps"][1],
+                "Cozer numa frigideira.")
+            self.c.execute("""UPDATE v2_content_translations
+                SET source_hash=? WHERE entity_kind='recipe'
+                  AND field_path='name'""",(digest("revised"),))
+            self.assertEqual(i18n.localise_recipe_detail(
+                self.c,recipe,language="en")["name"],"Panquecas de aveia")
+            self.assertIs(i18n.localise_recipe_detail(
+                self.c,recipe,language="pt"),recipe)
+
     def test_dish_menu_names_follow_approved_content_without_mutation(self):
         self.c.execute("""CREATE TABLE v2_dish_library (
             id TEXT PRIMARY KEY,name_pt TEXT,active INTEGER)""")
