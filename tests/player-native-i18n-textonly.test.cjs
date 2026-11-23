@@ -45,10 +45,21 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(vm.runInContext('playerMacroAbbreviation("fat_g")',ctx),"F");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"General");
   assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Jogo"})',ctx),"Match");
-  assert.equal(vm.runInContext('playerEventTitle({kind:"training",title:"Treino"})',ctx),"Treino");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"training",title:"Treino"})',ctx),"Training");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"training",title:"Sessão personalizada"})',ctx),"Sessão personalizada");
   assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Custom final"})',ctx),"Custom final");
   assert.equal(vm.runInContext('playerClassification("Jogo personalizado")',ctx),"Jogo personalizado");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Lunch");
+  for(const [pt,en] of [
+    ["Carne branca","White meat"],["Carne vermelha","Red meat"],
+    ["Peixe magro","Lean fish"],["Peixe gordo","Oily fish"],
+    ["Livre","Free choice"],["Pós-jogo","Post-match"],["Mix","Mix"]
+  ]){
+    assert.equal(vm.runInContext('playerMenuCategoryLabel('+JSON.stringify({kind:"category",value:"_value_" }).replace("_value_",pt)+')',ctx),en);
+  }
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"dish",value:"Carne branca"})',ctx),"Carne branca");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:"Carne vermelha"})',ctx),"Carne vermelha");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Categoria futura"})',ctx),"Categoria futura");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Blue");
   const count=nodes.size;
   for(const node of nodes.values()){
@@ -67,7 +78,10 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(vm.runInContext('playerMacroAbbreviation("carbs_g")',ctx),"HC");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"Geral");
   assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Jogo"})',ctx),"Jogo");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"training",title:"Treino"})',ctx),"Treino");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Almoço");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Carne branca"})',ctx),"Carne branca");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Pós-jogo"})',ctx),"Pós-jogo");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Azul");
   assert.equal(element.className,"mile-approved");
   assert.deepEqual(element.style,{});
@@ -116,12 +130,27 @@ test("Plans All list renders translated categories in both languages without tim
   }
 });
 
-test("Daily, weekly and intra-match cards display only the standard game title in EN",()=>{
+test("Daily and weekly cards translate only standard match and training titles in EN",()=>{
   const source=fs.readFileSync("static/jogador-v2.js","utf8");
   assert.ok(source.includes('label.textContent=playerEventTitle(event);section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);'));
   assert.ok(source.includes('label.textContent=playerEventTitle(event);head.append(label);'));
   assert.ok(source.includes('title:"Jogo"'),"Calendar data remains canonical in PT");
-  assert.ok(source.includes('event.kind==="match"'),"Match kind remains unchanged for existing behaviour");
+  assert.ok(source.includes('event?.kind==="match"'),"Match kind remains unchanged for existing behaviour");
+  assert.ok(source.includes('event?.kind==="training"'),"Training kind remains unchanged for existing behaviour");
+});
+
+test("Menu categories are translated at every player display only, leaving source values untouched",()=>{
+  const source=fs.readFileSync("static/jogador-v2.js","utf8");
+  assert.ok(source.includes('line.textContent=playerMenuCategoryLabel(menu);section.append(line);'),
+    "Weekly menu category uses display translation");
+  assert.ok(source.includes('name.textContent=playerMenuCategoryLabel(menu);if(menu.kind==="text")'),
+    "Daily meal menu category uses display translation");
+  assert.ok(source.includes('name.textContent=menu?playerMenuCategoryLabel(menu):playerText("Menu por atribuir","Menu not assigned")'),
+    "Menus tab category uses display translation");
+  assert.ok(source.includes('const dish=menu.dish_id?dishById.get(menu.dish_id):uniqueDishByName.get(menu.value);'),
+    "Dish canonical name resolution stays unchanged");
+  assert.ok(source.includes('if(menu?.kind==="dish")'),
+    "Dish photos and recipe interactions remain gated on dish kind");
 });
 
 test("Energy values render as ungrouped kcal in both locales, without changing nutrient formatting",()=>{
