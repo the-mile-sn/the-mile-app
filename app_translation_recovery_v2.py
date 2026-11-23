@@ -203,8 +203,11 @@ def carry_forward_unchanged(c, draft_id, old_raw, new_raw):
             continue
         if old_option != new_option:
             continue
-        # Reclassification may change timing/clinical meaning of notes.
-        if old_meal.get("name") != new_meal.get("name") and field["field_kind"] != "option_title":
+        # Any changed meal metadata may affect clinical meaning, even if the
+        # display name stays equal. Only the option title can cross that boundary.
+        old_context = {k:v for k,v in old_meal.items() if k != "options"}
+        new_context = {k:v for k,v in new_meal.items() if k != "options"}
+        if old_context != new_context and field["field_kind"] != "option_title":
             continue
         translated = old_row["translated_text"]
         if (not isinstance(translated, str) or not translated.strip()
