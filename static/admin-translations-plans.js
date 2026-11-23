@@ -223,13 +223,215 @@
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
-    panel.append(header,intro,search,list,detail);
+    const csvPanel=create("section","i18n-plan-csv-tools");
+    panel.append(header,intro,csvPanel,search,list,detail);
     let groups=[];
+    let validated=[],csvBusy=false;
+    const csvHeaders=["group_id","source_hash","expected_group_hash",
+      "expected_stage_hash","field_kind","meal_context","source_text",
+      "occurrences","translated_text"];
+    const csvCell=(value,protect=false)=>{
+      let content=String(value??"");
+      if(protect&&/^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(content))content="'"+content;
+      return '"'+content.replaceAll('"','""')+'"';
+    };
+    const createCsv=rows=>"\\uFEFF"+[csvHeaders,...rows.map(r=>
+      csvHeaders.map(k=>r[k]??""))].map((r,index)=>r.map((cell,j)=>
+        csvCell(cell,index>0&&["source_text","meal_context","translated_text"].includes(
+          csvHeaders[j]))).join(";")).join("\\r\\n")+"\\r\\n";
+    const parseCsv=raw=>{
+      const input=raw.replace(/^\\uFEFF/,"");
+      const rows=[];let current=[],value="",quoted=false,atStart=true;
+      const cell=()=>{current.push(value);value="";atStart=true;};
+      const next=()=>{cell();if(current.some(x=>x!==""))rows.push(current);current=[];};
+      for(let i=0;i<input.length;i++){
+        const ch=input[i];
+        if(quoted){
+          if(ch==='"'&&input[i+1]==='"'){value+='"';i++;}
+          else if(ch==='"')quoted=false;
+          else value+=ch;
+        }else if(ch==='"'&&atStart){quoted=true;atStart=false;}
+        else if(ch===";")cell();
+        else if(ch==="\\n")next();
+        else if(ch==="\\r"&&input[i+1]==="\\n"){}
+        else if(ch==='"')throw Error("CSV com aspas inválidas.");
+        else {value+=ch;atStart=false;}
+      }
+      if(quoted)throw Error("CSV com aspas por fechar.");
+      if(value!==""||current.length)next();
+      if(!rows.length||rows[0].join("|")!==csvHeaders.join("|"))
+        throw Error("Cabeçalho incorreto. Usa o modelo descarregado nesta área.");
+      if(rows.length>2501)throw Error("O CSV excede 2500 linhas.");
+      if(rows.some(r=>r.length!==csvHeaders.length))
+        throw Error("CSV com número incorreto de colunas.");
+      return rows.slice(1).map(r=>Object.fromEntries(csvHeaders.map((k,i)=>[k,r[i]])));
+    };
+    const exportButton=create("button","i18n-secondary","Descarregar CSV dos textos comuns");
+    exportButton.type="button";
+    const uploadLabel=create("label","i18n-plan-csv-upload","Importar CSV traduzido");
+    const fileInput=create("input","");
+    fileInput.type="file";fileInput.accept=".csv,text/csv";
+    uploadLabel.append(fileInput);
+    const previewButton=create("button","i18n-secondary","Verificar importação");
+    previewButton.type="button";
+    const importButton=create("button","i18n-primary","Importar propostas");
+    importButton.type="button";importButton.disabled=true;
+    const ackLabel=create("label","i18n-bulk-attestation");
+    const ackCheck=create("input");ackCheck.type="checkbox";
+    ackLabel.append(ackCheck,create("span","",
+      "Confirmei a revisão das traduções importadas que vou aprovar"));
+    const bulkButton=create("button","i18n-primary","Aprovar traduções importadas em lote");
+    bulkButton.type="button";bulkButton.disabled=true;
+    const csvFeedback=create("p","i18n-feedback");
+    const csvActions=create("div","i18n-plan-csv-actions");
+    csvActions.append(exportButton,uploadLabel,previewButton,importButton);
+    csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
+      create("p","i18n-plan-policy",
+        "O ficheiro contém apenas títulos de opções repetidos e unidades simples, sem"+
+        " identificar jogadores nem incluir notas individuais. Revê os títulos antes"+
+        " de partilhar o ficheiro. Preenche apenas translated_text, depois importa"+
+        " propostas e aprova-as em lote. Nenhuma importação aprova automaticamente."),
+      csvActions,ackLabel,bulkButton,csvFeedback);
+    const matchingGroups=()=>groups.filter(g=>{
+      const term=search.value.trim().toLocaleLowerCase("pt-PT");
+      return !term||[g.source_text,g.meal_context,g.field_kind].join(" ")
+        .toLocaleLowerCase("pt-PT").includes(term);
+    });
+    const updateCsvButtons=()=>{
+      importButton.disabled=csvBusy||!validated.length;
+      const n=matchingGroups().filter(g=>g.csv_eligible&&
+        (g.imported_status==="pending"||g.imported_status==="approved")).length;
+      bulkButton.disabled=csvBusy||!ackCheck.checked||!n;
+      bulkButton.textContent="Aprovar até "+Math.min(100,n)+
+        " expressões importadas (máx. 100 ocorrências por expressão)";
+    };
+    exportButton.addEventListener("click",()=>{
+      const rows=groups.filter(g=>g.csv_eligible).map(g=>({
+        group_id:g.group_id,source_hash:g.source_hash,
+        expected_group_hash:g.expected_group_hash,
+        expected_stage_hash:g.expected_stage_hash,
+        field_kind:g.field_kind,meal_context:g.meal_context,
+        source_text:g.source_text,occurrences:g.missing_count,
+        translated_text:g.imported_text||g.suggestion?.text||""
+      }));
+      if(!rows.length){
+        csvFeedback.textContent="Não há títulos repetidos ou unidades para exportar.";
+        return;
+      }
+      const blob=new Blob([createCsv(rows)],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download="the-mile-traducoes-planos-comuns.csv";
+      document.body.append(link);link.click();link.remove();
+      URL.revokeObjectURL(url);
+      csvFeedback.textContent="CSV descarregado com "+rows.length+
+        " expressões. Revê o conteúdo antes de o partilhares.";
+    });
+    fileInput.addEventListener("change",()=>{
+      validated=[];ackCheck.checked=false;importButton.disabled=true;
+      csvFeedback.textContent=fileInput.files[0]?.name||"";
+      updateCsvButtons();
+    });
+    previewButton.addEventListener("click",async()=>{
+      validated=[];importButton.disabled=true;
+      const file=fileInput.files[0];
+      if(!file){csvFeedback.textContent="Seleciona primeiro um CSV.";return;}
+      if(file.size>1024*1024){
+        csvFeedback.textContent="O ficheiro não pode exceder 1 MB.";return;
+      }
+      try{
+        const entries=parseCsv(await file.text());
+        const byId=new Map(groups.filter(g=>g.csv_eligible).map(g=>[g.group_id,g]));
+        const unique=new Set();
+        let blanks=0;
+        for(const row of entries){
+          const g=byId.get(row.group_id);
+          if(!g||unique.has(row.group_id))throw Error(
+            "Existe um grupo duplicado ou alterado. Descarrega um novo modelo.");
+          unique.add(row.group_id);
+          const safeSource=String(row.source_text).replace(/^'(?=[=+\\-@])/,"");
+          const safeContext=String(row.meal_context).replace(/^'(?=[=+\\-@])/,"");
+          if(row.source_hash!==g.source_hash||
+             row.expected_group_hash!==g.expected_group_hash||
+             row.expected_stage_hash!==(g.expected_stage_hash||"")||
+             row.field_kind!==g.field_kind||safeContext!==g.meal_context||
+             safeSource!==g.source_text)
+            throw Error("O plano mudou desde a exportação. Descarrega um CSV novo.");
+          const translated=row.translated_text.trim().replace(/^'(?=[=+\\-@])/,"");
+          if(!translated){blanks++;continue;}
+          validated.push({group_id:g.group_id,source_hash:g.source_hash,
+            expected_group_hash:g.expected_group_hash,
+            expected_stage_hash:g.expected_stage_hash||"",translated_text:translated});
+        }
+        if(!validated.length)throw Error("Preenche translated_text antes de importar.");
+        csvFeedback.textContent=validated.length+
+          " propostas prontas a importar. "+blanks+
+          " linhas vazias ficam por traduzir. Nenhuma será aprovada nesta etapa.";
+        updateCsvButtons();
+      }catch(e){validated=[];csvFeedback.textContent="CSV inválido: "+e.message;
+        updateCsvButtons();}
+    });
+    importButton.addEventListener("click",async()=>{
+      if(csvBusy||!validated.length)return;
+      csvBusy=true;updateCsvButtons();
+      let imported=0,unchanged=0;
+      try{
+        for(let i=0;i<validated.length;i+=100){
+          if(seq!==generation)break;
+          const result=await send("/api/v2/admin/i18n/plans/common/import","POST",
+            {rows:validated.slice(i,i+100)});
+          imported+=result.imported;unchanged+=result.unchanged;
+          csvFeedback.textContent="Importação: "+Math.min(i+100,validated.length)+
+            " / "+validated.length+" expressões processadas.";
+        }
+        validated=[];
+        await refresh();
+        csvFeedback.textContent=imported+" propostas importadas; "+unchanged+
+          " já existentes sem alterações. Revê e confirma a aprovação em lote.";
+      }catch(e){
+        csvFeedback.textContent="Importação interrompida após "+imported+
+          " propostas: "+e.message+". Atualiza o CSV e volta a verificar.";
+        validated=[];
+        await refresh();
+      }finally{csvBusy=false;updateCsvButtons();}
+    });
+    ackCheck.addEventListener("change",updateCsvButtons);
+    bulkButton.addEventListener("click",async()=>{
+      if(csvBusy||!ackCheck.checked)return;
+      const queue=matchingGroups().filter(g=>g.csv_eligible&&g.imported_text&&
+        (g.imported_status==="pending"||g.imported_status==="approved")).slice(0,100);
+      if(!queue.length)return;
+      csvBusy=true;updateCsvButtons();
+      let total=0,count=0;
+      try{
+        for(const item of queue){
+          if(seq!==generation)break;
+          const result=await send("/api/v2/admin/i18n/plans/common/approve","POST",{
+            group_id:item.group_id,source_hash:item.source_hash,
+            expected_group_hash:item.expected_group_hash,
+            translated_text:item.imported_text,acknowledged:true
+          });
+          count++;total+=result.approved;
+          csvFeedback.textContent="Aprovadas "+total+
+            " ocorrências em "+count+" expressões…";
+        }
+        await refresh();
+        csvFeedback.textContent="Aprovadas "+total+" ocorrências de "+count+
+          " expressões. Para grupos com mais de 100 ocorrências, confirma novo lote.";
+      }catch(e){
+        csvFeedback.textContent="Aprovação interrompida após "+count+
+          " expressões e "+total+" ocorrências: "+e.message+
+          ". Os lotes anteriores ficaram aprovados; atualiza e revê o restante.";
+        await refresh();
+      }finally{
+        ackCheck.checked=false;csvBusy=false;updateCsvButtons();
+      }
+    });
     const refresh=async()=>{
       const result=await send("/api/v2/admin/i18n/plans/common");
       if(seq!==generation||host.hidden)return;
       groups=result.items||[];
       showList();
+      updateCsvButtons();
     };
     const openGroup=item=>{
       detail.replaceChildren();
@@ -248,7 +450,7 @@
       const editor=create("textarea","");
       editor.rows=3;
       editor.maxLength=10000;
-      editor.value=item.suggestion?.text||"";
+      editor.value=item.imported_text||item.suggestion?.text||"";
       en.append(editor);
       cols.append(pt,en);
       const acknowledge=create("label","i18n-bulk-attestation");
@@ -317,12 +519,14 @@
           create("small","",item.missing_count+" por traduzir · "+
             (item.field_kind==="option_title"?
               "Título · "+item.meal_context:"Unidade simples")+
-            (item.missing_count>100?" · em grupos de 100":"")));
+            (item.missing_count>100?" · em grupos de 100":"")+
+            (item.imported_status?" · CSV "+(
+              item.imported_status==="approved"?"revisto":"importado por rever"):"")));
         row.addEventListener("click",()=>openGroup(item));
         list.append(row);
       }
     };
-    search.addEventListener("input",showList);
+    search.addEventListener("input",()=>{showList();updateCsvButtons();});
     try{await refresh();}
     catch(e){
       if(seq===generation)list.replaceChildren(
