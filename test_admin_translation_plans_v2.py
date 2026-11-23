@@ -347,6 +347,56 @@ class PlanTranslationsTests(unittest.TestCase):
                      WHERE field_path LIKE ?""",("%/notes/%",)).fetchone()[0],0)
 
 
+    def test_screened_consumption_note_csv_can_be_imported_and_approved(self):
+        """Normal plan notes use staged CSV; dosing notes stay in private review."""
+        with patch.dict(os.environ, FLAG):
+            amended=json.loads(self.original)
+            amended["meals"][0]["options"][0]["notes"]=[
+                "Podes aquecer o pão antes de adicionar o queijo.",
+                "Tomar 2 vezes durante o dia"]
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(amended,ensure_ascii=False),self.draft_id))
+                c.commit()
+            response=self._common()
+            self.assertEqual(response["status"],200,response)
+            groups=response["body"]["items"]
+            note=next(g for g in groups if g["field_kind"]=="individual_note")
+            self.assertEqual(note["source_text"],
+                             "Podes aquecer o pão antes de adicionar o queijo.")
+            self.assertTrue(note["plan_note_candidate"])
+            self.assertTrue(note["csv_eligible"])
+            self.assertNotIn("Tomar 2 vezes",str(response))
+            self.assertNotIn("Atleta de teste",str(response))
+            original_snapshot=json.dumps(amended,ensure_ascii=False)
+            translated="You can toast the bread before adding the cheese."
+            staged=self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(note,translated)]})
+            self.assertEqual(staged["status"],201,staged)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                  v2_content_translations WHERE entity_kind='plan'
+                  AND field_path LIKE ?""",("%/notes/%",)).fetchone()[0],0)
+            current=next(g for g in self._common()["body"]["items"]
+                         if g["group_id"]==note["group_id"])
+            approved=self.call(ROOT+"/common/approve","POST",{
+                "group_id":current["group_id"],
+                "source_hash":current["source_hash"],
+                "expected_group_hash":current["expected_group_hash"],
+                "translated_text":translated,"acknowledged":True})
+            self.assertEqual(approved["status"],200,approved)
+            with app.connect() as c:
+                row=c.execute("""SELECT translated_text,status FROM
+                    v2_content_translations WHERE entity_kind='plan'
+                    AND field_path='meals/0/options/0/notes/0'""").fetchone()
+                self.assertEqual(row["status"],"approved")
+                self.assertEqual(row["translated_text"],translated)
+                snapshot=c.execute("""SELECT snapshot_json FROM
+                     v2_food_plan_editor_publications WHERE draft_id=?""",
+                     (self.draft_id,)).fetchone()["snapshot_json"]
+                self.assertEqual(snapshot,original_snapshot)
+
     def _csv_row(self, group, english):
         return {"group_id":group["group_id"],
                 "source_hash":group["source_hash"],
