@@ -244,6 +244,22 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(i18n._current_english(
             plan," Arroz branco ",trim_source=True),"White rice")
 
+    def test_admin_readiness_aggregates_counts_only(self):
+        empty=i18n.translation_readiness(self.c)
+        self.assertTrue(empty["available"])
+        self.assertGreater(empty["approved_count"],0)
+        self.assertEqual(sum(empty["kinds"].values()),empty["approved_count"])
+        self.assertNotIn("source_text",str(empty))
+        self.assertNotIn("translated_text",str(empty))
+        self.assertNotIn("White rice",str(empty))
+        self.c.execute("""UPDATE v2_content_translations SET status='pending'
+            WHERE entity_kind='food'""")
+        revised=i18n.translation_readiness(self.c)
+        self.assertEqual(revised["approved_count"],empty["approved_count"]-1)
+        self.c.execute("DROP TABLE v2_content_translations")
+        self.assertEqual(i18n.translation_readiness(self.c),
+                         {"available":False,"approved_count":0,"kinds":{}})
+
     def test_flag_off_and_portuguese_are_identity_and_never_query(self):
         with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"0"}):
             p,l=i18n.localise_published_plans(
