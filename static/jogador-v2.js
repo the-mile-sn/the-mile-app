@@ -1,5 +1,64 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
+// Native translations replace text only; never alter HTML/CSS or interactions.
+let playerUiLanguage="pt";
+const playerMealLanguages={
+  pt:{breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},
+  en:{breakfast:"Breakfast",lunch:"Lunch",snack:"Snack",dinner:"Dinner",supper:"Supper"}
+};
+const playerColourLanguages={
+  pt:{orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"},
+  en:{orange:"Orange",yellow:"Yellow",blue:"Blue",green:"Green",vp:"Preparation green"}
+};
+const playerTextBindings=[
+  ["#tabs [data-tab='overview'] > span:last-child","Início","Home"],
+  ["#tabs [data-tab='plans'] > span:last-child","Planos","Plans"],
+  ["#tabs [data-tab='assessments'] > span:last-child","Avaliações","Assessments"],
+  ["#tabs [data-tab='menus'] > span:last-child","Menus","Menus"],
+  ["#tabs [data-tab='profile'] > span:last-child","Perfil","Profile"],
+  ["#overview-mode [data-view='day']","Dia","Day"],
+  ["#overview-mode [data-view='week']","Semana","Week"],
+  ["#menus-recipe-switch [data-menu-mode='recipes']","Receitas","Recipes"],
+  ["#plans-open-prescriptions span:not(.plans-entry-arrow)","Planos","Plans"],
+  ["#player-panel .welcome p","Planeamento nutricional","Nutrition planning"],
+  ["#profile-main .profile-plan-detail:first-child > span","Plano de acompanhamento","Support plan"],
+  ["#profile-main .profile-renewal-detail > span","Data de renovação","Renewal date"],
+  ["#profile-notifications-open .profile-notification-label","Notificações","Notifications"],
+  ["#profile-password-open > span:nth-child(2)","Alterar palavra-passe","Change password"],
+  ["#profile-logout > span:last-child","Terminar sessão","Sign out"],
+  ["#profile-notifications-title","Notificações","Notifications"],
+  ["#profile-notifications-page .profile-notifications-empty p","Ainda não existem notificações.","No notifications yet."],
+  ["#profile-password-title","Alterar palavra-passe","Change password"],
+  ["#profile-current-password + .mile-floating-label","Palavra-passe atual","Current password"],
+  ["#profile-new-password + .mile-floating-label","Nova palavra-passe","New password"],
+  ["#profile-confirm-password + .mile-floating-label","Confirmar nova palavra-passe","Confirm new password"],
+  ["#profile-password-form .profile-password-save","Guardar nova palavra-passe","Save new password"],
+  ["#plans-assessments [data-assessment-tab='resumo']","Resumo","Summary"],
+  ["#plans-assessments [data-assessment-tab='pregas']","Pregas","Skinfolds"],
+  ["#plans-assessments [data-assessment-tab='perimetros']","Perímetros","Circumferences"]
+];
+function playerText(pt,en){return playerUiLanguage==="en"?en:pt;}
+function playerPhaseLabel(value){
+ if(playerUiLanguage!=="en")return value;
+ return {"Pré-treino":"Pre-training","Pós-treino":"Post-training",
+         "Pré-jogo":"Pre-match","Intra-jogo":"During match",
+         "Pós-jogo":"Post-match"}[value]||value;
+}
+function applyPlayerNativeLanguage(language){
+ playerUiLanguage=language==="en"?"en":"pt";
+ Object.assign(names,playerMealLanguages[playerUiLanguage]);
+ Object.assign(colorNames,playerColourLanguages[playerUiLanguage]);
+ document.documentElement.lang=playerUiLanguage==="en"?"en-GB":"pt-PT";
+ for(const [selector,pt,en] of playerTextBindings){
+  const element=document.querySelector(selector);
+  if(element)element.textContent=playerUiLanguage==="en"?en:pt;
+ }
+ const assessments=document.querySelector("#tabs [data-tab='assessments']");
+ if(assessments){
+  const label=playerText("Avaliações","Assessments");
+  assessments.setAttribute("aria-label",label);assessments.title=label;
+ }
+}
 let playerSessionEpoch=0;
 let visualPortionsByColor={};
 let pendingIntraMatchExpansion=null;
@@ -122,6 +181,7 @@ function revokePlayerView(){
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  if(window.tmVisualPortions)window.tmVisualPortions.close();visualPortionsByColor={};
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
+ applyPlayerNativeLanguage("pt");
  calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
@@ -548,6 +608,7 @@ async function session(){
  const [r,p]=await Promise.all([profilePromise,plansPromise]);
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
+ applyPlayerNativeLanguage(me?.language);
  const plan=String(me.followup_plan||"").trim();
  $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";
  $("profile-renewal-date").textContent=displayPlayerRenewal(me.followup_renewal_date);
