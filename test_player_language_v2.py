@@ -29,6 +29,32 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
+    def test_internal_translation_readiness_requires_admin_and_flag(self):
+        first=self.players[0]
+        path="/api/v2/admin/translation-readiness"
+        self.assertEqual(self.admin.request(path)["status"],404)
+        with patch.dict(app.os.environ,{"MILE_APP_TRANSLATION_DIAGNOSTIC":"1"}):
+            self.assertEqual(first.request(path)["status"],403)
+            self.assertEqual(fixtures.Client().request(path)["status"],401)
+            data=self.admin.request(path)
+            self.assertEqual(data["status"],200,data)
+            self.assertEqual(data["body"],{
+                "available":False,"approved_count":0,"kinds":{}})
+            with app.connect() as c:
+                c.execute("""CREATE TABLE IF NOT EXISTS v2_content_translations (
+                    entity_kind TEXT,entity_id TEXT,field_path TEXT,
+                    language TEXT,source_hash TEXT,translated_text TEXT,
+                    status TEXT)""")
+                c.execute("""INSERT INTO v2_content_translations
+                    VALUES ('food','test-id','display_name','en',
+                    'mock-hash','Private sample','approved')""")
+                c.commit()
+            response=self.admin.request(path)
+            self.assertEqual(response["status"],200,response)
+            self.assertEqual(response["body"]["approved_count"],1)
+            self.assertEqual(response["body"]["kinds"],{"food":1})
+            self.assertNotIn("Private sample",str(response))
+
     def test_preference_is_self_only_default_pt_and_release_gated(self):
         first,second=self.players
         with patch.dict(app.os.environ,
