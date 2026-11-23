@@ -1352,7 +1352,7 @@ function injectPostMatchCard(){
  const date=iso(day);
  const games=playerPostMatchRecords.filter(m=>m.date===date&&m.can_answer);
  if(!games.length)return;
- const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes("Jogo"));
+ const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes(playerText("Jogo","Match")) || n.textContent?.includes("Jogo"));
  let anchor=matchCards[matchCards.length-1]||null;
  for(const game of games){
   const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
