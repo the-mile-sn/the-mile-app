@@ -1844,9 +1844,10 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
+                display_language=player_language_v2.presentation_language(
+                    c,user['id'])
                 source=app_content_i18n_v2.localise_consumption_source(
-                    c,link['athlete_id'],source,
-                    language=player_language_v2.presentation_language(c,user['id']))
+                    c,link['athlete_id'],source,language=display_language)
                 timing=(query.get('timing') or [None])[0]
                 if timing is not None:
                     if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
@@ -1862,6 +1863,12 @@ def application(env, start_response):
                     except ValueError as exc:
                         raise Problem(400, str(exc))
                     if not source['options']: raise Problem(404, 'published_timing_unavailable')
+                if display_language=='en':
+                    for option in source['options']:
+                        if (str(option.get('option_ref') or '').startswith(
+                                'player-added:') and
+                                option.get('title')=='Adicionado pelo jogador'):
+                            option['title']='Added by player'
                 return respond(200, {'date': meal_date, 'meal': meal_key,
                     'event_id': event_id, 'options': source['options'],
                     'color': source['color'], 'planned_color': source['planned_color'],
