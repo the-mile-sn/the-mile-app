@@ -685,8 +685,8 @@ async function session(){
    "/api/v2/player/reference-weights?start="+weekFrom+"&end="+weekTo
   ])cachedOverviewRead(path).catch(()=>{});
  }
- const [r,p,preferences]=await Promise.all([
-  profilePromise,plansPromise,preferencesPromise]);
+ const [r,p]=await Promise.all([profilePromise,plansPromise]);
+ const preferences=await preferencesPromise;
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
  applyPlayerNativeLanguage(me?.language);
