@@ -266,6 +266,23 @@ try{
     const uniqueButton=unique.locator("button");
     assert.equal(await uniqueButton.isDisabled(),true);
     assert.equal(await unique.locator(".i18n-plan-unique-row").count(),1);
+    const visibleRow=unique.locator(".i18n-plan-unique-row").first();
+    assert.match(await visibleRow.innerText(),/Panquecas caseiras/);
+    const rowVisual=await visibleRow.evaluate(el=>{
+      const span=el.querySelector("span"),list=el.parentElement;
+      return {height:el.getBoundingClientRect().height,
+        textColor:getComputedStyle(span).color,
+        background:getComputedStyle(el).backgroundColor,
+        flow:getComputedStyle(list).gridAutoRows,
+        textHeight:span.getBoundingClientRect().height};
+    });
+    assert.ok(rowVisual.height < 110,"Candidate row must be compact");
+    assert.ok(rowVisual.textHeight > 10,"Candidate must contain visible text");
+    assert.notEqual(rowVisual.textColor,rowVisual.background,
+      "Candidate text must contrast against background");
+    assert.equal(rowVisual.flow,"max-content",
+      "Candidate rows must not stretch to fill list height");
+
     const uniqueRow=unique.locator(".i18n-plan-unique-row input");
     await uniqueRow.uncheck();
     await unique.locator(".i18n-bulk-attestation input").check();
