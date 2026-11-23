@@ -1486,7 +1486,11 @@ def application(env, start_response):
                     # Chef's existing athlete/assigned-dish access gates are unchanged.
                     return respond(200,player_menu_photo(image),'image/webp')
                 if path == '/api/v2/chef/plans':
-                    return respond(200,{'options_by_color':food_plan_player_v2.player_plans(c,aid)['options_by_color']})
+                    # Language belongs to the authenticated chef, never a client
+                    # supplied athlete id; the presentation gate defaults OFF.
+                    language=athlete['language'] if athlete['language'] in ('pt','en') else 'pt'
+                    return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
+                        c,aid,language=language)['options_by_color']})
                 raise Problem(404,'not_found')
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
@@ -2139,7 +2143,12 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                return respond(200, food_plan_player_v2.player_plans(c, link['athlete_id']))
+                query=parse_qs(env.get('QUERY_STRING',''))
+                language=(query.get('language') or ['pt'])[0]
+                if language not in ('pt','en'):
+                    raise Problem(400,'invalid_language')
+                return respond(200, food_plan_player_v2.player_plans(
+                    c, link['athlete_id'],language=language))
             if path == '/api/me' and method == 'GET':
                 # Player PWA: keep the HttpOnly cookie alive across app restarts.
                 # Renew only when the existing session is nearing expiry. Admin
