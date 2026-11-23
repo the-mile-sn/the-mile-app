@@ -99,6 +99,8 @@
         "Quantidade com tradução aprovada noutro plano":
         item.suggestion.origin==="approved_exact_food_name"?
         "Nome com tradução aprovada na biblioteca de alimentos":
+        item.suggestion.origin==="approved_exact_supplement_name"?
+        "Nome com tradução aprovada na biblioteca de suplementos":
         item.suggestion.origin==="language_neutral_quantity"?
         "Símbolo internacional · pode manter-se igual em inglês":
         "Unidade de apresentação · regra conservadora";
@@ -130,8 +132,11 @@
       item.field_kind==="individual_note"?
         "Nota de consumo do plano. Revê o conteúdo antes de partilhar; "+
         "a exportação CSV está disponível apenas para notas elegíveis.":
-        "Texto personalizado ou potencialmente sensível: revisão profissional "+
-        "obrigatória. Não exportar."):null;
+      item.field_kind==="food_override"?
+        "Apresentação alimentar personalizada. Apenas nomes genéricos e "+
+        "revistos podem entrar no quinto CSV. Confirma o contexto.":
+        "Texto personalizado: revisão privada obrigatória. "+
+        "Alternativas e suplementos não entram no CSV."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
       save.disabled=!editor.value.trim()||!modified||busy;
