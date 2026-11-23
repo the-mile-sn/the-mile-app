@@ -260,6 +260,40 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(i18n.translation_readiness(self.c),
                          {"available":False,"approved_count":0,"kinds":{}})
 
+    def test_chef_dish_search_is_reviewed_and_preserves_menu_identity(self):
+        self.c.execute("""CREATE TABLE v2_dish_library (
+            id TEXT PRIMARY KEY,name_pt TEXT,category TEXT,active INTEGER)""")
+        self.c.executemany("INSERT INTO v2_dish_library VALUES (?,?,?,?)",[
+            ("dish-salmon","Salmão grelhado","Peixe",1),
+            ("dish-old","Frango assado","Carne",1),
+            ("dish-pending","Arroz de pato","Carne",1),
+            ("dish-inactive","Peixe cozido","Peixe",0)
+        ])
+        self._put("dish","dish-salmon","name_pt",
+                  "Salmão grelhado","Grilled salmon")
+        self._put("dish","dish-old","name_pt",
+                  "Frango anterior","Roasted chicken")
+        self._put("dish","dish-pending","name_pt",
+                  "Arroz de pato","Duck rice",status="pending")
+        self._put("dish","dish-inactive","name_pt",
+                  "Peixe cozido","Boiled fish")
+        en=i18n.search_approved_dishes(self.c,"grilled salmon")
+        self.assertEqual(en,[{"id":"dish-salmon",
+                              "name_pt":"Grilled salmon","category":"Peixe"}])
+        pt=i18n.search_approved_dishes(self.c,"salmão")
+        self.assertEqual(pt,en)
+        self.assertEqual(i18n.search_approved_dishes(
+            self.c,"roasted chicken"),[])
+        self.assertEqual(i18n.search_approved_dishes(
+            self.c,"duck rice"),[])
+        self.assertEqual(i18n.search_approved_dishes(
+            self.c,"boiled fish"),[])
+        self.assertEqual(i18n.search_approved_dishes(
+            self.c,"frango")[0]["name_pt"],"Frango assado")
+        self.assertEqual(self.c.execute(
+            "SELECT name_pt FROM v2_dish_library WHERE id='dish-salmon'"
+            ).fetchone()["name_pt"],"Salmão grelhado")
+
     def test_consumption_options_translate_display_only_keep_original_ref(self):
         from meal_option_selection_v2 import option_ref
         original=self.plan["meals"][0]["options"][0]
