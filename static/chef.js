@@ -1152,7 +1152,13 @@ function renderProfile(root){
    button.disabled=true;languageFeedback.textContent="";
    try{
     await request("/api/v2/chef/preferences","PUT",{language:code});
-    lang=code;chef.language=code;render();
+    lang=code;chef.language=code;
+    // Refresh display-only published Planos after a successful language change.
+    // A read failure keeps the current plan visible and does not undo the
+    // persisted language preference or interfere with menu/recipe permissions.
+    const updated=await request("/api/v2/chef/plans").catch(()=>null);
+    if(updated?.options_by_color)prescriptions=updated.options_by_color;
+    render();
    }catch(error){button.disabled=false;languageFeedback.textContent=txt().fail;}
   };
   segment.append(button);
