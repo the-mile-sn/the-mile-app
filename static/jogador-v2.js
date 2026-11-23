@@ -78,6 +78,18 @@ function playerSupplementMomentLabel(value){
          "Jantar":"Dinner","Ceia":"Supper","Treino":"Training",
          "Jogo":"Match","Almoço ou jantar":"Lunch or dinner"}[value]||value;
 }
+// Menu categories are canonical Portuguese values; translate only their display.
+// Dish IDs, custom free text and menu data must never be changed.
+const playerMenuCategoriesEnglish={
+ "Carne branca":"White meat","Carne vermelha":"Red meat",
+ "Peixe magro":"Lean fish","Peixe gordo":"Oily fish",
+ "Livre":"Free choice","Pós-jogo":"Post-match","Mix":"Mix"
+};
+function playerMenuCategoryLabel(menu){
+ const value=menu?.value||"";
+ return playerUiLanguage==="en"&&menu?.kind==="category"
+  ?(playerMenuCategoriesEnglish[value]||value):value;
+}
 // Only built-in training/match captions are translated for display.
 // Custom event titles and canonical event data stay unchanged for editing and icons.
 function playerEventTitle(event){
@@ -985,7 +997,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
   if(meal==="lunch"||meal==="dinner"){
    const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
-   if(menu){const line=document.createElement("div");line.className="weekly-menu-line";line.textContent=menu.value;section.append(line);}
+   if(menu){const line=document.createElement("div");line.className="weekly-menu-line";line.textContent=playerMenuCategoryLabel(menu);section.append(line);}
   }
   if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent=playerText("Plano ainda não publicado.","Plan not yet published.");section.append(note);}
   else if(options.length===1){
@@ -2621,7 +2633,7 @@ async function overview(){
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
    if(menu){
     const p=document.createElement("div");p.className="menu-line meal-menu-card";
-    const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=menu.value;if(menu.kind==="text")name.classList.add("menu-free-text-value");
+    const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=playerMenuCategoryLabel(menu);if(menu.kind==="text")name.classList.add("menu-free-text-value");
     p.append(name);section.append(p);
     if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish"){
      p.classList.add("meal-menu-link");
@@ -2943,7 +2955,7 @@ async function menusView(){
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu?.value||playerText("Menu por atribuir","Menu not assigned");if(menu?.kind==="text")name.classList.add("menu-free-text-value");
+ const name=document.createElement("span");name.className="value";name.textContent=menu?playerMenuCategoryLabel(menu):playerText("Menu por atribuir","Menu not assigned");if(menu?.kind==="text")name.classList.add("menu-free-text-value");
  const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
  body.append(nameColumn);
  if(menu?.kind==="dish"){
