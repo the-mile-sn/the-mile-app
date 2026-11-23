@@ -451,13 +451,13 @@ class PlanTranslationsTests(unittest.TestCase):
                 {"rows":[first]})["status"],201)
             current=next(x for x in self._common()["body"]["items"]
                 if x["group_id"]==group["group_id"])
-            revised=self._csv_row(current,"Option One")
+            revised=self._csv_row(current,"Option 1 revised")
             self.assertEqual(self.call(ROOT+"/common/import","POST",
                 {"rows":[revised]})["status"],201)
             self.assertEqual(self.call(ROOT+"/common/approve","POST",{
                 "group_id":group["group_id"],"source_hash":group["source_hash"],
                 "expected_group_hash":group["expected_group_hash"],
-                "translated_text":"Option One","acknowledged":True})["status"],200)
+                "translated_text":"Option 1 revised","acknowledged":True})["status"],200)
             # Add another matching publication so this previously approved
             # common memory becomes relevant to a new version.
             self._add_publication(3)
@@ -469,7 +469,7 @@ class PlanTranslationsTests(unittest.TestCase):
             with app.connect() as c:
                 self.assertEqual(c.execute("""SELECT translated_text FROM
                     v2_content_translations WHERE entity_kind='plan_common'
-                    """).fetchone()["translated_text"],"Option One")
+                    """).fetchone()["translated_text"],"Option 1 revised")
 
     def test_common_approval_caps_each_transaction_at_100(self):
         with patch.dict(os.environ,FLAG):
