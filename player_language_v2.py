@@ -27,3 +27,18 @@ def set_language(c, user_id, language):
         VALUES(?,?) ON CONFLICT(user_id) DO UPDATE
         SET language=excluded.language""",(user_id,language))
     return language
+
+def presentation_language(c, user_id):
+    """Do not show EN native labels until approved content is readable.
+
+    The user's preference may be saved before the cross-service migration
+    completes, but it must not create a mixed-language player experience.
+    """
+    import os
+    if (os.environ.get("MILE_PLAYER_LANGUAGE_SELECTION_ENABLED") != "1"
+            or os.environ.get("MILE_APP_TRANSLATIONS_ENABLED") != "1"):
+        return "pt"
+    import app_content_i18n_v2
+    if not app_content_i18n_v2.translation_store_available(c):
+        return "pt"
+    return get(c, user_id)
