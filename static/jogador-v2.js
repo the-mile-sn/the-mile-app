@@ -201,6 +201,8 @@ function enableWeekSwipe(element,onShift){
 // The menus week strip keeps its independent, existing week gesture.
 // A clear directional cue only in Daily mode. Weekly selection remains instant.
 let pendingDailySwipeDirection=0,dailySwipeEntryAnimation=null;
+// True while the Peso em jejum screen covers Início: day swipes are ignored there.
+let weightDetailOpen=false;
 function shiftOverviewDay(offset){
  if(offset!==1&&offset!==-1)return;
  const next=new Date(day);
@@ -233,7 +235,7 @@ function enableOverviewDaySwipe(element){
    if(node.scrollWidth>node.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
   }
   const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
-  content=overviewMode==='day'?$('day-details'):$('weekly-view');if(!content||content.hidden)return;
+  content=overviewMode==='day'?$('day-details'):$('weekly-view');if(!content||content.hidden||weightDetailOpen)return;
   start={x:t.clientX,y:t.clientY,at:performance.now(),width:content.getBoundingClientRect().width};
  },{passive:true});
  element.addEventListener('touchmove',event=>{
@@ -298,7 +300,7 @@ function revokePlayerView(){
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
  weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];selectedColor=null;
- tab="overview";overviewMode="day";day=new Date();menuWeek=new Date();
+ tab="overview";document.body.classList.add("overview-active");overviewMode="day";day=new Date();menuWeek=new Date();
  for(const id of ["day-details","week-strip","weekly-view","plan-colors","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
   const el=$(id);if(el)el.replaceChildren();
  }
@@ -792,7 +794,7 @@ async function show(t){
  const oldIndex=tabOrder.indexOf(tab),newIndex=tabOrder.indexOf(t);
  const direction=oldIndex<newIndex?1:-1;
  const animateTransition=oldIndex!==newIndex&&oldIndex>=0;
- tab=t;document.body.classList.toggle("profile-active",t==="profile");
+ tab=t;document.body.classList.toggle("profile-active",t==="profile");document.body.classList.toggle("overview-active",t==="overview");
  for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);
  window.themileRecipes?.syncHeaderBack?.();
  for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));
@@ -943,6 +945,50 @@ function weeklySummary(data,relativeMeans={}){
  }
  return section;
 }
+// Planned calories and macros of the week, day by day (moved from the Dia ring card to Semana).
+// g/kg divides each day by that day's reference weight, as in the weekly daily average.
+function buildWeeklyNutritionCharts(weekDays,referenceWeights={}){
+ const charts=document.createElement("section");charts.className="nutrition-weekly-charts";
+ const dayWeight=key=>{const raw=referenceWeights?.[key]?.weight_kg;const value=raw==null?NaN:Number(raw);return Number.isFinite(value)&&value>0?value:NaN;};
+ function buildBars(title,key,color,perKg=false,decimals=0){
+  const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
+  const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
+  const bars=document.createElement("div");bars.className="nutrition-chart-bars";
+  const valueOf=item=>item.found?item.total[key]/(perKg?dayWeight(item.key):1):NaN;
+  const valid=weekDays.filter(x=>Number.isFinite(valueOf(x)));
+  const mean=valid.length?valid.reduce((sum,x)=>sum+valueOf(x),0)/valid.length:null;
+  const max=Math.max(1,...valid.map(valueOf),mean||0);
+  for(const item of weekDays){
+   const value=valueOf(item),known=Number.isFinite(value);
+   const column=document.createElement("div");column.className="nutrition-chart-column";
+   if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
+   const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=known?(key==="kcal"?fmtKcal(value):fmt(value,decimals)):"–";n.style.color=color;
+   const track=document.createElement("div");track.className="nutrition-chart-track";
+   const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(known?Math.max(4,value/max*100):0)+"%";fill.style.background=color;track.append(fill);
+   const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
+  }
+  if(mean!==null){
+   const line=document.createElement("div");line.className="nutrition-chart-average";
+   line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
+   line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+(key==="kcal"?fmtKcal(mean):fmt(mean,decimals))+(key==="kcal"?" kcal":perKg?" g/kg":" g"));
+   bars.append(line);
+  }
+  wrap.append(bars);return wrap;
+ }
+ charts.append(buildBars(playerText("Calorias da semana","Weekly calories"),"kcal","#82d4a4"));
+ const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent=playerText("Macros da semana","Weekly macros");macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);charts.append(macroHeader);
+ const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.type="button";gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.type="button";kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);macroHeader.append(modes);
+ const macArea=document.createElement("div");charts.append(macArea);
+ const anyWeight=weekDays.some(x=>Number.isFinite(dayWeight(x.key)));
+ const renderMacroMode=mode=>{
+  macArea.replaceChildren();gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
+  if(mode==="kg"&&!anyWeight){const info=document.createElement("p");info.className="hint";info.textContent=playerText("Para consultar g/kg, falta o Peso de referência destes dias.","Reference weight is missing for these days, so g/kg is unavailable.");macArea.append(info);return;}
+  for(const [key,title,color] of [["protein_g",playerMacroLabel("protein_g"),"#64b4f7"],["carbs_g",playerMacroLabel("carbs_g"),"#f0a077"],["fat_g",playerMacroLabel("fat_g"),"#eed076"]])macArea.append(buildBars(title,key,color,mode==="kg",mode==="kg"?1:0));
+ };
+ gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};
+ renderMacroMode("g");
+ return charts;
+}
 function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  weeklyContext={mon,r,weekMenus,weeklyWeights};
  const root=$("weekly-view");root.replaceChildren();
@@ -1037,6 +1083,8 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    root.append(hint);
   }
  }
+ const chartDays=dates.map(key=>{const total=dayNutritionTotal(r.days.find(x=>x.date===key)||{date:key,classification:null});return {key,total,found:!!total};});
+ root.append(buildWeeklyNutritionCharts(chartDays,weeklyWeights));
  const weeklySupplements=new Map();
  for(const date of dates){
   for(const item of supplementsByDay[date]||[]){
@@ -1566,20 +1614,157 @@ async function loadPlayerPostMatch(){
  if(epoch!==playerSessionEpoch)return;
  injectPostMatchCard();
 }
-async function renderWeightCard(root,date){
- const card=document.createElement("section");card.className="daily-weight-card";
- const header=document.createElement("div");header.className="daily-weight-header tm-day-header";
- const glyph=document.createElement("span");glyph.className="daily-weight-icon tm-day-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
- const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent=playerText("Peso em jejum","Fasting weight");
- const value=document.createElement("span");value.className="daily-weight-value";
- const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
- header.append(glyph,label,value,action);card.append(header);
- const panel=document.createElement("div");panel.className="daily-weight-panel";panel.id="daily-weight-panel-"+date;panel.hidden=true;card.append(panel);
- root.append(card);
+// Início widgets: Peso (fasting weight) and Semana, side by side. The weight entry form still opens below them.
+const WEIGHT_WIDGET_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
+const WEEK_WIDGET_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="4"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>';
+function dayWidget(className,iconSvg,label){
+ const card=document.createElement("section");card.className="day-widget "+className;
+ const head=document.createElement("div");head.className="day-widget-head";
+ const glyph=document.createElement("span");glyph.className="day-widget-icon";glyph.innerHTML=iconSvg;
+ const title=document.createElement("span");title.className="day-widget-label";title.textContent=label;
+ head.append(glyph,title);card.append(head);
+ return {card,head};
+}
+function renderWeekWidget(row,date,calendar){
+ const {card,head}=dayWidget("day-week-widget",WEEK_WIDGET_ICON,playerText("Semana","Week"));
+ const open=document.createElement("button");open.type="button";open.className="day-widget-action";
+ open.setAttribute("aria-label",playerText("Abrir vista semanal","Open week view"));
+ open.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+ open.onclick=()=>{overviewMode="week";weeklySelection=null;overview().catch(error);};
+ head.append(open);head.onclick=event=>{if(!event.target.closest("button"))open.click();};
+ const entry=calendar?.days?.find(x=>x.date===date);
+ const value=document.createElement("strong");value.className="day-widget-value";value.textContent=playerClassification(entry?.classification||"Geral");card.append(value);
+ const matchDates=new Set((calendar?.matches||[]).map(m=>m.match_date||m.date).filter(Boolean));
+ const days=document.createElement("div");days.className="day-week-widget-days";
+ const mon=monday(new Date(date+"T12:00:00"));
+ for(let i=0;i<7;i++){
+  const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt);
+  const b=document.createElement("button");b.type="button";b.className="day-week-widget-day"+(key===date?" selected":"")+(matchDates.has(key)?" match":"");
+  b.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+(matchDates.has(key)?playerText(" · jogo"," · match"):""));
+  b.setAttribute("aria-pressed",String(key===date));
+  if(matchDates.has(key)&&key!==date)b.append(mealIcon("football"));
+  else b.textContent=dt.toLocaleDateString(playerDateLocale(),{weekday:"narrow"}).toLocaleUpperCase(playerDateLocale());
+  b.onclick=()=>{day=dt;weeklySelection=null;overview().catch(error);};
+  days.append(b);
+ }
+ card.append(days);
+ const next=[...matchDates].filter(key=>key>=date).sort()[0];
+ const foot=document.createElement("small");foot.className="day-widget-foot";
+ foot.textContent=next===date?playerText("Dia de jogo","Match day"):next&&next<=iso(new Date(mon.getTime()+6*86400000))
+  ?playerText("Jogo ","Match ")+new Date(next+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","")
+  :matchDates.size&&[...matchDates].some(key=>key>=iso(mon)&&key<date)?playerText("Sem mais jogos esta semana","No more matches this week"):playerText("Sem jogos esta semana","No matches this week");
+ card.append(foot);row.append(card);
+}
+// Peso em jejum screen (from the Peso widget): Semana / Mês chart, average, min, max, change and recent entries.
+let weightDetailRange="week";
+function closeWeightDetail(){
+ const view=$("weight-detail");if(view){view.hidden=true;view.replaceChildren();}
+ $("overview")?.classList.remove("weight-detail-open");weightDetailOpen=false;
+}
+async function openWeightDetail(date,editToday){
+ let view=$("weight-detail");
+ if(!view){view=document.createElement("section");view.id="weight-detail";view.className="weight-detail";$("overview").append(view);}
+ $("overview").classList.add("weight-detail-open");weightDetailOpen=true;view.hidden=false;window.scrollTo({top:0});
+ const locale=playerDateLocale(),format=x=>Number(x).toLocaleString(locale,{minimumFractionDigits:1,maximumFractionDigits:1});
+ const female=String(me?.sex||"").toUpperCase()==="F";
+ const render=async()=>{
+  const days=weightDetailRange==="week"?7:30;
+  view.replaceChildren();
+  const bar=document.createElement("div");bar.className="weight-detail-bar";
+  const back=document.createElement("button");back.type="button";back.className="weight-detail-back";back.textContent=playerText("Início","Home");
+  back.onclick=()=>{closeWeightDetail();window.scrollTo({top:0});};
+  const title=document.createElement("strong");title.textContent=playerText("Peso em jejum","Fasting weight");
+  const edit=document.createElement("button");edit.type="button";edit.className="weight-detail-edit";edit.textContent=playerText("Editar","Edit");
+  edit.onclick=()=>{closeWeightDetail();editToday();};
+  bar.append(back,title,edit);view.append(bar);
+  const switcher=document.createElement("div");switcher.className="weight-detail-range";switcher.setAttribute("role","group");
+  for(const [key,label] of [["week",playerText("Semana","Week")],["month",playerText("Mês","Month")]]){
+   const b=document.createElement("button");b.type="button";b.textContent=label;b.setAttribute("aria-pressed",String(weightDetailRange===key));
+   b.onclick=()=>{if(weightDetailRange===key)return;weightDetailRange=key;render().catch(error);};switcher.append(b);
+  }
+  view.append(switcher);
+  let entries=[];
+  try{entries=(await api("/api/v2/player/weight-history?end="+date+"&days="+days+"&local_date="+iso(new Date()))).entries||[];}
+  catch{const p=document.createElement("p");p.className="hint";p.textContent=playerText("Não foi possível carregar o peso. Tenta novamente.","Could not load weight. Please try again.");view.append(p);return;}
+  if(!view.isConnected||view.hidden)return;
+  const values=entries.map(x=>Number(x.weight_kg));
+  const end=new Date(date+"T12:00:00"),start=new Date(end);start.setDate(end.getDate()-(days-1));
+  const period=start.toLocaleDateString(locale,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(locale,{day:"numeric",month:"short",year:"numeric"});
+  const summary=document.createElement("div");summary.className="weight-detail-summary";
+  const caption=document.createElement("small");caption.textContent=playerText("Média","Average");
+  const avg=document.createElement("strong");avg.textContent=values.length?format(values.reduce((a,b)=>a+b,0)/values.length):"—";
+  const unit=document.createElement("span");unit.textContent=" kg";avg.append(unit);
+  const when=document.createElement("span");when.className="weight-detail-period";when.textContent=period;
+  summary.append(caption,avg,when);view.append(summary);
+  const chartCard=document.createElement("div");chartCard.className="weight-detail-chart";view.append(chartCard);
+  if(values.length<2){const p=document.createElement("p");p.className="hint";p.textContent=playerText("São necessários dois registos para apresentar a evolução.","Two measurements are needed to show a trend.");chartCard.append(p);}
+  else{
+   const W=330,H=190,plotW=W-36,top=10,bottom=H-28;
+   let lo=Math.floor(Math.min(...values)*2)/2-.5,hi=Math.ceil(Math.max(...values)*2)/2+.5;
+   const step=hi-lo<=3?.5:1;
+   const X=key=>6+Math.round((new Date(key+"T12:00:00")-start)/86400000)*(plotW-12)/(days-1);
+   const Y=v=>top+(hi-v)/(hi-lo)*(bottom-top);
+   const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+   svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");svg.setAttribute("aria-label",playerText("Evolução do peso em jejum","Fasting weight trend"));
+   const el=(tag,attrs)=>{const x=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))x.setAttribute(k,String(v));svg.append(x);return x;};
+   for(let v=lo;v<=hi+1e-9;v+=step){const y=Y(v);el("line",{x1:0,x2:plotW,y1:y,y2:y,class:"weight-detail-grid"});el("text",{x:plotW+6,y:y+4,class:"weight-detail-tick"}).textContent=fmt(v,1);}
+   const ticks=days===7?[...Array(7).keys()]:[0,7,14,21,28];
+   for(const k of ticks){const dt=new Date(start);dt.setDate(start.getDate()+k);const t=el("text",{x:X(iso(dt)),y:H-8,"text-anchor":"middle",class:"weight-detail-tick"});t.textContent=days===7?dt.toLocaleDateString(locale,{weekday:"narrow"}).toLocaleUpperCase(locale):String(dt.getDate());}
+   el("polyline",{points:entries.map(x=>X(x.weigh_date).toFixed(1)+","+Y(Number(x.weight_kg)).toFixed(1)).join(" "),class:"weight-detail-line"});
+   const detail=document.createElement("p");detail.className="weight-detail-point";detail.setAttribute("aria-live","polite");
+   entries.forEach((x,i)=>{
+    const last=i===entries.length-1,cx=X(x.weigh_date),cy=Y(Number(x.weight_kg));
+    el("circle",{cx,cy,r:last?4.5:3,class:last?"weight-detail-dot last":"weight-detail-dot"});
+    const flagged=female&&(x.menstruating===1||x.menstruating===true);
+    if(flagged)el("circle",{cx,cy:cy+10,r:2.5,fill:"#d6a7bc","aria-hidden":"true"});
+    const label=new Date(x.weigh_date+"T12:00:00").toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"})+" · "+format(x.weight_kg)+" kg"+(flagged?playerText(" · Menstruação"," · Menstruation"):"");
+    const touch=el("circle",{cx,cy,r:12,fill:"transparent",tabindex:0,role:"button","aria-label":label});
+    const show=()=>{detail.textContent=label;};touch.addEventListener("click",show);touch.addEventListener("focus",show);
+   });
+   chartCard.append(svg,detail);
+   const stats=document.createElement("div");stats.className="weight-detail-stats";
+   const change=values[values.length-1]-values[0];
+   for(const [label,text] of [[playerText("Mínimo","Minimum"),format(Math.min(...values))+" kg"],[playerText("Máximo","Maximum"),format(Math.max(...values))+" kg"],[playerText("Variação","Change"),(change>0?"+":change<0?"−":"±")+format(Math.abs(change))+" kg"]]){
+    const cell=document.createElement("div");const l=document.createElement("small");l.textContent=label;const v=document.createElement("strong");v.textContent=text;cell.append(l,v);stats.append(cell);
+   }
+   view.append(stats);
+  }
+  if(entries.length){
+   const heading=document.createElement("h3");heading.className="weight-detail-heading";heading.textContent=playerText("Registos","Entries");view.append(heading);
+   const list=document.createElement("div");list.className="weight-detail-list";
+   const recent=entries.slice().reverse();
+   recent.forEach((x,i)=>{
+    const row=document.createElement("div");row.className="weight-detail-row";
+    const when=document.createElement("span");const k=x.weigh_date;
+    when.textContent=k===iso(new Date())?playerText("Hoje","Today"):new Date(k+"T12:00:00").toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"});
+    const diff=document.createElement("small");const prior=recent[i+1];
+    if(prior){const d=Number(x.weight_kg)-Number(prior.weight_kg);diff.textContent=(d>0?"+":d<0?"−":"±")+format(Math.abs(d));}
+    const v=document.createElement("strong");v.textContent=format(x.weight_kg)+" kg";
+    row.append(when,diff,v);list.append(row);
+   });
+   view.append(list);
+  }
+ };
+ await render();
+}
+async function renderWeightCard(root,date,calendar=null){
+ const row=document.createElement("div");row.className="day-widgets";
+ const {card,head:header}=dayWidget("daily-weight-card day-weight-widget",WEIGHT_WIDGET_ICON,playerText("Peso","Weight"));
+ card.setAttribute("aria-label",playerText("Peso em jejum","Fasting weight"));
+ const value=document.createElement("span");value.className="day-widget-value";
+ const spark=document.createElement("div");spark.className="day-weight-widget-spark";
+ const foot=document.createElement("small");foot.className="day-widget-foot";
+ const action=document.createElement("button");action.type="button";action.className="daily-weight-action day-widget-action";
+ header.append(action);card.append(value,spark,foot);row.append(card);
+ renderWeekWidget(row,date,calendar);
+ const editorCard=document.createElement("section");editorCard.className="daily-weight-card day-weight-editor";editorCard.hidden=true;
+ const panel=document.createElement("div");panel.className="daily-weight-panel";panel.id="daily-weight-panel-"+date;panel.hidden=true;editorCard.append(panel);
+ root.append(row,editorCard);
  // Future dates are visible in the calendar but cannot have a weight entry yet.
  // Do not issue a request that the API deliberately rejects for future dates.
  if(date>iso(new Date())){
   action.remove(); // Future dates display the weight card without any action.
+  value.textContent="—";value.classList.add("empty");foot.textContent=playerText("Regista no próprio dia","Record it on the day");
   return;
  }
  // Render the + immediately; only enable interaction once the weight data is confirmed.
@@ -1591,20 +1776,27 @@ async function renderWeightCard(root,date){
   if(card.isConnected){const notice=document.createElement("small");notice.textContent=playerText("Peso indisponível","Weight unavailable");value.append(notice);action.remove();}
   return;
  }
- if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){card.remove();return;}
+ if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){row.remove();editorCard.remove();return;}
  action.disabled=false;
  const current=data.entries?.find(x=>x.weigh_date===date);
  const previous=data.previous;
  const format=x=>Number(x).toLocaleString(playerDateLocale(),{minimumFractionDigits:1,maximumFractionDigits:1});
  const existing=!!current;
  if(existing){
-  action.classList.add("daily-weight-chevron-action");
-  const top=document.createElement("strong");top.textContent=format(current.weight_kg)+" kg";value.append(top);
-  if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);const small=document.createElement("small");small.textContent=(difference>0?"+":"")+format(difference)+" kg";value.append(small);}
-  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  const top=document.createElement("strong");top.textContent=format(current.weight_kg);const unit=document.createElement("span");unit.className="day-widget-unit";unit.textContent=" kg";top.append(unit);value.append(top);
+  if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);foot.textContent=(difference>0?"+":difference<0?"−":"±")+format(Math.abs(difference))+playerText(" kg vs. anterior"," kg vs. previous");}
+  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
   action.setAttribute("aria-label",playerText("Ver evolução do peso","View weight trend"));
  }else{
+  value.textContent="—";value.classList.add("empty");
+  foot.textContent=date===iso(new Date())?playerText("Regista o peso de hoje","Record today's weight"):playerText("Sem registo neste dia","No entry on this day");
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label",playerText("Registar peso em jejum","Record fasting weight"));
+ }
+ const recent=(data.entries||[]).filter(x=>x.weigh_date<=date).slice(-7).map(x=>Number(x.weight_kg));
+ if(recent.length>=2){
+  const lo=Math.min(...recent),hi=Math.max(...recent),w=120,h=30;
+  const pts=recent.map((v,i)=>[i*w/(recent.length-1),h-4-(v-lo)/((hi-lo)||1)*(h-8)]);
+  spark.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><path d="M'+pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" L")+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
  }
  function editor(){
   panel.replaceChildren();
@@ -1665,64 +1857,25 @@ async function renderWeightCard(root,date){
    }catch(err){errorText.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;save.disabled=false;}
   };
  }
- function chart(){
-  panel.replaceChildren();
-  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label",playerText("Editar peso","Edit weight"));edit.title=playerText("Editar peso","Edit weight");edit.onclick=editor;
-  const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
-  if(items.length<2){const p=document.createElement("p");p.textContent=playerText("São necessários dois registos para apresentar a evolução.","Two measurements are needed to show a trend.");panel.append(edit,p);return;}
-  const values=items.map(x=>Number(x.weight_kg));
-  const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
-  const n=items.length,range=Math.max(1,high-low);
-  const mean=values.reduce((sum,v)=>sum+v,0)/n;
-  const female=String(me?.sex||"").toUpperCase()==="F";
-  const surface=document.createElement("div");surface.className="daily-weight-chart-surface";surface.append(edit);
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("viewBox","0 0 340 205");svg.setAttribute("role","img");
-  svg.setAttribute("aria-label",playerText("Evolução do peso nos últimos dez dias","Weight over the last ten days"));
-  const ns=svg.namespaceURI;
-  const element=(tag,attrs,parent=svg)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,String(value)));parent.append(el);return el;};
-  const left=25,right=315,top=38,bottom=143;
-  const yFor=v=>bottom-(v-low)/range*(bottom-top);
-  const coords=items.map((x,i)=>[left+i*(right-left)/Math.max(1,n-1),yFor(Number(x.weight_kg))]);
-  for(let i=0;i<4;i++){const y=top+i*(bottom-top)/3;element("line",{x1:left,y1:y,x2:right,y2:y,class:"assessment-chart-grid"});}
-  const meanY=yFor(mean);element("line",{x1:left,y1:meanY,x2:right,y2:meanY,class:"assessment-chart-mean"});
-  element("polyline",{points:coords.map(p=>p.join(",")).join(" "),class:"assessment-chart-line"});
-  const detail=document.createElement("p");detail.className="daily-weight-chart-detail";detail.setAttribute("aria-live","polite");
-  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"");};
-  coords.forEach((p,i)=>{
-   const valueLabel=element("text",{x:p[0],y:Math.max(15,p[1]-12),"text-anchor":"middle",class:"assessment-chart-value"});
-   valueLabel.textContent=format(items[i].weight_kg);
-   element("circle",{cx:p[0],cy:p[1],r:4.5,class:"assessment-chart-point"});
-   if(female&&(items[i].menstruating===1||items[i].menstruating===true)){
-    element("circle",{cx:p[0],cy:p[1]+11,r:3,fill:"#d6a7bc","aria-hidden":"true"});
-   }
-   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"")});
-   touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));
-   touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});
-   const dayLabel=element("text",{x:p[0],y:169,"text-anchor":"middle",class:"assessment-chart-tick"});
-   dayLabel.textContent=items[i].weigh_date.slice(-2);
-  });
-  surface.append(svg);
-  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent=playerText("— Média: ","— Average: ")+format(mean)+" kg";
-  const footer=document.createElement("div");footer.className="daily-weight-chart-footer";
-  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent=playerText("Últimos 10 dias","Last 10 days");
-  footer.append(period,average);surface.append(footer);panel.append(surface,detail);
- }
- // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
+ // Close the entry form again with the same control; an existing weight opens the weight screen instead.
  const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");
  const closeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
  action.setAttribute("aria-controls",panel.id);
  action.setAttribute("aria-expanded","false");
- header.addEventListener("click",event=>{if(event.target.closest("button"))return;if(!action.disabled)action.click();});
- header.setAttribute("role","button");header.setAttribute("tabindex","0");
- header.addEventListener("keydown",event=>{if(event.target!==header)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();if(!action.disabled)action.click();}});
- action.onclick=()=>{
-  panel.hidden=!panel.hidden;
-  const expanded=!panel.hidden;
-  action.innerHTML=expanded?closeIcon:collapsedIcon;
-  action.setAttribute("aria-label",expanded?(existing?playerText("Fechar evolução do peso","Close weight trend"):playerText("Fechar registo de peso","Close weight entry")):collapsedLabel);
-  action.setAttribute("aria-expanded",String(expanded));
-  if(expanded){existing?chart():editor();}
+ const toggleEditor=open=>{
+  panel.hidden=!open;editorCard.hidden=!open;
+  action.innerHTML=open?closeIcon:collapsedIcon;
+  action.setAttribute("aria-label",open?playerText("Fechar registo de peso","Close weight entry"):collapsedLabel);
+  action.setAttribute("aria-expanded",String(open));
+  if(open)editor();
+ };
+ card.addEventListener("click",event=>{if(event.target.closest("button"))return;if(!action.disabled)action.click();});
+ card.setAttribute("role","button");card.setAttribute("tabindex","0");
+ card.addEventListener("keydown",event=>{if(event.target!==card)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();if(!action.disabled)action.click();}});
+ action.onclick=event=>{
+  event?.stopPropagation(); // the icon is swapped during the click, so the card must not re-handle it
+  if(existing&&panel.hidden){openWeightDetail(date,()=>toggleEditor(true));return;}
+  toggleEditor(panel.hidden);
  };
 }
 let overviewRequestId=0;
@@ -2236,8 +2389,34 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
 }
 
 let consumptionPilotAllowed=null;
+// Início heading: the selected day (or week) as a large title, with a compact Dia/Semana menu.
+function updateOverviewHeading(){
+ const locale=playerDateLocale(),todayKey=iso(new Date()),dayKey=iso(day),isWeek=overviewMode==="week";
+ const mon=monday(day),sun=new Date(mon);sun.setDate(mon.getDate()+6);
+ const shift=n=>{const x=new Date();x.setDate(x.getDate()+n);return iso(x);};
+ const capital=text=>text.replace(/^./,letter=>letter.toLocaleUpperCase(locale));
+ let kicker,title;
+ if(isWeek){
+  kicker=mon.getMonth()===sun.getMonth()?mon.getDate()+" – "+sun.toLocaleDateString(locale,{day:"numeric",month:"long"})
+   :mon.toLocaleDateString(locale,{day:"numeric",month:"short"})+" – "+sun.toLocaleDateString(locale,{day:"numeric",month:"short"});
+  title=playerText("Semana","Week");
+ }else{
+  kicker=day.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"});
+  title=dayKey===todayKey?playerText("Hoje","Today"):dayKey===shift(-1)?playerText("Ontem","Yesterday"):dayKey===shift(1)?playerText("Amanhã","Tomorrow"):capital(day.toLocaleDateString(locale,{weekday:"long"}));
+ }
+ $("overview-kicker").textContent=kicker;$("overview-title").textContent=title;
+ $("overview-view-label").textContent=isWeek?playerText("Semana","Week"):playerText("Dia","Day");
+ const today=$("overview-today");today.textContent=playerText("Hoje","Today");
+ today.hidden=isWeek?iso(monday(new Date()))===iso(mon):dayKey===todayKey;
+}
+function toggleOverviewMenu(open){
+ const menu=$("overview-mode"),button=$("overview-view-button");
+ const next=open===undefined?!menu.classList.contains("open"):open;
+ menu.classList.toggle("open",next);button.setAttribute("aria-expanded",String(next));
+}
 async function overview(){
  cancelOverviewDaySkeletonTimer();
+ closeWeightDetail();updateOverviewHeading();toggleOverviewMenu(false);
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const weekKey=iso(mon),snapshot=reusableOverviewSnapshot(weekKey);
@@ -2358,7 +2537,7 @@ async function overview(){
 
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
-  renderWeightCard(root,d).catch(()=>{});
+  renderWeightCard(root,d,r).catch(()=>{});
   const note=document.createElement("p");note.textContent=playerText("Sem programação definida para este dia.","No schedule set for this day.");root.append(note);
   root.hidden=false;setOverviewLoading(false);animateDailySwipeEntry();return;
  }
@@ -2394,8 +2573,6 @@ async function overview(){
     macros.append(cell);
    }
    summary.append(macros);
-   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label",playerText("Expandir resumo nutricional","Expand nutrition summary"));expand.textContent="";
-   const weeklyCharts=document.createElement("div");weeklyCharts.className="nutrition-weekly-charts";weeklyCharts.hidden=true;
    const weekDays=[];
    for(let offset=0;offset<7;offset++){
     const date=new Date(mon);date.setDate(mon.getDate()+offset);const key=iso(date);
@@ -2489,7 +2666,7 @@ async function overview(){
      }
     };
     let showingPerKg=false;
-    unitArrow.addEventListener("click",e=>{e.stopPropagation();if(!hasWeight)return;showingPerKg=!showingPerKg;updateUnits(showingPerKg);const weeklyMode=weeklyCharts.querySelector(".macro-chart-switch");const buttons=weeklyMode?.querySelectorAll("button");if(buttons?.length===2)buttons[showingPerKg?1:0].click();});
+    unitArrow.addEventListener("click",e=>{e.stopPropagation();if(!hasWeight)return;showingPerKg=!showingPerKg;updateUnits(showingPerKg);});
     unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
@@ -2521,7 +2698,7 @@ async function overview(){
     if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total[key]/weight,1)+" g/kg";cell.append(per);}
     compactMacros.append(cell);
    }
-   visual.append(compactMacros);summary.insertBefore(visual,summary.querySelector(".nutrition-expand"));
+   visual.append(compactMacros);summary.append(visual);
    // A Monday compares with the preceding Sunday, even though it belongs to another weekly calendar response.
    // Fetch in the background to avoid delaying the daily view.
    if(!previous&&yesterday.getDay()===0){
@@ -2563,55 +2740,10 @@ async function overview(){
      if(pill){const value=pill.querySelector("strong");pill.classList.remove("above","below","neutral");pill.classList.add(deviationPrevious>0?"above":deviationPrevious<0?"below":"neutral");if(value)value.textContent=(Math.round(deviationPrevious)>0?"+":"")+fmt(deviationPrevious,0)+"%";}
     }).catch(()=>{});
    }
-   function buildBars(title,key,color,scale,decimals=0){
-    const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
-    const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
-    const bars=document.createElement("div");bars.className="nutrition-chart-bars";
-    const valid=weekDays.filter(x=>x.found&&Number.isFinite(x.total[key]/scale));
-    const mean=valid.length?valid.reduce((sum,x)=>sum+x.total[key]/scale,0)/valid.length:null;
-    const max=Math.max(1,...weekDays.map(x=>x.found?x.total[key]/scale:0),mean||0);
-    for(const item of weekDays){
-     const column=document.createElement("div");column.className="nutrition-chart-column";
-     if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?(key==="kcal"?fmtKcal(item.total[key]/scale):fmt(item.total[key]/scale,decimals)):"–";n.style.color=color;
-     const track=document.createElement("div");track.className="nutrition-chart-track";
-     const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
-     const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
-    }
-    if(mean!==null){
-     const line=document.createElement("div");line.className="nutrition-chart-average";
-     line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
-     line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+(key==="kcal"?fmtKcal(mean):fmt(mean,decimals))+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
-     bars.append(line);
-    }
-    wrap.append(bars);return wrap;
-   }
-   weeklyCharts.append(buildBars(playerText("Calorias da semana","Weekly calories"),"kcal","#82d4a4",1));
-   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent=playerText("Macros da semana","Weekly macros");macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
-   const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);macroHeader.append(modes);
-   const macArea=document.createElement("div");weeklyCharts.append(macArea);
-   const renderMacroMode=mode=>{
-    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent=playerText("Para consultar g/kg, adiciona o peso do jogador ao perfil.","Add the player's weight to the profile to view g/kg.");macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
-    const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
-    for(const [key,title,color] of [["protein_g",playerMacroLabel("protein_g"),"#64b4f7"],["carbs_g",playerMacroLabel("carbs_g"),"#f0a077"],["fat_g",playerMacroLabel("fat_g"),"#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
-   };
-   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?playerText("Valores por quilograma","Values per kilogram"):playerText("Peso do jogador indisponível no perfil","Player weight unavailable in profile");
-   renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?playerText("Expandir resumo nutricional","Expand nutrition summary"):playerText("Fechar gráficos nutricionais","Close nutrition charts"));if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
-   if(consumptionEnabled){
-    const footer=document.createElement("div");footer.className="consumption-concentric-footer";
-    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent=playerText("Ver valores semanais e detalhes","View weekly values and details");
-    footerLabel.addEventListener("click",()=>expand.click());
-    const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
-    const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
-    if(unitControl){footerActions.append(unitControl);unitControl.style.setProperty("display","none","important");}
-    footerActions.append(expand);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
-   }else visual.append(expand);
-   summary.append(weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent=playerText("Resumo incompleto: existem refeições sem plano publicado.","Incomplete summary: some meals have no published plan.");summary.append(note);}
   root.append(summary);
  }
- renderWeightCard(root,d).catch(()=>{});
+ renderWeightCard(root,d,r).catch(()=>{});
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning",consumptionEnabled,consumptionRecords);
@@ -3008,7 +3140,7 @@ async function menusView(){
  }
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;toggleOverviewMenu(false);overview().catch(error);};$("overview-view-button").onclick=event=>{event.stopPropagation();toggleOverviewMenu();};$("overview-today").onclick=()=>{day=new Date();weeklySelection=null;overview().catch(error);};document.addEventListener("click",event=>{if(!event.target.closest("#overview-mode,#overview-view-button"))toggleOverviewMenu(false);});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("overview-mode").classList.contains("open")){toggleOverviewMenu(false);$("overview-view-button").focus();}});$("profile-logout").onclick=()=>$("logout").click();
 for(const button of document.querySelectorAll("#profile-language-selector button[data-language]")){
  button.onclick=()=>updatePlayerLanguageChoice(button.dataset.language);
 }

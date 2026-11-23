@@ -68,8 +68,10 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertEqual(len(rules), 1)
         self.assertIn("height:61px", rules[0])
         self.assertIn("padding-block:9px", rules[0])
-        self.assertIn("daily-weight-header tm-day-header", JS)
-        self.assertIn("daily-weight-icon tm-day-icon", JS)
+        # Início now shows fasting weight as a widget (Peso) beside the Semana widget.
+        self.assertIn('dayWidget("daily-weight-card day-weight-widget",WEIGHT_WIDGET_ICON,playerText("Peso","Weight"))', JS)
+        self.assertIn('renderWeekWidget(row,date,calendar)', JS)
+        self.assertIn("#overview #day-details > .day-widgets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important", CSS)
         self.assertNotIn(".daily-weight-icon{width:40px;height:40px", CSS)
         self.assertIn(".daily-weight-card:has(.daily-weight-panel:not([hidden]))", CSS)
 
@@ -107,7 +109,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         for cls in ("tm-day-header", "tm-day-icon", "tm-day-title"):
             self.assertIn(cls, CSS)
             self.assertIn(cls, JS)
-        for key in ("meal-leading-icon tm-day-icon", "daily-weight-icon tm-day-icon",
+        for key in ("meal-leading-icon tm-day-icon",
                     "post-match-inline-icon tm-day-icon",
                     "meal-leading-icon supplement-leading-icon tm-day-icon"):
             self.assertIn(key, JS)

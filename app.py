@@ -1721,6 +1721,28 @@ def application(env, start_response):
                            json.dumps({'date':selected,'weight_kg':weight,'menstruating':menstruating}),now))
                 c.commit()
                 return respond(200,{'ok':True})
+            # Read-only fasting-weight history for the player's own weight screen (Semana / Mês).
+            # It never writes; recording stays on /api/v2/player/weight.
+            if path == '/api/v2/player/weight-history' and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                from datetime import date as weight_date
+                q=parse_qs(env.get('QUERY_STRING',''))
+                current=client_local_day((q.get('local_date') or [''])[0]) or weight_date.today()
+                raw_end=(q.get('end') or [current.isoformat()])[0]
+                try:
+                    end=weight_date.fromisoformat(raw_end)
+                    if end.isoformat()!=raw_end or end>current+timedelta(days=1):raise ValueError()
+                    days=int((q.get('days') or ['30'])[0])
+                    if not 1<=days<=400:raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight_history')
+                first=(end-timedelta(days=days-1)).isoformat()
+                rows=[dict(row) for row in c.execute(
+                    "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date BETWEEN ? AND ? ORDER BY weigh_date",
+                    (link['athlete_id'],first,end.isoformat())).fetchall()]
+                return respond(200,{'end':end.isoformat(),'days':days,'entries':rows})
             # Player post-match minutes: shared records with admin monitoring.
             # No edits or deletion by players; admins retain correction controls.
             if path == '/api/v2/player/post-match' and method in ('GET','POST'):

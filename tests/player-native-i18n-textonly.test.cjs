@@ -168,7 +168,7 @@ test("Energy values render as ungrouped kcal in both locales, without changing n
   assert.ok(player.includes('value.textContent=(key==="kcal"?fmtKcal(data[key]):fmt(data[key],0))'));
   assert.ok(player.includes('current.textContent=fmtKcal(actual.kcal/divisor)'));
   assert.ok(player.includes('planned.textContent=" / "+fmtKcal(total.kcal/divisor)'));
-  assert.ok(player.includes('n.textContent=item.found?(key==="kcal"?fmtKcal(item.total[key]/scale)'));
+  assert.ok(player.includes('n.textContent=known?(key==="kcal"?fmtKcal(value):fmt(value,decimals)):"–"'));
   assert.ok(player.includes('span.append(document.createTextNode((Number.isFinite(n)?(key==="kcal"?fmtKcal(n):fmt(n,d))'));
 });
 
@@ -246,7 +246,8 @@ test("Remaining consumption and nutrition labels use selected locale",()=>{
   assert.ok(source.includes('playerText("Peq Alm.","Breakfast")'));
   assert.ok(source.includes('playerText("ontem","yesterday")'));
   assert.ok(source.includes('playerText("média","average")'));
-  assert.ok(source.includes('playerText("Ver valores semanais e detalhes","View weekly values and details")'));
+  assert.ok(!source.includes('Ver valores semanais e detalhes'),"weekly values now live in the Semana view");
+  assert.ok(source.includes('playerText("Calorias da semana","Weekly calories")'));
   assert.ok(source.includes('playerMacroAbbreviation(\'carbs_g\')'));
 });
 

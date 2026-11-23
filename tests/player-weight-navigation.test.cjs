@@ -9,8 +9,8 @@ test("future dates avoid rejected weight fetch and remove action button",()=>{
  assert.ok(source.indexOf("if(date>iso(new Date()))") < source.indexOf('cachedOverviewRead("/api/v2/player/weight?date="+date)'));
 });
 test("weight request cannot block meal rendering",()=>{
- assert.match(source,/renderWeightCard\(root,d\)\.catch\(\(\)=>\{\}\);/);
- assert.doesNotMatch(source,/await renderWeightCard\(root,d\)/);
+ assert.match(source,/renderWeightCard\(root,d,r\)\.catch\(\(\)=>\{\}\);/);
+ assert.doesNotMatch(source,/await renderWeightCard\(root,d/);
 });
 test("weekly reference weights and menu data are shared across daily and weekly views",()=>{
  assert.match(source,/\[r,weekMenus,weekWeights\]=await Promise\.all/);
@@ -21,22 +21,23 @@ test("saving weight invalidates cached relative nutrition references",()=>{
  assert.match(source,/overviewReadCache\.clear\(\); \/\/ The reference-weight values can change after saving/);
 });
 test("days with no published meals still render weight card",()=>{
- assert.match(source,/renderWeightCard\(root,d\)\.catch\(\(\)=>\{\}\);\s*const note=document\.createElement\("p"\)/);
+ assert.match(source,/renderWeightCard\(root,d,r\)\.catch\(\(\)=>\{\}\);\s*const note=document\.createElement\("p"\)/);
 });
 
-test("expanded weight action becomes close X for editor and chart, with accessible state",()=>{
+test("weight widget opens the entry form with a close X, or the weight screen when a weight exists",()=>{
  assert.match(source,/const collapsedIcon=action\.innerHTML,collapsedLabel=action\.getAttribute\("aria-label"\)/);
  assert.match(source,/const closeIcon=.*M6 6l12 12M18 6L6 18/);
- assert.match(source,/action\.innerHTML=expanded\?closeIcon:collapsedIcon/);
- assert.match(source,/action\.setAttribute\("aria-expanded",String\(expanded\)\)/);
- assert.match(source,/if\(expanded\)\{existing\?chart\(\):editor\(\);\}/);
+ assert.match(source,/action\.innerHTML=open\?closeIcon:collapsedIcon/);
+ assert.match(source,/action\.setAttribute\("aria-expanded",String\(open\)\)/);
+ assert.match(source,/if\(existing&&panel\.hidden\)\{openWeightDetail\(date,\(\)=>toggleEditor\(true\)\);return;\}/);
+ assert.match(source,/event\?\.stopPropagation\(\);/);
 });
 test("weekly macro chart typography does not affect the collapsed summary",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-heading\{/);
+ assert.match(css,/#overview #weekly-view \.nutrition-weekly-charts \.macro-chart-heading\{/);
  assert.match(css,/font-size:16px!important;\s*font-weight:var\(--mile-type-semibold,600\)!important/);
  assert.match(css,/font-size:12px!important;\s*font-weight:var\(--mile-type-regular,400\)!important/);
- assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/);
+ assert.match(css,/#overview #weekly-view \.nutrition-weekly-charts \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/);
 });
 
 test("daily energy comparison has signed fixed-scale rings and preserves original kg data",()=>{
@@ -48,7 +49,7 @@ test("daily energy comparison has signed fixed-scale rings and preserves origina
  assert.match(source,/fmt\(total\[key\]\/weight,1\)\+" g\/kg"/);
  assert.match(source,/renderMacroMode\("g"\)/);
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/\.nutrition-weekly-charts:not\(\[hidden\]\)\) \.nutrition-comparison\{display:none!important\}/);
+ assert.doesNotMatch(css,/:has\(\.nutrition-weekly-charts/,"the Dia ring card has no expanded state any more");
 });
 
 test("Monday prior-day ring uses preceding Sunday across week boundary",()=>{
@@ -58,27 +59,25 @@ test("Monday prior-day ring uses preceding Sunday across week boundary",()=>{
  assert.match(source,/deviationPrevious=change\(sum\.kcal\)/);
  assert.match(source,/paintRings\(\)/);
 });
-test("expanded nutrition keeps the dual ring and displays only the original charts beneath it",()=>{
- const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/\.nutrition-weekly-charts:not\(\[hidden\]\)\) \.nutrition-comparison\{\s*display:grid!important/);
- assert.match(css,/\.nutrition-donut-summary>\.nutrition-weekly-charts\{/);
- assert.match(css,/bottom:18px!important;right:7px!important/);
- assert.match(source,/expand\.setAttribute\("aria-label",weeklyCharts\.hidden\?playerText\("Expandir resumo nutricional","Expand nutrition summary"\):playerText\("Fechar gráficos nutricionais","Close nutrition charts"\)\)/);
+test("weekly calories and macros moved from the Dia ring card to the Semana view (planned values)",()=>{
+ assert.match(source,/function buildWeeklyNutritionCharts\(weekDays,referenceWeights=\{\}\)/);
+ assert.match(source,/root\.append\(buildWeeklyNutritionCharts\(chartDays,weeklyWeights\)\)/);
+ assert.match(source,/const chartDays=dates\.map\(key=>\{const total=dayNutritionTotal\(/);
+ assert.doesNotMatch(source,/className="nutrition-expand"/);
+ assert.doesNotMatch(source,/consumption-concentric-footer/);
 });
-
 test("energy label and compact relative amount replace separate kcal unit inside halo",()=>{
  assert.match(source,/heading\.textContent=playerText\("Energia \(kcal\)","Energy \(kcal\)"\)/);
  assert.match(source,/center\.append\(number\)/);
  assert.match(source,/fmtKcal\(total\.kcal\/weight\)\+" \/kg"/);
  assert.doesNotMatch(source,/unit\.textContent="kcal";center\.append\(number,unit\)/);
 });
-test("open and close use same chevron inside persistent halo preview",()=>{
+test("the ring card keeps its g/kg switch visible without the old expand control",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(source,/else visual\.append\(expand\);\s*summary\.append\(weeklyCharts\)/);
- assert.match(css,/\.nutrition-comparison>\.nutrition-expand\[aria-expanded="true"\]/);
- assert.match(css,/position:absolute!important;top:auto!important;bottom:0!important;right:0!important/);
+ assert.match(source,/visual\.append\(rings,figures,mode\);/);
+ assert.doesNotMatch(css,/\.nutrition-expand/);
+ assert.match(css,/#overview #day-details \.nutrition-comparison\.consumption-concentric>\.consumption-concentric-unit-switch\{\s*position:absolute!important;top:-12px!important/);
 });
-
 test("all player calendars use horizontal swipe navigation without arrow controls",()=>{
  const html=fs.readFileSync("static/jogador-v2.html","utf8");
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
@@ -240,9 +239,9 @@ test("female weight trend only marks affirmative menstrual days, without changin
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
  const page=fs.readFileSync("static/jogador-v2.html","utf8");
  assert.match(player,/const female=String\(me\?\.sex\|\|""\)\.toUpperCase\(\)==="F"/);
- assert.match(player,/items\[i\]\.menstruating===1\|\|items\[i\]\.menstruating===true/);
- assert.match(player,/element\("circle",\{cx:p\[0\],cy:p\[1\]\+11,r:3,fill:"#d6a7bc","aria-hidden":"true"\}\)/);
- assert.match(player,/touch\.addEventListener\("click",\(\)=>showDetail\(i\)\)/);
- assert.match(player,/daily-weight-chart-detail/);
+ assert.match(player,/const flagged=female&&\(x\.menstruating===1\|\|x\.menstruating===true\)/);
+ assert.match(player,/if\(flagged\)el\("circle",\{cx,cy:cy\+10,r:2\.5,fill:"#d6a7bc","aria-hidden":"true"\}\)/);
+ assert.match(player,/touch\.addEventListener\("click",show\)/);
+ assert.match(player,/weight-detail-point/);
  assert.match(page,/jogador-v2\.js\?v=[^"\s]+/);
 });
