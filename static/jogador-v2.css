@@ -5539,8 +5539,8 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 }
 #overview .overview-heading-text{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important}
 #overview .overview-kicker{
- margin:0!important;font-size:12px!important;font-weight:600!important;letter-spacing:.03em!important;
- text-transform:uppercase!important;color:#aaaab4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ margin:0!important;font-size:14px!important;font-weight:500!important;letter-spacing:0!important;
+ text-transform:none!important;color:#aaaab4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
 }
 #overview .overview-title{margin:0!important;font-size:32px!important;font-weight:720!important;line-height:1.1!important;color:#f4f4f7!important}
 #overview .overview-heading-actions{display:flex!important;align-items:center!important;gap:6px!important;flex:none!important;margin-bottom:3px!important}

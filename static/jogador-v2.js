@@ -2396,12 +2396,14 @@ function updateOverviewHeading(){
  const shift=n=>{const x=new Date();x.setDate(x.getDate()+n);return iso(x);};
  const capital=text=>text.replace(/^./,letter=>letter.toLocaleUpperCase(locale));
  let kicker,title;
+ // Plain date, no "de" and no "-feira": "Segunda, 23 novembro 2026" / "Monday, 23 November 2026".
+ const monthYear=d=>d.toLocaleDateString(locale,{month:"long"})+" "+d.getFullYear();
  if(isWeek){
-  kicker=mon.getMonth()===sun.getMonth()?mon.getDate()+" – "+sun.toLocaleDateString(locale,{day:"numeric",month:"long"})
-   :mon.toLocaleDateString(locale,{day:"numeric",month:"short"})+" – "+sun.toLocaleDateString(locale,{day:"numeric",month:"short"});
+  kicker=mon.getMonth()===sun.getMonth()?mon.getDate()+" – "+sun.getDate()+" "+monthYear(sun)
+   :mon.getDate()+" "+mon.toLocaleDateString(locale,{month:"long"})+" – "+sun.getDate()+" "+monthYear(sun);
   title=playerText("Semana","Week");
  }else{
-  kicker=day.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"});
+  kicker=capital(day.toLocaleDateString(locale,{weekday:"long"}).replace(/-feira$/,""))+", "+day.getDate()+" "+monthYear(day);
   title=dayKey===todayKey?playerText("Hoje","Today"):dayKey===shift(-1)?playerText("Ontem","Yesterday"):dayKey===shift(1)?playerText("Amanhã","Tomorrow"):capital(day.toLocaleDateString(locale,{weekday:"long"}));
  }
  $("overview-kicker").textContent=kicker;$("overview-title").textContent=title;
