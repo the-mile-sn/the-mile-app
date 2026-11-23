@@ -1016,7 +1016,7 @@ class PlanTranslationsTests(unittest.TestCase):
             for path,original,english in (
                 ("meals/0/options/0/title","Opção 1","Option 1"),
                 ("meals/0/options/0/notes/0","Tomar 2 vezes durante o dia",
-                 "Take twice during the day")):
+                 "Take 2 times during the day")):
                 key=("plan",old_ref,path,"en")
                 c.execute("""INSERT INTO v2_content_translations(
                     entity_kind,entity_id,field_path,language,source_hash,
