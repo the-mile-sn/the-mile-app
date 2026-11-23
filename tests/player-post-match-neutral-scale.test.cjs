@@ -17,9 +17,9 @@ test("Only the post-match scale track and labels use neutral grays",()=>{
   assert.equal(r[2],r[3]);
  }
 });
-test("Game questionnaire scales keep original prompts, endpoints and numeric values",()=>{
- assert.match(js,/scale\("feeling","2\. Como te sentiste no jogo\?","Horrível","Muito bem"\)/);
- assert.match(js,/scale\("effort","3\. Perceção do esforço","Muito leve","Esforço máximo"\)/);
+test("Game questionnaire scales preserve original PT prompts, approved EN labels and numeric values",()=>{
+ assert.match(js,/scale\("feeling",playerText\("2\. Como te sentiste no jogo\?","2\. How did you feel during the match\?"\),playerText\("Horrível","Terrible"\),playerText\("Muito bem","Very good"\)\)/);
+ assert.match(js,/scale\("effort",playerText\("3\. Perceção do esforço","3\. Perceived exertion"\),playerText\("Muito leve","Very light"\),playerText\("Esforço máximo","Maximum exertion"\)\)/);
  assert.match(js,/input\.type="range";input\.min=1;input\.max=10;input\.step=1/);
  assert.match(js,/line\.className="post-match-scale"/);
  assert.match(js,/ends\.className="post-match-scale-ends"/);
