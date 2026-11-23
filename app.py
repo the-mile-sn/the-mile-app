@@ -209,6 +209,19 @@ class PgConnection:
         self.conn.commit()
 
 
+def report_internal_translation_readiness(c):
+    """Emit counts only to private startup logs; never expose an HTTP endpoint."""
+    if SITE_ROLE != 'player' or os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC') != '1':
+        return
+    try:
+        status = app_content_i18n_v2.translation_readiness(c)
+        logging.warning('TM translation readiness: available=%s approved_count=%s kinds=%s',
+                        status['available'], status['approved_count'], status['kinds'])
+    except Exception:
+        # This probe must not affect normal service availability.
+        logging.exception('TM translation readiness diagnostic unavailable')
+
+
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
@@ -326,16 +339,7 @@ def initialize():
                 logging.error('Player Planos conversion test failures: %s',
                               output.getvalue()[:1800])
                 raise RuntimeError('Player Planos conversion tests failed')
-        if SITE_ROLE == 'player' and os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC') == '1':
-            # Private Render startup diagnostic, not an HTTP endpoint. No clinical
-            # text, source hashes, account identifiers or connection strings.
-            try:
-                status=app_content_i18n_v2.translation_readiness(c)
-                logging.warning('TM translation readiness: available=%s approved_count=%s kinds=%s',
-                                status['available'], status['approved_count'], status['kinds'])
-            except Exception:
-                # Diagnostic failures must never prevent serving existing players.
-                logging.exception('TM translation readiness diagnostic unavailable')
+        report_internal_translation_readiness(c)
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         weight_reference_v2.ensure_weighins_table(c)
