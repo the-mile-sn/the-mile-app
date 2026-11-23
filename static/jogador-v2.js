@@ -1445,7 +1445,7 @@ function injectPostMatchCard(){
   const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
   const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger tm-day-header";
   const icon=document.createElement("span");icon.className="post-match-inline-icon tm-day-icon";icon.append(mealIcon("football-pitch"));
-  const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent=playerText("Questionário pós-jogo","Post-match questionnaire");
+  const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent=playerText("Questionário pós-jogo","Post-match check-in");
   const status=document.createElement("span");status.className="post-match-inline-status";
   status.textContent=game.answered?playerText("✓ Preenchido","✓ Completed"):playerText("Por preencher","Not completed");
   button.append(icon,title,status);

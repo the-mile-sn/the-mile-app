@@ -24,6 +24,13 @@ test("Game questionnaire scales preserve original PT prompts, approved EN labels
  assert.match(js,/line\.className="post-match-scale"/);
  assert.match(js,/ends\.className="post-match-scale-ends"/);
 });
+test("Post-match card uses the shorter English caption without changing the Portuguese title or actions",()=>{
+ const title=js.match(/title\.textContent=playerText\("Questionário pós-jogo","Post-match check-in"\)/g);
+ assert.ok(title&&title.length===1,"The approved title must be shown exactly once");
+ assert.match(js,/action\.setAttribute\("aria-label",game\.answered\?playerText\("Editar questionário pós-jogo","Edit post-match questionnaire"\):playerText\("Preencher questionário pós-jogo","Complete post-match questionnaire"\)\)/);
+ assert.match(js,/card\.className="post-match-inline"/);
+ assert.match(js,/button\.className="post-match-inline-trigger tm-day-header"/);
+});
 test("Player reloads the new stylesheet without touching JavaScript version",()=>{
  assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);
  assert.match(html,/jogador-v2\.js\?v=[^"\s]+/);
