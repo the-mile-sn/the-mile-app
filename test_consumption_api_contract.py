@@ -5,7 +5,7 @@ import unittest
 APP = pathlib.Path(__file__).with_name("app.py").read_text(encoding="utf-8")
 
 class ConsumptionApiContract(unittest.TestCase):
-    def test_every_player_endpoint_checks_pilot_allowlist(self):
+    def test_every_player_endpoint_requires_authenticated_linked_player(self):
         endpoints = [
             "if path == '/api/v2/player/consumption-options' and method == 'GET':",
             "if path == '/api/v2/player/consumption-records' and method == 'PUT':",
@@ -19,7 +19,9 @@ class ConsumptionApiContract(unittest.TestCase):
                 section = section.split(endpoints[index + 1], 1)[0]
             else:
                 section = section.split("if path in ('/api/v2/player/calendar'", 1)[0]
-            self.assertIn("MILE_CONSUMPTION_PILOT_ATHLETE_IDS", section)
+            self.assertIn("if not user: raise Problem(401, 'unauthorized')", section)
+            self.assertIn("archived_at IS NULL", section)
+            self.assertIn("WHERE l.user_id=?", section)
             self.assertIn("user['role'] != 'player'", section)
             self.assertIn("v2_player_links", section)
 
