@@ -112,7 +112,7 @@ def _format_grams(grams):
             ("%g"%value).replace(".",","))+" g"
 
 
-def _split_display_quantity(quantity, food, share):
+def _split_display_quantity(quantity, food, share, language="pt"):
     """Presentation-only portion; never affects the nutritional grams."""
     import re
     value = str(quantity or "").strip()
@@ -129,21 +129,23 @@ def _split_display_quantity(quantity, food, share):
                      else ("%g" % round(amount,3)).replace(".",","))
         return formatted + " " + simple.group(2).strip()
     if value:
-        return ("%g" % round(share*100,2)).replace(".",",") + "% de " + value
+        return ("%g" % round(share*100,2)).replace(".",",") + (
+            "% of " if language=="en" else "% de ") + value
     if food.get("grams") is not None:
         return ("%g" % round(float(food["grams"])*share,2)).replace(".",",") + " g"
     return ("%g" % round(share*100,2)).replace(".",",") + "%"
 
 
-def _display_timing_parts(food, quantity, fallback_timing=""):
+def _display_timing_parts(food, quantity, fallback_timing="", language="pt"):
     splits = food.get("timing_splits") or []
     if not splits:
         return [(str(food.get("timing") or fallback_timing or ""), quantity)]
-    return [(str(part.get("timing") or ""), _split_display_quantity(quantity, food, float(part["share"])))
+    return [(str(part.get("timing") or ""), _split_display_quantity(
+        quantity, food, float(part["share"]), language))
             for part in splits]
 
 
-def _option_items(option,library):
+def _option_items(option,library,language="pt"):
     foods=option.get("foods") or []
     notes=option.get("notes") or []
     order=option.get("order") or (
@@ -163,22 +165,25 @@ def _option_items(option,library):
         parent=(foods[alternative] if isinstance(alternative,int) and 0<=alternative<len(foods) else {})
         fallback=str(parent.get("timing") or "")
         if food.get("kind")=="supplement":
-            for timing,_ in _display_timing_parts(food, str(food.get("label") or ""), fallback):
+            for timing,_ in _display_timing_parts(food, str(food.get("label") or ""), fallback,language):
                 items.append({"kind":"note","text":str(food.get("label") or ""),"timing":timing})
             continue
         ref=library.get(food.get("id"))
         if not ref:raise ValueError("incomplete_published_food")
-        name=food.get("display_name") or ref.get("display_name") or "Alimento"
+        name=food.get("display_name") or ref.get("display_name") or (
+            "Food" if language=="en" else "Alimento")
         quantity=food.get("display_quantity") or _format_grams(food["grams"])
-        for timing,portion in _display_timing_parts(food,quantity,fallback):
+        for timing,portion in _display_timing_parts(food,quantity,fallback,language):
             if alternative is not None:
-                items.append({"kind":"note","text":"ou "+portion+" · "+name,"timing":timing})
+                items.append({"kind":"note","text":(
+                    "or " if language=="en" else "ou ")+portion+" · "+name,
+                    "timing":timing})
             else:
                 items.append({"kind":"food","quantity":portion,"name":name,"timing":timing})
     return items
 
 
-def _options(meal,library):
+def _options(meal,library,language="pt"):
     result=[]
     for index,option in enumerate(meal.get("options") or [],1):
         canonical=option.get("__tm_canonical_option_ref")
@@ -187,19 +192,19 @@ def _options(meal,library):
                             len(canonical)==64 else option_ref(option),
                        "title":option.get("title") or "",
                        "totals":_option_totals(option,library),
-                       "items":_option_items(option,library),
+                       "items":_option_items(option,library,language),
                        "timing_groups":option.get("timing_groups") or []})
     return result
 
 
-def _validated_options(meal,library):
+def _validated_options(meal,library,language="pt"):
     # Fail closed for an unexpected broken published prescription.
-    try:return _options(meal,library)
+    try:return _options(meal,library,language)
     except (TypeError,KeyError,ValueError,ZeroDivisionError,OverflowError):
         return []
 
 
-def _colors(plans,library):
+def _colors(plans,library,language="pt"):
     from microcycles_v2 import COLORS as ALL_COLORS,MEALS
     result={c:{m:[] for m in MEALS} for c in ALL_COLORS}
     for color,kind in COLORS.items():
@@ -211,12 +216,12 @@ def _colors(plans,library):
                     # Never silently combine ambiguous prescriptions.
                     result[color][slot]=[]
                     continue
-                result[color][slot]=_validated_options(meal,library)
+                result[color][slot]=_validated_options(meal,library,language)
                 for opt in result[color][slot]:opt["source_draft_id"]=plan["draft_id"]
     return result
 
 
-def _peri_plans(plans,library):
+def _peri_plans(plans,library,language="pt"):
     result={}
     for kind,plan_type in PERI_KINDS.items():
         entry=plans.get(plan_type)
@@ -227,7 +232,7 @@ def _peri_plans(plans,library):
             phase=peri_phase(meal.get("name"),kind)
             if not phase:continue
             legacy,label=PERI_NAMES[phase]
-            new=_validated_options(meal,library)
+            new=_validated_options(meal,library,language)
             for opt in new:opt["source_draft_id"]=entry["draft_id"]
             phases[legacy].extend(new)
             labels[legacy]=label
@@ -245,8 +250,8 @@ def player_plans(c,athlete_id,language="pt"):
         import app_content_i18n_v2
         plans,library=app_content_i18n_v2.localise_published_plans(
             c,plans,library,language=language)
-    return {"options_by_color":_colors(plans,library),
-            "peri_plans":_peri_plans(plans,library),
+    return {"options_by_color":_colors(plans,library,language),
+            "peri_plans":_peri_plans(plans,library,language),
             "source":"published_planos"}
 
 
