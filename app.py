@@ -2042,7 +2042,13 @@ def application(env, start_response):
                     columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
                 note_column=next((name for name in ('note','notes','observation','observations','description','preparation_notes') if name in columns), None)
                 selected="id, display_name, variant, kcal, protein_g, carbs_g, fat_g"+((", "+note_column) if note_column else "")
-                matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
+                if player_language_v2.presentation_language(c,user['id'])=='en':
+                    matches=app_content_i18n_v2.search_approved_food_names(
+                        c,search,['id','display_name','variant','kcal',
+                                  'protein_g','carbs_g','fat_g']+
+                        ([note_column] if note_column else []))
+                else:
+                    matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
                 return respond(200, {'foods': [{**{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')}, 'note': (f[note_column] or '') if note_column else ''} for f in matches]})
 
             # V2 player access: self-only, no athlete id supplied by the client.
