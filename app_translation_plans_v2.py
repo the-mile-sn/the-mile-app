@@ -470,12 +470,34 @@ def _common_stage_map(c):
     """).fetchall()}
 
 
+# This narrow screen rejects obvious identifiers and medical instructions.
+# It is not a guarantee of anonymisation: the private UI REQUIRES explicit
+# human screening of every candidate before any unique-title CSV is saved.
+_SENSITIVE_SINGLE_TITLE = re.compile(
+    r"(?:https?://|www\\.|@|\\b\\d{8,}\\b|"
+    r"\\b(?:alergia|intoler[aâ]ncia|diabet\\w*|insulina|medica[çc][aã]o|"
+    r"medicamento\\w*|doen[çc]a\\w*|hipertens\\w*|les[aã]o|"
+    r"diagn[oó]stico\\w*|patologia\\w*|prescri[çc][aã]o|"
+    r"confidencial|paciente|atleta|jogador\\w*)\\b)", re.I)
+
+
+def _single_title_candidate(group):
+    if group["field_kind"] != "option_title" or group["total"] != 1:
+        return False
+    original, context = group["source_text"], group["meal_context"]
+    return (bool(original.strip()) and bool(context.strip())
+            and len(original) <= 160 and len(context) <= 80
+            and all(ch.isprintable() for ch in original + context)
+            and _SENSITIVE_SINGLE_TITLE.search(original + " " + context) is None)
+
+
 def _csv_eligible(group):
-    # No snapshots, players, prescriptions, notes or alternatives are exported.
-    # Shared titles require at least two identical occurrences; ordinary
-    # presentation units can be exported even when they occur only once.
+    # Never exports notes, overrides, supplements or clinical data fields.
+    # Unique option titles are *candidates*, requiring a privacy-screening
+    # confirmation in the browser before downloading the CSV.
     return (group["field_kind"] == "display_quantity" or
-            (group["field_kind"] == "option_title" and group["total"] >= 2))
+            (group["field_kind"] == "option_title" and group["total"] >= 2) or
+            _single_title_candidate(group))
 
 
 def _missing_stamp(targets):
@@ -510,6 +532,7 @@ def common_preview(c, actor):
             "expected_group_hash":stamp,
             "suggestion":group["suggestion"], "batch_limit":MAX_COMMON_BATCH,
             "csv_eligible":_csv_eligible(group),
+            "single_title_candidate":_single_title_candidate(group),
             "imported_status":stage["status"] if stage else None,
             "imported_text":stage["translated_text"] if stage else None,
             "expected_stage_hash":_hash(stage["translated_text"]) if stage else "",
