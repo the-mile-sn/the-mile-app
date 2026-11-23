@@ -1880,12 +1880,12 @@ async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
-  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent=playerText('Que cor consumiste?','Which colour did you consume?');const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar seleção de cor');close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
+  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent=playerText('Que cor consumiste?','Which colour did you consume?');const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar seleção de cor','Close colour selection'));close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
   const colors=data.alternative_colors||[];
   if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem outras cores com opções publicadas.','No other colours have published options.');panel.append(hint);}
   for(const color of colors){
    const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
-   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
+   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=playerUiLanguage==='en'?({green:'Green',yellow:'Yellow',orange:'Orange',blue:'Blue',red:'Red',vp:'Preparation green'})[color]||color:({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
    button.onclick=()=>openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color);
    panel.append(button);
   }
@@ -1903,13 +1903,13 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
   panel.replaceChildren();
   const header=document.createElement('div');header.className='consumption-color-header';
   const title=document.createElement('p');title.textContent=playerText('Qual foi a opção consumida?','Which option did you consume?');
-  const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar');close.onclick=()=>panel.remove();
+  const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar','Close'));close.onclick=()=>panel.remove();
   header.append(title,close);panel.append(header);
   const options=data.options||[];
   if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem opções publicadas nesta cor.','No options published for this colour.');panel.append(hint);}
   options.forEach((option,index)=>{
    const button=document.createElement('button');button.type='button';button.className='consumption-alternative-option';
-   button.textContent=option.title||'Opção '+(index+1);
+   button.textContent=option.title||playerText('Opção ','Option ')+(index+1);
    button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,index,color);
    panel.append(button);
   });
@@ -1920,7 +1920,7 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
 async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null, extraTiming=false, onCancel=null){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
- const message=document.createElement('p');message.className='hint';message.textContent=extraTiming?'A preparar registo de consumo…':'A carregar opções publicadas…';
+ const message=document.createElement('p');message.className='hint';message.textContent=extraTiming?playerText('A preparar registo de consumo…','Preparing consumption record…'):playerText('A carregar opções publicadas…','Loading published options…');
  panel.append(message);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
@@ -1936,7 +1936,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   panel.replaceChildren();
 
   const select=document.createElement('select');
-  data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
+  data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||playerText('Opção ','Option ')+(i+1);select.append(item);});
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
   if(preferredOptionRef&&data.options.some(x=>x.option_ref===preferredOptionRef))select.value=preferredOptionRef;
@@ -1958,8 +1958,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
      if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previous?.status==='none'?false:initial&&previous?.status==='partial'?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
-     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';name.append(label);
-     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');grams.readOnly=true;grams.tabIndex=-1;grams.setAttribute('inputmode','none');grams.style.fontSize='16px';let portionTouchStart=null,portionTouchMoved=false,portionTouchEndedAt=0;
+     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||playerText('Alimento','Food');name.append(label);
+     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label',playerText('Quantidade consumida em gramas','Amount consumed in grams'));grams.readOnly=true;grams.tabIndex=-1;grams.setAttribute('inputmode','none');grams.style.fontSize='16px';let portionTouchStart=null,portionTouchMoved=false,portionTouchEndedAt=0;
      grams.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;portionTouchStart={x:t.clientX,y:t.clientY};portionTouchMoved=false;},{passive:true});
      grams.addEventListener('touchmove',e=>{const t=e.touches[0];if(t&&portionTouchStart&&Math.hypot(t.clientX-portionTouchStart.x,t.clientY-portionTouchStart.y)>8)portionTouchMoved=true;},{passive:true});
      grams.addEventListener('touchend',()=>{portionTouchEndedAt=Date.now();portionTouchStart=null;},{passive:true});
@@ -1974,19 +1974,19 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const current=Math.max(0,Math.round(Number(input.value)||0));
     const max=Math.max(2000,current+500);
     const overlay=document.createElement('div');overlay.className='consumption-grams-wheel-backdrop';
-    const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Ajustar porção');
+    const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',playerText('Ajustar porção','Adjust portion'));
     const top=document.createElement('div');top.className='consumption-grams-wheel-top';
-    const cancel=document.createElement('button');cancel.type='button';cancel.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';cancel.setAttribute('aria-label','Fechar');
+    const cancel=document.createElement('button');cancel.type='button';cancel.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';cancel.setAttribute('aria-label',playerText('Fechar','Close'));
     const title=document.createElement('strong');title.textContent=playerText('Porção (g)','Portion (g)');
-    const done=document.createElement('button');done.type='button';done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';done.setAttribute('aria-label','Confirmar');top.append(cancel,title,done);
+    const done=document.createElement('button');done.type='button';done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';done.setAttribute('aria-label',playerText('Confirmar','Confirm'));top.append(cancel,title,done);
     const wrap=document.createElement('div');wrap.className='consumption-grams-wheel-wrap';
     const band=document.createElement('div');band.className='consumption-grams-wheel-band';
-    const viewport=document.createElement('div');viewport.className='consumption-grams-wheel';viewport.setAttribute('role','listbox');viewport.setAttribute('aria-label','Gramas');
+    const viewport=document.createElement('div');viewport.className='consumption-grams-wheel';viewport.setAttribute('role','listbox');viewport.setAttribute('aria-label',playerText('Gramas','Grams'));
     const rail=document.createElement('div');rail.className='consumption-grams-wheel-rail';
     const pad=()=>{const p=document.createElement('div');p.className='consumption-grams-wheel-pad';rail.append(p);};pad();
     for(let v=0;v<=max;v++){const el=document.createElement('div');el.className='consumption-grams-wheel-option';el.textContent=String(v);rail.append(el);}
     pad();viewport.append(rail);wrap.append(band,viewport);
-    const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent='Introduzir valor manualmente';
+    const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent=playerText('Introduzir valor manualmente','Enter value manually');
     sheet.append(top,wrap,manual);overlay.append(sheet);document.body.append(overlay);
     let selected=current,previous=null;
     const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
@@ -2005,7 +2005,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const removeAll=document.createElement('button');removeAll.type='button';removeAll.className='consumption-remove-all';
    const syncRemoveAll=()=>{
     const checks=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]')];
-    removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?'Selecionar todos':'Remover todos';
+    removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?playerText('Selecionar todos','Select all'):playerText('Remover todos','Remove all');
     if(extraTiming)removeAll.hidden=!checks.length;
    };
    removeAll.onclick=()=>{
@@ -2024,17 +2024,17 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    foodsRoot.append(removeAll);
    foodsRoot.addEventListener('change',syncRemoveAll,{once:true});
    syncRemoveAll();
-   const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');
-   const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
-   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Porção';quantity.setAttribute('aria-label','Inserir porção em gramas');quantity.style.fontSize='16px';
-   const add=document.createElement('button');add.type='button';add.textContent='✓';add.title='Confirmar alimento';add.setAttribute('aria-label','Confirmar alimento');add.className='consumption-add-confirm';add.style.cssText='width:38px;height:38px;flex:0 0 38px;border-radius:50%;padding:0;background:#b9e2cf;color:#174e3d;font-size:20px;border:0;';;
+   const search=document.createElement('input');search.type='search';search.placeholder=playerText('Inserir alimento','Add food');search.setAttribute('aria-label',playerText('Pesquisar alimento adicional','Search for another food'));
+   const matches=document.createElement('select');matches.setAttribute('aria-label',playerText('Alimento da biblioteca','Food from library'));
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder=playerText('Porção','Portion');quantity.setAttribute('aria-label',playerText('Inserir porção em gramas','Enter portion in grams'));quantity.style.fontSize='16px';
+   const add=document.createElement('button');add.type='button';add.textContent='✓';add.title=playerText('Confirmar alimento','Confirm food');add.setAttribute('aria-label',playerText('Confirmar alimento','Confirm food'));add.className='consumption-add-confirm';add.style.cssText='width:38px;height:38px;flex:0 0 38px;border-radius:50%;padding:0;background:#b9e2cf;color:#174e3d;font-size:20px;border:0;';;
    const added=document.createElement('div');added.className='consumption-added-list';const foodNotes=new Map();
-   let request=0;const foodNames=new Map();const foodNameCacheKey='themile-consumption-food-names';try{for(const [id,name] of Object.entries(JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}')))foodNames.set(id,name);}catch(_){}const rememberFoodName=(id,name)=>{if(!id||!name)return;foodNames.set(String(id),name);try{const cached=JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}');cached[String(id)]=name;localStorage.setItem(foodNameCacheKey,JSON.stringify(cached));}catch(_){}};
+   let request=0;const foodNames=new Map();const foodNameCacheKey='themile-consumption-food-names-'+playerUiLanguage;try{for(const [id,name] of Object.entries(JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}')))foodNames.set(id,name);}catch(_){}const rememberFoodName=(id,name)=>{if(!id||!name)return;foodNames.set(String(id),name);try{const cached=JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}');cached[String(id)]=name;localStorage.setItem(foodNameCacheKey,JSON.stringify(cached));}catch(_){}};
    const renderSuggestions=()=>{suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>{choose(opt);updateAddState();confirm.disabled=false;};suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;};
    search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;rememberFoodName(food.id,food.display_name);foodNotes.set(String(food.id),String(food.note||''));matches.append(opt);}renderSuggestions();}catch(e){if(id===request)error(e);}};
    const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label','Quantidade consumida em gramas');const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
    add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;const entry={id,grams,consumed:true,name:matches.selectedOptions[0]?.textContent||search.value};rememberFoodName(id,entry.name);additional.push(entry);renderAdditional(entry,entry.name);quantity.value='';search.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;closeFoodSheet();syncRemoveAll();queuePreview();};
-   if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.library_name||f.name||foodNames.get(String(f.id))||'Alimento adicional');if(!(f.display_name||f.library_name||f.name)){const title=added.lastElementChild?.querySelector('.consumption-food-name');api('/api/v2/player/consumption-foods?q='+encodeURIComponent(String(f.id))).then(result=>{const found=(result.foods||[]).find(food=>String(food.id)===String(f.id));if(found&&title){title.textContent=found.display_name;rememberFoodName(f.id,found.display_name);}}).catch(()=>{});}}}
+   if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.library_name||f.name||foodNames.get(String(f.id))||playerText('Alimento adicional','Additional food'));if(!(f.display_name||f.library_name||f.name)){const title=added.lastElementChild?.querySelector('.consumption-food-name');api('/api/v2/player/consumption-foods?q='+encodeURIComponent(String(f.id))).then(result=>{const found=(result.foods||[]).find(food=>String(food.id)===String(f.id));if(found&&title){title.textContent=found.display_name;rememberFoodName(f.id,found.display_name);}}).catch(()=>{});}}}
    const extra=document.createElement('div');extra.className='consumption-extra';
    
    const fields=document.createElement('div');fields.className='consumption-add-fields';fields.hidden=true;fields.style.display='none';
@@ -2047,12 +2047,12 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     searchIcon.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>';
     searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';quantity.style.setProperty('flex','0 0 88px','important');quantity.style.setProperty('width','88px','important');quantity.style.setProperty('min-width','0','important');quantity.style.setProperty('max-width','88px','important');quantity.style.setProperty('padding','10px 8px','important');quantity.style.setProperty('font-size','16px','important');inputRow.append(searchWrap,quantity,add);inputRow.style.width='100%';add.style.setProperty('flex','0 0 38px','important');quantity.style.setProperty('background','rgba(255,255,255,.035)','important');quantity.style.borderRadius='14px';quantity.style.border='0';quantity.style.setProperty('color','var(--text-muted, #b7b3a9)','important');const updateAddState=()=>{add.disabled=!(matches.value&&Number(quantity.value)>0);add.style.opacity=add.disabled?'.4':'1';};quantity.addEventListener('input',updateAddState);search.addEventListener('input',updateAddState);const originalChoose=choose;const chooseWithState=(option)=>{originalChoose(option);updateAddState();};const addTrigger=document.createElement('button');addTrigger.type='button';addTrigger.className='consumption-add-trigger';addTrigger.textContent='⊕ Adicionar alimento';addTrigger.style.cssText='appearance:none;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:inherit!important;padding:4px 0!important;width:auto!important;max-width:max-content!important;min-height:0!important;font:inherit;font-size:14px!important;font-weight:400!important;white-space:nowrap;cursor:pointer';
    const backdrop=document.createElement('div');backdrop.className='consumption-food-sheet-backdrop';backdrop.hidden=true;
-   const sheet=document.createElement('section');sheet.className='consumption-food-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Adicionar alimento');sheet.hidden=true;
+   const sheet=document.createElement('section');sheet.className='consumption-food-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',playerText('Adicionar alimento','Add food'));sheet.hidden=true;
    const handle=document.createElement('div');handle.className='consumption-food-sheet-handle';handle.setAttribute('aria-hidden','true');
    const header=document.createElement('div');header.className='consumption-food-sheet-header';
-   const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='consumption-food-sheet-close';dismiss.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';dismiss.setAttribute('aria-label','Fechar');
+   const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='consumption-food-sheet-close';dismiss.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';dismiss.setAttribute('aria-label',playerText('Fechar','Close'));
    const heading=document.createElement('h2');heading.textContent=playerText('Adicionar alimento','Add food');
-   const confirm=document.createElement('button');confirm.type='button';confirm.className='consumption-food-sheet-confirm';confirm.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';confirm.setAttribute('aria-label','Confirmar alimento');
+   const confirm=document.createElement('button');confirm.type='button';confirm.className='consumption-food-sheet-confirm';confirm.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';confirm.setAttribute('aria-label',playerText('Confirmar alimento','Confirm food'));
    header.append(dismiss,confirm);
    const foodNote=document.createElement('p');foodNote.className='consumption-food-sheet-note';foodNote.hidden=true;const portionStep=document.createElement('div');portionStep.className='consumption-food-sheet-portion';portionStep.hidden=true;
    const portionLabel=document.createElement('label');portionLabel.textContent=playerText('Porção (g)','Portion (g)');quantity.placeholder='';quantity.setAttribute('inputmode','decimal');portionLabel.append(quantity);
@@ -2158,7 +2158,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
     progress.querySelector('.consumption-energy-ratio').textContent=extraTiming?Math.round(actual)+' kcal':Math.round(actual)+'/'+Math.round(planned)+' kcal';const fmt=v=>Math.round(Number(v||0));const nutrition=result.nutrition||{},target=result.planned||{};for(const [key,aliases,label] of [['protein',['protein','protein_g','proteins'],'P'],['carbs',['carbs','carbs_g','carbohydrates'],'HC'],['fat',['fat','fat_g','fats'],'G']]){const read=obj=>aliases.map(k=>obj[k]).find(v=>v!==undefined);const node=progress.querySelector('[data-macro="'+key+'"]');node.textContent=extraTiming?fmt(read(nutrition))+'g '+label:fmt(read(nutrition))+'/'+fmt(read(target))+'g '+label;}
     
-   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent='Não foi possível calcular as kcal';console.warn('Consumption preview failed',e);}
+   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent=playerText('Não foi possível calcular as kcal','Could not calculate kcal');console.warn('Consumption preview failed',e);}
   };
   const queuePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,280);};
   foodsRoot.addEventListener('input',queuePreview);foodsRoot.addEventListener('change',queuePreview);
@@ -2187,11 +2187,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(extraTiming)body.extra_timing=true;
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
-   if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent='Adiciona pelo menos um alimento da biblioteca.';return;}
-   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
+   if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent=playerText('Adiciona pelo menos um alimento da biblioteca.','Add at least one food from the library.');return;}
+   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent=playerText('A guardar o consumo…','Saving consumption…');await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent=playerText('Registo guardado.','Record saved.');panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent=playerText('Não foi possível guardar: ','Could not save: ')+(e.message||playerText('erro desconhecido','unknown error'));error(e);save.disabled=false;save.textContent=playerText('Tentar guardar novamente','Try saving again');}
   };
   save.className='consumption-save';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar','Back');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
