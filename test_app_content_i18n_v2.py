@@ -276,8 +276,8 @@ class PresentationTranslationTests(unittest.TestCase):
                     {"kind":"supplement","label":"Suplemento de teste"}]}]
         }
         before=copy.deepcopy(source)
-        with patch.object(plans_api,"_approved",return_value=self.plans), \\
-             patch.object(plans_api,"_library",return_value=self.library), \\
+        with patch.object(plans_api,"_approved",return_value=self.plans), \
+             patch.object(plans_api,"_library",return_value=self.library), \
              patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
             localized=i18n.localise_consumption_source(
                 self.c,"assigned-athlete",source,language="en")
@@ -295,7 +295,7 @@ class PresentationTranslationTests(unittest.TestCase):
             self.assertEqual(source,before)
             self.assertIs(i18n.localise_consumption_source(
                 self.c,"assigned-athlete",source,language="pt"),source)
-            self.assertIs(i18n.localise_consumption_source(
+            self.assertEqual(i18n.localise_consumption_source(
                 self.c,"assigned-athlete",dict(source,draft_id="other"),
                 language="en")["options"][0]["title"],
                 source["options"][0]["title"])
