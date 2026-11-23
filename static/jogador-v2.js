@@ -704,9 +704,17 @@ async function renderSupplementPlan(target){
   const box=document.createElement("div");box.className="supplement-entry";
   if(item.library_id){const img=document.createElement("img");img.className="supplement-product-image";img.src="/api/v2/supplement-library/"+encodeURIComponent(item.library_id)+"/image";img.alt=item.name;img.loading="lazy";img.onerror=()=>img.remove();box.append(img);}
   const title=document.createElement("strong");title.textContent=item.name+" · "+item.dose;
-  const meta=document.createElement("small");meta.textContent=(playerUiLanguage==="en"?{
-  daily:"Daily",training:"Training",match:"Match","md-1":"MD-1","md+1":"MD+1"
- }[item.rule]:labels[item.rule])||item.rule+" · "+(item.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[item.moment]||"Sem associação");
+  const ruleLabel=playerUiLanguage==="en"?
+   ({daily:"Every day",training:"Training days",match:"Match day",
+      "md-1":"MD-1","md+1":"MD+1"}[item.rule]||item.rule):
+   (labels[item.rule]||item.rule);
+  const momentLabels=playerUiLanguage==="en"?
+   ({breakfast:"Breakfast",lunch:"Lunch",snack:"Snack",dinner:"Dinner",supper:"Supper",
+     training:"Training",match:"Match",lunch_or_dinner:"Lunch or dinner"}):
+   ({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",
+     supper:"Ceia",training:"Treino",match:"Jogo",lunch_or_dinner:"Almoço ou jantar"});
+  const meta=document.createElement("small");meta.textContent=ruleLabel+" · "+
+    (item.timing_text||momentLabels[item.moment]||playerText("Sem associação","Not assigned"));
   box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
  }
 }
