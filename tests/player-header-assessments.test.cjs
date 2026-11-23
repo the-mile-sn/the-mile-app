@@ -49,7 +49,7 @@ test('Planos navigation opens prescriptions directly without a redundant page he
 });
 test('assessment notes preserve the timestamp below metrics and the formula inside body fat details',()=>{
  assert.match(html,/id="assessment-measurements"><\/div><div class="assessment-most-recent" id="assessment-most-recent"/);
- assert.match(js,/stamp\.textContent="Última avaliação/);
+ assert.match(js,/stamp\.textContent=playerText\("Última avaliação · ","Latest assessment · "\)\+assessmentDate/);
  assert.match(js,/key==="body_fat"/);
   assert.match(js,/playerBodyFatFormulaNote\(source\?\.formula_note\)/);
  assert.match(js,/details\.append\(note\)/);
