@@ -28,17 +28,16 @@ def set_language(c, user_id, language):
         SET language=excluded.language""",(user_id,language))
     return language
 
-def presentation_language(c, user_id):
-    """Do not show EN native labels until approved content is readable.
-
-    The user's preference may be saved before the cross-service migration
-    completes, but it must not create a mixed-language player experience.
-    """
+def selection_available(c):
+    """Show the language control only when approved translations can be read."""
     import os
     if (os.environ.get("MILE_PLAYER_LANGUAGE_SELECTION_ENABLED") != "1"
             or os.environ.get("MILE_APP_TRANSLATIONS_ENABLED") != "1"):
-        return "pt"
+        return False
     import app_content_i18n_v2
-    if not app_content_i18n_v2.translation_store_available(c):
-        return "pt"
-    return get(c, user_id)
+    return app_content_i18n_v2.translation_store_available(c)
+
+
+def presentation_language(c, user_id):
+    """Never show a mixed-language UI while the content source is unavailable."""
+    return get(c, user_id) if selection_available(c) else "pt"
