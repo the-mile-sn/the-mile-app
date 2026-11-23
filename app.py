@@ -15,6 +15,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import chef_accounts_v2
+import player_language_v2
 import chef_collaboration_v2
 import chat_api_v2
 import player_recipes_v2
@@ -278,6 +279,7 @@ def initialize():
         chef_accounts_v2.enable_role(c)
         microcycles_v2.initialize(c)
         chef_accounts_v2.initialize(c)
+        player_language_v2.initialize(c)
         chef_collaboration_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         consumption_records_v2.initialize(c)
@@ -1492,6 +1494,28 @@ def application(env, start_response):
                     return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
                         c,aid,language=language)['options_by_color']})
                 raise Problem(404,'not_found')
+            if path == '/api/v2/player/preferences' and method in ('GET','PUT'):
+                # The preference is strictly bound to the authenticated user;
+                # there is no client-provided athlete or user identifier.
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                linked=c.execute("SELECT 1 FROM v2_player_links WHERE user_id=?",
+                                 (user['id'],)).fetchone()
+                if not linked:raise Problem(404,'player_not_linked')
+                allowed=os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
+                if method=='GET':
+                    return respond(200,{'language':
+                        player_language_v2.get(c,user['id']) if allowed else 'pt',
+                        'enabled':allowed})
+                if not allowed:raise Problem(404,'not_found')
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'language'} or (
+                        type(body['language'])!=str or
+                        body['language'] not in ('pt','en')):
+                    raise Problem(400,'invalid_language')
+                value=player_language_v2.set_language(c,user['id'],body['language'])
+                c.commit()
+                return respond(200,{'language':value})
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
@@ -1503,6 +1527,10 @@ def application(env, start_response):
                 player['visual_portions_enabled']=bool(link['visual_portions_enabled']) and (
                     PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session))
                 player['sex']=user['sex']
+                # Only a language code, never a new UI element, is added.
+                player['language']=(player_language_v2.get(c,user['id'])
+                    if os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
+                    else 'pt')
                 return respond(200, {'player': player})
             if path == '/api/v2/player/reference-weights' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
@@ -2143,10 +2171,11 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                query=parse_qs(env.get('QUERY_STRING',''))
-                language=(query.get('language') or ['pt'])[0]
-                if language not in ('pt','en'):
-                    raise Problem(400,'invalid_language')
+                # Never trust a query parameter to override the player's
+                # authenticated, persisted language preference.
+                language=(player_language_v2.get(c,user['id'])
+                    if os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
+                    else 'pt')
                 return respond(200, food_plan_player_v2.player_plans(
                     c, link['athlete_id'],language=language))
             if path == '/api/me' and method == 'GET':
