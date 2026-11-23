@@ -71,14 +71,14 @@ test("Player native locale changes approved text only, preserving DOM and style"
 
 test("Energy values render as ungrouped kcal in both locales, without changing nutrient formatting",()=>{
   const player=fs.readFileSync("static/jogador-v2.js","utf8");
-  const helper=player.match(/function fmtKcal\\(v\\)\\{[^\\n]+\\}/)?.[0];
+  const helper=player.split("\n").find(line=>line.startsWith("function fmtKcal(v){"));
   assert.ok(helper,"kcal-specific formatter exists");
   for(const locale of ["pt-PT","en-GB"]){
     const displayed=vm.runInNewContext(
-      'function playerDateLocale(){return '+JSON.stringify(locale)+';}\\n'+helper+'\\nfmtKcal(1244.2)');
+      'function playerDateLocale(){return '+JSON.stringify(locale)+';};'+helper+';fmtKcal(1244.2)');
     assert.equal(displayed,"1244",locale);
     const rounded=vm.runInNewContext(
-      'function playerDateLocale(){return '+JSON.stringify(locale)+';}\\n'+helper+'\\nfmtKcal(999.6)');
+      'function playerDateLocale(){return '+JSON.stringify(locale)+';};'+helper+';fmtKcal(999.6)');
     assert.equal(rounded,"1000",locale);
   }
   assert.ok(player.includes('value.textContent=(key==="kcal"?fmtKcal(data[key]):fmt(data[key],0))'));
