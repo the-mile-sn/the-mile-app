@@ -337,3 +337,15 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-plan-quantity-preview .i18n-plan-unique-row span{
   white-space:pre-wrap;overflow-wrap:anywhere;
 }
+
+/* Final reviewed Planos food-name CSV, same visual hierarchy as other previews. */
+.i18n-plan-food-preview .i18n-plan-food-stats{
+  margin:0 0 8px;color:var(--tm-ui-muted);font-size:11px;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.i18n-plan-food-preview .i18n-plan-unique-row{
+  align-items:flex-start;min-height:38px;
+}
+.i18n-plan-food-preview .i18n-plan-unique-row span{
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
