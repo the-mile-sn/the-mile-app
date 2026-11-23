@@ -8,11 +8,11 @@ on:
       - food_plan_player_v2.py
       - app.py
       - static/chef.js
-      - test_app_content_i18n_v2.py
-      - test_player_language_v2.py
       - static/jogador-v2.js
       - static/player-recipes.js
       - static/player-visual-portions.js
+      - test_app_content_i18n_v2.py
+      - test_player_language_v2.py
       - tests/player-native-i18n-textonly.test.cjs
       - .github/workflows/validate-content-i18n.yml
   workflow_dispatch:
@@ -37,8 +37,7 @@ jobs:
       - run: node --check static/player-visual-portions.js
       - name: Reject any visual asset changes
         run: |
-          if git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -E '\.(css|html|svg)      - run: node --test tests/player-native-i18n-textonly.test.cjs
-; then
+          if git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -E '\.(css|html|svg)$'; then
             echo "Internationalisation must not modify CSS, HTML or SVG." >&2
             exit 1
           fi
