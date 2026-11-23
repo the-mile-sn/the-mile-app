@@ -285,13 +285,86 @@
     const csvFeedback=create("p","i18n-feedback");
     const csvActions=create("div","i18n-plan-csv-actions");
     csvActions.append(exportButton,uploadLabel,previewButton,importButton);
+    const uniquePreview=create("details","i18n-plan-unique-preview");
+    const uniqueSummary=create("summary","","Segundo CSV · títulos únicos");
+    const uniqueIntro=create("p","i18n-plan-policy",
+      "Pré-visualização privada. Um título único pode conter informação"+
+      " individualizada: confirma que não identifica jogadores e que não"+
+      " contém informação clínica antes de o partilhar. Desmarca os títulos"+
+      " que não devem sair do backoffice.");
+    const uniqueList=create("div","i18n-plan-unique-list");
+    const uniqueAcknowledge=create("label","i18n-bulk-attestation");
+    const uniqueCheck=create("input");uniqueCheck.type="checkbox";
+    uniqueAcknowledge.append(uniqueCheck,create("span","",
+      "Revisei os títulos selecionados e confirmei que podem ser exportados"));
+    const uniqueDownload=create("button","i18n-secondary",
+      "Descarregar CSV de títulos únicos");
+    uniqueDownload.type="button";uniqueDownload.disabled=true;
+    uniquePreview.append(uniqueSummary,uniqueIntro,uniqueList,
+      uniqueAcknowledge,uniqueDownload);
     csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
       create("p","i18n-plan-policy",
-        "O ficheiro contém apenas títulos de opções repetidos e unidades simples, sem"+
-        " identificar jogadores nem incluir notas individuais. Revê os títulos antes"+
-        " de partilhar o ficheiro. Preenche apenas translated_text, depois importa"+
-        " propostas e aprova-as em lote. Nenhuma importação aprova automaticamente."),
-      csvActions,ackLabel,bulkButton,csvFeedback);
+        "O CSV comum mantém os títulos repetidos e unidades simples."+
+        " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
+        " a uma revisão de privacidade antes do download. Não exportamos"+
+        " notas clínicas, alternativas nem prescrições. Preenche apenas"+
+        " translated_text; importar não aprova automaticamente."),
+      csvActions,uniquePreview,ackLabel,bulkButton,csvFeedback);
+    const csvEntry=g=>({
+      group_id:g.group_id,source_hash:g.source_hash,
+      expected_group_hash:g.expected_group_hash,
+      expected_stage_hash:g.expected_stage_hash,
+      field_kind:g.field_kind,meal_context:g.meal_context,
+      source_text:g.source_text,occurrences:g.missing_count,
+      translated_text:g.imported_text||g.suggestion?.text||""
+    });
+    const downloadCsv=(rows,name)=>{
+      const blob=new Blob([createCsv(rows)],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download=name;
+      document.body.append(link);link.click();link.remove();
+      URL.revokeObjectURL(url);
+    };
+    const renderUnique=()=>{
+      uniqueCheck.checked=false;
+      uniqueDownload.disabled=true;
+      uniqueList.replaceChildren();
+      const candidates=groups.filter(g=>g.single_title_candidate&&g.csv_eligible);
+      uniqueSummary.textContent="Segundo CSV · "+candidates.length+
+        " títulos únicos candidatos a tradução";
+      if(!candidates.length){
+        uniqueList.append(create("p","i18n-plan-policy",
+          "Não há títulos únicos elegíveis neste momento."));
+      }
+      for(const group of candidates){
+        const row=create("label","i18n-plan-unique-row");
+        const checkbox=create("input");checkbox.type="checkbox";
+        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
+        checkbox.addEventListener("change",()=>{
+          uniqueCheck.checked=false;uniqueDownload.disabled=true;
+        });
+        row.append(checkbox,create("span","",group.source_text+
+          " · "+group.meal_context));
+        uniqueList.append(row);
+      }
+    };
+    uniqueCheck.addEventListener("change",()=>{
+      uniqueDownload.disabled=!uniqueCheck.checked||
+        !uniqueList.querySelector("input:checked");
+    });
+    uniqueDownload.addEventListener("click",()=>{
+      if(!uniqueCheck.checked)return;
+      const included=new Set(Array.from(uniqueList.querySelectorAll("input:checked"))
+        .map(el=>el.dataset.groupId));
+      const rows=groups.filter(g=>g.single_title_candidate&&g.csv_eligible&&
+        included.has(g.group_id)).map(csvEntry);
+      if(!rows.length){csvFeedback.textContent="Não há títulos selecionados.";return;}
+      downloadCsv(rows,"the-mile-traducoes-planos-titulos-unicos.csv");
+      csvFeedback.textContent=rows.length+
+        " títulos únicos exportados. Confirma novamente o conteúdo do CSV"+
+        " antes de o partilhar.";
+      uniqueCheck.checked=false;uniqueDownload.disabled=true;
+    });
     const matchingGroups=()=>groups.filter(g=>{
       const term=search.value.trim().toLocaleLowerCase("pt-PT");
       return !term||[g.source_text,g.meal_context,g.field_kind].join(" ")
@@ -306,23 +379,13 @@
         " expressões importadas (máx. 100 ocorrências por expressão)";
     };
     exportButton.addEventListener("click",()=>{
-      const rows=groups.filter(g=>g.csv_eligible).map(g=>({
-        group_id:g.group_id,source_hash:g.source_hash,
-        expected_group_hash:g.expected_group_hash,
-        expected_stage_hash:g.expected_stage_hash,
-        field_kind:g.field_kind,meal_context:g.meal_context,
-        source_text:g.source_text,occurrences:g.missing_count,
-        translated_text:g.imported_text||g.suggestion?.text||""
-      }));
+      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate)
+        .map(csvEntry);
       if(!rows.length){
         csvFeedback.textContent="Não há títulos repetidos ou unidades para exportar.";
         return;
       }
-      const blob=new Blob([createCsv(rows)],{type:"text/csv;charset=utf-8"});
-      const url=URL.createObjectURL(blob),link=document.createElement("a");
-      link.href=url;link.download="the-mile-traducoes-planos-comuns.csv";
-      document.body.append(link);link.click();link.remove();
-      URL.revokeObjectURL(url);
+      downloadCsv(rows,"the-mile-traducoes-planos-comuns.csv");
       csvFeedback.textContent="CSV descarregado com "+rows.length+
         " expressões. Revê o conteúdo antes de o partilhares.";
     });
@@ -431,6 +494,7 @@
       if(seq!==generation||host.hidden)return;
       groups=result.items||[];
       showList();
+      renderUnique();
       updateCsvButtons();
     };
     const openGroup=item=>{
