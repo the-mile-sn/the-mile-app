@@ -362,3 +362,75 @@ def localise_supplement_plan(c, items, *, language="pt"):
     if not enabled(language) or not items:
         return items
     return localise_supplement_days(c, {"plan":items},language=language)["plan"]
+
+def localise_consumption_source(c, athlete_id, source, *, language="pt"):
+    """Localise the existing published consumption response, never its keys.
+
+    A validated source comes from consumption_source_v2.current_source
+    *after* player ownership and publication eligibility have been checked.
+    The option_ref, source_draft_id, alternative_to, grams and timing
+    remain identical to the original; persisted consumption is untouched.
+    """
+    if not enabled(language) or not source or not translation_store_available(c):
+        return source
+    import food_plan_player_v2 as published
+    approved=published._approved(c,athlete_id)
+    matches=[(kind,plan) for kind,plan in approved.items()
+             if plan.get("draft_id")==source.get("draft_id")]
+    if len(matches)!=1:
+        return source
+    kind,plan=matches[0]
+    pt_library=published._library(c)
+    localised,en_library=localise_published_plans(
+        c,{kind:plan},pt_library,language=language)
+    translated=localised[kind]["content"]
+    lookup={}
+    ambiguous=set()
+    for meal in translated.get("meals") or []:
+        if not isinstance(meal,dict):continue
+        for option in meal.get("options") or []:
+            if not isinstance(option,dict):continue
+            key=option.get("__tm_canonical_option_ref")
+            if key in lookup:ambiguous.add(key)
+            else:lookup[key]=option
+    result=dict(source)
+    options=[]
+    for option in source.get("options") or []:
+        replacement=dict(option)
+        ref=option.get("option_ref")
+        updated=lookup.get(ref) if ref not in ambiguous else None
+        if updated:
+            # Only human-readable values change. The option reference is
+            # from the canonical published source, never from translated text.
+            if option.get("title"):
+                replacement["title"]=updated.get("title") or option["title"]
+            foods=[]
+            for index,food in enumerate(option.get("foods") or []):
+                display=dict(food)
+                approved_food=(updated.get("foods") or [])
+                target=approved_food[index] if index<len(approved_food) else None
+                if isinstance(target,dict):
+                    if food.get("kind")=="supplement":
+                        if food.get("label"):
+                            display["label"]=target.get("label") or food["label"]
+                    else:
+                        fid=str(food.get("id") or "")
+                        canonical=(pt_library.get(fid) or {}).get("display_name")
+                        if (canonical is not None and
+                                str(food.get("display_name") or "").strip()==
+                                str(canonical).strip()):
+                            display["display_name"]=(en_library.get(fid) or {}
+                                ).get("display_name") or food["display_name"]
+                        elif food.get("display_name")==(
+                                plan.get("content") or {}).get("never_used"):
+                            # Keep custom and ambiguous names in Portuguese;
+                            # they require a matching publication approval.
+                            pass
+                        if food.get("display_quantity"):
+                            display["display_quantity"]=target.get(
+                                "display_quantity") or food["display_quantity"]
+                foods.append(display)
+            replacement["foods"]=foods
+        options.append(replacement)
+    result["options"]=options
+    return result
