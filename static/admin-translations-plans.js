@@ -200,6 +200,91 @@
       detail.append(header,create("p","i18n-plan-policy",
         "Traduções por versão publicada. Sem exportação CSV de dados clínicos. "+
         "Aprovações só após revisão e confirmação. Quantidades e cálculos não são alterados."));
+      // Historical approvals are never applied automatically across publications.
+      // Present only unambiguous, hash-matched candidates for explicit review.
+      let recovery=null;
+      if((result.publication.statuses?.missing||0)>0){
+        try{
+          recovery=await send("/api/v2/admin/i18n/plans/recovery?"+
+            new URLSearchParams({publication_ref:public_ref}));
+        }catch(_){recovery=null;}
+      }
+      if(seq!==generation||host.hidden)return;
+      if(recovery&&recovery.candidates?.length){
+        const panel=create("section","i18n-plan-option");
+        panel.append(create("h3","","Recuperar traduções já aprovadas"),
+          create("p","i18n-plan-policy",
+            "Correspondências de texto anteriormente aprovado, não novas aprovações. "+
+            "Confirma cada tradução e o contexto da refeição. Notas e textos clínicos "+
+            "exigem revisão individual. Não altera os planos nem valores nutricionais."));
+        const choices=[];
+        const list=create("div","i18n-plan-common-list");
+        for(const suggestion of recovery.candidates){
+          const label=create("label","i18n-plan-unique-row");
+          const tick=create("input");tick.type="checkbox";
+          const text=create("span","");
+          text.append(create("strong","",suggestion.group+" · "+suggestion.field_label),
+            create("span","",suggestion.source_text),
+            create("span","",suggestion.translated_text));
+          if(suggestion.sensitive)text.append(
+            create("small","","Texto sensível: confirma instruções e contexto clínico."));
+          label.append(tick,text);list.append(label);
+          choices.push({tick,suggestion});
+        }
+        panel.append(list);
+        const selectSafe=create("button","i18n-secondary",
+          "Selecionar títulos e textos não sensíveis");
+        selectSafe.type="button";
+        const acknowledgement=create("label","i18n-bulk-attestation");
+        const understood=create("input");understood.type="checkbox";
+        acknowledgement.append(understood,
+          create("span","","Revisei todas as traduções selecionadas e confirmei o contexto."));
+        const apply=create("button","i18n-primary","Aprovar traduções selecionadas");
+        apply.type="button";apply.disabled=true;
+        const feedback=create("p","i18n-feedback");
+        const update=()=>{
+          apply.disabled=!understood.checked||!choices.some(c=>c.tick.checked);
+        };
+        selectSafe.onclick=()=>{
+          for(const choice of choices)if(!choice.suggestion.sensitive)choice.tick.checked=true;
+          understood.checked=false;update();
+        };
+        understood.addEventListener("change",update);
+        for(const choice of choices)choice.tick.addEventListener("change",()=>{
+          understood.checked=false;update();
+        });
+        apply.onclick=async()=>{
+          if(apply.disabled)return;
+          apply.disabled=true;selectSafe.disabled=true;
+          error(feedback,"");
+          try{
+            const rows=choices.filter(c=>c.tick.checked).map(c=>({
+              field_path:c.suggestion.field_path,
+              expected_source_hash:c.suggestion.expected_source_hash,
+              expected_candidate_hash:c.suggestion.candidate_hash,
+              reviewed:true
+            }));
+            if(!rows.length||rows.length>100)throw Error("Seleção inválida");
+            const answer=await send("/api/v2/admin/i18n/plans/recovery/approve",
+              "POST",{publication_ref:public_ref,rows,acknowledged:true});
+            error(feedback,String(answer.approved||0)+" traduções aprovadas.");
+            const updated=await send("/api/v2/admin/i18n/plans");
+            publications=updated.items||[];
+            renderList($("i18n-status")?.value||"all",$("i18n-search")?.value||"");
+            await openPublication(public_ref);
+          }catch(e){
+            error(feedback,"A recuperação foi interrompida: "+e.message);
+            selectSafe.disabled=false;update();
+          }
+        };
+        panel.append(selectSafe,acknowledgement,apply,feedback);
+        detail.append(panel);
+      }
+      if(recovery?.conflicts){
+        detail.append(create("p","i18n-plan-policy",
+          "Existem traduções anteriores divergentes. Esses campos exigem "+
+          "revisão individual e não foram sugeridos para recuperação."));
+      }
       if(!activeFields.length){
         detail.append(create("p","i18n-results-count",
           "Este plano não tem textos específicos para tradução. "+

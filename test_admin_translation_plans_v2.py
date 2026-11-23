@@ -898,6 +898,157 @@ class PlanTranslationsTests(unittest.TestCase):
                     WHERE entity_kind='plan' ORDER BY status""").fetchall()]
                 self.assertEqual(statuses,["approved","pending"])
 
+    def test_reviewed_recovery_from_older_publication_is_atomic_and_private(self):
+        import app_translation_recovery_v2 as recovery
+        with patch.dict(os.environ,FLAG):
+            old_ref=self.index()["publication_ref"]
+            title=self.fields(old_ref)["body"]["fields"][0]
+            self.assertEqual(self.propose(old_ref,title,"Option 1")[ "status"],201)
+            approved=self.fields(old_ref)["body"]["fields"][0]
+            self.assertEqual(self.approve(old_ref,approved)["status"],200)
+            new=json.loads(self.original)
+            # Meal timing metadata change, with option text unchanged.
+            new["meals"][0]["name"]="Pequeno-almoço / Lanche"
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(new,ensure_ascii=False),self.draft_id))
+            new_ref=self.index()["publication_ref"]
+            self.assertNotEqual(old_ref,new_ref)
+            self.assertEqual(self.fields(new_ref)["body"]["fields"][0]["status"],"missing")
+            resp=self.call(ROOT+"/recovery?publication_ref="+new_ref)
+            self.assertEqual(resp["status"],200,resp)
+            matches=resp["body"]["candidates"]
+            title_match=next(r for r in matches if r["field_kind"]=="option_title")
+            self.assertEqual(title_match["translated_text"],"Option 1")
+            self.assertEqual(title_match["origin"],"approved_same_path")
+            self.assertNotIn("athlete_id",str(resp["body"]))
+            self.assertEqual(self.call(ROOT+"/recovery/approve","POST",{
+                "publication_ref":new_ref,"rows":[{
+                    "field_path":title_match["field_path"],
+                    "expected_source_hash":title_match["expected_source_hash"],
+                    "expected_candidate_hash":title_match["candidate_hash"],
+                    "reviewed":False}],"acknowledged":True})["status"],400)
+            self.assertEqual(Client().request(
+                ROOT+"/recovery?publication_ref="+new_ref)["status"],401)
+            result=self.call(ROOT+"/recovery/approve","POST",{
+                "publication_ref":new_ref,"rows":[{
+                    "field_path":title_match["field_path"],
+                    "expected_source_hash":title_match["expected_source_hash"],
+                    "expected_candidate_hash":title_match["candidate_hash"],
+                    "reviewed":True}],"acknowledged":True})
+            self.assertEqual(result["status"],200,result)
+            self.assertEqual(result["body"]["approved"],1)
+            self.assertEqual(self.fields(new_ref)["body"]["fields"][0]["status"],"approved")
+            self.assertEqual(self.fields(old_ref)["status"],409)
+            with app.connect() as c:
+                count=c.execute("""SELECT COUNT(*) FROM v2_content_translation_history
+                    WHERE entity_kind='plan' AND entity_id=? AND action='approved'""",
+                    ("pub:"+new_ref,)).fetchone()[0]
+                self.assertEqual(count,1)
+
+    def test_recovery_requires_unique_unconflicted_prior_approval(self):
+        import app_translation_plans_v2 as p
+        with patch.dict(os.environ,FLAG):
+            old_ref=self.index()["publication_ref"]
+            title=self.fields(old_ref)["body"]["fields"][0]
+            self.propose(old_ref,title,"One")
+            self.approve(old_ref,self.fields(old_ref)["body"]["fields"][0])
+            with app.connect() as c:
+                c.execute("""INSERT INTO v2_content_translations(
+                    entity_kind,entity_id,field_path,language,source_hash,
+                    translated_text,status,updated_at,updated_by)
+                    VALUES ('plan','pub:other-version',?,'en',?,?,'approved',0,'test')""",
+                    (title["field_path"],p._hash(title["source_text"]),"Another"))
+                changed=json.loads(self.original)
+                changed["version_note"]="metadata-only"
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(changed,ensure_ascii=False),self.draft_id))
+            new_ref=self.index()["publication_ref"]
+            result=self.call(ROOT+"/recovery?publication_ref="+new_ref)
+            self.assertEqual(result["status"],200,result)
+            self.assertGreaterEqual(result["body"]["conflicts"],1)
+            self.assertFalse(any(f["field_path"]==title["field_path"]
+                for f in result["body"]["candidates"]))
+
+    def test_recovery_accepts_only_exact_contextual_common_approval(self):
+        import app_translation_plans_v2 as p
+        with patch.dict(os.environ,FLAG):
+            amended=json.loads(self.original)
+            amended["meals"][0]["options"][0]["notes"][0]="Servir morno."
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(amended,ensure_ascii=False),self.draft_id))
+            ref=self.index()["publication_ref"]
+            note=next(f for f in self.fields(ref)["body"]["fields"]
+                      if f["field_kind"]=="individual_note")
+            group=None
+            with app.connect() as c:
+                group=p._group_identity(note,amended)
+                # A clinical note is only a REVIEW candidate, never published automatically.
+                if group is not None:
+                    c.execute("""INSERT INTO v2_content_translations(
+                        entity_kind,entity_id,field_path,language,source_hash,
+                        translated_text,status,updated_at,updated_by)
+                        VALUES('plan_common',?,'text','en',?,?,'approved',0,'test')""",
+                        (group[0],p._hash(note["source_text"]),
+                         "Serve warm."))
+            if group is None:
+                self.skipTest("Clinical note deliberately excluded from common review")
+            result=self.call(ROOT+"/recovery?publication_ref="+ref)
+            matches=[x for x in result["body"]["candidates"]
+                     if x["field_path"]==note["field_path"]]
+            self.assertEqual(len(matches),1)
+            self.assertTrue(matches[0]["sensitive"])
+            self.assertEqual(matches[0]["origin"],"approved_same_context")
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan' AND entity_id=?""",
+                    ("pub:"+ref,)).fetchone()[0],0)
+
+    def test_same_draft_carry_forward_never_changes_option_or_clinical_context(self):
+        import app_translation_plans_v2 as p
+        import app_translation_recovery_v2 as recovery
+        with app.connect() as c:
+            old_ref="pub:"+p._ref(self.draft_id,self.original)
+            for path,original,english in (
+                ("meals/0/options/0/title","Opção 1","Option 1"),
+                ("meals/0/options/0/notes/0","Tomar 2 vezes durante o dia",
+                 "Take 2 times during the day")):
+                key=("plan",old_ref,path,"en")
+                c.execute("""INSERT INTO v2_content_translations(
+                    entity_kind,entity_id,field_path,language,source_hash,
+                    translated_text,status,updated_at,updated_by)
+                    VALUES(?,?,?,?,?,?,'approved',0,'test')""",
+                    (*key,p._hash(original),english))
+            # Metadata-only republication, complete option and context identical.
+            same=json.loads(self.original)
+            same["version_note"]="approved metadata"
+            same_raw=json.dumps(same,ensure_ascii=False)
+            self.assertEqual(recovery.carry_forward_unchanged(
+                c,self.draft_id,self.original,same_raw),2)
+            same_ref=p._ref(self.draft_id,same_raw)
+            self.assertEqual(len(p._existing(c,same_ref)),2)
+            # Meal name reclassified: preserve title but not clinical note.
+            changed=json.loads(self.original)
+            changed["meals"][0]["name"]="Pequeno-almoço / Lanche"
+            changed_raw=json.dumps(changed,ensure_ascii=False)
+            self.assertEqual(recovery.carry_forward_unchanged(
+                c,self.draft_id,self.original,changed_raw),1)
+            next_ref=p._ref(self.draft_id,changed_raw)
+            self.assertIn("meals/0/options/0/title",p._existing(c,next_ref))
+            self.assertNotIn("meals/0/options/0/notes/0",p._existing(c,next_ref))
+            changed["meals"][0]["options"][0]["title"]="Outra opção"
+            self.assertEqual(recovery.carry_forward_unchanged(
+                c,self.draft_id,self.original,json.dumps(changed)),0)
+            # A different draft or athlete is never eligible for this replay.
+            other=json.loads(self.original)
+            other["athlete_id"]="a-different-athlete"
+            self.assertEqual(recovery.carry_forward_unchanged(
+                c,self.draft_id,self.original,json.dumps(other)),0)
+
     def test_republish_invalidates_old_version_without_affecting_audit(self):
         with patch.dict(os.environ,FLAG):
             ref=self.index()["publication_ref"]

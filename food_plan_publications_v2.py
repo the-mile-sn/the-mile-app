@@ -184,6 +184,9 @@ def publish(c, draft_id, expected_updated_at=None):
         (aid, data["plan_type"], draft_id)).fetchone()
     if other:
         raise ValueError("another_plan_active")
+    previous = publication_for_draft(c, draft_id)
+    previous_raw = (previous["snapshot_json"] if previous and
+                    previous["state"] == "published" else None)
     approved_at = int(time.time())
     c.execute(
         "INSERT INTO v2_food_plan_editor_publications"
@@ -196,6 +199,13 @@ def publish(c, draft_id, expected_updated_at=None):
         " published_at=excluded.published_at,"
         " state=excluded.state",
         (draft_id, aid, data["plan_type"], row["content"], approved_at, "published"))
+    # Same-draft approvals survive strictly unchanged option content; no cross-athlete
+    # or outdated text is approved. This runs in the existing publication transaction.
+    carried = 0
+    if previous_raw is not None:
+        import app_translation_recovery_v2 as recovery
+        carried = recovery.carry_forward_unchanged(
+            c, draft_id, previous_raw, row["content"])
     return {"state": "published", "published_at": approved_at,
             "pending_changes": False, "draft_id": draft_id}
 
