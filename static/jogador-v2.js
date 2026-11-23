@@ -78,10 +78,12 @@ function playerSupplementMomentLabel(value){
          "Jantar":"Dinner","Ceia":"Supper","Treino":"Training",
          "Jogo":"Match","Almoço ou jantar":"Lunch or dinner"}[value]||value;
 }
-// The built-in match caption is a display label, not a calendar-event edit.
-// Custom event titles and icon resolution retain their original values.
+// Only built-in training/match captions are translated for display.
+// Custom event titles and canonical event data stay unchanged for editing and icons.
 function playerEventTitle(event){
- return event?.kind==="match"&&event.title==="Jogo"?playerText("Jogo","Match"):event?.title||"";
+ if(event?.kind==="match"&&event.title==="Jogo")return playerText("Jogo","Match");
+ if(event?.kind==="training"&&event.title==="Treino")return playerText("Treino","Training");
+ return event?.title||"";
 }
 function playerPhaseLabel(value){
  if(playerUiLanguage!=="en")return value;
