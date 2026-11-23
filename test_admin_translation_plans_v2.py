@@ -429,6 +429,107 @@ class PlanTranslationsTests(unittest.TestCase):
                 "expected_stage_hash":group["expected_stage_hash"],
                 "translated_text":english}
 
+    def test_generic_food_override_csv_preserves_original_and_review(self):
+        with patch.dict(os.environ,FLAG):
+            edited=json.loads(self.original)
+            entry=edited["meals"][0]["options"][0]["foods"][1]
+            entry["alternative_to"]=None
+            entry["display_name"]="Arroz branco cozido"
+            snapshot=json.dumps(edited,ensure_ascii=False)
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                      SET snapshot_json=? WHERE draft_id=?""",
+                      (snapshot,self.draft_id))
+                c.commit()
+            preview=self._common()
+            self.assertEqual(preview["status"],200,preview)
+            group=next(g for g in preview["body"]["items"]
+                       if g["field_kind"]=="food_override")
+            self.assertEqual(group["source_text"],"Arroz branco cozido")
+            self.assertTrue(group["food_override_candidate"])
+            self.assertTrue(group["csv_eligible"])
+            self.assertEqual(group["missing_count"],1)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(group,"Cooked white rice")]} )["status"],201)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                   v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
+            current=next(g for g in self._common()["body"]["items"]
+                         if g["group_id"]==group["group_id"])
+            approved=self.call(ROOT+"/common/approve","POST",{
+                "group_id":current["group_id"],
+                "source_hash":current["source_hash"],
+                "expected_group_hash":current["expected_group_hash"],
+                "translated_text":current["imported_text"],
+                "acknowledged":True})
+            self.assertEqual(approved["status"],200,approved)
+            with app.connect() as c:
+                row=c.execute("""SELECT translated_text,status FROM
+                  v2_content_translations WHERE entity_kind='plan'
+                  AND field_path='meals/0/options/0/foods/1/display_name'""").fetchone()
+                self.assertEqual(row["status"],"approved")
+                self.assertEqual(row["translated_text"],"Cooked white rice")
+                current_snapshot=c.execute("""SELECT snapshot_json FROM
+                  v2_food_plan_editor_publications WHERE draft_id=?""",
+                  (self.draft_id,)).fetchone()["snapshot_json"]
+                self.assertEqual(current_snapshot,snapshot)
+
+    def test_custom_overrides_do_not_export_private_texts(self):
+        with patch.dict(os.environ,FLAG):
+            for source in ("Alergia ao leite", "Plano do jogador teste",
+                           "Contactar teste@example.com", "Tomar 2 cápsulas"):
+                changed=json.loads(self.original)
+                foods=changed["meals"][0]["options"][0]["foods"]
+                foods[1]["alternative_to"]=None
+                foods[1]["display_name"]=source
+                with app.connect() as c:
+                    c.execute("""UPDATE v2_food_plan_editor_publications
+                       SET snapshot_json=? WHERE draft_id=?""",
+                       (json.dumps(changed,ensure_ascii=False),self.draft_id))
+                    c.commit()
+                preview=self._common()
+                self.assertEqual(preview["status"],200)
+                self.assertFalse(any(g["field_kind"]=="food_override"
+                                     for g in preview["body"]["items"]))
+                self.assertNotIn(source,str(preview))
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                  v2_content_translations WHERE entity_kind='plan_common'""").fetchone()[0],0)
+
+    def test_approved_food_library_label_used_only_as_private_hint(self):
+        with patch.dict(os.environ,FLAG):
+            edited=json.loads(self.original)
+            foods=edited["meals"][0]["options"][0]["foods"]
+            foods[1]["alternative_to"]=None
+            foods[1]["display_name"]="Arroz branco"
+            foods[1]["id"]="not-linked"
+            with app.connect() as c:
+                translations.submit(c,entity_kind="food",
+                    entity_id="food-plan-test",field_path="display_name",
+                    source_text="Arroz branco",translated_text="White rice",
+                    actor_id="test-admin")
+                translations.approve(c,entity_kind="food",
+                    entity_id="food-plan-test",field_path="display_name",
+                    source_text="Arroz branco",reviewer_id="test-admin",
+                    expected_candidate_hash=hashlib.sha256(
+                        b"White rice").hexdigest())
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                      SET snapshot_json=? WHERE draft_id=?""",
+                      (json.dumps(edited,ensure_ascii=False),self.draft_id))
+                c.commit()
+            ref=self.index()["publication_ref"]
+            field=next(f for f in self.fields(ref)["body"]["fields"]
+                       if f["field_kind"]=="food_override")
+            self.assertEqual(field["suggestion"]["origin"],
+                             "approved_exact_food_name")
+            self.assertEqual(field["suggestion"]["text"],"White rice")
+            self.assertEqual(field["status"],"missing")
+            audit=self.call()["body"]["reuse_audit"]
+            self.assertGreaterEqual(audit["approved_library_name_suggestions"],1)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                  v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
+
     def test_remaining_quantities_csv_is_reviewed_and_version_bound(self):
         with patch.dict(os.environ,FLAG):
             preview=self._common()

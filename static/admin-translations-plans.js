@@ -97,6 +97,10 @@
         "Título com tradução aprovada noutro plano":
         item.suggestion.origin==="approved_exact_quantity"?
         "Quantidade com tradução aprovada noutro plano":
+        item.suggestion.origin==="approved_exact_food_name"?
+        "Nome com tradução aprovada na biblioteca de alimentos":
+        item.suggestion.origin==="approved_exact_supplement_name"?
+        "Nome com tradução aprovada na biblioteca de suplementos":
         item.suggestion.origin==="language_neutral_quantity"?
         "Símbolo internacional · pode manter-se igual em inglês":
         "Unidade de apresentação · regra conservadora";
@@ -128,8 +132,11 @@
       item.field_kind==="individual_note"?
         "Nota de consumo do plano. Revê o conteúdo antes de partilhar; "+
         "a exportação CSV está disponível apenas para notas elegíveis.":
-        "Texto personalizado ou potencialmente sensível: revisão profissional "+
-        "obrigatória. Não exportar."):null;
+      item.field_kind==="food_override"?
+        "Apresentação alimentar personalizada. Apenas nomes genéricos e "+
+        "revistos podem entrar no quinto CSV. Confirma o contexto.":
+        "Texto personalizado: revisão privada obrigatória. "+
+        "Alternativas e suplementos não entram no CSV."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
       save.disabled=!editor.value.trim()||!modified||busy;
@@ -225,10 +232,11 @@
     const intro=create("p","i18n-plan-policy",
       "Textos idênticos agrupados para revisão, incluindo quantidades "+
       "de apresentação. Aprova até 100 ocorrências da mesma expressão. "+
-      "Notas e quantidades têm CSVs próprios com revisão de privacidade.");
+      "Notas, quantidades e nomes alimentares genéricos têm CSVs próprios "+
+      "com revisão de privacidade. Alternativas e suplementos exigem revisão privada.");
     const search=create("input","i18n-plan-common-search");
     search.type="search";
-    search.placeholder="Pesquisar títulos, quantidades e notas…";
+    search.placeholder="Pesquisar títulos, nomes, quantidades e notas…";
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
@@ -347,15 +355,36 @@
     quantityDownload.type="button";quantityDownload.disabled=true;
     quantityPreview.append(quantitySummary,quantityIntro,quantityStats,
       quantityList,quantityConsent,quantityDownload);
+    const foodPreview=create("details",
+      "i18n-plan-unique-preview i18n-plan-food-preview");
+    const foodSummary=create("summary","","Quinto CSV · apresentações alimentares");
+    const foodIntro=create("p","i18n-plan-policy",
+      "Nomes próprios das apresentações alimentares dos planos, "+
+      "não provenientes da tradução automática da biblioteca. "+
+      "Revê a lista e desmarca qualquer texto individualizado, "+
+      "identificável ou sensível antes de exportar. "+
+      "Alternativas personalizadas e textos de suplementos não são exportados.");
+    const foodStats=create("p","i18n-plan-food-stats");
+    const foodList=create("div","i18n-plan-unique-list");
+    const foodConsent=create("label","i18n-bulk-attestation");
+    const foodCheck=create("input");foodCheck.type="checkbox";
+    foodConsent.append(foodCheck,create("span","",
+      "Revisei os nomes alimentares selecionados e confirmei que podem ser exportados"));
+    const foodDownload=create("button","i18n-secondary",
+      "Descarregar CSV de apresentações alimentares");
+    foodDownload.type="button";foodDownload.disabled=true;
+    foodPreview.append(foodSummary,foodIntro,foodStats,foodList,
+      foodConsent,foodDownload);
     csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
       create("p","i18n-plan-policy",
         "O CSV comum mantém os títulos repetidos e unidades simples."+
         " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
         " a uma revisão de privacidade antes do download. Não exportamos"+
-        " dados pessoais, alternativas nem prescrições. Notas e quantidades"+
-        " têm CSVs próprios com revisão. Preenche apenas translated_text;"+
-        " importar não aprova automaticamente."),
-      csvActions,uniquePreview,notesPreview,quantityPreview,approvalPanel,csvFeedback);
+        " dados pessoais, alternativas nem prescrições. Os nomes genéricos"+
+        " de apresentação têm um quinto CSV com confirmação de privacidade."+
+        " Preenche apenas translated_text; importar não aprova automaticamente."),
+      csvActions,uniquePreview,notesPreview,quantityPreview,foodPreview,
+      approvalPanel,csvFeedback);
     const csvEntry=g=>({
       group_id:g.group_id,source_hash:g.source_hash,
       expected_group_hash:g.expected_group_hash,
@@ -477,6 +506,54 @@
         "Preserva números e unidades antes de importar.";
       quantityCheck.checked=false;quantityDownload.disabled=true;
     });
+    const renderFoods=()=>{
+      foodCheck.checked=false;foodDownload.disabled=true;
+      foodList.replaceChildren();
+      const candidates=groups.filter(g=>g.food_override_candidate&&g.csv_eligible);
+      const occurrences=candidates.reduce((n,g)=>n+g.missing_count,0);
+      const reusable=candidates.filter(g=>
+        g.suggestion?.origin==="approved_exact_food_name").length;
+      foodSummary.textContent="Quinto CSV · "+candidates.length+
+        " nomes alimentares ("+occurrences+" ocorrências pendentes)";
+      foodStats.textContent=reusable+" nomes com tradução aprovada "+
+        "reutilizável da biblioteca, a confirmar antes da importação. "+
+        "Os restantes requerem tradução ou revisão do contexto.";
+      if(!candidates.length){
+        foodList.append(create("p","i18n-plan-policy",
+          "Não existem apresentações genéricas elegíveis. "+
+          "Os restantes textos são revistos individualmente no plano."));
+      }
+      for(const group of candidates){
+        const row=create("label","i18n-plan-unique-row");
+        const checkbox=create("input");checkbox.type="checkbox";
+        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
+        checkbox.addEventListener("change",()=>{
+          foodCheck.checked=false;foodDownload.disabled=true;
+        });
+        const hint=group.suggestion?.origin==="approved_exact_food_name"?
+          " · EN já aprovado na biblioteca (rever)":" · precisa de inglês";
+        row.append(checkbox,create("span","",
+          group.source_text+" · "+group.missing_count+" ocorrências"+hint));
+        foodList.append(row);
+      }
+    };
+    foodCheck.addEventListener("change",()=>{
+      foodDownload.disabled=!foodCheck.checked||
+        !foodList.querySelector("input:checked");
+    });
+    foodDownload.addEventListener("click",()=>{
+      if(!foodCheck.checked)return;
+      const included=new Set(
+        Array.from(foodList.querySelectorAll("input:checked"))
+          .map(el=>el.dataset.groupId));
+      const rows=groups.filter(g=>g.food_override_candidate&&g.csv_eligible&&
+        included.has(g.group_id)).map(csvEntry);
+      if(!rows.length){csvFeedback.textContent="Não há nomes selecionados.";return;}
+      downloadCsv(rows,"the-mile-traducoes-planos-apresentacoes.csv");
+      csvFeedback.textContent=rows.length+
+        " nomes alimentares exportados. Revê-os antes de partilhar o ficheiro.";
+      foodCheck.checked=false;foodDownload.disabled=true;
+    });
     uniqueCheck.addEventListener("change",()=>{
       uniqueDownload.disabled=!uniqueCheck.checked||
         !uniqueList.querySelector("input:checked");
@@ -521,6 +598,7 @@
     };
     exportButton.addEventListener("click",()=>{
       const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate&&
+        g.field_kind!=="food_override"&&
         (g.field_kind!=="display_quantity"||
          g.suggestion?.origin==="simple_unit_rule")).map(csvEntry);
       if(!rows.length){
@@ -639,6 +717,7 @@
       renderUnique();
       renderNotes();
       renderQuantities();
+      renderFoods();
       updateCsvButtons();
     };
     const openGroup=item=>{
@@ -647,11 +726,14 @@
       groupHead.append(create("strong","",
         item.field_kind==="option_title"?"Título de opção":
         item.field_kind==="individual_note"?"Nota de consumo do plano":
+        item.field_kind==="food_override"?"Apresentação alimentar personalizada":
         "Unidade de apresentação"),
         create("small","",item.missing_count+" ocorrências para aprovar"));
       const context=create("p","i18n-plan-policy",
         item.field_kind==="display_quantity"?
           "Quantidade apresentada · preserva os números e unidades originais":
+        item.field_kind==="food_override"?
+          "Nome genérico, sem informação de jogador. Revê a correspondência.":
           "Contexto: "+item.meal_context);
       const cols=create("div","i18n-plan-compare");
       const pt=create("div","i18n-plan-pt");
@@ -732,7 +814,9 @@
             (item.field_kind==="option_title"?
               "Título · "+item.meal_context:
               item.field_kind==="individual_note"?
-              "Nota do plano · "+item.meal_context:"Unidade simples")+
+              "Nota do plano · "+item.meal_context:
+              item.field_kind==="food_override"?
+              "Apresentação alimentar":"Unidade simples")+
             (item.missing_count>100?" · em grupos de 100":"")+
             (item.imported_status?" · CSV "+(
               item.imported_status==="approved"?"revisto":"importado por rever"):"")));

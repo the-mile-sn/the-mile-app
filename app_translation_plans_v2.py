@@ -182,6 +182,49 @@ def _approved_quantities(c):
             if len(values) == 1}
 
 
+def _approved_food_names(c):
+    """Unambiguous approved current food-library names, reused only as hints.
+
+    Join canonical PT names to avoid stale translations and do not return IDs,
+    athlete data, original plan fields or text to any public endpoint.
+    """
+    found = {}
+    for row in c.execute("""
+        SELECT f.display_name AS source_text,t.source_hash,t.translated_text
+        FROM v2_content_translations t
+        JOIN v2_food_library f ON f.id=t.entity_id
+        WHERE t.entity_kind='food' AND t.field_path='display_name'
+          AND t.language='en' AND t.status='approved' AND f.active=1
+    """).fetchall():
+        source = row["source_text"]
+        english = row["translated_text"]
+        if (not isinstance(source,str) or not isinstance(english,str) or
+                _hash(source) != row["source_hash"] or not english.strip()):
+            continue
+        found.setdefault(_hash(source),set()).add(english)
+    return {source_hash:next(iter(values)) for source_hash,values in found.items()
+            if len(values)==1}
+
+
+def _approved_supplement_names(c):
+    """Approved exact supplement names, not doses or prescriptions."""
+    found={}
+    for row in c.execute("""
+        SELECT s.name AS source_text,t.source_hash,t.translated_text
+        FROM v2_content_translations t
+        JOIN v2_supplement_library s ON s.id=t.entity_id
+        WHERE t.entity_kind='supplement' AND t.field_path='name'
+          AND t.language='en' AND t.status='approved'
+    """).fetchall():
+        source,english=row["source_text"],row["translated_text"]
+        if (not isinstance(source,str) or not isinstance(english,str)
+                or _hash(source)!=row["source_hash"] or not english.strip()):
+            continue
+        found.setdefault(_hash(source),set()).add(english)
+    return {source_hash:next(iter(values)) for source_hash,values in found.items()
+            if len(values)==1}
+
+
 def _language_neutral_quantity(source):
     """Leave standard symbols untouched; preserve numeric notation exactly."""
     return bool(_PLAIN_QUANTITY.fullmatch(source.strip()))
@@ -200,11 +243,18 @@ def _quantity_hint(source):
     return suggestion if suggestion != source else None
 
 
-def _safe_suggestion(field, approved_titles, approved_quantities=None):
+def _safe_suggestion(field, approved_titles, approved_quantities=None,
+                     approved_food_names=None, approved_supplement_names=None):
     source = field["source_text"]
     if field["field_kind"] == "option_title":
         candidate = approved_titles.get(_hash(source))
         origin = "approved_exact_title"
+    elif field["field_kind"] in ("food_override", "alternative_override"):
+        candidate = (approved_food_names or {}).get(_hash(source))
+        origin = "approved_exact_food_name"
+    elif field["field_kind"] == "supplement_label":
+        candidate = (approved_supplement_names or {}).get(_hash(source))
+        origin = "approved_exact_supplement_name"
     elif field["field_kind"] == "display_quantity":
         candidate = (approved_quantities or {}).get(_hash(source))
         origin = "approved_exact_quantity"
@@ -241,6 +291,9 @@ def _reuse_audit(c, items, published):
     food_names = _name_map(c)
     accepted_titles = _approved_titles(c)
     accepted_quantities = _approved_quantities(c)
+    accepted_food_names = _approved_food_names(c)
+    accepted_supplements = _approved_supplement_names(c)
+    reusable_overrides = 0
     approved_linked = 0
     for row in published:
         try:
@@ -261,7 +314,11 @@ def _reuse_audit(c, items, published):
                 titles[field["source_text"]] += 1
             if field_status != "missing":
                 continue
-            suggestion = _safe_suggestion(field, accepted_titles, accepted_quantities)
+            suggestion = _safe_suggestion(
+                field, accepted_titles, accepted_quantities,
+                accepted_food_names, accepted_supplements)
+            if suggestion and suggestion["origin"] == "approved_exact_food_name":
+                reusable_overrides += 1
             if suggestion and suggestion["origin"] == "approved_exact_title":
                 eligible_title_hints += 1
             if suggestion and suggestion["origin"] == "simple_unit_rule":
@@ -300,6 +357,7 @@ def _reuse_audit(c, items, published):
         "repeated_option_title_occurrences": sum(count-1 for count in titles.values()),
         "approved_title_suggestions": eligible_title_hints,
         "simple_unit_suggestions": eligible_unit_hints,
+        "approved_library_name_suggestions": reusable_overrides,
         "alternative_overrides": kinds["alternative_override"],
         "other_food_overrides": kinds["food_override"],
         "individual_notes": kinds["individual_note"],
@@ -359,6 +417,8 @@ def inspect(c, actor, public_ref):
     existing = _existing(c, public_ref)
     approved_titles = _approved_titles(c)
     approved_quantities = _approved_quantities(c)
+    approved_food_names = _approved_food_names(c)
+    approved_supplements = _approved_supplement_names(c)
     displayed = []
     for f in fields:
         candidate = existing.get(f["field_path"])
@@ -368,7 +428,8 @@ def inspect(c, actor, public_ref):
                           "translated_text":candidate["translated_text"] if candidate else "",
                           "candidate_hash":_hash(candidate["translated_text"]) if candidate else None,
                           "suggestion":_safe_suggestion(
-                              f, approved_titles, approved_quantities)
+                              f, approved_titles, approved_quantities,
+                              approved_food_names, approved_supplements)
                                        if state == "missing" else None})
     return {"publication":_summary(c,row,value,_name_map(c)),
             "fields":displayed,
@@ -438,10 +499,10 @@ def approve(c, actor, body):
 
 
 
-# Shared plan text: titles, simple presentation units and screened consumption
-# notes. Free-form food overrides, supplement labels and private notes that
-# fail the privacy screen remain in individual, admin-only reviews.
-_COMMON_KINDS = {"option_title", "display_quantity", "individual_note"}
+# Generic food display overrides can be shortlisted for admin-reviewed CSV.
+# Personal alternatives and supplement prescriptions stay private.
+_COMMON_KINDS = {"option_title", "display_quantity", "individual_note",
+                 "food_override"}
 MAX_COMMON_BATCH = 100
 
 
@@ -450,6 +511,9 @@ def _group_identity(field, plan):
     if kind not in _COMMON_KINDS:
         return None
     if kind == "display_quantity" and not _quantity_candidate(
+            {"field_kind":kind, "source_text":field["source_text"]}):
+        return None
+    if kind == "food_override" and not _food_override_candidate(
             {"field_kind":kind, "source_text":field["source_text"]}):
         return None
     context = ""
@@ -480,6 +544,7 @@ def _common_groups(c):
     names = _name_map(c)
     approved = _approved_titles(c)
     quantities = _approved_quantities(c)
+    names_en = _approved_food_names(c)
     groups = {}
     for publication in rows:
         try:
@@ -515,7 +580,8 @@ def _common_groups(c):
             else:
                 group[state + "_count"] += 1
             if group["suggestion"] is None:
-                group["suggestion"] = _safe_suggestion(field, approved, quantities)
+                group["suggestion"] = _safe_suggestion(
+                    field, approved, quantities, names_en)
     return groups
 
 
@@ -567,6 +633,26 @@ def _plan_note_candidate(group):
                           source, re.I) is None)
 
 
+def _food_override_candidate(group):
+    """Shortlist generic food presentation names; review before any CSV export.
+
+    These are not alternatives or supplement prescription labels. A limited
+    pattern screen is deliberately complemented by mandatory private manual
+    selection, and never claims PII-free certainty.
+    """
+    if group["field_kind"] != "food_override":
+        return False
+    source = group["source_text"]
+    return (bool(source.strip()) and len(source) <= 160
+            and all(ch.isprintable() for ch in source)
+            and _SENSITIVE_SINGLE_TITLE.search(source) is None
+            and re.search(
+                r"\b(?:tomar|dosagem|comprimidos?|c[aá]psulas?|"
+                r"receitar|prescri[çc][aã]o|suplemento\w*|"
+                r"creatina|cafe[ií]na|insulina|medicamento\w*)\b",
+                source, re.I) is None)
+
+
 def _quantity_candidate(group):
     """Generic plan display quantities only, with privacy screening and review.
 
@@ -588,7 +674,7 @@ def _quantity_candidate(group):
 def _csv_eligible(group):
     # Free text is screened conservatively, then explicitly reviewed by an
     # admin before local browser export. Never assumes a note is clinical.
-    return (_quantity_candidate(group) or
+    return (_quantity_candidate(group) or _food_override_candidate(group) or
             (group["field_kind"] == "option_title" and group["total"] >= 2) or
             _single_title_candidate(group) or _plan_note_candidate(group))
 
@@ -628,6 +714,7 @@ def common_preview(c, actor):
             "single_title_candidate":_single_title_candidate(group),
             "plan_note_candidate":_plan_note_candidate(group),
             "quantity_candidate":_quantity_candidate(group),
+            "food_override_candidate":_food_override_candidate(group),
             "quantity_neutral":(group["field_kind"] == "display_quantity"
                                 and _language_neutral_quantity(group["source_text"])),
             "imported_status":stage["status"] if stage else None,
@@ -637,7 +724,7 @@ def common_preview(c, actor):
     items.sort(key=lambda item:(-item["missing_count"],
                                 item["field_kind"],item["source_text"].casefold()))
     return {"items":items, "total_groups":len(items),
-            "policy":"admin_private_screened_quantities_notes_no_auto_approval",
+            "policy":"admin_private_screened_food_names_quantities_notes_no_auto_approval",
             "max_batch":MAX_COMMON_BATCH}
 
 
