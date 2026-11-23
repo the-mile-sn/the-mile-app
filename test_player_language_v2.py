@@ -55,6 +55,34 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
             self.assertEqual(response["body"]["kinds"],{"food":1})
             self.assertNotIn("Private sample",str(response))
 
+    def test_english_food_search_is_authenticated_and_locale_scoped(self):
+        first,second=self.players
+        fake={"id":"food-test","display_name":"White rice","variant":"",
+              "kcal":130,"protein_g":2.7,"carbs_g":28,"fat_g":0.3,
+              "note":""}
+        with patch.dict(app.os.environ,{
+                "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
+                "MILE_APP_TRANSLATIONS_ENABLED":"1"}), \
+             patch("app_content_i18n_v2.translation_store_available",
+                   return_value=True), \
+             patch("app_content_i18n_v2.search_approved_food_names",
+                   return_value=[fake]) as resolver:
+            self.assertEqual(first.request("/api/v2/player/preferences",
+                "PUT",{"language":"en"})["status"],200)
+            response=first.request(
+                "/api/v2/player/consumption-foods?q=white")
+            self.assertEqual(response["status"],200,response)
+            self.assertEqual(response["body"]["foods"],[fake])
+            resolver.assert_called_once()
+            resolver.reset_mock()
+            other=second.request("/api/v2/player/consumption-foods?q=white")
+            self.assertEqual(other["status"],200,other)
+            resolver.assert_not_called()
+            self.assertEqual(self.admin.request(
+                "/api/v2/player/consumption-foods?q=white")["status"],403)
+            self.assertEqual(fixtures.Client().request(
+                "/api/v2/player/consumption-foods?q=white")["status"],401)
+
     def test_preference_is_self_only_default_pt_and_release_gated(self):
         first,second=self.players
         with patch.dict(app.os.environ,
