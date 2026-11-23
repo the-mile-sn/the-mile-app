@@ -57,7 +57,7 @@
    sheet.classList.toggle("is-expanded",expanded);
    sheet.style.height="";
    handle.setAttribute("aria-expanded",String(expanded));
-   handle.setAttribute("aria-label",expanded?"Reduzir painel":"Expandir painel");
+   handle.setAttribute("aria-label",expanded?tr("Reduzir painel","Collapse panel"):tr("Expandir painel","Expand panel"));
   };
   function start(event){
    if(event.button!=null&&event.button!==0)return;
