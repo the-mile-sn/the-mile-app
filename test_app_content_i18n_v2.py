@@ -232,6 +232,18 @@ class PresentationTranslationTests(unittest.TestCase):
             self.assertEqual(i18n.localise_dish_menus(
                 self.c,menus,language="en")[0]["value"],"Salmão grelhado")
 
+    def test_library_hashes_are_exact_but_plan_hashes_trim_source(self):
+        library={"source_hash":digest(" Arroz branco "),
+                 "translated_text":"White rice"}
+        plan={"source_hash":digest("Arroz branco"),
+              "translated_text":"White rice"}
+        self.assertEqual(i18n._current_english(
+            library," Arroz branco "),"White rice")
+        self.assertEqual(i18n._current_english(
+            plan," Arroz branco ")," Arroz branco ")
+        self.assertEqual(i18n._current_english(
+            plan," Arroz branco ",trim_source=True),"White rice")
+
     def test_flag_off_and_portuguese_are_identity_and_never_query(self):
         with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"0"}):
             p,l=i18n.localise_published_plans(
