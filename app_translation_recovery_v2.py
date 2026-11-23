@@ -173,9 +173,16 @@ def carry_forward_unchanged(c, draft_id, old_raw, new_raw):
             return 0
     old_ref = plans._ref(draft_id, old_raw)
     new_ref = plans._ref(draft_id, new_raw)
-    try:
-        c.execute("SELECT 1 FROM v2_content_translations LIMIT 0")
-    except Exception:
+    # Probe without raising a SQL error: a failed SELECT aborts PostgreSQL's
+    # active publication transaction, even if Python catches the exception.
+    if hasattr(c, "conn"):
+        exists = c.execute("""SELECT 1 FROM information_schema.tables
+            WHERE table_schema=current_schema()
+              AND table_name='v2_content_translations'""").fetchone()
+    else:
+        exists = c.execute("""SELECT 1 FROM sqlite_master
+            WHERE type='table' AND name='v2_content_translations'""").fetchone()
+    if exists is None:
         return 0
     old_fields, _, _ = plans._fields(old_data, plans._name_map(c))
     new_fields, _, _ = plans._fields(new_data, plans._name_map(c))
