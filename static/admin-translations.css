@@ -325,3 +325,15 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
   .i18n-plan-coverage-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
   .i18n-plan-coverage-head button{width:auto}
 }
+
+/* Reviewed Planos quantity queue, reusing the established CSV preview rows. */
+.i18n-plan-quantity-preview .i18n-plan-quantity-stats{
+  margin:0 0 8px;color:var(--tm-ui-muted);
+  font-size:11px;line-height:1.5;overflow-wrap:anywhere;
+}
+.i18n-plan-quantity-preview .i18n-plan-unique-row{
+  align-items:flex-start;
+}
+.i18n-plan-quantity-preview .i18n-plan-unique-row span{
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
