@@ -29,6 +29,7 @@ import assessments_v2
 import weight_reference_v2
 import plan_import_v2
 import food_plan_player_v2
+import app_content_i18n_v2
 import player_visual_portions_v2
 import meal_option_selection_v2
 import consumption_records_v2
@@ -1457,6 +1458,8 @@ def application(env, start_response):
                         items=chef_collaboration_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_menu_range')
+                    items=app_content_i18n_v2.localise_dish_menus(
+                        c,items,language=athlete['language'])
                     return respond(200,{'menus':items})
                 if method != 'GET': raise Problem(403,'forbidden')
                 if path == '/api/v2/chef/calendar':
@@ -2053,6 +2056,9 @@ def application(env, start_response):
                             key=(menu['menu_date'],menu['meal'])
                             base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
                             menu['effective_color']=effective.get(menu['menu_date'],{}).get(menu['meal'],{}).get('color')
+                        menus=app_content_i18n_v2.localise_dish_menus(
+                            c,menus,language=player_language_v2.presentation_language(
+                                c,user['id']))
                         return respond(200,{'menus':menus})
                     days = calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])]))
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
