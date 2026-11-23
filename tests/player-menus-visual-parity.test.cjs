@@ -24,7 +24,9 @@ test("Unassigned menus render without manufactured data; assigned categories, di
  const fragment=js.slice(js.indexOf("async function menusView()"),js.indexOf("function error(e)"));
  assert.match(fragment,/const isUnassigned=!menu/);
  assert.match(fragment,/menu-entry--unassigned/);
- assert.match(fragment,/menu\?\.value\|\|playerText\("Menu por atribuir","Menu not assigned"\)/);
+ assert.match(fragment,/menu\?playerMenuCategoryLabel\(menu\):playerText\("Menu por atribuir","Menu not assigned"\)/);
+ assert.match(fragment,/if\(menu\?\.kind==="dish"\)/);
+ assert.match(js,/function playerMenuCategoryLabel\(menu\)/);
  assert.match(fragment,/if\(menu\?\.kind==="text"\)/);
  assert.match(fragment,/if\(menu\?\.kind==="dish"\)/);
  assert.match(fragment,/dish-photo-frame/);
