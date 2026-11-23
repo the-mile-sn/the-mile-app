@@ -232,3 +232,44 @@ def localise_dish_summaries(c, dishes, *, language="pt"):
             dish.get("name_pt"))
         result.append(display)
     return result
+
+def localise_supplement_days(c, by_day, *, language="pt"):
+    """Translate only current library-exact presentation strings.
+
+    Personalised doses, event rules, date-specific overrides and the athlete's
+    original supplement schedule are not changed or reinterpreted.
+    """
+    if not enabled(language) or not by_day or not translation_store_available(c):
+        return by_day
+    ids=sorted({str(item.get("library_id")) for items in by_day.values()
+                for item in items if item.get("library_id")})
+    if not ids:
+        return by_day
+    placeholders=",".join("?" for _ in ids)
+    library={str(row["id"]):dict(row) for row in c.execute(
+        "SELECT id,name,dose,timing_text,note FROM v2_supplement_library "
+        "WHERE id IN ("+placeholders+")",tuple(ids)).fetchall()}
+    approved=_translation_map(c,"supplement")
+    output={}
+    for day,items in by_day.items():
+        result=[]
+        for item in items:
+            display=dict(item)
+            source=library.get(str(item.get("library_id") or ""))
+            if source:
+                for field in ("name","dose","timing_text","note"):
+                    canonical=source.get(field)
+                    current=item.get(field)
+                    if isinstance(current,str) and current.strip() and (
+                            current.strip()==str(canonical or "").strip()):
+                        display[field]=_current_english(approved.get(
+                            (str(source["id"]),field)),current)
+                if (item.get("timing_text") and
+                    item.get("display_moment")==item.get("timing_text")):
+                    display["display_moment"]=display.get("timing_text")
+            # Fixed display-only fallback; moment codes remain in PT as stored.
+            if item.get("display_moment")=="Almoço ou jantar":
+                display["display_moment"]="Lunch or dinner"
+            result.append(display)
+        output[day]=result
+    return output
