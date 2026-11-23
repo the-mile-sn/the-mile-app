@@ -268,6 +268,9 @@
             const answer=await send("/api/v2/admin/i18n/plans/recovery/approve",
               "POST",{publication_ref:public_ref,rows,acknowledged:true});
             error(feedback,String(answer.approved||0)+" traduções aprovadas.");
+            const updated=await send("/api/v2/admin/i18n/plans");
+            publications=updated.items||[];
+            renderList($("i18n-status")?.value||"all",$("i18n-search")?.value||"");
             await openPublication(public_ref);
           }catch(e){
             error(feedback,"A recuperação foi interrompida: "+e.message);
