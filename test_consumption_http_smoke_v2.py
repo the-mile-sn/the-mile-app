@@ -18,7 +18,7 @@ class ConsumptionHttpSmoke(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             env=os.environ.copy()
             env.update({"MILE_DATA_DIR":directory,"DATABASE_URL":"",
-                        "MILE_SITE_ROLE":"both","MILE_CONSUMPTION_PILOT_ATHLETE_IDS":""})
+                        "MILE_SITE_ROLE":"both"})
             # The player-only startup enforces the production 58-plan readiness gate.\n            # Use the combined role here to test identical HTTP authentication\n            # without manufacturing or bypassing the published-plan roster.\n            # Run a separate interpreter: app reads its DB configuration on import.
             script=r'''
 import json
@@ -40,9 +40,12 @@ with connect() as db:
  db.execute("CREATE TABLE IF NOT EXISTS v2_player_links(user_id TEXT,athlete_id TEXT)")
  db.execute("INSERT INTO v2_athletes(id,name,created_at) VALUES (?,?,?)",("pilot-athlete","Synthetic Athlete",int(time.time())))
  db.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES (?,?,?)",("synthetic","pilot-athlete",int(time.time())))
+ # Minimal isolated food catalogue for the authenticated search endpoint.
+ db.execute("CREATE TABLE IF NOT EXISTS v2_food_library (id TEXT PRIMARY KEY, display_name TEXT, variant TEXT, kcal REAL, protein_g REAL, carbs_g REAL, fat_g REAL, active INTEGER)")
+ db.execute("INSERT INTO v2_food_library(id,display_name,variant,kcal,protein_g,carbs_g,fat_g,active) VALUES (?,?,?,?,?,?,?,?)",("rice","Arroz","net",100,2,20,1,1))
 import app
 from unittest.mock import patch
-published={"draft_id":"published-test","color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
+published={"draft_id":"published-test","color":"green","planned_color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
 library={"rice":{"id":"rice","active":1,"kcal":100,"protein_g":2,"carbs_g":20,"fat_g":1}}
 app.consumption_source_v2.current_source=lambda *args,**kwargs: published
 app.consumption_nutrition_v2.active_library=lambda *args,**kwargs: library
@@ -76,7 +79,8 @@ try:
   try:
    with urlopen(authenticated,timeout=8) as response: linked_status=response.status
   except HTTPError as error: linked_status=error.code
-  assert linked_status==403,(path,linked_status)
+  expected_linked=400 if method=="PUT" else 200
+  assert linked_status==expected_linked,(path,linked_status,expected_linked)
  # Exercise real username/password login, not only a fabricated session.
  login=Request(base+"/api/login",data=json.dumps({"identifier":"smokeplayer","password":"smoke-passphrase-unique"}).encode(),
   method="POST",headers={"Content-Type":"application/json"})
@@ -84,8 +88,7 @@ try:
   assert response.status==200,response.status
   cookie=response.headers.get("Set-Cookie","")
   assert "mile_session=" in cookie,cookie
- # Allowlist the synthetic athlete, then test a real HTTP save/read cycle.
- os.environ["MILE_CONSUMPTION_PILOT_ATHLETE_IDS"]="pilot-athlete"
+ # The synthetic linked player may record consumption without the retired pilot allowlist.
  payload={"date":"2026-11-11","meal":"lunch","option_ref":"option-test","status":"all"}
  req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
   headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})

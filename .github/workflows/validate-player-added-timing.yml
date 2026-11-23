@@ -7,6 +7,7 @@ on:
       - 'consumption_timing_v2.py'
       - 'consumption_records_v2.py'
       - 'test_consumption_added_timing_v2.py'
+      - 'tests/player-i18n-consumption-events.test.cjs'
       - 'static/jogador-v2.js'
       - 'static/jogador-v2.css'
       - '.github/workflows/validate-player-added-timing.yml'
@@ -26,5 +27,7 @@ jobs:
         run: python -m py_compile app.py consumption_timing_v2.py consumption_records_v2.py consumption_nutrition_v2.py test_consumption_added_timing_v2.py
       - name: Check player JS syntax
         run: node --check static/jogador-v2.js
+      - name: Validate Portuguese and English consumption and event labels
+        run: node --test tests/player-i18n-consumption-events.test.cjs
       - name: Verify extra timing, existing timing and legacy calculations
         run: python -m unittest -v test_consumption_added_timing_v2 test_consumption_timing_v2 test_consumption_timing_ui_contract

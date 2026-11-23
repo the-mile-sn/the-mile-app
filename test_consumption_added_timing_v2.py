@@ -90,7 +90,7 @@ class AddedTimingTests(unittest.TestCase):
         css=(ROOT/"static/jogador-v2.css").read_text(encoding="utf-8")
         block=JS.split("const choices=Object.entries(periTimingLabels)",1)[1].split("return true;",1)[0]
         self.assertIn("intra-add-moment-group",block)
-        self.assertIn("addButton.textContent='⊕ Adicionar'",block)
+        self.assertIn("addButton.textContent=playerText('⊕ Adicionar','⊕ Add')",block)
         self.assertIn("picker.append(label,selector,editorHost)",block)
         self.assertIn("trigger.setAttribute('aria-haspopup','listbox')",block)
         self.assertIn("menu.setAttribute('role','listbox')",block)
@@ -149,7 +149,7 @@ class AddedTimingTests(unittest.TestCase):
         self.assertIn("refreshAfterConsumption(group,meal,eventId)",JS)
         self.assertIn("refreshAfterConsumption(host,mealKey,eventId)",JS)
         self.assertIn("intra-add-moment-trigger",JS)
-        self.assertIn("origin.textContent='Adicionado pelo jogador'",JS)
+        self.assertIn("origin.textContent=playerText('Adicionado pelo jogador','Added by player')",JS)
         self.assertIn("prescription['origin']='player_added'",APP)
         self.assertIn("Intra-jogo — acréscimo livre de momento e alimentos",GUIDE)
 
