@@ -361,6 +361,70 @@ class PlanTranslationsTests(unittest.TestCase):
         self.assertEqual(plan_reviews._quantity_hint("1 un / 120 g"),
                          "1 unit / 120 g")
 
+
+    def test_single_title_csv_is_version_bound_and_manual_reviewed(self):
+        """Unique option titles can use the existing staged CSV import route.
+
+        Nothing touches free notes, supplements or original snapshots.
+        """
+        with patch.dict(os.environ,FLAG):
+            preview=self._common()
+            self.assertEqual(preview["status"],200,preview)
+            title=next(g for g in preview["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            self.assertEqual(title["missing_count"],1)
+            self.assertTrue(title["single_title_candidate"])
+            self.assertTrue(title["csv_eligible"])
+            self.assertEqual(title["source_text"],"Opção 1")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(title,"Option 1")]}
+            )["status"],201)
+            reloaded=next(g for g in self._common()["body"]["items"]
+                          if g["group_id"]==title["group_id"])
+            self.assertEqual(reloaded["imported_status"],"pending")
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan'""").fetchone()[0],0)
+            approved=self.call(ROOT+"/common/approve","POST",{
+                "group_id":reloaded["group_id"],"source_hash":reloaded["source_hash"],
+                "expected_group_hash":reloaded["expected_group_hash"],
+                "translated_text":reloaded["imported_text"],"acknowledged":True})
+            self.assertEqual(approved["status"],200,approved)
+            self.assertEqual(approved["body"]["approved"],1)
+            with app.connect() as c:
+                row=c.execute("""SELECT status FROM v2_content_translations
+                    WHERE entity_kind='plan' AND field_path='meals/0/options/0/title'
+                """).fetchone()
+                self.assertEqual(row["status"],"approved")
+                self.assertEqual(c.execute("""SELECT snapshot_json FROM
+                    v2_food_plan_editor_publications WHERE draft_id=?""",
+                    (self.draft_id,)).fetchone()["snapshot_json"],self.original)
+
+    def test_single_title_export_excludes_obvious_clinical_or_personal_labels(self):
+        with patch.dict(os.environ,FLAG):
+            self.assertEqual(self._common()["body"]["items"][0]["csv_eligible"],True)
+            for title in ("Alergia ao leite", "Plano do jogador Lucas",
+                          "Contactar teste@example.com",
+                          "https://exemplo.com/instrucoes", "Medicação 5 mg"):
+                edited=json.loads(self.original)
+                edited["meals"][0]["options"][0]["title"]=title
+                with app.connect() as c:
+                    c.execute("""UPDATE v2_food_plan_editor_publications
+                        SET snapshot_json=? WHERE draft_id=?""",
+                        (json.dumps(edited,ensure_ascii=False),self.draft_id))
+                    c.commit()
+                result=self._common()
+                self.assertEqual(result["status"],200,result)
+                candidate=next(x for x in result["body"]["items"]
+                               if x["field_kind"]=="option_title")
+                self.assertFalse(candidate["single_title_candidate"],title)
+                self.assertFalse(candidate["csv_eligible"],title)
+                self.assertNotIn("Tomar 2 vezes",str(result))
+                self.assertNotIn("private-athlete",str(result))
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan_common'""").fetchone()[0],0)
+
     def test_common_csv_import_is_private_staged_and_not_approved(self):
         with patch.dict(os.environ,FLAG):
             self._add_publication(2)
