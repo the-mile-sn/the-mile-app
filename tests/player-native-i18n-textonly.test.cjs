@@ -65,7 +65,7 @@ test("Remaining Player and Chef UI labels use the selected language without visu
     'playerText("Ver receitas","View recipes")',
     'playerText("Ver receita","View recipe")',
     'playerText("As novas palavras-passe não coincidem.","The new passwords do not match.")',
-    'playerText("Refeição registada","Meal recorded")',
+    "playerText('Refeição registada','Meal recorded')",
     'playerText("Fechar fotografia","Close photo")',
     'playerText("Média semanal: ","Weekly average: ")',
     "playerText('Momentos de consumo disponíveis','Available consumption times')",

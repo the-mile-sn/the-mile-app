@@ -63,7 +63,7 @@ test("expanded nutrition keeps the dual ring and displays only the original char
  assert.match(css,/\.nutrition-weekly-charts:not\(\[hidden\]\)\) \.nutrition-comparison\{\s*display:grid!important/);
  assert.match(css,/\.nutrition-donut-summary>\.nutrition-weekly-charts\{/);
  assert.match(css,/bottom:18px!important;right:7px!important/);
- assert.match(source,/expand\.setAttribute\("aria-label",weeklyCharts\.hidden\?"Expandir resumo nutricional":"Fechar gráficos nutricionais"\)/);
+ assert.match(source,/expand\.setAttribute\("aria-label",weeklyCharts\.hidden\?playerText\("Expandir resumo nutricional","Expand nutrition summary"\):playerText\("Fechar gráficos nutricionais","Close nutrition charts"\)\)/);
 });
 
 test("energy label and compact relative amount replace separate kcal unit inside halo",()=>{

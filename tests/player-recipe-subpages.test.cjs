@@ -152,7 +152,7 @@ test("menu dish photos always open the same zoom, independent of recipes",()=>{
 test("only dishes with linked recipes get a separate recipe action",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
  assert.match(player,/if\(Number\(dish\.recipe_count\|\|0\)>0\)/);
- assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?"Ver receitas":"Ver receita"/);
+ assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?playerText\("Ver receitas","View recipes"\):playerText\("Ver receita","View recipe"\)/);
  assert.match(player,/window\.themileRecipes\.openDish\(dish.id,menu.value\)/);
  assert.match(player,/dish-photo-zoom/);
 });
