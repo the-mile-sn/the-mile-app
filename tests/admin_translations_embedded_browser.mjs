@@ -87,7 +87,17 @@ try{
           csv_eligible:true,single_title_candidate:true,
           imported_status:null,imported_text:null,suggestion:null
         };
-        const items=!commonApprovals?[unit]:!importApprovals?[title]:[single];
+        const note={
+          group_id:"6".repeat(64),source_hash:"5".repeat(64),
+          expected_group_hash:"4".repeat(64),expected_stage_hash:"",
+          field_kind:"individual_note",meal_context:"Pequeno almoço / lanche",
+          source_text:"Podes aquecer o pão antes de servir.",
+          occurrences:1,missing_count:1,pending_count:0,approved_count:0,
+          outdated_count:0,batch_limit:100,csv_eligible:true,
+          plan_note_candidate:true,single_title_candidate:false,
+          imported_status:null,imported_text:null,suggestion:null
+        };
+        const items=!commonApprovals?[unit]:!importApprovals?[title]:[single,note];
         await route.fulfill(fmt({total_groups:items.length,max_batch:100,items}));
       }else if(path==="/api/v2/admin/i18n/plans/common/import"){
         const payload=route.request().postDataJSON();
@@ -259,13 +269,30 @@ try{
     await page.locator(".i18n-plan-csv-tools > button.i18n-primary").click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
-    await page.locator(".i18n-plan-unique-preview summary").waitFor();
-    const unique=page.locator(".i18n-plan-unique-preview");
+    await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview) summary").waitFor();
+    const unique=page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview)");
     await unique.locator("summary").click();
     assert.match(await unique.locator("summary").innerText(),/1 títulos únicos/);
     const uniqueButton=unique.locator("button");
     assert.equal(await uniqueButton.isDisabled(),true);
     assert.equal(await unique.locator(".i18n-plan-unique-row").count(),1);
+    const visibleRow=unique.locator(".i18n-plan-unique-row").first();
+    assert.match(await visibleRow.innerText(),/Panquecas caseiras/);
+    const rowVisual=await visibleRow.evaluate(el=>{
+      const span=el.querySelector("span"),list=el.parentElement;
+      return {height:el.getBoundingClientRect().height,
+        textColor:getComputedStyle(span).color,
+        background:getComputedStyle(el).backgroundColor,
+        flow:getComputedStyle(list).gridAutoRows,
+        textHeight:span.getBoundingClientRect().height};
+    });
+    assert.ok(rowVisual.height < 110,"Candidate row must be compact");
+    assert.ok(rowVisual.textHeight > 10,"Candidate must contain visible text");
+    assert.notEqual(rowVisual.textColor,rowVisual.background,
+      "Candidate text must contrast against background");
+    assert.equal(rowVisual.flow,"max-content",
+      "Candidate rows must not stretch to fill list height");
+
     const uniqueRow=unique.locator(".i18n-plan-unique-row input");
     await uniqueRow.uncheck();
     await unique.locator(".i18n-bulk-attestation input").check();
@@ -286,6 +313,22 @@ try{
     assert.equal(csvUnique.includes("Bowl de iogurte"),false);
     assert.equal(csvUnique.includes("Atleta fictício"),false);
     assert.equal(csvUnique.includes("Tomar 2 vezes"),false);
+    const notes=page.locator(".i18n-plan-notes-preview");
+    await notes.locator("summary").click();
+    assert.match(await notes.locator("summary").innerText(),/1 notas de consumo/);
+    assert.match(await notes.locator(".i18n-plan-unique-row").innerText(),
+      /Podes aquecer o pão/);
+    assert.equal(await notes.locator("button").isDisabled(),true);
+    await notes.locator(".i18n-bulk-attestation input").check();
+    const noteDownload=page.waitForEvent("download");
+    await notes.locator("button").click();
+    const noteFile=await noteDownload;
+    assert.equal(noteFile.suggestedFilename(),"the-mile-traducoes-planos-notas.csv");
+    const csvNote=await fs.readFile(await noteFile.path(),"utf8");
+    assert.ok(csvNote.includes("Podes aquecer o pão"));
+    assert.ok(csvNote.includes("individual_note"));
+    assert.equal(csvNote.includes("Atleta fictício"),false);
+
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));

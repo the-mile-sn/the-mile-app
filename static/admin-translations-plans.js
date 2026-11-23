@@ -120,7 +120,11 @@
     let busy=false;
     const feedback=create("p","i18n-feedback");
     const notice=item.sensitive?create("p","i18n-plan-sensitive",
-      "Texto individual ou clínico: revisão profissional obrigatória. Não exportar."):null;
+      item.field_kind==="individual_note"?
+        "Nota de consumo do plano. Revê o conteúdo antes de partilhar; "+
+        "a exportação CSV está disponível apenas para notas elegíveis.":
+        "Texto personalizado ou potencialmente sensível: revisão profissional "+
+        "obrigatória. Não exportar."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
       save.disabled=!editor.value.trim()||!modified||busy;
@@ -216,10 +220,11 @@
     const intro=create("p","i18n-plan-policy",
       "Títulos idênticos na mesma refeição e unidades simples. "+
       "Revê o inglês uma vez e aprova até 100 ocorrências em simultâneo. "+
-      "Notas individuais, alternativas e textos clínicos ficam de fora.");
+      "As notas de consumo dos planos têm revisão própria; "+
+      "alternativas e dados clínicos ficam fora do CSV.");
     const search=create("input","i18n-plan-common-search");
     search.type="search";
-    search.placeholder="Pesquisar títulos e unidades…";
+    search.placeholder="Pesquisar títulos, unidades e notas…";
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
@@ -302,14 +307,29 @@
     uniqueDownload.type="button";uniqueDownload.disabled=true;
     uniquePreview.append(uniqueSummary,uniqueIntro,uniqueList,
       uniqueAcknowledge,uniqueDownload);
+    const notesPreview=create("details","i18n-plan-unique-preview i18n-plan-notes-preview");
+    const notesSummary=create("summary","","Terceiro CSV · notas de consumo dos planos");
+    const notesIntro=create("p","i18n-plan-policy",
+      "Notas escritas nas opções alimentares dos planos. Verifica o texto antes "+
+      "de o exportar e desmarca qualquer referência pessoal, clínica ou sensível.");
+    const notesList=create("div","i18n-plan-unique-list");
+    const notesConsent=create("label","i18n-bulk-attestation");
+    const notesCheck=create("input");notesCheck.type="checkbox";
+    notesConsent.append(notesCheck,create("span","",
+      "Revisei estas notas e confirmei que podem ser exportadas para tradução"));
+    const notesDownload=create("button","i18n-secondary",
+      "Descarregar CSV de notas dos planos");
+    notesDownload.type="button";notesDownload.disabled=true;
+    notesPreview.append(notesSummary,notesIntro,notesList,notesConsent,notesDownload);
     csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
       create("p","i18n-plan-policy",
         "O CSV comum mantém os títulos repetidos e unidades simples."+
         " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
         " a uma revisão de privacidade antes do download. Não exportamos"+
-        " notas clínicas, alternativas nem prescrições. Preenche apenas"+
-        " translated_text; importar não aprova automaticamente."),
-      csvActions,uniquePreview,ackLabel,bulkButton,csvFeedback);
+        " dados pessoais, alternativas nem prescrições. As notas dos planos"+
+        " têm um terceiro CSV com revisão. Preenche apenas translated_text;"+
+        " importar não aprova automaticamente."),
+      csvActions,uniquePreview,notesPreview,ackLabel,bulkButton,csvFeedback);
     const csvEntry=g=>({
       group_id:g.group_id,source_hash:g.source_hash,
       expected_group_hash:g.expected_group_hash,
@@ -348,6 +368,45 @@
         uniqueList.append(row);
       }
     };
+    const renderNotes=()=>{
+      notesCheck.checked=false;
+      notesDownload.disabled=true;
+      notesList.replaceChildren();
+      const candidates=groups.filter(g=>g.plan_note_candidate&&g.csv_eligible);
+      notesSummary.textContent="Terceiro CSV · "+candidates.length+
+        " notas de consumo candidatas a tradução";
+      if(!candidates.length){
+        notesList.append(create("p","i18n-plan-policy",
+          "Não existem notas de consumo elegíveis neste momento."));
+      }
+      for(const group of candidates){
+        const row=create("label","i18n-plan-unique-row");
+        const checkbox=create("input");checkbox.type="checkbox";
+        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
+        checkbox.addEventListener("change",()=>{
+          notesCheck.checked=false;notesDownload.disabled=true;
+        });
+        row.append(checkbox,create("span","",group.source_text+
+          " · "+group.meal_context));
+        notesList.append(row);
+      }
+    };
+    notesCheck.addEventListener("change",()=>{
+      notesDownload.disabled=!notesCheck.checked||
+        !notesList.querySelector("input:checked");
+    });
+    notesDownload.addEventListener("click",()=>{
+      if(!notesCheck.checked)return;
+      const included=new Set(Array.from(notesList.querySelectorAll("input:checked"))
+        .map(el=>el.dataset.groupId));
+      const rows=groups.filter(g=>g.plan_note_candidate&&g.csv_eligible&&
+        included.has(g.group_id)).map(csvEntry);
+      if(!rows.length){csvFeedback.textContent="Não há notas selecionadas.";return;}
+      downloadCsv(rows,"the-mile-traducoes-planos-notas.csv");
+      csvFeedback.textContent=rows.length+
+        " notas exportadas. Confirma o conteúdo do CSV antes de o partilhar.";
+      notesCheck.checked=false;notesDownload.disabled=true;
+    });
     uniqueCheck.addEventListener("change",()=>{
       uniqueDownload.disabled=!uniqueCheck.checked||
         !uniqueList.querySelector("input:checked");
@@ -495,16 +554,21 @@
       groups=result.items||[];
       showList();
       renderUnique();
+      renderNotes();
       updateCsvButtons();
     };
     const openGroup=item=>{
       detail.replaceChildren();
       const groupHead=create("div","i18n-plan-detail-head");
       groupHead.append(create("strong","",
-        item.field_kind==="option_title"?"Título de opção":"Unidade de apresentação"),
+        item.field_kind==="option_title"?"Título de opção":
+        item.field_kind==="individual_note"?"Nota de consumo do plano":
+        "Unidade de apresentação"),
         create("small","",item.missing_count+" ocorrências para aprovar"));
-      const context=create("p","i18n-plan-policy",item.field_kind==="option_title"?
-        "Contexto: "+item.meal_context:"Apenas expressões de unidade inequívocas");
+      const context=create("p","i18n-plan-policy",
+        item.field_kind==="display_quantity"?
+          "Apenas expressões de unidade inequívocas":
+          "Contexto: "+item.meal_context);
       const cols=create("div","i18n-plan-compare");
       const pt=create("div","i18n-plan-pt");
       pt.append(create("small","","Português · original"),
@@ -582,7 +646,9 @@
         row.append(create("strong","",item.source_text),
           create("small","",item.missing_count+" por traduzir · "+
             (item.field_kind==="option_title"?
-              "Título · "+item.meal_context:"Unidade simples")+
+              "Título · "+item.meal_context:
+              item.field_kind==="individual_note"?
+              "Nota do plano · "+item.meal_context:"Unidade simples")+
             (item.missing_count>100?" · em grupos de 100":"")+
             (item.imported_status?" · CSV "+(
               item.imported_status==="approved"?"revisto":"importado por rever"):"")));
