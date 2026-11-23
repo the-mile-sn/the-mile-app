@@ -25,6 +25,7 @@ try{
     let authenticated=false;
     const requests=[];
     const publicRef="a".repeat(64);
+    const privateRef="d".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
     let commonImported=false,importApprovals=0,importRequests=0;
     const makePlanField=()=>({field_path:"meals/0/options/0/title",
@@ -39,6 +40,22 @@ try{
       field_count:1,linked_food_count:1,
       statuses:{missing:planPending?0:1,pending:planPending&&!planApproved?1:0,
         approved:planApproved?1:0,outdated:0}};
+    const privatePublication={publication_ref:privateRef,
+      plan_type:"Plano amarelo",player_label:"Atleta fictício reservado",
+      state:"published",published_at:100,field_count:2,linked_food_count:0,
+      statuses:{missing:2,pending:0,approved:0,outdated:0}};
+    const privateFields=[
+      {field_path:"meals/0/options/0/foods/0/display_name",
+        field_kind:"alternative_override",field_label:"Alternativa personalizada",
+        group:"Almoço · Opção 1",sensitive:true,source_text:"Pão ralado",
+        source_hash:"b".repeat(64),translated_text:"",
+        candidate_hash:null,status:"missing",suggestion:null},
+      {field_path:"meals/0/options/0/foods/1/label",
+        field_kind:"supplement_label",field_label:"Suplemento · texto 2",
+        group:"Almoço · Opção 1",sensitive:true,source_text:"Suplemento A",
+        source_hash:"c".repeat(64),translated_text:"",
+        candidate_hash:null,status:"missing",suggestion:null}
+    ];
     await page.route("**/api/**",async route=>{
       const url=new URL(route.request().url()),path=url.pathname;
       requests.push(path);
@@ -49,7 +66,8 @@ try{
       }else if(path==="/api/v2/admin/i18n/overview"){
         await route.fulfill(fmt(stats));
       }else if(path==="/api/v2/admin/i18n/plans"){
-        await route.fulfill(fmt({language:"en",items:[planPublication],total:1,
+        await route.fulfill(fmt({language:"en",
+          items:[planPublication,privatePublication],total:2,
           reuse_audit:{published_versions:1,visible_text_fields:7,
             repeated_option_title_occurrences:2,approved_library_food_references:1,
             alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1,
@@ -157,8 +175,11 @@ try{
         await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
           group_id:payload.group_id}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
-        assert.equal(url.searchParams.get("publication_ref"),publicRef);
-        await route.fulfill(fmt({publication:planPublication,fields:[makePlanField()],
+        const ref=url.searchParams.get("publication_ref");
+        assert.ok([publicRef,privateRef].includes(ref));
+        await route.fulfill(fmt({
+          publication:ref===publicRef?planPublication:privatePublication,
+          fields:ref===publicRef?[makePlanField()]:privateFields,
           policy:"manual_private_review_no_csv_no_external_api"}));
       }else if(path==="/api/v2/admin/i18n/plans/propose"){
         const payload=route.request().postDataJSON();
@@ -446,6 +467,24 @@ try{
     assert.equal(csvFood.includes("Atleta fictício"),false);
     assert.equal(csvFood.includes("Tomar 2 vezes"),false);
 
+    const privateQueue=page.locator(".i18n-plan-private-queue");
+    await privateQueue.locator("button").waitFor();
+    assert.match(await privateQueue.locator("button").innerText(),
+      /Abrir revisão privada · 2 textos/);
+    assert.equal(await privateQueue.locator(".i18n-plan-field").count(),0,
+      "Private texts should load only after the administrator opens the queue");
+    const proposalsBefore=planSaveRequests;
+    await privateQueue.locator("button").click();
+    await privateQueue.locator(".i18n-plan-field").first().waitFor();
+    assert.equal(await privateQueue.locator(".i18n-plan-field").count(),2);
+    assert.match(await privateQueue.innerText(),/Alternativa personalizada/);
+    assert.match(await privateQueue.innerText(),/Suplemento · texto 2/);
+    assert.equal(await privateQueue.locator(".i18n-plan-field-actions .i18n-primary")
+      .first().isDisabled(),true);
+    assert.equal(planSaveRequests,proposalsBefore,
+      "Opening the final queue must not save or approve anything");
+    assert.equal(await privateQueue.locator("a[download]").count(),0);
+    assert.equal(await privateQueue.locator('input[type="file"]').count(),0);
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
