@@ -38,6 +38,9 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(nodes.get("#profile-password-open > span:nth-child(2)")
                    .textContent,"Change password");
   assert.equal(vm.runInContext("names.breakfast",ctx),"Breakfast");
+  assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"General");
+  assert.equal(vm.runInContext('playerClassification("Jogo personalizado")',ctx),"Jogo personalizado");
+  assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Lunch");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Blue");
   const count=nodes.size;
   for(const node of nodes.values()){
@@ -52,6 +55,8 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(nodes.get("#tabs [data-tab='overview'] > span:last-child")
                    .textContent,"Início");
   assert.equal(vm.runInContext("names.breakfast",ctx),"Pequeno-almoço");
+  assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"Geral");
+  assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Almoço");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Azul");
   assert.equal(element.className,"mile-approved");
   assert.deepEqual(element.style,{});
@@ -73,6 +78,8 @@ test("Remaining Player and Chef UI labels use the selected language without visu
   ])assert.ok(player.includes(phrase),phrase);
   assert.ok(chef.includes('lang==="pt"?"Fechar fotografia":"Close photo"'));
   assert.ok(chef.includes('lang==="pt"?"abrir detalhes":"open details"'));
+  assert.ok(chef.includes('function chefClassificationLabel(value){return lang==="en"&&value==="Geral"?"General":value;}'));
+  assert.ok(player.includes('playerSupplementMomentLabel(x.display_moment||x.timing_text||'));
   assert.ok(portions.includes('tr("Reduzir painel","Collapse panel")'));
   assert.ok(portions.includes('tr("Expandir painel","Expand panel")'));
   // Text-only changes: no CSS, HTML or new visual control is required.

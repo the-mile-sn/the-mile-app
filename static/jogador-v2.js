@@ -62,6 +62,12 @@ const playerAssessmentEnglish={
 function playerAssessmentLabel(key,canonical){
  return playerUiLanguage==="en"?(playerAssessmentEnglish[key]||canonical):canonical;
 }
+function playerSupplementMomentLabel(value){
+ if(playerUiLanguage!=="en")return value;
+ return {"Pequeno-almoço":"Breakfast","Almoço":"Lunch","Lanche":"Snack",
+         "Jantar":"Dinner","Ceia":"Supper","Treino":"Training",
+         "Jogo":"Match","Almoço ou jantar":"Lunch or dinner"}[value]||value;
+}
 function playerPhaseLabel(value){
  if(playerUiLanguage!=="en")return value;
  return {"Pré-treino":"Pre-training","Pós-treino":"Post-training",
@@ -553,7 +559,7 @@ function paintPlayerPhoto(hasPhoto,initials,epoch){
   }).catch(()=>{});
 }
 function displayPlayerRenewal(value){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return playerText("Por definir","Not set");
  return value.slice(8,10)+"/"+value.slice(5,7)+"/"+value.slice(0,4);
 }
 let playerLoadingPhotoController=null;
@@ -919,7 +925,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
   dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry||{date:key,classification:null}));
   const header=document.createElement("button");header.type="button";header.className="weekly-day-header week-day"+(key===iso(day)?" selected":"")+(key===iso(new Date())?" today":"");header.setAttribute("aria-pressed",String(key===iso(day)));header.setAttribute("aria-label",playerText("Abrir vista diária: ","Open day view: ")+dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
-  for(const [cls,val] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",entry?.classification||"Geral"]]){
+  for(const [cls,val] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(entry?.classification||"Geral")]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
   }
   markWeeklyColumn(header,key);header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};grid.append(header);
@@ -952,7 +958,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const section=document.createElement("section");section.className="weekly-detail weekly-color-detail tone-"+color;
   const dayData=r.days.find(x=>x.date===date);
   const top=document.createElement("div");top.className="weekly-detail-heading";
-  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"Geral");
+  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+playerClassification(dayData?.classification||"Geral");
   const title=document.createElement("strong");title.textContent=names[meal]||meal;
   const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar refeição","Close meal"));close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
   const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
@@ -975,7 +981,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
     const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
     const top=document.createElement("div");top.className="weekly-detail-heading";
     const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short",day:"2-digit",month:"2-digit"});
-    const title=document.createElement("strong");title.textContent=item.selection_phase==="intra_match"?"Jogo":item.title;
+    const title=document.createElement("strong");title.textContent=item.selection_phase==="intra_match"?playerText("Jogo","Match"):item.title;
     const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar refeição","Close meal"));close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
     const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
     const opts=item.options||[],avg=average(opts);
@@ -1356,7 +1362,7 @@ function supplementsCard(items){
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
-  const moment=document.createElement("small");moment.textContent=x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||"Sem associação";
+  const moment=document.createElement("small");moment.textContent=playerSupplementMomentLabel(x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||playerText("Sem associação","Not assigned"));
   line.append(name,moment);if(x.note){const note=document.createElement("small");note.textContent=x.note;line.append(note);}box.append(line);
  }
  return box;
@@ -2288,8 +2294,8 @@ async function overview(){
   const dayInfo=r.days.find(x=>x.date===iso(dt));
   const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"")+(iso(dt)===iso(new Date())?" today":"");
   button.setAttribute("aria-pressed",String(iso(dt)===d));
-  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+dayInfo.classification:""));
-  for(const [cls,text] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"Geral"]]){
+  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+playerClassification(dayInfo.classification):""));
+  for(const [cls,text] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(dayInfo?.classification||"Geral")]]){
    const span=document.createElement("span");span.className=cls;span.textContent=text;button.append(span);
   }
   button.onclick=()=>{pendingDailySwipeDirection=0;day=dt;overview().catch(error);};strip.append(button);
@@ -2903,15 +2909,15 @@ async function menusView(){
   const key=iso(dt),classification=c.days.find(x=>x.date===key)?.classification||"Geral";
   const button=document.createElement("button");button.type="button";button.className="week-day"+(key===menuSelectedDate?" selected":"")+(key===todayKey?" today":"");button.dataset.date=key;
   button.setAttribute("aria-pressed",String(key===menuSelectedDate));
-  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+" · "+classification);
-  for(const [cls,value] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",classification]]){
+  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+" · "+playerClassification(classification));
+  for(const [cls,value] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(classification)]]){
    const span=document.createElement("span");span.className=cls;span.textContent=value;button.append(span);
   }
   button.onclick=()=>{selectMenuDay(key);animateCalendarSelection(strip,key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.append(button);
  }
  animateCalendarSelection(strip,menuSelectedDate);
- const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString(playerDateLocale(),{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString(playerDateLocale(),{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);const isUnassigned=!menu;const div=document.createElement("div");div.className="row menu-entry"+(isUnassigned?" menu-entry--unassigned":"");div.dataset.meal=meal;
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString(playerDateLocale(),{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString(playerDateLocale(),{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=playerClassification(dayClass?.classification||"Geral");h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);const isUnassigned=!menu;const div=document.createElement("div");div.className="row menu-entry"+(isUnassigned?" menu-entry--unassigned":"");div.dataset.meal=meal;
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===(dayClass?.classification||"Geral"));const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=menu?(Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal])):null;
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";

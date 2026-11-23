@@ -638,6 +638,7 @@ function chefCompactDate(date){
    .replace(/-feira/gi,"").replace(/\s+de\s+/gi," ").replace(/\s+/g," ").trim();
 }
 function classificationFor(key){return days.find(item=>item.date===key)?.classification||"";}
+function chefClassificationLabel(value){return lang==="en"&&value==="Geral"?"General":value;}
 function mealAvailable(date,meal){return !!colorFor(date,meal)||!!plannedMenu(date,meal);}
 function chefNutrition(totals){
  if(!totals||typeof totals!=="object")return null;
@@ -801,7 +802,7 @@ function renderChefDaily(root){
  const summary=node("section","chef-daily-summary");
  const header=node("div","chef-summary-header");
  header.append(node("strong","",chefCompactDate(selectedDay)));
- if(classification)header.append(node("span","chef-microcycle",classification));
+ if(classification)header.append(node("span","chef-microcycle",chefClassificationLabel(classification)));
  summary.append(header);
  const strip=node("div","chef-day-colors");
  for(const meal of mealOrder){
@@ -823,7 +824,7 @@ function chefWeekDetailLabel(date){
  const d=String(date.getDate()).padStart(2,"0");
  const m=String(date.getMonth()+1).padStart(2,"0");
  const datePart=lang==="pt"?d+"/"+m:m+"/"+d;
- const microcycle=classificationFor(dateKey(date));
+ const microcycle=chefClassificationLabel(classificationFor(dateKey(date)));
  return weekday+", "+datePart+(microcycle?" · "+microcycle:"");
 }
 /* Player's 460ms adjacent-date moving circle, adapted to Chef's
@@ -878,7 +879,7 @@ function renderChefWeekly(root){
   dayHead.type="button";dayHead.setAttribute("aria-label",dateDescription(date));
   dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
   dayHead.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
-    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
+    node("strong","",String(date.getDate())),node("span","",chefClassificationLabel(classificationFor(key))));
   dayHead.onclick=()=>selectChefWeekDay(date);
   grid.append(dayHead);
  }
@@ -1020,7 +1021,7 @@ function renderChefMenuDay(root,key){
  const weekday=node("strong","",chefMenuWeekday(date));
  weekday.title=dateDescription(date);
  head.append(weekday);
- const micro=classificationFor(key);if(micro)head.append(node("span","",micro));
+ const micro=chefClassificationLabel(classificationFor(key));if(micro)head.append(node("span","",micro));
  card.append(head);
  for(const meal of ["lunch","dinner"]){
   const item=plannedMenu(key,meal),color=mealTone(key,meal);
