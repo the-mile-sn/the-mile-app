@@ -211,6 +211,45 @@ def localise_published_plans(c, plans, library, *, language="pt"):
         localised[plan_type] = copied
     return localised, en_library
 
+def search_approved_dishes(c, search):
+    """Search PT/approved EN Chef dish names without changing canonical IDs.
+
+    Chef access is verified by the calling API. Unapproved and outdated names
+    never match English searches; the display-only result keeps the existing
+    field names so the approved Chef menu form remains unchanged.
+    """
+    query="%"+search.lower()+"%"
+    columns="d.id,d.name_pt,d.category,t.source_hash AS _translation_hash,"+(
+        "t.translated_text AS _translation_text")
+    joined=""" FROM v2_dish_library d
+       LEFT JOIN v2_content_translations t
+         ON t.entity_kind='dish' AND t.entity_id=d.id
+        AND t.field_path='name_pt' AND t.language='en'
+        AND t.status='approved'
+       WHERE d.active=1 AND """
+    pt=c.execute("SELECT "+columns+joined+
+        "lower(d.name_pt) LIKE ? ORDER BY d.name_pt LIMIT 100",
+        (query,)).fetchall()
+    en=c.execute("SELECT "+columns+joined+
+        "lower(t.translated_text) LIKE ? ORDER BY t.translated_text LIMIT 250",
+        (query,)).fetchall()
+    found={}
+    for row in list(pt)+list(en):
+        value=dict(row)
+        label=_current_english(
+            {"source_hash":value.get("_translation_hash"),
+             "translated_text":value.get("_translation_text")},
+            value["name_pt"])
+        if (search.casefold() not in value["name_pt"].casefold()
+                and search.casefold() not in str(label).casefold()):
+            continue
+        found[str(value["id"])]={"id":value["id"],"name_pt":label,
+                                 "category":value["category"]}
+    return sorted(found.values(),
+                  key=lambda value:(value["name_pt"].casefold(),
+                                    str(value["id"])))[:100]
+
+
 def localise_dish_menus(c, menus, *, language="pt"):
     """Translate only authorised dish menu display names, never free text.
 
