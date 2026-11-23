@@ -322,7 +322,7 @@ async function api(path,opts={}){
  if(epoch!==playerSessionEpoch){const err=new Error("stale_session");err.stale=true;throw err;}
  if(!r.ok){
   if(r.status===401&&path!=="/api/login"&&path!=="/api/logout")revokePlayerView();
-  const err=new Error(data.error||data.code||"Pedido indisponível");err.status=r.status;throw err;
+  const err=new Error(data.error||data.code||playerText("Pedido indisponível","Request unavailable"));err.status=r.status;throw err;
  }
  return data;
 }
@@ -1326,7 +1326,7 @@ function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"");
  const label=document.createElement("span");label.className=compact?"":"tm-day-title";label.textContent=playerEventTitle(event);section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
-   const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label",playerText("Editar ","Edit ")+event.title);toggle.title=playerText("Editar ","Edit ")+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
+   const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label",playerText("Editar ","Edit ")+playerEventTitle(event));toggle.title=playerText("Editar ","Edit ")+playerEventTitle(event);toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
    const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label",playerText("Data","Date"));
    const session=document.createElement("select");session.setAttribute("aria-label",playerText("Período","Period"));
@@ -1350,10 +1350,10 @@ function eventCard(event,compact=false){
    const actions=document.createElement("div");actions.className="daily-event-actions";save.className="daily-event-save";actions.append(save);
    editor.append(fields,actions,warning);
    const remove=document.createElement("button");remove.type="button";remove.className="daily-event-remove";
-   remove.setAttribute("aria-label",playerText("Remover ","Remove ")+event.title);remove.title=playerText("Remover ","Remove ")+event.title;
+   remove.setAttribute("aria-label",playerText("Remover ","Remove ")+playerEventTitle(event));remove.title=playerText("Remover ","Remove ")+playerEventTitle(event);
    remove.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M19.5 5.5L18.8803 15.5251C18.7219 18.0864 18.6428 19.3671 18.0008 20.2879C17.6833 20.7431 17.2747 21.1273 16.8007 21.416C15.8421 22 14.559 22 11.9927 22C9.42312 22 8.1383 22 7.17905 21.4149C6.7048 21.1257 6.296 20.7408 5.97868 20.2848C5.33688 19.3626 5.25945 18.0801 5.10461 15.5152L4.5 5.5\"/><path d=\"M3 5.5H21M16.0557 5.5L15.3731 4.09173C14.9196 3.15626 14.6928 2.68852 14.3017 2.39681C14.215 2.3321 14.1231 2.27454 14.027 2.2247C13.5939 2 13.0741 2 12.0345 2C10.9688 2 10.436 2 9.99568 2.23412C9.8981 2.28601 9.80498 2.3459 9.71729 2.41317C9.32164 2.7167 9.10063 3.20155 8.65861 4.17126L8.05292 5.5\"/><path d=\"M9.5 16.5L9.5 10.5M14.5 16.5L14.5 10.5\"/></svg>";
    remove.onclick=async()=>{
-     if(!confirm(playerText("Remover ","Remove ")+event.title+playerText(" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."," from this day? Associated peri-training meals will no longer be counted.")))return;
+     if(!confirm(playerText("Remover ","Remove ")+playerEventTitle(event)+playerText(" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."," from this day? Associated peri-training meals will no longer be counted.")))return;
      remove.disabled=true;
      try{
        await api("/api/v2/player/events/"+encodeURIComponent(event.id)+"?local_date="+encodeURIComponent(iso(new Date())),{method:"DELETE",
@@ -2695,13 +2695,13 @@ async function overview(){
     const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
      if(isRecordedOption&&previous.status==='all')return;
-     if(previous&&!isRecordedOption&&!window.confirm('Já existe um registo para esta refeição. Substituir pela opção selecionada?'))return;
+     if(previous&&!isRecordedOption&&!window.confirm(playerText('Já existe um registo para esta refeição. Substituir pela opção selecionada?','A record already exists for this meal. Replace it with the selected option?')))return;
      quick.disabled=true;edit.disabled=true;quick.textContent=playerText('A guardar…','Saving…');feedback.textContent='';
      try{
       const qs=new URLSearchParams({date:d,meal:meal,event_id:''});
       const source=await api('/api/v2/player/consumption-options?'+qs);
       const selected=source.options?.[i];
-      if(!selected?.option_ref)throw new Error('Opção indisponível');
+      if(!selected?.option_ref)throw new Error(playerText('Opção indisponível','Option unavailable'));
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
       showConsumptionSuccess(quick);feedback.textContent='';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
      }catch(e){feedback.textContent=playerText('Não foi possível registar. Tenta novamente.','Could not save the record. Please try again.');quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(e);}
@@ -2712,7 +2712,7 @@ async function overview(){
   }
   if(consumptionEnabled&&color&&options.length){
    const change=document.createElement('button');change.type='button';change.className='consumption-cancel consumption-change-color';
-   change.textContent=playerText('Alterar cor','Change colour');change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
+   change.textContent=playerText('Alterar cor','Change colour');change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label',playerText('Registar consumo de outra cor','Record consumption with a different colour'));
    
    change.onclick=()=>openAlternativeColorPicker(section,d,meal);
    section.append(change);

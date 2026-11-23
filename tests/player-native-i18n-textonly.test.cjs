@@ -211,6 +211,34 @@ test("Chef dish category search renders English without changing canonical categ
   assert.ok(source.includes('node("small","",chefDishCategoryLabel(dish.category))'));
 });
 
+test("Meal replacement, missing option and event editing prompts honour locale without changing data",()=>{
+  const source=fs.readFileSync("static/jogador-v2.js","utf8");
+  const required=[
+    "playerText('Já existe um registo para esta refeição. Substituir pela opção selecionada?','A record already exists for this meal. Replace it with the selected option?')",
+    "new Error(playerText('Opção indisponível','Option unavailable'))",
+    "playerText('Registar consumo de outra cor','Record consumption with a different colour')",
+    'playerText("Pedido indisponível","Request unavailable")',
+    'playerText("Editar ","Edit ")+playerEventTitle(event)',
+    'playerText("Remover ","Remove ")+playerEventTitle(event)'
+  ];
+  for(const phrase of required)assert.ok(source.includes(phrase),phrase);
+  assert.ok(source.includes('body:JSON.stringify({event_date:date.value,session:session.value,local_date:iso(new Date())})'));
+  assert.ok(source.includes('decorateLabel(section,event.title||event.kind)'),
+    "Original event title remains canonical for icons and editing");
+  assert.equal(source.includes("change.setAttribute('aria-label','Registar consumo de outra cor')"),false);
+  assert.equal(source.includes("throw new Error('Opção indisponível')"),false);
+  // The only translation is in the presentation helper; event records stay unchanged.
+  const prelude=source.slice(source.indexOf("const $=id=>"),source.indexOf("let playerSessionEpoch=0;"));
+  const document={documentElement:{lang:"pt-PT"},querySelector(){return null}};
+  const ctx=vm.createContext({document});
+  vm.runInContext(prelude,ctx);
+  assert.equal(vm.runInContext('playerText("Editar ","Edit ")+playerEventTitle({kind:"training",title:"Treino"})',ctx),"Editar Treino");
+  vm.runInContext('applyPlayerNativeLanguage("en")',ctx);
+  assert.equal(vm.runInContext('playerText("Editar ","Edit ")+playerEventTitle({kind:"training",title:"Treino"})',ctx),"Edit Training");
+  assert.equal(vm.runInContext('playerText("Remover ","Remove ")+playerEventTitle({kind:"match",title:"Jogo"})',ctx),"Remove Match");
+  assert.equal(vm.runInContext('playerText("Editar ","Edit ")+playerEventTitle({kind:"training",title:"Sessão própria"})',ctx),"Edit Sessão própria");
+});
+
 test("Remaining consumption and nutrition labels use selected locale",()=>{
   const source=fs.readFileSync("static/jogador-v2.js","utf8");
   assert.ok(source.includes("playerText('Editar consumo','Edit consumption')"));
