@@ -52,7 +52,13 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
             self.assertEqual(first.request("/api/v2/player/preferences",
                 "PUT",{"language":"en"})["body"]["language"],"en")
             self.assertEqual(first.request("/api/v2/player/me")["body"]
-                             ["player"]["language"],"en")
+                             ["player"]["language"],"pt",
+                             "No English UI until translations are readable")
+            with patch.dict(app.os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}), \
+                 patch("app_content_i18n_v2.translation_store_available",
+                       return_value=True):
+                self.assertEqual(first.request("/api/v2/player/me")["body"]
+                                 ["player"]["language"],"en")
             self.assertEqual(second.request("/api/v2/player/preferences")["body"]
                              ["language"],"pt")
             with app.connect() as c:
