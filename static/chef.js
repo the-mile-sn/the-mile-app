@@ -66,6 +66,10 @@ let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
 let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
 let chefProfileSubpage=null;
 const txt = () => labels[lang];
+// Only the text of the existing Day/Week selector changes with the Chef language.
+function chefViewModeCaption(view){
+ return (lang==="pt"?{day:"Dia",week:"Semana"}:{day:"Day",week:"Week"})[view]||view;
+}
 // Localise presentation only: the dish's original category and ID stay unchanged.
 const chefDishCategoryEnglish={
  "Peixe":"Fish","Peixe magro":"Lean fish","Peixe gordo":"Oily fish",
@@ -1269,7 +1273,11 @@ function render(){
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
-  for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
+  el("chef-view-mode").setAttribute("aria-label",lang==="pt"?"Vista de planeamento":"Planning view");
+  for(const button of el("chef-view-mode").querySelectorAll("[data-view]")){
+    button.textContent=chefViewModeCaption(button.dataset.view);
+    button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
+  }
   const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();screen.removeAttribute("aria-busy");
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
