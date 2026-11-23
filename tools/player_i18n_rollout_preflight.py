@@ -145,6 +145,13 @@ def inspect(c, env):
 
 
 def main():
+    # Running this file directly makes Python start imports from tools/,
+    # not the repository root. Resolve the root from this file rather than
+    # requiring operators to edit PYTHONPATH on production Shell sessions.
+    from pathlib import Path
+    project_root = str(Path(__file__).resolve().parent.parent)
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
     from app import connect
     with connect() as c:
         # Explicitly prohibit write queries, including through imported helpers.
