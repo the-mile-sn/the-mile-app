@@ -1,11 +1,13 @@
 # Internacionalização PT-PT / EN-GB — integração protegida (23/11/2026)
 
-## Regra absoluta: zero alterações visuais
-**Nunca redesenhar nenhum componente aprovado.** Cor, fonte, peso, tamanho,
-paddings, margens, alinhamentos, grelhas, animações, swipes, scroll, ícones,
-comportamentos de toque, HTML estrutural e CSS mantêm-se. Apenas as cadeias
-textuais e a lógica de leitura da língua mudam. **Não criar um novo seletor
-visual** sem um acordo específico sobre o componente já aprovado.
+## Regra absoluta: preservar toda a app, exceto o novo seletor autorizado
+**Nunca redesenhar nenhum componente aprovado.** Cores, fontes, tamanhos,
+paddings, margens, alinhamentos, animações, swipes, scroll, ícones e gestos
+mantêm-se. Apenas os textos visíveis e a lógica do idioma mudam. **Única
+exceção aprovada:** acrescentar no Perfil dos jogadores um card de Idioma
+igual ao da app dos chefs, imediatamente abaixo de Notificações.
+O card é a única adição ao HTML e ao CSS; os ficheiros anteriores devem
+continuar literalmente iguais em todos os restantes pontos.
 
 ## Estado
 Trabalho preparado na PR #364, **sem publicação nem ativação**.
@@ -40,17 +42,22 @@ A ausência desta confirmação impede a ativação em produção.
 - A língua efetiva em `/api/v2/player/me` e nos Planos só pode ser EN quando
   **ambas** as flags estão ativas e a tabela aprovada está acessível.
 - A interface do jogador traduz os **mesmos nós existentes**, começando por
-  navegação, Perfil e filtros de Planos; não acrescenta botões ou cartões.
-- Ainda não há seletor visual aprovado para o jogador. A preferência fica
-  pronta no backend; a ativação dependerá de decisão separada que respeite
-  o design existente.
+  navegação, Perfil e filtros de Planos.
+- Seletor de idioma **PT / EN** autorizado no Perfil dos jogadores, seguindo
+  a localização, geometria, cores e tipografia do card já aprovado na app
+  dos chefs. Apenas aparece quando ambas as flags e o acesso à tabela
+  de traduções aprovadas estiverem disponíveis.
+- Ao escolher o idioma, a preferência é gravada no próprio utilizador,
+  através do endpoint privado com CSRF, e o carregamento existente atualiza
+  textos e conteúdos sem criar uma segunda lógica de renderização.
 - O Chef conserva o seletor já existente e a sua preferência; depois de
   alterar o idioma recarrega os Planos.
 
 ## Condições obrigatórias antes do merge e da ativação
-1. Confirmar **mesma fonte autorizada** para as traduções aprovadas nos
-   serviços administrativo e público. Nunca replicar dados clínicos ou
-   exportar snapshots por rotas públicas.
+1. Confirmada pela responsável a **mesma base de dados** no Render para
+   os dois serviços. Antes de ativar, confirmar por leitura interna protegida
+   que o serviço público vê a tabela de traduções aprovadas. Nunca replicar
+   dados clínicos nem exportar snapshots por rotas públicas.
 2. Completar o inventário e a tradução dos textos nativos restantes (vista
    Dia/Semana, formulários, estados, menus, consumos, receitas e suplementos),
    mantendo rigorosamente a composição aprovada de todas as vistas.
@@ -69,9 +76,11 @@ A ausência desta confirmação impede a ativação em produção.
 - IDs de opções, escolhas, consumos, receitas, suplementação, quantidades e
   nutrientes não são modificados.
 - Preferências isoladas por sessão, CSRF e permissão.
-- Substituição textual nos elementos já existentes sem inserir/remover
-  componentes nem alterar classes e estilos.
-- **Nenhum .html ou .css está incluído nesta PR.**
+- Substituição textual nos componentes existentes, sem alterar as suas
+  classes, estilos ou estrutura.
+- Exceção: um único card no Perfil dos jogadores. Os testes comparam
+  o HTML e o CSS com o estado anterior, permitindo apenas a inserção
+  do card e os estilos estritamente isolados deste componente.
 
 Esta PR é base técnica, **não uma ativação de inglês em produção**.
 
@@ -87,8 +96,8 @@ Esta PR é base técnica, **não uma ativação de inglês em produção**.
 - O teste de interface dos sliders continua a exigir o mesmo CSS e os
   mesmos valores de 1 a 10. O teste de UI de Receitas continua a exigir
   os mesmos ícones, cards, separadores, fotografia e navegação.
-- Foi confirmado que a PR não altera ficheiros HTML ou CSS. A tradução de
-  cadeias não autoriza modificar a estrutura DOM.
+- Nenhum componente visual existente pode ser modificado. O novo seletor
+  do Perfil é a única exceção aprovada e tem testes de isolamento.
 
 ## Validação do armazenamento e lançamento
 A leitura externa de `the-mile-db` via Render está bloqueada pela própria
