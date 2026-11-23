@@ -18,7 +18,7 @@ class ConsumptionHttpSmoke(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             env=os.environ.copy()
             env.update({"MILE_DATA_DIR":directory,"DATABASE_URL":"",
-                        "MILE_SITE_ROLE":"both","MILE_CONSUMPTION_PILOT_ATHLETE_IDS":""})
+                        "MILE_SITE_ROLE":"both"})
             # The player-only startup enforces the production 58-plan readiness gate.\n            # Use the combined role here to test identical HTTP authentication\n            # without manufacturing or bypassing the published-plan roster.\n            # Run a separate interpreter: app reads its DB configuration on import.
             script=r'''
 import json
@@ -76,7 +76,8 @@ try:
   try:
    with urlopen(authenticated,timeout=8) as response: linked_status=response.status
   except HTTPError as error: linked_status=error.code
-  assert linked_status==403,(path,linked_status)
+  expected_linked=400 if method=="PUT" else 200
+  assert linked_status==expected_linked,(path,linked_status,expected_linked)
  # Exercise real username/password login, not only a fabricated session.
  login=Request(base+"/api/login",data=json.dumps({"identifier":"smokeplayer","password":"smoke-passphrase-unique"}).encode(),
   method="POST",headers={"Content-Type":"application/json"})
@@ -84,8 +85,7 @@ try:
   assert response.status==200,response.status
   cookie=response.headers.get("Set-Cookie","")
   assert "mile_session=" in cookie,cookie
- # Allowlist the synthetic athlete, then test a real HTTP save/read cycle.
- os.environ["MILE_CONSUMPTION_PILOT_ATHLETE_IDS"]="pilot-athlete"
+ # The synthetic linked player may record consumption without the retired pilot allowlist.
  payload={"date":"2026-11-11","meal":"lunch","option_ref":"option-test","status":"all"}
  req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
   headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
