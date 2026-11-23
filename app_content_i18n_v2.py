@@ -129,3 +129,30 @@ def localise_published_plans(c, plans, library, *, language="pt"):
         copied["content"] = snapshot
         localised[plan_type] = copied
     return localised, en_library
+
+def localise_dish_menus(c, menus, *, language="pt"):
+    """Translate only authorised dish menu display names, never free text.
+
+    Menu IDs, dates, kinds, the stored canonical dish value and history remain
+    unchanged. Player and Chef endpoints first scope the menu rows by athlete.
+    """
+    if not enabled(language) or not menus or not translation_store_available(c):
+        return menus
+    ids=sorted({str(row.get("dish_id")) for row in menus
+                if row.get("kind")=="dish" and row.get("dish_id")})
+    if not ids:
+        return menus
+    placeholders=",".join("?" for _ in ids)
+    canonical={str(row["id"]):row["name_pt"] for row in c.execute(
+        "SELECT id,name_pt FROM v2_dish_library WHERE active=1 AND id IN ("+
+        placeholders+")",tuple(ids)).fetchall()}
+    approved={row["entity_id"]:row for row in _approved_rows(c,"dish")
+              if row["field_path"]=="name_pt"}
+    result=[]
+    for menu in menus:
+        display=dict(menu)
+        dish_id=str(menu.get("dish_id") or "")
+        if menu.get("kind")=="dish" and dish_id in canonical:
+            display["value"]=_current_english(approved.get(dish_id),canonical[dish_id])
+        result.append(display)
+    return result
