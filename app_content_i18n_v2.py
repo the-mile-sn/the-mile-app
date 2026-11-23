@@ -28,6 +28,24 @@ def translation_store_available(c):
         WHERE type='table' AND name='v2_content_translations'""").fetchone() is not None
 
 
+def translation_readiness(c):
+    """Restricted diagnostic: never return private source or English text.
+
+    This runs inside the app's own database connection (no external network
+    access or Render IP allowlist changes). The calling route must enforce an
+    authenticated administrator and the diagnostic feature flag.
+    """
+    if not translation_store_available(c):
+        return {"available":False,"approved_count":0,"kinds":{}}
+    rows=c.execute("""SELECT entity_kind,COUNT(*) AS approved_count
+        FROM v2_content_translations
+        WHERE language='en' AND status='approved'
+        GROUP BY entity_kind ORDER BY entity_kind""").fetchall()
+    counts={row["entity_kind"]:int(row["approved_count"]) for row in rows}
+    return {"available":True,"approved_count":sum(counts.values()),
+            "kinds":counts}
+
+
 def _sha(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
