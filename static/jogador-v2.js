@@ -24,6 +24,7 @@ const playerTextBindings=[
   ["#profile-main .profile-plan-detail:first-child > span","Plano de acompanhamento","Support plan"],
   ["#profile-main .profile-renewal-detail > span","Data de renovação","Renewal date"],
   ["#profile-notifications-open .profile-notification-label","Notificações","Notifications"],
+  ["#profile-language-label","Idioma","Language"],
   ["#profile-password-open > span:nth-child(2)","Alterar palavra-passe","Change password"],
   ["#profile-logout > span:last-child","Terminar sessão","Sign out"],
   ["#profile-notifications-title","Notificações","Notifications"],
@@ -81,6 +82,57 @@ function applyPlayerNativeLanguage(language){
  }
 }
 let playerSessionEpoch=0;
+let playerLanguageSaving=false;
+function syncPlayerLanguageSelector(preferences){
+ const card=$("profile-language-card");
+ if(!card)return;
+ const ready=preferences?.enabled===true;
+ card.hidden=!ready;
+ const label=playerText("Idioma","Language");
+ card.setAttribute("aria-label",label);
+ $("profile-language-selector").setAttribute("aria-label",label);
+ for(const button of card.querySelectorAll("button[data-language]")){
+  const selected=button.dataset.language===playerUiLanguage;
+  button.classList.toggle("active",selected);
+  button.setAttribute("aria-pressed",String(selected));
+  button.disabled=playerLanguageSaving;
+ }
+ if(!ready)$("profile-language-feedback").textContent="";
+}
+async function updatePlayerLanguageChoice(code){
+ if(!["pt","en"].includes(code)||playerLanguageSaving||!me||
+    $("profile-language-card").hidden||code===playerUiLanguage)return;
+ const epoch=playerSessionEpoch;
+ const feedback=$("profile-language-feedback");
+ playerLanguageSaving=true;
+ syncPlayerLanguageSelector({enabled:true});
+ feedback.textContent="";
+ try{
+  await api("/api/v2/player/preferences",{
+   method:"PUT",
+   headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+   body:JSON.stringify({language:code})
+  });
+  if(epoch!==playerSessionEpoch)return;
+  // Reload the authenticated data through the normal existing session path:
+  // this also refreshes cached Planos, menus, daily supplements and recipes.
+  overviewReadCache.clear();overviewSnapshot=null;
+  lastOverviewPresentation=null;lastMenuPresentationWeek=null;
+  window.themileRecipes?.reset();
+  await session();
+ }catch(err){
+  if(epoch===playerSessionEpoch&&!err.stale){
+   feedback.textContent=playerText(
+    "Não foi possível alterar o idioma. Tenta novamente.",
+    "Could not change language. Please try again.");
+  }
+ }finally{
+  playerLanguageSaving=false;
+  if(epoch===playerSessionEpoch)
+   syncPlayerLanguageSelector({enabled:!$("profile-language-card").hidden});
+ }
+}
+
 let visualPortionsByColor={};
 let pendingIntraMatchExpansion=null;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
@@ -202,7 +254,9 @@ function revokePlayerView(){
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  if(window.tmVisualPortions)window.tmVisualPortions.close();visualPortionsByColor={};
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
+ playerLanguageSaving=false;
  applyPlayerNativeLanguage("pt");
+ syncPlayerLanguageSelector({enabled:false});
  calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
@@ -615,6 +669,11 @@ async function session(){
  // reads a head start before background navigation prefetch can occupy them.
  const profilePromise=api("/api/v2/player/me");
  const plansPromise=api("/api/v2/player/plans");
+ // The control is only shown once both approved-data gates are available.
+ // Run the preference read after the core identity fetch starts to avoid
+ // blocking the existing published-plan loading order.
+ const preferencesPromise=profilePromise.then(()=>
+  api("/api/v2/player/preferences")).catch(()=>({enabled:false,language:"pt"}));
  if(sessionData.user?.role==="player"){
   const weekStart=monday(day),weekEnd=new Date(weekStart);
   weekEnd.setDate(weekStart.getDate()+6);
@@ -626,10 +685,12 @@ async function session(){
    "/api/v2/player/reference-weights?start="+weekFrom+"&end="+weekTo
   ])cachedOverviewRead(path).catch(()=>{});
  }
- const [r,p]=await Promise.all([profilePromise,plansPromise]);
+ const [r,p,preferences]=await Promise.all([
+  profilePromise,plansPromise,preferencesPromise]);
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
  applyPlayerNativeLanguage(me?.language);
+ syncPlayerLanguageSelector(preferences);
  const plan=String(me.followup_plan||"").trim();
  $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";
  $("profile-renewal-date").textContent=displayPlayerRenewal(me.followup_renewal_date);
@@ -2908,6 +2969,9 @@ async function menusView(){
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
 $("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
+for(const button of document.querySelectorAll("#profile-language-selector button[data-language]")){
+ button.onclick=()=>updatePlayerLanguageChoice(button.dataset.language);
+}
 function resetProfilePassword(){
  $("profile-password-form").reset();
  $("profile-password-feedback").textContent="";
