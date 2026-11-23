@@ -1452,7 +1452,7 @@ async function renderWeightCard(root,date){
  const card=document.createElement("section");card.className="daily-weight-card";
  const header=document.createElement("div");header.className="daily-weight-header tm-day-header";
  const glyph=document.createElement("span");glyph.className="daily-weight-icon tm-day-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
- const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent="Peso em jejum";
+ const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent=playerText("Peso em jejum","Fasting weight");
  const value=document.createElement("span");value.className="daily-weight-value";
  const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
  header.append(glyph,label,value,action);card.append(header);
@@ -1466,27 +1466,27 @@ async function renderWeightCard(root,date){
  }
  // Render the + immediately; only enable interaction once the weight data is confirmed.
  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
- action.setAttribute("aria-label","A carregar peso em jejum");
+ action.setAttribute("aria-label",playerText("A carregar peso em jejum","Loading fasting weight"));
  action.disabled=true;
  let data;
  try{data=await cachedOverviewRead("/api/v2/player/weight?date="+date);}catch{
-  if(card.isConnected){const notice=document.createElement("small");notice.textContent="Peso indisponível";value.append(notice);action.remove();}
+  if(card.isConnected){const notice=document.createElement("small");notice.textContent=playerText("Peso indisponível","Weight unavailable");value.append(notice);action.remove();}
   return;
  }
  if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){card.remove();return;}
  action.disabled=false;
  const current=data.entries?.find(x=>x.weigh_date===date);
  const previous=data.previous;
- const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+ const format=x=>Number(x).toLocaleString(playerDateLocale(),{minimumFractionDigits:1,maximumFractionDigits:1});
  const existing=!!current;
  if(existing){
   action.classList.add("daily-weight-chevron-action");
   const top=document.createElement("strong");top.textContent=format(current.weight_kg)+" kg";value.append(top);
   if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);const small=document.createElement("small");small.textContent=(difference>0?"+":"")+format(difference)+" kg";value.append(small);}
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-  action.setAttribute("aria-label","Ver evolução do peso");
+  action.setAttribute("aria-label",playerText("Ver evolução do peso","View weight trend"));
  }else{
-  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label","Registar peso em jejum");
+  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label",playerText("Registar peso em jejum","Record fasting weight"));
  }
  function editor(){
   panel.replaceChildren();
@@ -1523,13 +1523,13 @@ async function renderWeightCard(root,date){
   };
   const kg=makeWheel("kg",Array.from({length:61},(_,i)=>50+i),Math.floor(initial));
   const grams=makeWheel("g",Array.from({length:10},(_,i)=>i*100),Math.round((initial-Math.floor(initial))*10)*100);
-  const save=document.createElement("button");save.type="submit";save.textContent="✓";save.setAttribute("aria-label","Guardar peso");save.className="daily-weight-save";
+  const save=document.createElement("button");save.type="submit";save.textContent="✓";save.setAttribute("aria-label",playerText("Guardar peso","Save weight"));save.className="daily-weight-save";
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
   form.append(picker);
   if(String(me?.sex||"").toUpperCase()==="F"){
    const questionCard=document.createElement("div");questionCard.className="daily-weight-menstruation-card";
-   const group=document.createElement("fieldset");group.className="daily-weight-menstruation";const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
-   for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
+   const group=document.createElement("fieldset");group.className="daily-weight-menstruation";const legend=document.createElement("legend");legend.textContent=playerText("Menstruação (opcional)","Menstruation (optional)");group.append(legend);
+   for(const [v,t] of [["",playerText("Não responder","Skip")],["yes",playerText("Sim","Yes")],["no",playerText("Não","No")]]){
     const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";const caption=document.createElement("span");caption.className="daily-weight-radio-label";caption.textContent=t;l.append(input,caption);group.append(l);
    }questionCard.append(group);form.append(questionCard);
   }
@@ -1544,14 +1544,14 @@ async function renderWeightCard(root,date){
     overviewReadCache.clear(); // The reference-weight values can change after saving.
     overviewSnapshot=null;
     await overview();
-   }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
+   }catch(err){errorText.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;save.disabled=false;}
   };
  }
  function chart(){
   panel.replaceChildren();
-  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar peso");edit.title="Editar peso";edit.onclick=editor;
+  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label",playerText("Editar peso","Edit weight"));edit.title=playerText("Editar peso","Edit weight");edit.onclick=editor;
   const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
-  if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(edit,p);return;}
+  if(items.length<2){const p=document.createElement("p");p.textContent=playerText("São necessários dois registos para apresentar a evolução.","Two measurements are needed to show a trend.");panel.append(edit,p);return;}
   const values=items.map(x=>Number(x.weight_kg));
   const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
   const n=items.length,range=Math.max(1,high-low);
@@ -1560,7 +1560,7 @@ async function renderWeightCard(root,date){
   const surface=document.createElement("div");surface.className="daily-weight-chart-surface";surface.append(edit);
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("viewBox","0 0 340 205");svg.setAttribute("role","img");
-  svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
+  svg.setAttribute("aria-label",playerText("Evolução do peso nos últimos dez dias","Weight over the last ten days"));
   const ns=svg.namespaceURI;
   const element=(tag,attrs,parent=svg)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,String(value)));parent.append(el);return el;};
   const left=25,right=315,top=38,bottom=143;
@@ -1570,7 +1570,7 @@ async function renderWeightCard(root,date){
   const meanY=yFor(mean);element("line",{x1:left,y1:meanY,x2:right,y2:meanY,class:"assessment-chart-mean"});
   element("polyline",{points:coords.map(p=>p.join(",")).join(" "),class:"assessment-chart-line"});
   const detail=document.createElement("p");detail.className="daily-weight-chart-detail";detail.setAttribute("aria-live","polite");
-  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?" · Menstruação":"");};
+  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"");};
   coords.forEach((p,i)=>{
    const valueLabel=element("text",{x:p[0],y:Math.max(15,p[1]-12),"text-anchor":"middle",class:"assessment-chart-value"});
    valueLabel.textContent=format(items[i].weight_kg);
@@ -1578,16 +1578,16 @@ async function renderWeightCard(root,date){
    if(female&&(items[i].menstruating===1||items[i].menstruating===true)){
     element("circle",{cx:p[0],cy:p[1]+11,r:3,fill:"#d6a7bc","aria-hidden":"true"});
    }
-   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?" · Menstruação":"")});
+   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"")});
    touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));
    touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});
    const dayLabel=element("text",{x:p[0],y:169,"text-anchor":"middle",class:"assessment-chart-tick"});
    dayLabel.textContent=items[i].weigh_date.slice(-2);
   });
   surface.append(svg);
-  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent="— Média: "+format(mean)+" kg";
+  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent=playerText("— Média: ","— Average: ")+format(mean)+" kg";
   const footer=document.createElement("div");footer.className="daily-weight-chart-footer";
-  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent="Últimos 10 dias";
+  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent=playerText("Últimos 10 dias","Last 10 days");
   footer.append(period,average);surface.append(footer);panel.append(surface,detail);
  }
  // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
@@ -1602,7 +1602,7 @@ async function renderWeightCard(root,date){
   panel.hidden=!panel.hidden;
   const expanded=!panel.hidden;
   action.innerHTML=expanded?closeIcon:collapsedIcon;
-  action.setAttribute("aria-label",expanded?(existing?"Fechar evolução do peso":"Fechar registo de peso"):collapsedLabel);
+  action.setAttribute("aria-label",expanded?(existing?playerText("Fechar evolução do peso","Close weight trend"):playerText("Fechar registo de peso","Close weight entry")):collapsedLabel);
   action.setAttribute("aria-expanded",String(expanded));
   if(expanded){existing?chart():editor();}
  };
