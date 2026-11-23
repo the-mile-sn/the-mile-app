@@ -326,6 +326,16 @@ def initialize():
                 logging.error('Player Planos conversion test failures: %s',
                               output.getvalue()[:1800])
                 raise RuntimeError('Player Planos conversion tests failed')
+        if SITE_ROLE == 'player' and os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC') == '1':
+            # Private Render startup diagnostic, not an HTTP endpoint. No clinical
+            # text, source hashes, account identifiers or connection strings.
+            try:
+                status=app_content_i18n_v2.translation_readiness(c)
+                logging.warning('TM translation readiness: available=%s approved_count=%s kinds=%s',
+                                status['available'], status['approved_count'], status['kinds'])
+            except Exception:
+                # Diagnostic failures must never prevent serving existing players.
+                logging.exception('TM translation readiness diagnostic unavailable')
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         weight_reference_v2.ensure_weighins_table(c)
@@ -1509,14 +1519,6 @@ def application(env, start_response):
                     return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
                         c,aid,language=language)['options_by_color']})
                 raise Problem(404,'not_found')
-            if path == '/api/v2/admin/translation-readiness' and method=='GET':
-                # Zero-content, opt-in probe from the application's actual DB
-                # connection. Never include player data, source text or URLs.
-                if not user: raise Problem(401,'unauthorized')
-                admin(user)
-                if os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC')!='1':
-                    raise Problem(404,'not_found')
-                return respond(200,app_content_i18n_v2.translation_readiness(c))
             if path == '/api/v2/player/preferences' and method in ('GET','PUT'):
                 # The preference is strictly bound to the authenticated user;
                 # there is no client-provided athlete or user identifier.
