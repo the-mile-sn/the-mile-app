@@ -1528,9 +1528,8 @@ def application(env, start_response):
                     PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session))
                 player['sex']=user['sex']
                 # Only a language code, never a new UI element, is added.
-                player['language']=(player_language_v2.get(c,user['id'])
-                    if os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
-                    else 'pt')
+                player['language']=player_language_v2.presentation_language(
+                    c,user['id'])
                 return respond(200, {'player': player})
             if path == '/api/v2/player/reference-weights' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
@@ -2173,9 +2172,8 @@ def application(env, start_response):
                 if not link: raise Problem(404, 'player_not_linked')
                 # Never trust a query parameter to override the player's
                 # authenticated, persisted language preference.
-                language=(player_language_v2.get(c,user['id'])
-                    if os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
-                    else 'pt')
+                language=player_language_v2.presentation_language(
+                    c,user['id'])
                 return respond(200, food_plan_player_v2.player_plans(
                     c, link['athlete_id'],language=language))
             if path == '/api/me' and method == 'GET':
