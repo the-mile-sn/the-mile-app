@@ -421,11 +421,6 @@ def localise_consumption_source(c, athlete_id, source, *, language="pt"):
                                 str(canonical).strip()):
                             display["display_name"]=(en_library.get(fid) or {}
                                 ).get("display_name") or food["display_name"]
-                        elif food.get("display_name")==(
-                                plan.get("content") or {}).get("never_used"):
-                            # Keep custom and ambiguous names in Portuguese;
-                            # they require a matching publication approval.
-                            pass
                         if food.get("display_quantity"):
                             display["display_quantity"]=target.get(
                                 "display_quantity") or food["display_quantity"]
