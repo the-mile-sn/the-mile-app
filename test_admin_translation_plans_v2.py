@@ -354,6 +354,13 @@ class PlanTranslationsTests(unittest.TestCase):
                 "expected_stage_hash":group["expected_stage_hash"],
                 "translated_text":english}
 
+    def test_simple_unit_suggestions_agree_with_singular_and_plural(self):
+        import app_translation_plans_v2 as plan_reviews
+        self.assertEqual(plan_reviews._quantity_hint("1 un"), "1 unit")
+        self.assertEqual(plan_reviews._quantity_hint("2 un"), "2 units")
+        self.assertEqual(plan_reviews._quantity_hint("1 un / 120 g"),
+                         "1 unit / 120 g")
+
     def test_common_csv_import_is_private_staged_and_not_approved(self):
         with patch.dict(os.environ,FLAG):
             self._add_publication(2)
