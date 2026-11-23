@@ -10,7 +10,7 @@ test("Recorded consumption controls retain Portuguese and display approved Engli
   for(const [pt,en] of [
     [" Registado"," Recorded"],[" Editar"," Edit"],[" Anular"," Undo"],
     ["Registado: ","Recorded: "],["Consumido: ","Consumed: "],
-    ["A guardar…","Saving…"],["Adicionar","Add"],["Momento do consumo","Consumption time"],
+    ["A guardar…","Saving…"],["⊕ Adicionar","⊕ Add"],["Momento do consumo","Consumption time"],
     ["Selecionar momento do consumo","Select consumption time"],
     ["Adicionado pelo jogador","Added by player"]
   ])assert.ok(js.includes("playerText('"+pt+"','"+en+"')")||js.includes('playerText("'+pt+'","'+en+'")'),pt+" / "+en);
