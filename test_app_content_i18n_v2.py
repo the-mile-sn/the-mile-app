@@ -243,9 +243,9 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(english[0]["totals"],portuguese[0]["totals"])
         self.assertEqual(option["foods"][1]["alternative_to"],0)
         self.assertEqual(plans_api._split_display_quantity(
-            "1 colher de sopa",{"grams":30},0.5,"en"),"50% of 1 colher de sopa")
+            "uma colher de sopa",{"grams":30},0.5,"en"),"50% of uma colher de sopa")
         self.assertEqual(plans_api._split_display_quantity(
-            "1 colher de sopa",{"grams":30},0.5,"pt"),"50% de 1 colher de sopa")
+            "uma colher de sopa",{"grams":30},0.5,"pt"),"50% de uma colher de sopa")
 
     def test_pending_and_stale_cannot_leak(self):
         self.c.execute("""UPDATE v2_content_translations SET status='pending'
