@@ -700,29 +700,114 @@
       const result=await send("/api/v2/admin/i18n/plans");
       if(seq!==generation||host.hidden)return;
       publications=result.items||[];
-      const audit=result.reuse_audit;
-      if(audit){
-        auditPanel.append(create("strong","","Diagnóstico de reutilização — dados agregados"));
+      const renderAudit=audit=>{
+        auditPanel.replaceChildren();
+        if(!audit)return;
+        const fmt=n=>Number(n||0).toLocaleString("pt-PT");
+        const states=["approved","pending","missing","outdated"];
+        const labels={
+          option_title:"Títulos das opções",
+          individual_note:"Notas de consumo dos planos",
+          display_quantity:"Quantidades apresentadas",
+          alternative_override:"Alternativas personalizadas",
+          food_override:"Apresentações personalizadas",
+          supplement_label:"Textos de suplementos"
+        };
+        const categories=Object.entries(labels);
+        const totals=audit.coverage_totals||{};
+        const byKind=audit.coverage_by_kind||{};
+        const total=states.reduce((acc,state)=>acc+Number(totals[state]||0),0);
+        const header=create("div","i18n-plan-coverage-head");
+        const heading=create("h3","","Cobertura das traduções dos Planos");
+        const reload=create("button","i18n-secondary","Atualizar diagnóstico");
+        reload.type="button";
+        const feedback=create("small","i18n-plan-coverage-feedback");
+        reload.addEventListener("click",async()=>{
+          if(reload.disabled)return;
+          reload.disabled=true;feedback.textContent="A atualizar…";
+          try{
+            const fresh=await send("/api/v2/admin/i18n/plans");
+            if(seq!==generation||host.hidden)return;
+            publications=fresh.items||[];
+            renderAudit(fresh.reuse_audit);
+            renderList(status,query);
+          }catch(e){
+            feedback.textContent="Não foi possível atualizar: "+e.message;
+          }finally{reload.disabled=false;}
+        });
+        header.append(heading,reload);
+        auditPanel.append(header,feedback);
+        const overview=create("div","i18n-plan-coverage-overview");
+        const overviewLabels=[
+          ["approved","Aprovados"],["pending","Por rever"],
+          ["missing","Por traduzir"],["outdated","Desatualizados"]
+        ];
+        for(const [state,label] of overviewLabels){
+          const tile=create("div","i18n-plan-coverage-stat");
+          tile.append(create("strong","",fmt(totals[state])),
+                      create("small","",label));
+          overview.append(tile);
+        }
+        auditPanel.append(overview);
+        const approved=Number(totals.approved||0);
+        auditPanel.append(create("p","i18n-plan-coverage-intro",
+          "Total: "+fmt(total)+" campos próprios nas versões publicadas · "+
+          (total?Math.round(100*approved/total):0)+"% aprovados. "+
+          "Contagem por ocorrência, não por texto único; exclui "+
+          "alimentos herdados das bibliotecas."));
+        const scroller=create("div","i18n-plan-coverage-scroll");
+        const table=create("table","i18n-plan-coverage-table");
+        const thead=create("thead");
+        const titles=create("tr");
+        for(const caption of ["Tipo de conteúdo","Aprovados","Por rever",
+                               "Por traduzir","Desatualizados","Total"]){
+          const th=create("th","",caption);th.scope="col";titles.append(th);
+        }
+        thead.append(titles);table.append(thead);
+        const tbody=create("tbody");
+        for(const [kind,label] of categories){
+          const counts=byKind[kind]||{};
+          const row=create("tr");
+          const name=create("th","",label);name.scope="row";row.append(name);
+          for(const state of states){
+            row.append(create("td","",fmt(counts[state])));
+          }
+          row.append(create("td","",fmt(states.reduce(
+            (n,state)=>n+Number(counts[state]||0),0))));
+          tbody.append(row);
+        }
+        const footer=create("tr","i18n-plan-coverage-total");
+        const footerLabel=create("th","","Total");footerLabel.scope="row";
+        footer.append(footerLabel);
+        for(const state of states)footer.append(create("td","",fmt(totals[state])));
+        footer.append(create("td","",fmt(total)));tbody.append(footer);
+        table.append(tbody);scroller.append(table);auditPanel.append(scroller);
+        auditPanel.append(create("p","i18n-plan-coverage-intro",
+          "Os campos por traduzir e desatualizados precisam de nova revisão. "+
+          "Este diagnóstico é apenas informativo: não exporta textos "+
+          "individualizados nem aprova qualquer tradução."));
+        const reuse=create("details","i18n-plan-reuse-details");
+        reuse.append(create("summary","","Diagnóstico de reutilização"));
         const stats=create("div","i18n-plan-audit-grid");
         const numbers=[
           ["Textos próprios",audit.visible_text_fields],
           ["Títulos repetidos",audit.repeated_option_title_occurrences],
           ["Alimentos com inglês aprovado",audit.approved_library_food_references],
           ["Alternativas personalizadas",audit.alternative_overrides],
-          ["Notas individuais",audit.individual_notes],
+          ["Notas de planos",audit.individual_notes],
           ["Sugestões de unidades",audit.simple_unit_suggestions]
         ];
         for(const [label,count] of numbers){
           const tile=create("div","i18n-plan-audit-stat");
-          tile.append(create("strong","",Number(count||0).toLocaleString("pt-PT")),
-                      create("small","",label));
+          tile.append(create("strong","",fmt(count)),create("small","",label));
           stats.append(tile);
         }
-        auditPanel.append(stats,create("p","",
-          "Os números não incluem nomes de jogadores nem textos clínicos. "+
-          "As alternativas não são associadas automaticamente a alimentos. "+
-          "Nenhuma sugestão é guardada ou aprovada sem revisão."));
-      }
+        reuse.append(stats,create("p","i18n-plan-coverage-intro",
+          "A reutilização de alimentos da biblioteca é contabilizada "+
+          "separadamente. Nenhuma sugestão é aprovada sem revisão."));
+        auditPanel.append(reuse);
+      };
+      renderAudit(result.reuse_audit);
       renderList(status,query);
       await renderCommon(commonPanel);
     }catch(e){
