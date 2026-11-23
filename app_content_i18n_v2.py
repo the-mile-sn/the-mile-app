@@ -74,6 +74,60 @@ def _current_english(row, original, *, trim_source=False):
     return row["translated_text"]
 
 
+def search_approved_food_names(c, search, columns):
+    """Search by PT or approved EN name; return existing food attributes only.
+
+    The caller must authorise the player before calling this function.
+    Never search notes, player records or unapproved translations. Keep
+    original food IDs, nutrition data and note fields unchanged.
+    """
+    permitted={"id","display_name","variant","kcal","protein_g",
+               "carbs_g","fat_g","note","notes","observation",
+               "observations","description","preparation_notes"}
+    if not columns or not set(columns).issubset(permitted):
+        raise ValueError("invalid_food_search_columns")
+    qualified=", ".join("f."+field for field in columns)
+    translated_columns=qualified+(
+        ", t.source_hash AS _tm_translation_hash,"
+        " t.translated_text AS _tm_translation_text")
+    joined=""" FROM v2_food_library f
+        LEFT JOIN v2_content_translations t
+          ON t.entity_kind='food' AND t.entity_id=f.id
+         AND t.field_path='display_name' AND t.language='en'
+         AND t.status='approved'
+        WHERE f.active=1 AND """
+    term="%"+search.lower()+"%"
+    # Portuguese matches retain the old 30-record limit and search behaviour.
+    portuguese=c.execute(
+        "SELECT "+translated_columns+joined+
+        "lower(f.display_name) LIKE ? ORDER BY f.display_name LIMIT 30",
+        (term,)).fetchall()
+    # EN matches are bounded and cannot be returned unless their current
+    # source hash matches the canonical library value.
+    english=c.execute(
+        "SELECT "+translated_columns+joined+
+        "lower(t.translated_text) LIKE ? ORDER BY t.translated_text LIMIT 250",
+        (term,)).fetchall()
+    found={}
+    for row in list(portuguese)+list(english):
+        entry=dict(row)
+        english_name=_current_english(
+            {"source_hash":entry.get("_tm_translation_hash"),
+             "translated_text":entry.get("_tm_translation_text")},
+            entry["display_name"])
+        # Ignore English-only matches from stale translations.
+        if (search.casefold() not in entry["display_name"].casefold()
+                and search.casefold() not in str(english_name).casefold()):
+            continue
+        entry["display_name"]=english_name
+        found[str(entry["id"])]={
+            field:entry[field] for field in columns
+        }
+    return sorted(found.values(),
+                  key=lambda row:(row["display_name"].casefold(),
+                                  str(row["id"])))[:30]
+
+
 def localise_published_plans(c, plans, library, *, language="pt"):
     """Return display-only copies, scoped to plans already selected by athlete.
 
