@@ -44,6 +44,9 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(vm.runInContext('playerMacroAbbreviation("carbs_g")',ctx),"C");
   assert.equal(vm.runInContext('playerMacroAbbreviation("fat_g")',ctx),"F");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"General");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Jogo"})',ctx),"Match");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"training",title:"Treino"})',ctx),"Treino");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Custom final"})',ctx),"Custom final");
   assert.equal(vm.runInContext('playerClassification("Jogo personalizado")',ctx),"Jogo personalizado");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Lunch");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Blue");
@@ -63,6 +66,7 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(vm.runInContext('playerMacroLabel("carbs_g")',ctx),"Hidratos");
   assert.equal(vm.runInContext('playerMacroAbbreviation("carbs_g")',ctx),"HC");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"Geral");
+  assert.equal(vm.runInContext('playerEventTitle({kind:"match",title:"Jogo"})',ctx),"Jogo");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Almoço");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Azul");
   assert.equal(element.className,"mile-approved");
@@ -110,6 +114,14 @@ test("Plans All list renders translated categories in both languages without tim
     assert.equal(targets["plan-colors"].children.length,5,
       "Existing Plans navigation is preserved");
   }
+});
+
+test("Daily, weekly and intra-match cards display only the standard game title in EN",()=>{
+  const source=fs.readFileSync("static/jogador-v2.js","utf8");
+  assert.ok(source.includes('label.textContent=playerEventTitle(event);section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);'));
+  assert.ok(source.includes('label.textContent=playerEventTitle(event);head.append(label);'));
+  assert.ok(source.includes('title:"Jogo"'),"Calendar data remains canonical in PT");
+  assert.ok(source.includes('event.kind==="match"'),"Match kind remains unchanged for existing behaviour");
 });
 
 test("Energy values render as ungrouped kcal in both locales, without changing nutrient formatting",()=>{

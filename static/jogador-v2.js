@@ -78,6 +78,11 @@ function playerSupplementMomentLabel(value){
          "Jantar":"Dinner","Ceia":"Supper","Treino":"Training",
          "Jogo":"Match","Almoço ou jantar":"Lunch or dinner"}[value]||value;
 }
+// The built-in match caption is a display label, not a calendar-event edit.
+// Custom event titles and icon resolution retain their original values.
+function playerEventTitle(event){
+ return event?.kind==="match"&&event.title==="Jogo"?playerText("Jogo","Match"):event?.title||"";
+}
 function playerPhaseLabel(value){
  if(playerUiLanguage!=="en")return value;
  return {"Pré-treino":"Pre-training","Pós-treino":"Post-training",
@@ -1305,7 +1310,7 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
 }
 function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"");
- const label=document.createElement("span");label.className=compact?"":"tm-day-title";label.textContent=event.title;section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
+ const label=document.createElement("span");label.className=compact?"":"tm-day-title";label.textContent=playerEventTitle(event);section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
    const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
@@ -1355,7 +1360,7 @@ function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecor
   section.open=true;pendingIntraMatchExpansion=null;
  }
  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
- const matchIconBox=document.createElement("span");matchIconBox.className="meal-leading-icon tm-day-icon";matchIconBox.append(mealIcon("football"));head.append(matchIconBox);const label=document.createElement("strong");label.className="tm-day-title";label.textContent=event.title;head.append(label);
+ const matchIconBox=document.createElement("span");matchIconBox.className="meal-leading-icon tm-day-icon";matchIconBox.append(mealIcon("football"));head.append(matchIconBox);const label=document.createElement("strong");label.className="tm-day-title";label.textContent=playerEventTitle(event);head.append(label);
  if(avg){
   const totals=document.createElement("span");totals.className="meal-average meal-average-inline";
   totals.append(nutrition(avg));head.append(totals);
