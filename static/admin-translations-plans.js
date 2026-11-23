@@ -94,7 +94,12 @@
     if(item.suggestion&&item.status==="missing"){
       const hint=create("div","i18n-plan-suggestion");
       const origin=item.suggestion.origin==="approved_exact_title"?
-        "Título com tradução aprovada noutro plano":"Unidade de apresentação · regra conservadora";
+        "Título com tradução aprovada noutro plano":
+        item.suggestion.origin==="approved_exact_quantity"?
+        "Quantidade com tradução aprovada noutro plano":
+        item.suggestion.origin==="language_neutral_quantity"?
+        "Símbolo internacional · pode manter-se igual em inglês":
+        "Unidade de apresentação · regra conservadora";
       hint.append(create("small","",origin+" · confirmar contexto"));
       const candidate=create("p","",item.suggestion.text);
       const use=create("button","i18n-secondary","Usar sugestão");
@@ -218,13 +223,12 @@
     const heading=create("strong","","Traduções comuns · revisão por expressão");
     header.append(heading);
     const intro=create("p","i18n-plan-policy",
-      "Títulos idênticos na mesma refeição e unidades simples. "+
-      "Revê o inglês uma vez e aprova até 100 ocorrências em simultâneo. "+
-      "As notas de consumo dos planos têm revisão própria; "+
-      "alternativas e dados clínicos ficam fora do CSV.");
+      "Textos idênticos agrupados para revisão, incluindo quantidades "+
+      "de apresentação. Aprova até 100 ocorrências da mesma expressão. "+
+      "Notas e quantidades têm CSVs próprios com revisão de privacidade.");
     const search=create("input","i18n-plan-common-search");
     search.type="search";
-    search.placeholder="Pesquisar títulos, unidades e notas…";
+    search.placeholder="Pesquisar títulos, quantidades e notas…";
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
@@ -348,8 +352,8 @@
         "O CSV comum mantém os títulos repetidos e unidades simples."+
         " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
         " a uma revisão de privacidade antes do download. Não exportamos"+
-        " dados pessoais, alternativas nem prescrições. As notas dos planos"+
-        " têm um terceiro CSV com revisão. Preenche apenas translated_text;"+
+        " dados pessoais, alternativas nem prescrições. Notas e quantidades"+
+        " têm CSVs próprios com revisão. Preenche apenas translated_text;"+
         " importar não aprova automaticamente."),
       csvActions,uniquePreview,notesPreview,quantityPreview,approvalPanel,csvFeedback);
     const csvEntry=g=>({
@@ -647,7 +651,7 @@
         create("small","",item.missing_count+" ocorrências para aprovar"));
       const context=create("p","i18n-plan-policy",
         item.field_kind==="display_quantity"?
-          "Apenas expressões de unidade inequívocas":
+          "Quantidade apresentada · preserva os números e unidades originais":
           "Contexto: "+item.meal_context);
       const cols=create("div","i18n-plan-compare");
       const pt=create("div","i18n-plan-pt");
