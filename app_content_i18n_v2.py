@@ -156,3 +156,79 @@ def localise_dish_menus(c, menus, *, language="pt"):
             display["value"]=_current_english(approved.get(dish_id),canonical[dish_id])
         result.append(display)
     return result
+
+def _translation_map(c, kind):
+    return {(row["entity_id"],row["field_path"]):row
+            for row in _approved_rows(c,kind)}
+
+
+def localise_recipe_summaries(c, items, *, language="pt"):
+    """Display-only names and category names in already-authorised recipe lists."""
+    if not enabled(language) or not items or not translation_store_available(c):
+        return items
+    recipes=_translation_map(c,"recipe")
+    categories=_translation_map(c,"recipe_category")
+    results=[]
+    for item in items:
+        record=dict(item)
+        recipe_id=str(item.get("id") or "")
+        category_id=str(item.get("category_id") or "")
+        record["name"]=_current_english(
+            recipes.get((recipe_id,"name")),item.get("name"))
+        if "category" in item:
+            record["category"]=_current_english(
+                categories.get((category_id,"name")),item.get("category"))
+        results.append(record)
+    return results
+
+
+def localise_recipe_detail(c, item, *, language="pt"):
+    """Version-bound EN for name, category, notes, sections and preparation.
+
+    Portions, quantities, identifiers, photo permissions, published visibility,
+    and ordering stay exactly as in the authenticated source response.
+    """
+    if not enabled(language) or not item or not translation_store_available(c):
+        return item
+    result=copy.deepcopy(item)
+    translated=_translation_map(c,"recipe")
+    categories=_translation_map(c,"recipe_category")
+    recipe_id=str(item.get("id") or "")
+    category_id=str(item.get("category_id") or "")
+    def field(path, text):
+        return _current_english(translated.get((recipe_id,path)),text)
+    result["name"]=field("name",item.get("name"))
+    result["notes"]=field("notes",item.get("notes"))
+    if "category" in item:
+        result["category"]=_current_english(
+            categories.get((category_id,"name")),item.get("category"))
+    for section in result.get("sections") or []:
+        if not isinstance(section,dict):continue
+        sid=section.get("id")
+        if not isinstance(sid,str) or not sid:continue
+        section["title"]=field("sections/"+sid+"/title",section.get("title"))
+        for ingredient in section.get("ingredients") or []:
+            if not isinstance(ingredient,dict):continue
+            iid=ingredient.get("id")
+            if not isinstance(iid,str) or not iid:continue
+            prefix="sections/"+sid+"/ingredients/"+iid
+            ingredient["name"]=field(prefix+"/name",ingredient.get("name"))
+            ingredient["unit"]=field(prefix+"/unit",ingredient.get("unit"))
+    for idx,step in enumerate(result.get("steps") or []):
+        result["steps"][idx]=field("steps/"+str(idx),step)
+    return result
+
+
+def localise_dish_summaries(c, dishes, *, language="pt"):
+    """Translate only the existing name_pt property, retaining IDs and access."""
+    if not enabled(language) or not dishes or not translation_store_available(c):
+        return dishes
+    translated=_translation_map(c,"dish")
+    result=[]
+    for dish in dishes:
+        display=dict(dish)
+        display["name_pt"]=_current_english(
+            translated.get((str(dish.get("id") or ""),"name_pt")),
+            dish.get("name_pt"))
+        result.append(display)
+    return result
