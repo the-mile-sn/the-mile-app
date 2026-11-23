@@ -43,7 +43,7 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
         with patch.dict(app.os.environ,{
                 "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
                 "MILE_APP_TRANSLATIONS_ENABLED":"1",
-                "MILE_PLAYER_I18N_PILOT_USERNAMES":" LaNgUaGeOnE "}), \\
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":" LaNgUaGeOnE "}), \
              patch("app_content_i18n_v2.translation_store_available",
                    return_value=True):
             self.assertEqual(first.request("/api/v2/player/preferences")["body"],
@@ -63,7 +63,7 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
         with patch.dict(app.os.environ,{
                 "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
                 "MILE_APP_TRANSLATIONS_ENABLED":"1",
-                "MILE_PLAYER_I18N_PILOT_USERNAMES":"languagetwo"}), \\
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":"languagetwo"}), \
              patch("app_content_i18n_v2.translation_store_available",
                    return_value=True):
             self.assertEqual(first.request("/api/v2/player/me")["body"]
@@ -75,7 +75,7 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
         with patch.dict(app.os.environ,{
                 "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
                 "MILE_APP_TRANSLATIONS_ENABLED":"1",
-                "MILE_PLAYER_I18N_PILOT_USERNAMES":""}), \\
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":""}), \
              patch("app_content_i18n_v2.translation_store_available",
                    return_value=True):
             for client in (first,second):
