@@ -2795,7 +2795,7 @@ function renderPlans(){
  const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training",playerText("Treino","Training")]]:[]),...(hasPeri("match")?[["peri-match",playerText("Jogo","Match")]]:[]),["supplements",playerText("Suplementação","Supplements")]];
  for(const [key,label] of entries){
   const group=document.createElement("details");group.className="plans-all-group";
-  const heading=document.createElement("summary");heading.textContent=playerUiLanguage==="en"?(periTimingEnglish[timing]||label):label;group.append(heading);
+  const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
   const content=document.createElement("div");content.className="plans-all-body";group.append(content);
   group.addEventListener("toggle",()=>{if(group.open&&!content.dataset.loaded){content.dataset.loaded="true";planPhase=null;renderPlanContent(key,content);}});
   detail.append(group);

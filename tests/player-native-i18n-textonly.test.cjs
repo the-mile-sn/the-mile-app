@@ -69,6 +69,49 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.deepEqual(element.style,{});
 });
 
+test("Plans All list renders translated categories in both languages without timing context",()=>{
+  const source=fs.readFileSync("static/jogador-v2.js","utf8");
+  const start=source.indexOf("function renderPlans(){");
+  const end=source.indexOf("\nconst dishPhotoCache=",start);
+  assert.ok(start>=0&&end>start,"Plans renderer boundaries");
+  const renderer=source.slice(start,end);
+  for(const [locale,expected] of [
+    ["pt",["Verde","Suplementação"]],
+    ["en",["Green","Supplements"]]
+  ]){
+    const createNode=()=>({
+      textContent:"",className:"",children:[],attributes:{},
+      replaceChildren(...children){this.children=children;},
+      append(...children){this.children.push(...children);},
+      setAttribute(key,value){this.attributes[key]=value;},
+      addEventListener(){}
+    });
+    const targets={
+      "plan-colors":createNode(),
+      "plan-subfilters":createNode(),
+      "plan-detail":createNode()
+    };
+    const context={
+      $:id=>targets[id],
+      document:{createElement:()=>createNode()},
+      plans:{green:{breakfast:[{items:[]}]}},
+      periPlans:{training:{options:{}},match:{options:{}}},
+      plansCategory:"todos",
+      selectedColor:null,
+      planPhase:null,
+      colorNames:{green:locale==="en"?"Green":"Verde"},
+      playerText:(pt,en)=>locale==="en"?en:pt
+    };
+    assert.doesNotThrow(()=>vm.runInNewContext(renderer+"\nrenderPlans();",context),
+      "Plans All must render without any peri-match timing variable: "+locale);
+    assert.deepEqual(
+      targets["plan-detail"].children.map(group=>group.children[0].textContent),
+      expected,"Visible plan categories must be localised: "+locale);
+    assert.equal(targets["plan-colors"].children.length,5,
+      "Existing Plans navigation is preserved");
+  }
+});
+
 test("Energy values render as ungrouped kcal in both locales, without changing nutrient formatting",()=>{
   const player=fs.readFileSync("static/jogador-v2.js","utf8");
   const helper=player.split("\n").find(line=>line.startsWith("function fmtKcal(v){"));
