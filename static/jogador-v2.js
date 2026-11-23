@@ -41,6 +41,16 @@ const playerTextBindings=[
   ["#plans-assessments [data-assessment-tab='perimetros']","Perímetros","Circumferences"]
 ];
 function playerText(pt,en){return playerUiLanguage==="en"?en:pt;}
+function playerMacroLabel(key){
+ const pt={protein_g:"Proteína",carbs_g:"Hidratos",fat_g:"Gordura"};
+ const en={protein_g:"Protein",carbs_g:"Carbohydrates",fat_g:"Fat"};
+ return (playerUiLanguage==="en"?en:pt)[key]||key;
+}
+function playerMacroAbbreviation(key){
+ const pt={protein_g:"P",carbs_g:"HC",fat_g:"G"};
+ const en={protein_g:"P",carbs_g:"C",fat_g:"F"};
+ return (playerUiLanguage==="en"?en:pt)[key]||key;
+}
 function playerDateLocale(){return playerUiLanguage==="en"?"en-GB":"pt-PT";}
 function playerClassification(name){
  return name==="Geral"?playerText("Geral","General"):name;
@@ -298,7 +308,7 @@ async function api(path,opts={}){
  return data;
 }
 function fmt(v,d=1){return Number(v).toLocaleString(playerDateLocale(),{minimumFractionDigits:d,maximumFractionDigits:d});}
-function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
+function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g",playerMacroAbbreviation("protein_g")+" ","protein",0],["carbs_g",playerMacroAbbreviation("carbs_g")+" ","carbs",0],["fat_g",playerMacroAbbreviation("fat_g")+" ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
 const periTimingEnglish={pre_warmup:"Before warm-up",warmup:"Warm-up",pre_match:"Pre-match",post_warmup:"After warm-up",first_half:"First half",half_time:"Half-time",second_half:"Second half",post_match:"Post-match",throughout:"Throughout the match"};
@@ -902,7 +912,7 @@ function summarizeWeekNutrition(dates,totals,referenceWeights={}){
 }
 function weeklySummary(data,relativeMeans={}){
  const section=document.createElement("section");section.className="weekly-average-summary";
- for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+ for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
   const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
@@ -938,7 +948,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";markWeeklyColumn(empty,dates[i]);grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
-   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
+   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?playerText("Peq Alm.","Breakfast"):names[meal]||meal;b.append(label);
    if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+playerText(" — abrir opções"," — open options"));b.setAttribute("aria-pressed",String(active));
    b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus,weeklyWeights);};grid.append(b);
@@ -947,7 +957,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  for(let i=0;i<7;i++){
   const box=document.createElement("div");box.className="weekly-day-total";markWeeklyColumn(box,dates[i]);const total=totals[i];
   if(!total){box.textContent="—";grid.append(box);continue;}
-  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);energy.setAttribute("aria-label","Energia "+fmt(total.kcal,0)+" kcal");box.append(energy);
+  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);energy.setAttribute("aria-label",playerText("Energia ","Energy ")+fmt(total.kcal,0)+" kcal");box.append(energy);
   const line=document.createElement("div");line.className="weekly-total-macros";
   for(const k of ["protein_g","carbs_g","fat_g"]){const v=document.createElement("span");v.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":"fat";v.textContent=fmt(total[k],0);line.append(v);}
   box.append(line);grid.append(box);
@@ -1060,7 +1070,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
    continue;
   }
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
-  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
   const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(group,date,meal,eventId,index,null,timing,optionRef).finally(()=>{edit.disabled=false;});};
@@ -1240,7 +1250,7 @@ function appendPeriConsumption(card,item,records){
  hosts.forEach((host,index)=>{
   if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
-  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
   const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
@@ -2041,7 +2051,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    let request=0;const foodNames=new Map();const foodNameCacheKey='themile-consumption-food-names-'+playerUiLanguage;try{for(const [id,name] of Object.entries(JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}')))foodNames.set(id,name);}catch(_){}const rememberFoodName=(id,name)=>{if(!id||!name)return;foodNames.set(String(id),name);try{const cached=JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}');cached[String(id)]=name;localStorage.setItem(foodNameCacheKey,JSON.stringify(cached));}catch(_){}};
    const renderSuggestions=()=>{suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>{choose(opt);updateAddState();confirm.disabled=false;};suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;};
    search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;rememberFoodName(food.id,food.display_name);foodNotes.set(String(food.id),String(food.note||''));matches.append(opt);}renderSuggestions();}catch(e){if(id===request)error(e);}};
-   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label','Quantidade consumida em gramas');const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
+   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label',playerText('Quantidade consumida em gramas','Amount consumed in grams'));const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
    add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;const entry={id,grams,consumed:true,name:matches.selectedOptions[0]?.textContent||search.value};rememberFoodName(id,entry.name);additional.push(entry);renderAdditional(entry,entry.name);quantity.value='';search.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;closeFoodSheet();syncRemoveAll();queuePreview();};
    if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.library_name||f.name||foodNames.get(String(f.id))||playerText('Alimento adicional','Additional food'));if(!(f.display_name||f.library_name||f.name)){const title=added.lastElementChild?.querySelector('.consumption-food-name');api('/api/v2/player/consumption-foods?q='+encodeURIComponent(String(f.id))).then(result=>{const found=(result.foods||[]).find(food=>String(food.id)===String(f.id));if(found&&title){title.textContent=found.display_name;rememberFoodName(f.id,found.display_name);}}).catch(()=>{});}}}
    const extra=document.createElement('div');extra.className='consumption-extra';
@@ -2054,7 +2064,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const searchWrap=document.createElement('div');searchWrap.className='consumption-search-wrap';
     const searchIcon=document.createElement('span');searchIcon.className='consumption-search-symbol';searchIcon.setAttribute('aria-hidden','true');
     searchIcon.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>';
-    searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';quantity.style.setProperty('flex','0 0 88px','important');quantity.style.setProperty('width','88px','important');quantity.style.setProperty('min-width','0','important');quantity.style.setProperty('max-width','88px','important');quantity.style.setProperty('padding','10px 8px','important');quantity.style.setProperty('font-size','16px','important');inputRow.append(searchWrap,quantity,add);inputRow.style.width='100%';add.style.setProperty('flex','0 0 38px','important');quantity.style.setProperty('background','rgba(255,255,255,.035)','important');quantity.style.borderRadius='14px';quantity.style.border='0';quantity.style.setProperty('color','var(--text-muted, #b7b3a9)','important');const updateAddState=()=>{add.disabled=!(matches.value&&Number(quantity.value)>0);add.style.opacity=add.disabled?'.4':'1';};quantity.addEventListener('input',updateAddState);search.addEventListener('input',updateAddState);const originalChoose=choose;const chooseWithState=(option)=>{originalChoose(option);updateAddState();};const addTrigger=document.createElement('button');addTrigger.type='button';addTrigger.className='consumption-add-trigger';addTrigger.textContent='⊕ Adicionar alimento';addTrigger.style.cssText='appearance:none;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:inherit!important;padding:4px 0!important;width:auto!important;max-width:max-content!important;min-height:0!important;font:inherit;font-size:14px!important;font-weight:400!important;white-space:nowrap;cursor:pointer';
+    searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';quantity.style.setProperty('flex','0 0 88px','important');quantity.style.setProperty('width','88px','important');quantity.style.setProperty('min-width','0','important');quantity.style.setProperty('max-width','88px','important');quantity.style.setProperty('padding','10px 8px','important');quantity.style.setProperty('font-size','16px','important');inputRow.append(searchWrap,quantity,add);inputRow.style.width='100%';add.style.setProperty('flex','0 0 38px','important');quantity.style.setProperty('background','rgba(255,255,255,.035)','important');quantity.style.borderRadius='14px';quantity.style.border='0';quantity.style.setProperty('color','var(--text-muted, #b7b3a9)','important');const updateAddState=()=>{add.disabled=!(matches.value&&Number(quantity.value)>0);add.style.opacity=add.disabled?'.4':'1';};quantity.addEventListener('input',updateAddState);search.addEventListener('input',updateAddState);const originalChoose=choose;const chooseWithState=(option)=>{originalChoose(option);updateAddState();};const addTrigger=document.createElement('button');addTrigger.type='button';addTrigger.className='consumption-add-trigger';addTrigger.textContent=playerText('⊕ Adicionar alimento','⊕ Add food');addTrigger.style.cssText='appearance:none;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:inherit!important;padding:4px 0!important;width:auto!important;max-width:max-content!important;min-height:0!important;font:inherit;font-size:14px!important;font-weight:400!important;white-space:nowrap;cursor:pointer';
    const backdrop=document.createElement('div');backdrop.className='consumption-food-sheet-backdrop';backdrop.hidden=true;
    const sheet=document.createElement('section');sheet.className='consumption-food-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',playerText('Adicionar alimento','Add food'));sheet.hidden=true;
    const handle=document.createElement('div');handle.className='consumption-food-sheet-handle';handle.setAttribute('aria-hidden','true');
@@ -2140,7 +2150,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const controls=document.createElement('div');controls.className='consumption-secondary-actions';controls.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;width:100%';controls.append(addTrigger);if(removeAll.isConnected){removeAll.style.setProperty('margin','0 0 0 auto','important');removeAll.style.setProperty('align-self','center','important');removeAll.style.setProperty('position','static','important');removeAll.style.setProperty('text-align','right','important');removeAll.style.setProperty('white-space','nowrap','important');controls.append(removeAll);}foodsRoot.append(added,controls);updateAddState();
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
-  progress.innerHTML='<div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-macro-values"><span data-macro="protein"></span><span data-macro="carbs"></span><span data-macro="fat"></span></div>';
+  progress.innerHTML='<div class="consumption-energy-values"><strong class="consumption-energy-ratio">'+playerText('A calcular…','Calculating…')+'</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-macro-values"><span data-macro="protein"></span><span data-macro="carbs"></span><span data-macro="fat"></span></div>';
   panel.append(progress);
   let previewSeq=0,previewTimer;
   const updatePreview=async()=>{
@@ -2165,7 +2175,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(seq!==previewSeq||!panel.isConnected)return;
     const actual=Number(result.nutrition?.kcal||0),planned=Number(result.planned?.kcal||0),pct=planned>0?actual/planned*100:0;
     progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
-    progress.querySelector('.consumption-energy-ratio').textContent=extraTiming?Math.round(actual)+' kcal':Math.round(actual)+'/'+Math.round(planned)+' kcal';const fmt=v=>Math.round(Number(v||0));const nutrition=result.nutrition||{},target=result.planned||{};for(const [key,aliases,label] of [['protein',['protein','protein_g','proteins'],'P'],['carbs',['carbs','carbs_g','carbohydrates'],'HC'],['fat',['fat','fat_g','fats'],'G']]){const read=obj=>aliases.map(k=>obj[k]).find(v=>v!==undefined);const node=progress.querySelector('[data-macro="'+key+'"]');node.textContent=extraTiming?fmt(read(nutrition))+'g '+label:fmt(read(nutrition))+'/'+fmt(read(target))+'g '+label;}
+    progress.querySelector('.consumption-energy-ratio').textContent=extraTiming?Math.round(actual)+' kcal':Math.round(actual)+'/'+Math.round(planned)+' kcal';const fmt=v=>Math.round(Number(v||0));const nutrition=result.nutrition||{},target=result.planned||{};for(const [key,aliases,label] of [['protein',['protein','protein_g','proteins'],'P'],['carbs',['carbs','carbs_g','carbohydrates'],playerMacroAbbreviation('carbs_g')],['fat',['fat','fat_g','fats'],playerMacroAbbreviation('fat_g')]]){const read=obj=>aliases.map(k=>obj[k]).find(v=>v!==undefined);const node=progress.querySelector('[data-macro="'+key+'"]');node.textContent=extraTiming?fmt(read(nutrition))+'g '+label:fmt(read(nutrition))+'/'+fmt(read(target))+'g '+label;}
     
    }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent=playerText('Não foi possível calcular as kcal','Could not calculate kcal');console.warn('Consumption preview failed',e);}
   };
@@ -2354,7 +2364,7 @@ async function overview(){
    }
 
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
-   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+   for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-macro "+cls;
     const name=document.createElement("small");name.textContent=title;
     const grams=document.createElement("strong");grams.textContent=(consumptionEnabled?fmt(actual[key],0)+" / ":"")+fmt(total[key],0)+" g";
@@ -2363,7 +2373,7 @@ async function overview(){
     macros.append(cell);
    }
    summary.append(macros);
-   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expandir resumo nutricional");expand.textContent="";
+   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label",playerText("Expandir resumo nutricional","Expand nutrition summary"));expand.textContent="";
    const weeklyCharts=document.createElement("div");weeklyCharts.className="nutrition-weekly-charts";weeklyCharts.hidden=true;
    const weekDays=[];
    for(let offset=0;offset<7;offset++){
@@ -2380,7 +2390,7 @@ async function overview(){
    const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
    const deviationMean=change(mean);let deviationPrevious=change(previous?.total.kcal);
    const visual=document.createElement("div");visual.className="nutrition-comparison";
-   const heading=document.createElement("h3");heading.className="nutrition-comparison-heading";heading.textContent="Energia (kcal)";visual.append(heading);
+   const heading=document.createElement("h3");heading.className="nutrition-comparison-heading";heading.textContent=playerText("Energia (kcal)","Energy (kcal)");visual.append(heading);
    const gauge=document.createElement("div");gauge.className="nutrition-comparison-gauge";
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
    const ring=(radius,delta,pos,neg)=>{
@@ -2427,13 +2437,13 @@ async function overview(){
     const planned=document.createElement("span");
     const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";
     const energyLabel=document.createElement("span");energyLabel.className="consumption-concentric-energy-label";energyLabel.textContent="kcal";energyRow.append(energyLabel);energyLine.append(current,planned,suffix);
-    const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
+    const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label",playerText("Unidades nutricionais","Nutrition units"));
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
-    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M20.5 5.5h-11C5.787 5.5 3 8.185 3 12m.5 6.5h11c3.713 0 6.5-2.685 6.5-6.5"/><path d="M18.5 3S21 4.841 21 5.5S18.5 8 18.5 8m-13 8S3 17.841 3 18.5S5.5 21 5.5 21"/></g></svg>';unitArrow.setAttribute("aria-label","Mostrar valores por kg");mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);
+    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M20.5 5.5h-11C5.787 5.5 3 8.185 3 12m.5 6.5h11c3.713 0 6.5-2.685 6.5-6.5"/><path d="M18.5 3S21 4.841 21 5.5S18.5 8 18.5 8m-13 8S3 17.841 3 18.5S5.5 21 5.5 21"/></g></svg>';unitArrow.setAttribute("aria-label",playerText("Mostrar valores por kg","Show values per kg"));mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
     const macroValues=[];
-    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+    for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
      const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
      const name=document.createElement("span");name.textContent=title;
      const amount=document.createElement("strong");amount.className="consumption-concentric-amount";
@@ -2445,7 +2455,7 @@ async function overview(){
      macroValues.push({key,consumedValue,prescribedValue,grams});
     }
     const updateUnits=(perKg)=>{
-     unitArrow.setAttribute("aria-label",perKg?"Mostrar valores em gramas":"Mostrar valores por kg");unitArrow.title=perKg?"Voltar a g e kcal":"Ver g/kg e kcal/kg";
+     unitArrow.setAttribute("aria-label",perKg?playerText("Mostrar valores em gramas","Show values in grams"):playerText("Mostrar valores por kg","Show values per kg"));unitArrow.title=perKg?playerText("Voltar a g e kcal","Back to g and kcal"):playerText("Ver g/kg e kcal/kg","View g/kg and kcal/kg");
      gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
      const divisor=perKg&&hasWeight?weight:1;
      current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
@@ -2462,7 +2472,7 @@ async function overview(){
     unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
-    for(const [name,delta,cls] of [["ontem",deviationPrevious,"prior"],["média",deviationMean,"mean"]]){
+    for(const [name,delta,cls] of [[playerText("ontem","yesterday"),deviationPrevious,"prior"],[playerText("média","average"),deviationMean,"mean"]]){
      const pill=document.createElement("div");pill.className="consumption-concentric-trend "+cls;
      const caption=document.createElement("span");caption.textContent=name;
      const value=document.createElement("strong");value.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
@@ -2473,7 +2483,7 @@ async function overview(){
     visual.append(rings,figures,mode);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
-   for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
+   for(const [name,delta,cls] of [[playerText("vs média semanal","vs weekly average"),deviationMean,"mean"],[playerText("vs dia anterior","vs previous day"),deviationPrevious,"prior"]]){
     const stat=document.createElement("div");stat.className="nutrition-comparison-stat "+cls;
     const figure=document.createElement("strong");figure.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
     if(delta!==null)stat.classList.add(delta>0?"above":delta<0?"below":"neutral");
@@ -2482,7 +2492,7 @@ async function overview(){
    }
    visual.append(comparisons);
    const compactMacros=document.createElement("div");compactMacros.className="nutrition-comparison-macros";
-   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+   for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-comparison-macro "+cls;
     const label=document.createElement("small");label.textContent=title;
     const value=document.createElement("strong");value.textContent=(consumptionEnabled?fmt(actual[key],0)+" / ":"")+fmt(total[key],0)+" g";
@@ -2555,21 +2565,21 @@ async function overview(){
     }
     wrap.append(bars);return wrap;
    }
-   weeklyCharts.append(buildBars("Calorias da semana","kcal","#82d4a4",1));
-   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent="Macros da semana";macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
+   weeklyCharts.append(buildBars(playerText("Calorias da semana","Weekly calories"),"kcal","#82d4a4",1));
+   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent=playerText("Macros da semana","Weekly macros");macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
    const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);macroHeader.append(modes);
    const macArea=document.createElement("div");weeklyCharts.append(macArea);
    const renderMacroMode=mode=>{
-    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent="Para consultar g/kg, adiciona o peso do jogador ao perfil.";macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
+    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent=playerText("Para consultar g/kg, adiciona o peso do jogador ao perfil.","Add the player's weight to the profile to view g/kg.");macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
     const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
-    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
+    for(const [key,title,color] of [["protein_g",playerMacroLabel("protein_g"),"#64b4f7"],["carbs_g",playerMacroLabel("carbs_g"),"#f0a077"],["fat_g",playerMacroLabel("fat_g"),"#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?playerText("Valores por quilograma","Values per kilogram"):playerText("Peso do jogador indisponível no perfil","Player weight unavailable in profile");
    renderMacroMode("g");
    expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?playerText("Expandir resumo nutricional","Expand nutrition summary"):playerText("Fechar gráficos nutricionais","Close nutrition charts"));if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
    if(consumptionEnabled){
     const footer=document.createElement("div");footer.className="consumption-concentric-footer";
-    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent="Ver valores semanais e detalhes";
+    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent=playerText("Ver valores semanais e detalhes","View weekly values and details");
     footerLabel.addEventListener("click",()=>expand.click());
     const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
     const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
@@ -2659,8 +2669,8 @@ async function overview(){
     const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
-    consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?' Consumido':' Cumpri');quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
-    const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+    consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?playerText(' Consumido',' Consumed'):playerText(' Cumpri',' Done'));quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
+    const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
     const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
      if(isRecordedOption&&previous.status==='all')return;

@@ -66,6 +66,17 @@ let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
 let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
 let chefProfileSubpage=null;
 const txt = () => labels[lang];
+// Localise presentation only: the dish's original category and ID stay unchanged.
+const chefDishCategoryEnglish={
+ "Peixe":"Fish","Peixe magro":"Lean fish","Peixe gordo":"Oily fish",
+ "Carne":"Meat","Carne branca":"White meat","Carne vermelha":"Red meat",
+ "Aves":"Poultry","Marisco":"Seafood","Ovos":"Eggs",
+ "Vegetariano":"Vegetarian","Vegetariana":"Vegetarian",
+ "Pratos principais":"Main dishes","Pós-jogo":"Post-match"
+};
+function chefDishCategoryLabel(value){
+ return lang==="en"?(chefDishCategoryEnglish[String(value||"").trim()]||value):value;
+}
 
 function dateKey(date){
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),
@@ -476,7 +487,7 @@ function editMenuForm(date,meal,item,slot){
    for(const dish of data.dishes||[]){
     const button=node("button","chef-menu-dish-result");button.type="button";
     button.append(node("span","",dish.name_pt));
-    if(dish.category)button.append(node("small","",dish.category));
+    if(dish.category)button.append(node("small","",chefDishCategoryLabel(dish.category)));
     button.onclick=()=>{
      selectedDish={id:dish.id,name:dish.name_pt};
      search.value=dish.name_pt;showSelected();results.hidden=true;
