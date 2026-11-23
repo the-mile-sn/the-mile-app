@@ -1500,6 +1500,14 @@ def application(env, start_response):
                     return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
                         c,aid,language=language)['options_by_color']})
                 raise Problem(404,'not_found')
+            if path == '/api/v2/admin/translation-readiness' and method=='GET':
+                # Zero-content, opt-in probe from the application's actual DB
+                # connection. Never include player data, source text or URLs.
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC')!='1':
+                    raise Problem(404,'not_found')
+                return respond(200,app_content_i18n_v2.translation_readiness(c))
             if path == '/api/v2/player/preferences' and method in ('GET','PUT'):
                 # The preference is strictly bound to the authenticated user;
                 # there is no client-provided athlete or user identifier.
