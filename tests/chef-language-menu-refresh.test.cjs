@@ -38,7 +38,7 @@ test("Existing Chef week loader updates Home and Menus PT → EN → PT without 
    activeTab:"profile",days:[],colors:{},menus:[],executions:[],
    clearTimeout(){},el:()=>({hidden:false}),
    renderChefHomeSkeleton(){throw Error("Profile must not trigger Home skeletons")},
-   clearChefSkeleton(){this.chefSkeletonVisible=false},
+   clearChefSkeleton(){context.chefSkeletonVisible=false},
    monday(d){const date=new Date(d);date.setDate(date.getDate()-(date.getDay()+6)%7);return date},
    shift(d,n){const date=new Date(d);date.setDate(date.getDate()+n);return date},
    dateKey(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")},
