@@ -101,3 +101,46 @@ test("Chef approved-dish list localises only category labels, retaining canonica
  assert.match(chef,/dish_id:selectedDish\.id/);
 });
 
+test("Chef Home and Menus translate only menu-category display, never saved text or dish data",()=>{
+ const mapStart=chef.indexOf("const chefDishCategoryEnglish={");
+ const mapEnd=chef.indexOf("\nfunction dateKey(",mapStart);
+ const menuStart=chef.indexOf("function appendChefMenuDish(");
+ const menuEnd=chef.indexOf("\nfunction renderChefMeal(",menuStart);
+ assert.ok(mapStart>=0&&mapEnd>mapStart&&menuStart>=0&&menuEnd>menuStart);
+ const source=chef.slice(mapStart,mapEnd)+"\n"+chef.slice(menuStart,menuEnd);
+ const cases=[
+  ["category","Carne branca","White meat"],
+  ["category","Peixe magro","Lean fish"],
+  ["category","Livre","Livre"],
+  ["category","Pós-jogo","Post-match"],
+  ["category","Mix","Mix"],
+  ["text","Estágio","Estágio"],
+  ["text","Carne branca","Carne branca"],
+  ["dish","Herb-crusted salmon","Herb-crusted salmon"]
+ ];
+ for(const locale of ["pt","en"]){
+  const ctx=vm.createContext({
+   lang:locale,
+   asText(value){return String(value??"");},
+   chefMenuPhoto(){return null;},
+   node(type,cls,text){return {type,cls,text,children:[],
+    append(child){this.children.push(child);}};}
+  });
+  vm.runInContext(source,ctx);
+  for(const [kind,value,english] of cases){
+   const item=Object.freeze({kind,value,menu_date:"2026-11-23",meal:"lunch"});
+   const host={children:[],append(child){this.children.push(child);}};
+   ctx.item=item;ctx.host=host;
+   vm.runInContext('appendChefMenuDish(host,item,"Menu not assigned")',ctx);
+   assert.equal(host.children[0].children[0].text,
+     locale==="en"?english:value,kind+" "+locale);
+   assert.equal(item.value,value);
+   assert.equal(item.kind,kind);
+  }
+  const host={children:[],append(child){this.children.push(child);}};
+  ctx.item=null;ctx.host=host;
+  vm.runInContext('appendChefMenuDish(host,item,"Menu not assigned")',ctx);
+  assert.equal(host.children[0].children[0].text,"Menu not assigned");
+ }
+});
+
