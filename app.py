@@ -1844,6 +1844,9 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
+                source=app_content_i18n_v2.localise_consumption_source(
+                    c,link['athlete_id'],source,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 timing=(query.get('timing') or [None])[0]
                 if timing is not None:
                     if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
