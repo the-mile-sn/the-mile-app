@@ -619,3 +619,72 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 .tm-admin-translations-page .i18n-plan-notes-preview .i18n-plan-unique-list{
   grid-auto-rows:max-content;align-content:start;
 }
+
+/* Read-only coverage audit for published Planos; native compact backoffice surfaces. */
+.tm-admin-translations-page .i18n-plan-coverage-head{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:10px;margin:0 0 12px;
+}
+.tm-admin-translations-page .i18n-plan-coverage-head h3{
+  margin:0;font-size:14px;font-weight:600;color:var(--tm-ui-text);
+}
+.tm-admin-translations-page .i18n-plan-coverage-head button{min-height:36px;font-size:12px}
+.tm-admin-translations-page .i18n-plan-coverage-feedback{
+  display:block;min-height:0;color:var(--tm-ui-muted);font-size:11px;
+}
+.tm-admin-translations-page .i18n-plan-coverage-feedback:empty{display:none}
+.tm-admin-translations-page .i18n-plan-coverage-overview{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.tm-admin-translations-page .i18n-plan-coverage-stat{
+  background:var(--tm-ui-subcard);border-radius:10px;padding:11px 12px;min-width:0;
+}
+.tm-admin-translations-page .i18n-plan-coverage-stat strong{
+  display:block;font-size:20px;font-weight:600;line-height:1.2;
+  color:var(--tm-ui-text);font-variant-numeric:tabular-nums;
+}
+.tm-admin-translations-page .i18n-plan-coverage-stat small{
+  display:block;font-size:11px;line-height:1.4;
+  margin-top:4px;color:var(--tm-ui-muted);
+}
+.tm-admin-translations-page .i18n-plan-coverage-intro{
+  font-size:11px;line-height:1.5;margin:11px 0;color:var(--tm-ui-muted);
+}
+.tm-admin-translations-page .i18n-plan-coverage-scroll{
+  max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;
+  border-radius:10px;background:var(--tm-ui-subcard);
+}
+.tm-admin-translations-page .i18n-plan-coverage-table{
+  width:100%;min-width:630px;border-collapse:collapse;
+  color:var(--tm-ui-text);font-size:12px;line-height:1.45;
+  font-variant-numeric:tabular-nums;
+}
+.tm-admin-translations-page .i18n-plan-coverage-table :is(th,td){
+  padding:10px 12px;border-bottom:1px solid var(--tm-ui-divider);
+}
+.tm-admin-translations-page .i18n-plan-coverage-table thead th{
+  color:var(--tm-ui-muted);font-weight:500;font-size:11px;
+  white-space:nowrap;text-align:right;
+}
+.tm-admin-translations-page .i18n-plan-coverage-table :is(thead th:first-child,tbody th){
+  text-align:left;
+}
+.tm-admin-translations-page .i18n-plan-coverage-table tbody th{
+  font-weight:500;min-width:150px;
+}
+.tm-admin-translations-page .i18n-plan-coverage-table tbody td{text-align:right}
+.tm-admin-translations-page .i18n-plan-coverage-table tbody tr:last-child :is(th,td){border-bottom:0}
+.tm-admin-translations-page .i18n-plan-coverage-total :is(th,td){
+  font-weight:600;background:var(--tm-ui-search);
+}
+.tm-admin-translations-page .i18n-plan-reuse-details{
+  margin:12px 0 0;padding-top:10px;border-top:1px solid var(--tm-ui-divider);
+}
+.tm-admin-translations-page .i18n-plan-reuse-details summary{
+  font-size:12px;font-weight:500;cursor:pointer;color:var(--tm-ui-text);
+}
+.tm-admin-translations-page .i18n-plan-reuse-details .i18n-plan-audit-grid{margin-top:12px}
+@media(max-width:720px){
+  .tm-admin-translations-page .i18n-plan-coverage-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tm-admin-translations-page .i18n-plan-coverage-head button{width:auto}
+}
