@@ -1,7 +1,8 @@
 """Version-bound, private review of published meal-plan display text.
 
-Never exports whole snapshots, athlete identifiers, clinical records or free-text
-notes to third-party services. Never mutates published plans or their nutrition.
+Never exports whole snapshots, athlete identifiers or clinical records.
+Plan consumption notes can enter a separately reviewed CSV after conservative
+screening and explicit admin confirmation; never mutates published nutrition.
 The separate admin HTTP boundary enforces session, origin and CSRF.
 """
 import hashlib
@@ -96,7 +97,7 @@ def _fields(plan, food_names):
                 "Título da opção", group, False, "option_title")
             for ni, note in enumerate(option.get("notes") or []):
                 add(prefix + f"/notes/{ni}", note,
-                    f"Nota clínica ou individual · {ni + 1}", group, True,
+                    f"Nota de consumo do plano · {ni + 1}", group, True,
                     "individual_note")
             for fi, food in enumerate(option.get("foods") or []):
                 if not isinstance(food, dict):
@@ -388,10 +389,10 @@ def approve(c, actor, body):
 
 
 
-# Shared plan text is strictly limited to visible option titles and
-# unambiguous presentation units. Alternative labels, notes, free-text
-# quantities and prescription labels never enter this cross-plan queue.
-_COMMON_KINDS = {"option_title", "display_quantity"}
+# Shared plan text: titles, simple presentation units and screened consumption
+# notes. Free-form food overrides, supplement labels and private notes that
+# fail the privacy screen remain in individual, admin-only reviews.
+_COMMON_KINDS = {"option_title", "display_quantity", "individual_note"}
 MAX_COMMON_BATCH = 100
 
 
@@ -402,8 +403,10 @@ def _group_identity(field, plan):
     if kind == "display_quantity" and _quantity_hint(field["source_text"]) is None:
         return None
     context = ""
-    if kind == "option_title":
-        match = re.match(r"^meals/(\d+)/options/\d+/title$", field["field_path"])
+    if kind in ("option_title", "individual_note"):
+        suffix = "title" if kind == "option_title" else r"notes/\d+"
+        match = re.match(r"^meals/(\d+)/options/\d+/" + suffix + r"$",
+                         field["field_path"])
         if match is None:
             return None
         meal_index = int(match.group(1))
@@ -412,6 +415,10 @@ def _group_identity(field, plan):
         except (IndexError, TypeError, AttributeError):
             return None
         if not context:
+            return None
+        if kind == "individual_note" and not _plan_note_candidate(
+                {"field_kind":kind,"source_text":field["source_text"],
+                 "meal_context":context}):
             return None
     key = _hash(kind + "\0" + context + "\0" + field["source_text"])
     return key, kind, context
@@ -491,13 +498,28 @@ def _single_title_candidate(group):
             and _SENSITIVE_SINGLE_TITLE.search(original + " " + context) is None)
 
 
+def _plan_note_candidate(group):
+    """Conservatively shortlist consumption notes; human screening still required.
+
+    This only applies to note entries from published plan options. No IDs,
+    food overrides, supplement prescriptions or raw snapshots are shared.
+    """
+    if group["field_kind"] != "individual_note":
+        return False
+    source, context = group["source_text"], group["meal_context"]
+    return (bool(source.strip()) and bool(context.strip())
+            and len(source) <= 700 and len(context) <= 80
+            and all(ch.isprintable() or ch in "\n\r\t" for ch in source)
+            and all(ch.isprintable() for ch in context)
+            and _SENSITIVE_SINGLE_TITLE.search(source + " " + context) is None)
+
+
 def _csv_eligible(group):
-    # Never exports notes, overrides, supplements or clinical data fields.
-    # Unique option titles are *candidates*, requiring a privacy-screening
-    # confirmation in the browser before downloading the CSV.
+    # Free text is screened conservatively, then explicitly reviewed by an
+    # admin before local browser export. Never assumes a note is clinical.
     return (group["field_kind"] == "display_quantity" or
             (group["field_kind"] == "option_title" and group["total"] >= 2) or
-            _single_title_candidate(group))
+            _single_title_candidate(group) or _plan_note_candidate(group))
 
 
 def _missing_stamp(targets):
@@ -533,6 +555,7 @@ def common_preview(c, actor):
             "suggestion":group["suggestion"], "batch_limit":MAX_COMMON_BATCH,
             "csv_eligible":_csv_eligible(group),
             "single_title_candidate":_single_title_candidate(group),
+            "plan_note_candidate":_plan_note_candidate(group),
             "imported_status":stage["status"] if stage else None,
             "imported_text":stage["translated_text"] if stage else None,
             "expected_stage_hash":_hash(stage["translated_text"]) if stage else "",
@@ -540,7 +563,7 @@ def common_preview(c, actor):
     items.sort(key=lambda item:(-item["missing_count"],
                                 item["field_kind"],item["source_text"].casefold()))
     return {"items":items, "total_groups":len(items),
-            "policy":"admin_private_identical_text_same_meal_no_clinical_auto",
+            "policy":"admin_private_contextual_text_screened_notes_no_auto_approval",
             "max_batch":MAX_COMMON_BATCH}
 
 
@@ -548,8 +571,8 @@ def common_preview(c, actor):
 def import_common(c, actor, body):
     """Store up to 100 CSV proposals as plan_common, not as plan approvals.
 
-    Data are limited to grouped generic titles and simple presentation units.
-    Nothing writes into athlete plans or approves any position during import.
+    Data are limited to grouped titles, presentation units and screened
+    consumption notes. Nothing modifies a plan or approves during import.
     """
     actor_id = admin._admin(c, actor)
     if (not isinstance(body, dict) or set(body) != {"rows"} or
@@ -656,7 +679,8 @@ def approve_common(c, actor, body):
         raise PlanTranslationError(400,"invalid_common_review")
     groups = _common_groups(c)
     group = groups.get(body["group_id"])
-    if group is None or group["source_hash"] != body["source_hash"]:
+    if (group is None or not _csv_eligible(group) or
+            group["source_hash"] != body["source_hash"]):
         raise PlanTranslationError(409,"common_translation_changed")
     targets = sorted(group["missing"],
                      key=lambda r:(r["publication_ref"],r["field_path"]))
