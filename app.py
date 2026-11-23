@@ -2085,7 +2085,10 @@ def application(env, start_response):
                 if user['role']!='player': raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link: raise Problem(404,'player_not_linked')
-                return respond(200,{'recipes':player_recipes_v2.library_for_athlete(c,link['athlete_id'])})
+                items=player_recipes_v2.library_for_athlete(c,link['athlete_id'])
+                items=app_content_i18n_v2.localise_recipe_summaries(c,items,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'recipes':items})
             if path.startswith('/api/v2/player/recipe-photo/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
@@ -2106,6 +2109,8 @@ def application(env, start_response):
                 if not recipe: raise Problem(404,'not_found')
                 recipe.pop('photo_key',None)
                 recipe['has_photo']=bool(c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=? AND photo_key IS NOT NULL",(recipe['id'],)).fetchone())
+                recipe=app_content_i18n_v2.localise_recipe_detail(c,recipe,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 return respond(200,{'recipe':recipe})
             if path.startswith('/api/v2/player/dish-recipes/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
@@ -2114,6 +2119,8 @@ def application(env, start_response):
                 if not link: raise Problem(404,'player_not_linked')
                 recipes=player_recipes_v2.published_for_dish(c,link['athlete_id'],path.rsplit('/',1)[-1])
                 if recipes is None: raise Problem(404,'not_found')
+                recipes=app_content_i18n_v2.localise_recipe_summaries(c,recipes,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 return respond(200,{'recipes':recipes})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
@@ -2128,8 +2135,11 @@ def application(env, start_response):
                         WHERE matches.name_pt=m.value)=1))
                   WHERE d.active=1""",(link['athlete_id'],)).fetchall()
                 counts=player_recipes_v2.dish_recipe_counts(c,link['athlete_id'])
-                return respond(200,{'dishes':[{'id':row['id'],'name_pt':row['name_pt'],
-                    'recipe_count':counts.get(row['id'],0)} for row in rows]})
+                dishes=[{'id':row['id'],'name_pt':row['name_pt'],
+                    'recipe_count':counts.get(row['id'],0)} for row in rows]
+                dishes=app_content_i18n_v2.localise_dish_summaries(c,dishes,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'dishes':dishes})
             if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
