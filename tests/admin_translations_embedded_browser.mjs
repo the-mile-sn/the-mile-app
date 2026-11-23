@@ -302,7 +302,7 @@ try{
     await coverage.locator(".i18n-plan-coverage-table").waitFor();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
-    assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),1);
+    assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),2);
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
     assert.equal(await page.locator(".i18n-plan-common-detail textarea").inputValue(),
