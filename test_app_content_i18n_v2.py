@@ -100,6 +100,26 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(self.library["food-1"]["display_name"],"Arroz branco")
         self.assertEqual(translated["Plano azul"]["snapshot_json"],self.raw)
 
+    def test_option_ref_never_changes_with_language(self):
+        from meal_option_selection_v2 import option_ref
+        translated,english_library=self._translated()
+        original=self.plans["Plano azul"]["content"]["meals"][0]["options"][0]
+        english=translated["Plano azul"]["content"]["meals"][0]["options"][0]
+        self.assertEqual(english["__tm_canonical_option_ref"],option_ref(original))
+        self.assertNotEqual(option_ref(original),option_ref(english))
+        with patch.object(plans_api,"_option_totals",return_value={
+                "kcal":200,"protein_g":2,"carbs_g":4,"fat_g":1}), \
+             patch.object(plans_api,"_option_items",return_value=[]):
+            portuguese_view=plans_api._options(self.plan["meals"][0],self.library)
+            english_view=plans_api._options(
+                translated["Plano azul"]["content"]["meals"][0],english_library)
+        self.assertEqual(portuguese_view[0]["option_ref"],
+                         english_view[0]["option_ref"])
+        self.assertEqual(portuguese_view[0]["option_ref"],option_ref(original))
+        self.assertEqual(english_view[0]["title"],"Rice with fish")
+        self.assertEqual(portuguese_view[0]["title"],"Arroz com peixe")
+        self.assertNotIn("__tm_canonical_option_ref",english_view[0])
+
     def test_pending_and_stale_cannot_leak(self):
         self.c.execute("""UPDATE v2_content_translations SET status='pending'
             WHERE field_path='meals/0/options/0/title'""")
