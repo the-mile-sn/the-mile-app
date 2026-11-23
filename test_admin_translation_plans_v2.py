@@ -975,12 +975,18 @@ class PlanTranslationsTests(unittest.TestCase):
     def test_recovery_accepts_only_exact_contextual_common_approval(self):
         import app_translation_plans_v2 as p
         with patch.dict(os.environ,FLAG):
+            amended=json.loads(self.original)
+            amended["meals"][0]["options"][0]["notes"][0]="Servir morno."
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(amended,ensure_ascii=False),self.draft_id))
             ref=self.index()["publication_ref"]
             note=next(f for f in self.fields(ref)["body"]["fields"]
                       if f["field_kind"]=="individual_note")
             group=None
             with app.connect() as c:
-                group=p._group_identity(note,self.plan)
+                group=p._group_identity(note,amended)
                 # A clinical note is only a REVIEW candidate, never published automatically.
                 if group is not None:
                     c.execute("""INSERT INTO v2_content_translations(
@@ -988,7 +994,7 @@ class PlanTranslationsTests(unittest.TestCase):
                         translated_text,status,updated_at,updated_by)
                         VALUES('plan_common',?,'text','en',?,?,'approved',0,'test')""",
                         (group[0],p._hash(note["source_text"]),
-                         "Take 2 times during the day"))
+                         "Serve warm."))
             if group is None:
                 self.skipTest("Clinical note deliberately excluded from common review")
             result=self.call(ROOT+"/recovery?publication_ref="+ref)
