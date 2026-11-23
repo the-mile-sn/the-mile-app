@@ -192,6 +192,9 @@ def _reuse_audit(c, items, published):
     """Anonymous counts only; no patient names, source text or plan snapshots."""
     titles = Counter()
     kinds = Counter()
+    coverage = {kind:{"approved":0,"pending":0,"missing":0,"outdated":0}
+                for kind in ("option_title", "individual_note", "display_quantity",
+                             "alternative_override", "food_override", "supplement_label")}
     eligible_title_hints = 0
     eligible_unit_hints = 0
     approved_library = {}
@@ -217,9 +220,11 @@ def _reuse_audit(c, items, published):
         for field in fields:
             kind = field["field_kind"]
             kinds[kind] += 1
+            field_status = _status(field, states.get(field["field_path"]))
+            coverage[kind][field_status] += 1
             if kind == "option_title":
                 titles[field["source_text"]] += 1
-            if _status(field, states.get(field["field_path"])) != "missing":
+            if field_status != "missing":
                 continue
             suggestion = _safe_suggestion(field, accepted_titles)
             if suggestion and suggestion["origin"] == "approved_exact_title":
@@ -243,7 +248,14 @@ def _reuse_audit(c, items, published):
                                  or override.strip() == canonical.strip())
                             and approved_library.get(fid) == _hash(canonical)):
                         approved_linked += 1
+    coverage_totals = {
+        state:sum(counts[state] for counts in coverage.values())
+        for state in ("approved","pending","missing","outdated")
+    }
     return {
+        "coverage_by_kind": coverage,
+        "coverage_totals": coverage_totals,
+        "coverage_scope": "published_plan_fields_only_excludes_library_references",
         "published_versions": len(items),
         "visible_text_fields": sum(item["field_count"] for item in items),
         "linked_food_references": sum(item["linked_food_count"] for item in items),
