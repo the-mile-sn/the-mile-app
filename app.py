@@ -2079,7 +2079,10 @@ def application(env, start_response):
                     if row:
                         peri['options']=meal_option_selection_v2.visible_options(
                             peri.get('options') or [],row,None)
-                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':app_content_i18n_v2.localise_supplement_days(
+                    c,supplements_v2.days(c,link['athlete_id'],first,last,
+                    microcycles_v2.list_matches(c,link['athlete_id']),event_data),
+                    language=player_language_v2.presentation_language(c,user['id']))})
             if path == '/api/v2/player/recipes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
