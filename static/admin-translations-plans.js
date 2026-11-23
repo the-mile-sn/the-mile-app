@@ -326,6 +326,23 @@
       "Descarregar CSV de notas dos planos");
     notesDownload.type="button";notesDownload.disabled=true;
     notesPreview.append(notesSummary,notesIntro,notesList,notesConsent,notesDownload);
+    const quantityPreview=create("details","i18n-plan-unique-preview i18n-plan-quantity-preview");
+    const quantitySummary=create("summary","","Quarto CSV · quantidades pendentes");
+    const quantityIntro=create("p","i18n-plan-policy",
+      "Quantidades de apresentação ainda por traduzir. Os símbolos internacionais"+
+      " podem permanecer iguais em inglês; outros termos precisam de tradução."+
+      " Revê cada expressão antes de exportar e desmarca as que não devam ser partilhadas.");
+    const quantityStats=create("p","i18n-plan-quantity-stats");
+    const quantityList=create("div","i18n-plan-unique-list");
+    const quantityConsent=create("label","i18n-bulk-attestation");
+    const quantityCheck=create("input");quantityCheck.type="checkbox";
+    quantityConsent.append(quantityCheck,create("span","",
+      "Revisei as quantidades selecionadas e confirmei que podem ser exportadas"));
+    const quantityDownload=create("button","i18n-secondary",
+      "Descarregar CSV de quantidades");
+    quantityDownload.type="button";quantityDownload.disabled=true;
+    quantityPreview.append(quantitySummary,quantityIntro,quantityStats,
+      quantityList,quantityConsent,quantityDownload);
     csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
       create("p","i18n-plan-policy",
         "O CSV comum mantém os títulos repetidos e unidades simples."+
@@ -334,7 +351,7 @@
         " dados pessoais, alternativas nem prescrições. As notas dos planos"+
         " têm um terceiro CSV com revisão. Preenche apenas translated_text;"+
         " importar não aprova automaticamente."),
-      csvActions,uniquePreview,notesPreview,approvalPanel,csvFeedback);
+      csvActions,uniquePreview,notesPreview,quantityPreview,approvalPanel,csvFeedback);
     const csvEntry=g=>({
       group_id:g.group_id,source_hash:g.source_hash,
       expected_group_hash:g.expected_group_hash,
@@ -412,6 +429,50 @@
         " notas exportadas. Confirma o conteúdo do CSV antes de o partilhar.";
       notesCheck.checked=false;notesDownload.disabled=true;
     });
+    const renderQuantities=()=>{
+      quantityCheck.checked=false;quantityDownload.disabled=true;
+      quantityList.replaceChildren();
+      const candidates=groups.filter(g=>g.quantity_candidate&&g.csv_eligible);
+      const occurrences=candidates.reduce((n,g)=>n+g.missing_count,0);
+      const neutral=candidates.filter(g=>g.quantity_neutral).length;
+      quantitySummary.textContent="Quarto CSV · "+candidates.length+
+        " quantidades únicas ("+occurrences+" ocorrências por traduzir)";
+      quantityStats.textContent=neutral+
+        " expressões com símbolos que podem manter-se iguais em inglês, "+
+        "sujeitas a revisão. As restantes exigem tradução ou confirmação.";
+      if(!candidates.length)quantityList.append(create("p","i18n-plan-policy",
+        "Não existem quantidades elegíveis na fila. Os restantes campos "+
+        "continuam disponíveis na revisão individual dos planos."));
+      for(const group of candidates){
+        const row=create("label","i18n-plan-unique-row");
+        const checkbox=create("input");checkbox.type="checkbox";
+        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
+        checkbox.addEventListener("change",()=>{
+          quantityCheck.checked=false;quantityDownload.disabled=true;
+        });
+        const hint=group.quantity_neutral?" · símbolo igual em inglês (a rever)":
+          group.suggestion?.text?" · tradução existente (a rever)":" · traduzir";
+        row.append(checkbox,create("span","",group.source_text+" · "+
+          group.missing_count+" ocorrências"+hint));
+        quantityList.append(row);
+      }
+    };
+    quantityCheck.addEventListener("change",()=>{
+      quantityDownload.disabled=!quantityCheck.checked||
+        !quantityList.querySelector("input:checked");
+    });
+    quantityDownload.addEventListener("click",()=>{
+      if(!quantityCheck.checked)return;
+      const chosen=new Set(Array.from(quantityList.querySelectorAll("input:checked"))
+        .map(el=>el.dataset.groupId));
+      const rows=groups.filter(g=>g.quantity_candidate&&g.csv_eligible&&
+        chosen.has(g.group_id)).map(csvEntry);
+      if(!rows.length){csvFeedback.textContent="Não há quantidades selecionadas.";return;}
+      downloadCsv(rows,"the-mile-traducoes-planos-quantidades.csv");
+      csvFeedback.textContent=rows.length+" quantidades exportadas. "+
+        "Preserva números e unidades antes de importar.";
+      quantityCheck.checked=false;quantityDownload.disabled=true;
+    });
     uniqueCheck.addEventListener("change",()=>{
       uniqueDownload.disabled=!uniqueCheck.checked||
         !uniqueList.querySelector("input:checked");
@@ -455,8 +516,9 @@
           "até 100 ocorrências, com histórico de revisão.";
     };
     exportButton.addEventListener("click",()=>{
-      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate)
-        .map(csvEntry);
+      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate&&
+        (g.field_kind!=="display_quantity"||
+         g.suggestion?.origin==="simple_unit_rule")).map(csvEntry);
       if(!rows.length){
         csvFeedback.textContent="Não há títulos repetidos ou unidades para exportar.";
         return;
@@ -572,6 +634,7 @@
       showList();
       renderUnique();
       renderNotes();
+      renderQuantities();
       updateCsvButtons();
     };
     const openGroup=item=>{
