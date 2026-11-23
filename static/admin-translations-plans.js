@@ -94,7 +94,12 @@
     if(item.suggestion&&item.status==="missing"){
       const hint=create("div","i18n-plan-suggestion");
       const origin=item.suggestion.origin==="approved_exact_title"?
-        "Título com tradução aprovada noutro plano":"Unidade de apresentação · regra conservadora";
+        "Título com tradução aprovada noutro plano":
+        item.suggestion.origin==="approved_exact_quantity"?
+        "Quantidade com tradução aprovada noutro plano":
+        item.suggestion.origin==="language_neutral_quantity"?
+        "Símbolo internacional · pode manter-se igual em inglês":
+        "Unidade de apresentação · regra conservadora";
       hint.append(create("small","",origin+" · confirmar contexto"));
       const candidate=create("p","",item.suggestion.text);
       const use=create("button","i18n-secondary","Usar sugestão");
@@ -218,13 +223,12 @@
     const heading=create("strong","","Traduções comuns · revisão por expressão");
     header.append(heading);
     const intro=create("p","i18n-plan-policy",
-      "Títulos idênticos na mesma refeição e unidades simples. "+
-      "Revê o inglês uma vez e aprova até 100 ocorrências em simultâneo. "+
-      "As notas de consumo dos planos têm revisão própria; "+
-      "alternativas e dados clínicos ficam fora do CSV.");
+      "Textos idênticos agrupados para revisão, incluindo quantidades "+
+      "de apresentação. Aprova até 100 ocorrências da mesma expressão. "+
+      "Notas e quantidades têm CSVs próprios com revisão de privacidade.");
     const search=create("input","i18n-plan-common-search");
     search.type="search";
-    search.placeholder="Pesquisar títulos, unidades e notas…";
+    search.placeholder="Pesquisar títulos, quantidades e notas…";
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
@@ -326,15 +330,32 @@
       "Descarregar CSV de notas dos planos");
     notesDownload.type="button";notesDownload.disabled=true;
     notesPreview.append(notesSummary,notesIntro,notesList,notesConsent,notesDownload);
+    const quantityPreview=create("details","i18n-plan-unique-preview i18n-plan-quantity-preview");
+    const quantitySummary=create("summary","","Quarto CSV · quantidades pendentes");
+    const quantityIntro=create("p","i18n-plan-policy",
+      "Quantidades de apresentação ainda por traduzir. Os símbolos internacionais"+
+      " podem permanecer iguais em inglês; outros termos precisam de tradução."+
+      " Revê cada expressão antes de exportar e desmarca as que não devam ser partilhadas.");
+    const quantityStats=create("p","i18n-plan-quantity-stats");
+    const quantityList=create("div","i18n-plan-unique-list");
+    const quantityConsent=create("label","i18n-bulk-attestation");
+    const quantityCheck=create("input");quantityCheck.type="checkbox";
+    quantityConsent.append(quantityCheck,create("span","",
+      "Revisei as quantidades selecionadas e confirmei que podem ser exportadas"));
+    const quantityDownload=create("button","i18n-secondary",
+      "Descarregar CSV de quantidades");
+    quantityDownload.type="button";quantityDownload.disabled=true;
+    quantityPreview.append(quantitySummary,quantityIntro,quantityStats,
+      quantityList,quantityConsent,quantityDownload);
     csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
       create("p","i18n-plan-policy",
         "O CSV comum mantém os títulos repetidos e unidades simples."+
         " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
         " a uma revisão de privacidade antes do download. Não exportamos"+
-        " dados pessoais, alternativas nem prescrições. As notas dos planos"+
-        " têm um terceiro CSV com revisão. Preenche apenas translated_text;"+
+        " dados pessoais, alternativas nem prescrições. Notas e quantidades"+
+        " têm CSVs próprios com revisão. Preenche apenas translated_text;"+
         " importar não aprova automaticamente."),
-      csvActions,uniquePreview,notesPreview,approvalPanel,csvFeedback);
+      csvActions,uniquePreview,notesPreview,quantityPreview,approvalPanel,csvFeedback);
     const csvEntry=g=>({
       group_id:g.group_id,source_hash:g.source_hash,
       expected_group_hash:g.expected_group_hash,
@@ -412,6 +433,50 @@
         " notas exportadas. Confirma o conteúdo do CSV antes de o partilhar.";
       notesCheck.checked=false;notesDownload.disabled=true;
     });
+    const renderQuantities=()=>{
+      quantityCheck.checked=false;quantityDownload.disabled=true;
+      quantityList.replaceChildren();
+      const candidates=groups.filter(g=>g.quantity_candidate&&g.csv_eligible);
+      const occurrences=candidates.reduce((n,g)=>n+g.missing_count,0);
+      const neutral=candidates.filter(g=>g.quantity_neutral).length;
+      quantitySummary.textContent="Quarto CSV · "+candidates.length+
+        " quantidades únicas ("+occurrences+" ocorrências por traduzir)";
+      quantityStats.textContent=neutral+
+        " expressões com símbolos que podem manter-se iguais em inglês, "+
+        "sujeitas a revisão. As restantes exigem tradução ou confirmação.";
+      if(!candidates.length)quantityList.append(create("p","i18n-plan-policy",
+        "Não existem quantidades elegíveis na fila. Os restantes campos "+
+        "continuam disponíveis na revisão individual dos planos."));
+      for(const group of candidates){
+        const row=create("label","i18n-plan-unique-row");
+        const checkbox=create("input");checkbox.type="checkbox";
+        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
+        checkbox.addEventListener("change",()=>{
+          quantityCheck.checked=false;quantityDownload.disabled=true;
+        });
+        const hint=group.quantity_neutral?" · símbolo igual em inglês (a rever)":
+          group.suggestion?.text?" · tradução existente (a rever)":" · traduzir";
+        row.append(checkbox,create("span","",group.source_text+" · "+
+          group.missing_count+" ocorrências"+hint));
+        quantityList.append(row);
+      }
+    };
+    quantityCheck.addEventListener("change",()=>{
+      quantityDownload.disabled=!quantityCheck.checked||
+        !quantityList.querySelector("input:checked");
+    });
+    quantityDownload.addEventListener("click",()=>{
+      if(!quantityCheck.checked)return;
+      const chosen=new Set(Array.from(quantityList.querySelectorAll("input:checked"))
+        .map(el=>el.dataset.groupId));
+      const rows=groups.filter(g=>g.quantity_candidate&&g.csv_eligible&&
+        chosen.has(g.group_id)).map(csvEntry);
+      if(!rows.length){csvFeedback.textContent="Não há quantidades selecionadas.";return;}
+      downloadCsv(rows,"the-mile-traducoes-planos-quantidades.csv");
+      csvFeedback.textContent=rows.length+" quantidades exportadas. "+
+        "Preserva números e unidades antes de importar.";
+      quantityCheck.checked=false;quantityDownload.disabled=true;
+    });
     uniqueCheck.addEventListener("change",()=>{
       uniqueDownload.disabled=!uniqueCheck.checked||
         !uniqueList.querySelector("input:checked");
@@ -455,8 +520,9 @@
           "até 100 ocorrências, com histórico de revisão.";
     };
     exportButton.addEventListener("click",()=>{
-      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate)
-        .map(csvEntry);
+      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate&&
+        (g.field_kind!=="display_quantity"||
+         g.suggestion?.origin==="simple_unit_rule")).map(csvEntry);
       if(!rows.length){
         csvFeedback.textContent="Não há títulos repetidos ou unidades para exportar.";
         return;
@@ -572,6 +638,7 @@
       showList();
       renderUnique();
       renderNotes();
+      renderQuantities();
       updateCsvButtons();
     };
     const openGroup=item=>{
@@ -584,7 +651,7 @@
         create("small","",item.missing_count+" ocorrências para aprovar"));
       const context=create("p","i18n-plan-policy",
         item.field_kind==="display_quantity"?
-          "Apenas expressões de unidade inequívocas":
+          "Quantidade apresentada · preserva os números e unidades originais":
           "Contexto: "+item.meal_context);
       const cols=create("div","i18n-plan-compare");
       const pt=create("div","i18n-plan-pt");

@@ -22,6 +22,12 @@ MAX_PUBLICATIONS = 2000
 MAX_FIELDS = 4000
 # Only unambiguous unit-only display quantities qualify for a suggested rendering.
 _PIECE_QUANTITY = re.compile(r"^(\d+(?:[.,]\d+)?)\s*(?:un\.?|unid\.?|unidades?)\s*(?:/\s*(\d+(?:[.,]\d+)?)\s*(g|mg|ml|kg))?$", re.I)
+# Only a bare quantity with a standard symbol can remain identical in en-GB.
+# This is a *reviewed suggestion*, not an automatic approval.
+_PLAIN_QUANTITY = re.compile(
+    r"^\d+(?:[.,]\d+)?\s*(?:kg|mg|mcg|µg|g|ml|l|kcal|%)"
+    r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:kg|mg|mcg|µg|g|ml|l|kcal|%))?$",
+    re.I)
 
 
 class PlanTranslationError(Exception):
@@ -159,6 +165,28 @@ def _approved_titles(c):
             if len(values) == 1}
 
 
+def _approved_quantities(c):
+    """Unambiguous English from already approved plan presentation quantities."""
+    found = {}
+    for row in c.execute("""
+        SELECT field_path,source_hash,translated_text
+        FROM v2_content_translations
+        WHERE entity_kind='plan' AND language='en' AND status='approved'
+          AND field_path LIKE ?
+    """, ("meals/%/options/%/foods/%/display_quantity",)).fetchall():
+        path = row["field_path"]
+        if not _PATH.fullmatch(path) or not path.endswith("/display_quantity"):
+            continue
+        found.setdefault(row["source_hash"], set()).add(row["translated_text"])
+    return {source_hash:next(iter(values)) for source_hash,values in found.items()
+            if len(values) == 1}
+
+
+def _language_neutral_quantity(source):
+    """Leave standard symbols untouched; preserve numeric notation exactly."""
+    return bool(_PLAIN_QUANTITY.fullmatch(source.strip()))
+
+
 def _quantity_hint(source):
     """Suggest only a structurally simple unit label (not a dose or clinical note)."""
     match = _PIECE_QUANTITY.fullmatch(source)
@@ -172,14 +200,20 @@ def _quantity_hint(source):
     return suggestion if suggestion != source else None
 
 
-def _safe_suggestion(field, approved_titles):
+def _safe_suggestion(field, approved_titles, approved_quantities=None):
     source = field["source_text"]
     if field["field_kind"] == "option_title":
         candidate = approved_titles.get(_hash(source))
         origin = "approved_exact_title"
     elif field["field_kind"] == "display_quantity":
-        candidate = _quantity_hint(source)
-        origin = "simple_unit_rule"
+        candidate = (approved_quantities or {}).get(_hash(source))
+        origin = "approved_exact_quantity"
+        if not candidate:
+            candidate = _quantity_hint(source)
+            origin = "simple_unit_rule"
+        if not candidate and _language_neutral_quantity(source):
+            candidate = source
+            origin = "language_neutral_quantity"
     else:
         return None
     if (not candidate or _numbers(source) != _numbers(candidate)
@@ -206,6 +240,7 @@ def _reuse_audit(c, items, published):
         approved_library[str(row["entity_id"])] = row["source_hash"]
     food_names = _name_map(c)
     accepted_titles = _approved_titles(c)
+    accepted_quantities = _approved_quantities(c)
     approved_linked = 0
     for row in published:
         try:
@@ -226,7 +261,7 @@ def _reuse_audit(c, items, published):
                 titles[field["source_text"]] += 1
             if field_status != "missing":
                 continue
-            suggestion = _safe_suggestion(field, accepted_titles)
+            suggestion = _safe_suggestion(field, accepted_titles, accepted_quantities)
             if suggestion and suggestion["origin"] == "approved_exact_title":
                 eligible_title_hints += 1
             if suggestion and suggestion["origin"] == "simple_unit_rule":
@@ -323,6 +358,7 @@ def inspect(c, actor, public_ref):
     fields, linked, _ = _fields(value, _name_map(c))
     existing = _existing(c, public_ref)
     approved_titles = _approved_titles(c)
+    approved_quantities = _approved_quantities(c)
     displayed = []
     for f in fields:
         candidate = existing.get(f["field_path"])
@@ -331,7 +367,8 @@ def inspect(c, actor, public_ref):
                           "source_hash":_hash(f["source_text"]),
                           "translated_text":candidate["translated_text"] if candidate else "",
                           "candidate_hash":_hash(candidate["translated_text"]) if candidate else None,
-                          "suggestion":_safe_suggestion(f, approved_titles)
+                          "suggestion":_safe_suggestion(
+                              f, approved_titles, approved_quantities)
                                        if state == "missing" else None})
     return {"publication":_summary(c,row,value,_name_map(c)),
             "fields":displayed,
@@ -412,7 +449,8 @@ def _group_identity(field, plan):
     kind = field["field_kind"]
     if kind not in _COMMON_KINDS:
         return None
-    if kind == "display_quantity" and _quantity_hint(field["source_text"]) is None:
+    if kind == "display_quantity" and not _quantity_candidate(
+            {"field_kind":kind, "source_text":field["source_text"]}):
         return None
     context = ""
     if kind in ("option_title", "individual_note"):
@@ -441,6 +479,7 @@ def _common_groups(c):
     rows = _rows(c)
     names = _name_map(c)
     approved = _approved_titles(c)
+    quantities = _approved_quantities(c)
     groups = {}
     for publication in rows:
         try:
@@ -476,7 +515,7 @@ def _common_groups(c):
             else:
                 group[state + "_count"] += 1
             if group["suggestion"] is None:
-                group["suggestion"] = _safe_suggestion(field, approved)
+                group["suggestion"] = _safe_suggestion(field, approved, quantities)
     return groups
 
 
@@ -528,10 +567,28 @@ def _plan_note_candidate(group):
                           source, re.I) is None)
 
 
+def _quantity_candidate(group):
+    """Generic plan display quantities only, with privacy screening and review.
+
+    Rejects probable identifiers, medical language and dose instructions.
+    Shortlisting is not proof of anonymisation: the admin reviews all rows.
+    """
+    if group["field_kind"] != "display_quantity":
+        return False
+    source = group["source_text"]
+    return (bool(source.strip()) and len(source) <= 160
+            and all(ch.isprintable() for ch in source)
+            and _SENSITIVE_SINGLE_TITLE.search(source) is None
+            and re.search(
+                r"\b(?:tomar|dosagem|prescrever|comprimidos?|c[aá]psulas?|"
+                r"creatina|cafe[ií]na|medicamento\w*|suplemento\w*)\b",
+                source, re.I) is None)
+
+
 def _csv_eligible(group):
     # Free text is screened conservatively, then explicitly reviewed by an
     # admin before local browser export. Never assumes a note is clinical.
-    return (group["field_kind"] == "display_quantity" or
+    return (_quantity_candidate(group) or
             (group["field_kind"] == "option_title" and group["total"] >= 2) or
             _single_title_candidate(group) or _plan_note_candidate(group))
 
@@ -570,6 +627,9 @@ def common_preview(c, actor):
             "csv_eligible":_csv_eligible(group),
             "single_title_candidate":_single_title_candidate(group),
             "plan_note_candidate":_plan_note_candidate(group),
+            "quantity_candidate":_quantity_candidate(group),
+            "quantity_neutral":(group["field_kind"] == "display_quantity"
+                                and _language_neutral_quantity(group["source_text"])),
             "imported_status":stage["status"] if stage else None,
             "imported_text":stage["translated_text"] if stage else None,
             "expected_stage_hash":_hash(stage["translated_text"]) if stage else "",
@@ -577,7 +637,7 @@ def common_preview(c, actor):
     items.sort(key=lambda item:(-item["missing_count"],
                                 item["field_kind"],item["source_text"].casefold()))
     return {"items":items, "total_groups":len(items),
-            "policy":"admin_private_contextual_text_screened_notes_no_auto_approval",
+            "policy":"admin_private_screened_quantities_notes_no_auto_approval",
             "max_batch":MAX_COMMON_BATCH}
 
 
