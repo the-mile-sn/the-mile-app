@@ -1527,7 +1527,7 @@ def application(env, start_response):
                 linked=c.execute("SELECT 1 FROM v2_player_links WHERE user_id=?",
                                  (user['id'],)).fetchone()
                 if not linked:raise Problem(404,'player_not_linked')
-                allowed=player_language_v2.selection_available(c)
+                allowed=player_language_v2.selection_available(c,user['id'])
                 if method=='GET':
                     return respond(200,{'language':
                         player_language_v2.get(c,user['id']) if allowed else 'pt',
