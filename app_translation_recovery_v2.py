@@ -21,16 +21,21 @@ def _candidate(c, field, plan):
     path = field["field_path"]
     approved = set()
     sources = set()
-    rows = c.execute("""
-        SELECT translated_text
-        FROM v2_content_translations
-        WHERE entity_kind='plan' AND field_path=? AND source_hash=?
-          AND language='en' AND status='approved'
-    """, (path, source_hash)).fetchall()
-    for row in rows:
-        if isinstance(row["translated_text"], str) and row["translated_text"].strip():
-            approved.add(row["translated_text"])
-            sources.add("approved_same_path")
+    # Context-free matches from *other* athletes are not suitable for
+    # clinical notes, supplement labels or custom food instructions.
+    # A contextual, explicitly reviewed plan_common approval can be offered
+    # below, but must still be reviewed per field before reuse.
+    if field["field_kind"] in ("option_title", "display_quantity"):
+        rows = c.execute("""
+            SELECT translated_text
+            FROM v2_content_translations
+            WHERE entity_kind='plan' AND field_path=? AND source_hash=?
+              AND language='en' AND status='approved'
+        """, (path, source_hash)).fetchall()
+        for row in rows:
+            if isinstance(row["translated_text"], str) and row["translated_text"].strip():
+                approved.add(row["translated_text"])
+                sources.add("approved_same_path")
 
     common = plans._group_identity(field, plan)
     if common is not None:
