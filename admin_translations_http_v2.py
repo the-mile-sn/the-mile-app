@@ -18,6 +18,7 @@ PATHS = frozenset((
     ROOT + "/plans", ROOT + "/plans/fields", ROOT + "/plans/history",
     ROOT + "/plans/propose", ROOT + "/plans/approve",
     ROOT + "/plans/common", ROOT + "/plans/common/approve",
+    ROOT + "/plans/common/import",
 ))
 
 
@@ -119,6 +120,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/plans/common/import":
+                return 201, plans.import_common(c, user, body)
             if path == ROOT + "/plans/common/approve":
                 return 200, plans.approve_common(c, user, body)
             if path == ROOT + "/plans/propose":
