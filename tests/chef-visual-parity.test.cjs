@@ -10,17 +10,17 @@ const guide=fs.readFileSync("docs/GUIA_VISUAL_APP_CHEFS.md","utf8");
 test("Chef Day and Week selector follows the selected PT/EN language without changing controls",()=>{
  const vm=require("node:vm");
  const start=js.indexOf("function chefViewModeCaption(view){");
- const end=js.indexOf("\\n}",start)+2;
+ const end=js.indexOf("\n}",start)+2;
  assert.ok(start>=0&&end>start,"language helper must be present");
  const helper=js.slice(start,end);
  for(const [code,day,week] of [["pt","Dia","Semana"],["en","Day","Week"]]){
   assert.equal(vm.runInNewContext('let lang='+JSON.stringify(code)+';'+helper+';chefViewModeCaption("day")'),day);
   assert.equal(vm.runInNewContext('let lang='+JSON.stringify(code)+';'+helper+';chefViewModeCaption("week")'),week);
  }
- assert.match(js,/button\\.textContent=chefViewModeCaption\\(button\\.dataset\\.view\\)/);
- assert.match(js,/button\\.setAttribute\\("aria-pressed",String\\(button\\.dataset\\.view===chefViewMode\\)\\)/);
- assert.match(js,/setAttribute\\("aria-label",lang==="pt"\\?"Vista de planeamento":"Planning view"\\)/);
- assert.match(html,/<nav id="chef-view-mode"[^>]*data-view="day"[^>]*Dia<\\/button>.*data-view="week"[^>]*Semana<\\/button>/);
+ assert.match(js,/button\.textContent=chefViewModeCaption\(button\.dataset\.view\)/);
+ assert.match(js,/button\.setAttribute\("aria-pressed",String\(button\.dataset\.view===chefViewMode\)\)/);
+ assert.match(js,/setAttribute\("aria-label",lang==="pt"\?"Vista de planeamento":"Planning view"\)/);
+ assert.match(html,/<nav id="chef-view-mode"[^>]*data-view="day"[^>]*Dia<\/button>.*data-view="week"[^>]*Semana<\/button>/);
 });
 
 test("Chef and Player share a system font, tokens and dark palette with no remote font dependency",()=>{
