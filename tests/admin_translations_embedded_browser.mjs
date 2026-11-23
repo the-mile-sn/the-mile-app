@@ -117,7 +117,20 @@ try{
           suggestion:{text:"100 g",origin:"language_neutral_quantity",
             requires_review:true}
         };
-        const items=!commonApprovals?[unit]:!importApprovals?[title]:[single,note,quantity];
+        const food={
+          group_id:"a".repeat(32)+"5".repeat(32),
+          source_hash:"b".repeat(64),expected_group_hash:"c".repeat(64),
+          expected_stage_hash:"",field_kind:"food_override",
+          meal_context:"",source_text:"Arroz branco cozido",
+          occurrences:2,missing_count:2,pending_count:0,
+          approved_count:0,outdated_count:0,batch_limit:100,
+          csv_eligible:true,food_override_candidate:true,
+          imported_status:null,imported_text:null,
+          suggestion:{text:"Cooked white rice",origin:"approved_exact_food_name",
+            requires_review:true}
+        };
+        const items=!commonApprovals?[unit]:!importApprovals?[title]:
+          [single,note,quantity,food];
         await route.fulfill(fmt({total_groups:items.length,max_batch:100,items}));
       }else if(path==="/api/v2/admin/i18n/plans/common/import"){
         const payload=route.request().postDataJSON();
@@ -315,8 +328,8 @@ try{
     await approvalButton.click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
-    await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview) summary").waitFor();
-    const unique=page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview)");
+    await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview):not(.i18n-plan-food-preview) summary").waitFor();
+    const unique=page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview):not(.i18n-plan-food-preview)");
     await unique.locator("summary").click();
     assert.match(await unique.locator("summary").innerText(),/1 títulos únicos/);
     const uniqueButton=unique.locator("button");
@@ -403,6 +416,35 @@ try{
     assert.ok(csvQuantity.includes("3"));
     assert.equal(csvQuantity.includes("Atleta fictício"),false);
     assert.equal(csvQuantity.includes("Tomar 2 vezes"),false);
+
+    const foods=page.locator(".i18n-plan-food-preview");
+    await foods.locator("summary").click();
+    assert.match(await foods.locator("summary").innerText(),
+      /1 nomes alimentares \(2 ocorrências/);
+    assert.match(await foods.locator(".i18n-plan-food-stats").innerText(),
+      /1 nomes com tradução aprovada/);
+    assert.match(await foods.locator(".i18n-plan-unique-row").innerText(),
+      /Arroz branco cozido/);
+    assert.equal(await foods.locator("button").isDisabled(),true);
+    const choice=foods.locator(".i18n-plan-unique-row input");
+    await choice.uncheck();
+    await foods.locator(".i18n-bulk-attestation input").check();
+    assert.equal(await foods.locator("button").isDisabled(),true);
+    await choice.check();
+    assert.equal(await foods.locator("button").isDisabled(),true);
+    await foods.locator(".i18n-bulk-attestation input").check();
+    assert.equal(await foods.locator("button").isEnabled(),true);
+    const foodDownload=page.waitForEvent("download");
+    await foods.locator("button").click();
+    const foodFile=await foodDownload;
+    assert.equal(foodFile.suggestedFilename(),
+      "the-mile-traducoes-planos-apresentacoes.csv");
+    const csvFood=await fs.readFile(await foodFile.path(),"utf8");
+    assert.ok(csvFood.includes("food_override"));
+    assert.ok(csvFood.includes("Arroz branco cozido"));
+    assert.ok(csvFood.includes("Cooked white rice"));
+    assert.equal(csvFood.includes("Atleta fictício"),false);
+    assert.equal(csvFood.includes("Tomar 2 vezes"),false);
 
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
