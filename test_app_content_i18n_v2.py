@@ -120,6 +120,28 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(portuguese_view[0]["title"],"Arroz com peixe")
         self.assertNotIn("__tm_canonical_option_ref",english_view[0])
 
+    def test_alternative_notes_are_localised_but_prescription_is_not(self):
+        translated,library=self._translated()
+        option=translated["Plano azul"]["content"]["meals"][0]["options"][0]
+        with patch.object(plans_api,"_option_totals",return_value={}):
+            english=plans_api._options(
+                translated["Plano azul"]["content"]["meals"][0],
+                library,language="en")
+            portuguese=plans_api._options(
+                self.plan["meals"][0],self.library,language="pt")
+        self.assertEqual(english[0]["option_ref"],portuguese[0]["option_ref"])
+        self.assertTrue(any(item.get("text","").startswith("or ")
+                            for item in english[0]["items"]))
+        self.assertTrue(any(item.get("text","").startswith("ou ")
+                            for item in portuguese[0]["items"]))
+        self.assertEqual(english[0]["number"],portuguese[0]["number"])
+        self.assertEqual(english[0]["totals"],portuguese[0]["totals"])
+        self.assertEqual(option["foods"][1]["alternative_to"],0)
+        self.assertEqual(plans_api._split_display_quantity(
+            "1 colher de sopa",{"grams":30},0.5,"en"),"50% of 1 colher de sopa")
+        self.assertEqual(plans_api._split_display_quantity(
+            "1 colher de sopa",{"grams":30},0.5,"pt"),"50% de 1 colher de sopa")
+
     def test_pending_and_stale_cannot_leak(self):
         self.c.execute("""UPDATE v2_content_translations SET status='pending'
             WHERE field_path='meals/0/options/0/title'""")
@@ -161,7 +183,7 @@ class PresentationTranslationTests(unittest.TestCase):
         from unittest.mock import patch as mocked
         with mocked.object(plans_api,"_approved",return_value=self.plans), \
              mocked.object(plans_api,"_library",return_value=self.library), \
-             mocked.object(plans_api,"_colors",side_effect=lambda p,l:(p,l)), \
+             mocked.object(plans_api,"_colors",side_effect=lambda p,l,language:(p,l)), \
              mocked.object(plans_api,"_peri_plans",return_value={}), \
              patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
             pt=plans_api.player_plans(self.c,"assigned-athlete")
