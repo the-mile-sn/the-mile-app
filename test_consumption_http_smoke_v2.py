@@ -42,7 +42,7 @@ with connect() as db:
  db.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES (?,?,?)",("synthetic","pilot-athlete",int(time.time())))
 import app
 from unittest.mock import patch
-published={"draft_id":"published-test","color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
+published={"draft_id":"published-test","color":"green","planned_color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
 library={"rice":{"id":"rice","active":1,"kcal":100,"protein_g":2,"carbs_g":20,"fat_g":1}}
 app.consumption_source_v2.current_source=lambda *args,**kwargs: published
 app.consumption_nutrition_v2.active_library=lambda *args,**kwargs: library
