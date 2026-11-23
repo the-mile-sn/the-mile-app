@@ -69,6 +69,49 @@ class PresentationTranslationTests(unittest.TestCase):
             return i18n.localise_published_plans(
                 self.c,self.plans,self.library,language="en")
 
+    def test_supplement_daily_text_is_current_and_prescriptions_are_unchanged(self):
+        self.c.execute("""CREATE TABLE v2_supplement_library (
+            id TEXT,name TEXT,dose TEXT,timing_text TEXT,note TEXT)""")
+        self.c.execute("INSERT INTO v2_supplement_library VALUES (?,?,?,?,?)",
+                       ("supp-1","Creatina","5 g","Após o treino","Com água"))
+        self._put("supplement","supp-1","name","Creatina","Creatine")
+        self._put("supplement","supp-1","dose","5 g","5 g")
+        self._put("supplement","supp-1","timing_text",
+                  "Após o treino","After training")
+        self._put("supplement","supp-1","note","Com água","With water")
+        source={"2026-11-23":[
+            {"library_id":"supp-1","name":"Creatina","dose":"5 g",
+             "moment":"post_training","timing_text":"Após o treino",
+             "display_moment":"Após o treino","note":"Com água","rule":"daily"},
+            {"library_id":"supp-1","name":"Creatina","dose":"10 g",
+             "moment":"lunch_or_dinner","timing_text":"",
+             "display_moment":"Almoço ou jantar","note":"Nota individual",
+             "rule":"match"},
+            {"library_id":"","name":"Outro suplemento","dose":"2 cápsulas",
+             "moment":"lunch","display_moment":"","rule":"daily"}]}
+        original=copy.deepcopy(source)
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            en=i18n.localise_supplement_days(self.c,source,language="en")
+            daily,custom,unlinked=en["2026-11-23"]
+            self.assertEqual(daily["name"],"Creatine")
+            self.assertEqual(daily["dose"],"5 g")
+            self.assertEqual(daily["timing_text"],"After training")
+            self.assertEqual(daily["display_moment"],"After training")
+            self.assertEqual(daily["note"],"With water")
+            self.assertEqual(custom["dose"],"10 g")
+            self.assertEqual(custom["note"],"Nota individual")
+            self.assertEqual(custom["display_moment"],"Lunch or dinner")
+            self.assertEqual(custom["rule"],"match")
+            self.assertEqual(unlinked["name"],"Outro suplemento")
+            self.assertEqual(source,original)
+            self.assertIs(i18n.localise_supplement_days(
+                self.c,source,language="pt"),source)
+            self.c.execute("""UPDATE v2_content_translations
+                SET status='pending'
+                WHERE entity_kind='supplement' AND field_path='name'""")
+            self.assertEqual(i18n.localise_supplement_days(
+                self.c,source,language="en")["2026-11-23"][0]["name"],"Creatina")
+
     def test_recipe_catalogue_and_detail_translate_text_only(self):
         recipe={
             "id":"recipe-a","name":"Panquecas de aveia",
