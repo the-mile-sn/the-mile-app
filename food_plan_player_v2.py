@@ -181,7 +181,11 @@ def _option_items(option,library):
 def _options(meal,library):
     result=[]
     for index,option in enumerate(meal.get("options") or [],1):
-        result.append({"number":index,"option_ref":option_ref(option),"title":option.get("title") or "",
+        canonical=option.get("__tm_canonical_option_ref")
+        result.append({"number":index,
+                       "option_ref":canonical if isinstance(canonical,str) and
+                            len(canonical)==64 else option_ref(option),
+                       "title":option.get("title") or "",
                        "totals":_option_totals(option,library),
                        "items":_option_items(option,library),
                        "timing_groups":option.get("timing_groups") or []})
