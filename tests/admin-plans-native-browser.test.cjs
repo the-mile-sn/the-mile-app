@@ -92,8 +92,16 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
   assert.equal(editorCss.display,"grid",JSON.stringify(editorCss));
   assert.equal(editorCss.columns.split(" ").length,4,JSON.stringify(editorCss));
   assert.notEqual(editorCss.cardPadding,"0px",JSON.stringify(editorCss));
-  await page.locator("#tm-plan-page #plan-player").selectOption("user-1");
-  await page.locator("#tm-plan-page #plan-type").selectOption("Plano azul");
+  // Use the real shared dropdown rather than the deliberately hidden native select.
+  const playerPicker=page.locator("#tm-plan-page .tm-select-shell").filter({has:page.locator("#plan-player")});
+  const typePicker=page.locator("#tm-plan-page .tm-select-shell").filter({has:page.locator("#plan-type")});
+  await playerPicker.getByRole("button",{name:"Jogador",exact:true}).click();
+  await playerPicker.getByRole("option",{name:"Atleta de teste",exact:true}).click();
+  await typePicker.getByRole("button",{name:"Tipo de plano",exact:true}).click();
+  await typePicker.getByRole("option",{name:"Plano azul",exact:true}).click();
+  assert.equal(await playerPicker.locator(".tm-select-trigger").getAttribute("aria-expanded"),"false");
+  assert.equal(await typePicker.locator(".tm-select-trigger").getAttribute("aria-expanded"),"false");
+  assert.equal(await page.locator("#tm-plan-page #plan-type").inputValue(),"Plano azul");
   const athlete=await page.locator("#tm-plan-page #plan-player").inputValue();
   assert.equal(athlete,"user-1");
   page.once("dialog",d=>d.dismiss());
