@@ -387,3 +387,10 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 #i18n-results .i18n-result :is(.i18n-result-portuguese,.i18n-result-english)>small:first-child{margin:0 0 5px;font-weight:500;color:var(--tm-ui-muted)}
 #i18n-results .i18n-result-translation{display:block;font-size:13px;line-height:1.45}
 @media(max-width:620px){#i18n-results .i18n-result{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px}#i18n-results .i18n-result-arrow{grid-row:1;grid-column:3}#i18n-results .i18n-result .i18n-status-pill{grid-column:1/-1;grid-row:2;justify-self:start}}
+
+/* Reuse the existing review editor in the selected inventory row. */
+#i18n-results .i18n-inventory-record{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0}
+#i18n-results .i18n-inventory-record>.i18n-result{width:100%;min-width:0}
+#i18n-results .i18n-inventory-record>.i18n-review{grid-column:1/-1;min-width:0;margin:0 0 8px}
+#i18n-results .i18n-inline-edit{min-height:40px;align-self:center}
+@media(max-width:620px){#i18n-results .i18n-inventory-record{grid-template-columns:minmax(0,1fr)}#i18n-results .i18n-inline-edit{justify-self:end}}

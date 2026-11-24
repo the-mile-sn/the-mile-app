@@ -127,8 +127,8 @@ try {
       name + " has horizontal overflow: " + scrollWidth + " > " + width);
     await page.locator("#i18n-results .i18n-result-english").first().waitFor();
     assert.equal(await page.locator("#i18n-results .i18n-result-translation").first().innerText(),snap.english);
-    await page.locator("#i18n-results .i18n-result").first().click();
-    await page.locator("#i18n-review:not([hidden])").waitFor();
+    await page.getByRole("button",{name:"Editar tradução de "+snap.source,exact:true}).click();
+    await page.locator("#i18n-results #i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(
       () => document.querySelector("#i18n-source-text")?.textContent === "Frango com arroz",
     );
@@ -143,11 +143,13 @@ try {
     );
     assert.equal(await page.locator("#i18n-target-text").inputValue(),
       snap.english);
+    await page.locator("#i18n-target-text").fill("Grilled chicken and rice");
     await page.locator("#i18n-propose").click();
     await page.locator("#i18n-approve:not([disabled])").waitFor();
     await page.locator("#i18n-approve").click();
     await page.getByText("Tradução aprovada.", { exact: true }).waitFor();
     assert.deepEqual(snap.writes, ["propose", "approve"]);
+    assert.equal(snap.proposed.text,"Grilled chicken and rice");
     assert.equal(await page.locator("#i18n-results .i18n-status-pill").first().innerText(), "Aprovada");
     await page.screenshot({
       path: "/tmp/backoffice-translations-" + name + "-MOCK.png",

@@ -304,7 +304,10 @@
      });
      const result=await send("/api/v2/admin/i18n/catalog?"+params);
      if(currentRequest!==catalogRequestSeq)return;
-     const list=$("i18n-results");list.replaceChildren();
+     const list=$("i18n-results");
+     const inlineRecord=$("i18n-review").closest(".i18n-inventory-record");
+     if(inlineRecord)reviewHome.append($("i18n-review"));
+     list.replaceChildren();
      $("i18n-results-count").textContent=result.total+" registos encontrados";
      if(!result.items.length){
        list.append(create("p","i18n-results-count","Não existem conteúdos para estes filtros."));
@@ -327,7 +330,19 @@
          primary.translation_text||primary.legacy_candidate||entry.translation_text||entry.legacy_candidate||"Por traduzir"));
        b.append(main,english,badge(displayedState),arrow);
        b.addEventListener("click",()=>openReview(entry));
-       list.append(b);
+       const wrapper=create("div","i18n-inventory-record");
+       wrapper.append(b);
+       const fields=entry.fields?.length?entry.fields:[entry];
+       if(fields.length===1){
+         const edit=create("button","i18n-secondary i18n-inline-edit","Editar");
+         edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
+         edit.addEventListener("click",()=>openReview(entry,wrapper));
+         wrapper.append(edit);
+       }
+       wrapper.dataset.entityId=entry.entity_id;
+       if(inlineRecord&&state.selected?.entity_kind===entry.entity_kind&&state.selected?.entity_id===entry.entity_id)
+         wrapper.append($("i18n-review"));
+       list.append(wrapper);
      }
      const pages=Math.max(1,Math.ceil(result.total/state.pageSize));
      $("i18n-page-indicator").textContent="Página "+state.page+" / "+pages;
@@ -345,9 +360,14 @@
    state.selected=null;state.row=null;state.edited=false;state.legacy="";
    $("i18n-fields").replaceChildren();
    $("i18n-review").hidden=true;
+   reviewHome.append($("i18n-review"));
    $("i18n-history-panel").open=false;
  };
- const openReview=async(entry)=>{
+ const reviewHome=$("i18n-review").parentElement;
+ const openReview=async(entry,inlineHost=null)=>{
+   if(state.busy)return;
+   if(inlineHost)inlineHost.append($("i18n-review"));
+   else reviewHome.append($("i18n-review"));
    const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
    const primary=fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
    const chooseField=(field)=>{
@@ -418,7 +438,7 @@
          create("p","",record.translated_text));
        panel.append(wrap);
      }
-   }catch(error){msg("Não foi possível abrir a tradução: "+error.message,true,"i18n-review-feedback");}
+   }catch(error){if(state.selected===key)msg("Não foi possível abrir a tradução: "+error.message,true,"i18n-review-feedback");}
  };
  const updateAfterWrite=async()=>{
    await Promise.all([loadOverview(),loadCatalog()]);
