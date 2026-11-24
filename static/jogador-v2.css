@@ -5671,7 +5671,8 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 }
 
 /* ===== Início — «Plano do dia» e «Registos» (24/11) ===== */
-#overview #day-details .day-section-heading{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:12px!important;margin:18px 2px 10px!important}
+/* Sections breathe: 34 px above each title (from the cards before), 12 px to its own cards. */
+#overview #day-details .day-section-heading{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:12px!important;margin:34px 2px 12px!important}
 #overview #day-details .day-section-heading[hidden]{display:none!important}
 #overview #day-details .day-section-heading h3{margin:0!important;font-size:20px!important;font-weight:700!important;line-height:1.2!important;color:#f4f4f7!important}
 #overview #day-details .day-plan-progress{font-size:14px!important;color:#aaaab4!important;white-space:nowrap!important}
