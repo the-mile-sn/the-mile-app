@@ -53,12 +53,17 @@ test("Player native locale changes approved text only, preserving DOM and style"
   for(const [pt,en] of [
     ["Carne branca","White meat"],["Carne vermelha","Red meat"],
     ["Peixe magro","Lean fish"],["Peixe gordo","Oily fish"],
-    ["Livre","Free choice"],["Pós-jogo","Post-match"],["Mix","Mix"]
+    ["Livre","Free choice"],["Pós-jogo","Post-match"],["Mix","Mix"],
+    ["Estágio","Training camp"]
   ]){
     assert.equal(vm.runInContext('playerMenuCategoryLabel('+JSON.stringify({kind:"category",value:"_value_" }).replace("_value_",pt)+')',ctx),en);
   }
   assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"dish",value:"Carne branca"})',ctx),"Carne branca");
   assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:"Carne vermelha"})',ctx),"Carne vermelha");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:"Estágio"})',ctx),"Training camp");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:" Estágio "})',ctx),"Training camp");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:"Estágio de inverno"})',ctx),"Estágio de inverno");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"dish",value:"Estágio"})',ctx),"Estágio");
   assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Categoria futura"})',ctx),"Categoria futura");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Blue");
   const count=nodes.size;
@@ -82,6 +87,8 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Almoço");
   assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Carne branca"})',ctx),"Carne branca");
   assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Pós-jogo"})',ctx),"Pós-jogo");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"category",value:"Estágio"})',ctx),"Estágio");
+  assert.equal(vm.runInContext('playerMenuCategoryLabel({kind:"text",value:"Estágio"})',ctx),"Estágio");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Azul");
   assert.equal(element.className,"mile-approved");
   assert.deepEqual(element.style,{});
