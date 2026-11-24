@@ -326,7 +326,6 @@
    $("i18n-results").hidden=isPlan;
    $("i18n-results-count").hidden=isPlan;
    $("i18n-prev").parentElement.hidden=isPlan;
-   $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
    $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
    $("i18n-work-title").textContent=isPlan?"Planos":"Revisão manual";
@@ -567,10 +566,6 @@
    return opening;
  };
  const init=()=>{
-   window.addEventListener("mile:translations-imported",()=>{
-     if(embedded&&document.getElementById("tm-admin-translations-page").hidden)return;
-     closeReview();loadOverview();loadCatalog();
-   });
    if(embedded)window.addEventListener("mile:translations-open",event=>{
      activate(event.detail?.kind);
    });

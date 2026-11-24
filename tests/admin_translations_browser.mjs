@@ -221,63 +221,13 @@ try {
     await page.close();
   }
 
-  // API-free import is opt-in and never approves anything.
+  // CSV controls are no longer exposed by the translation manager.
   {
-    const page=await browser.newPage({viewport:{width:390,height:844}});
-    const writes=[];
-    const entry={
-      entity_kind:"food",entity_id:"food-oats",field_path:"display_name",
-      source_text:"Aveia",category:"Cereais",state:"missing",
-      fields:[{field_path:"display_name",field_label:"Nome do alimento",
-               source_text:"Aveia",state:"missing",legacy_candidate:""}]
-    };
-    await page.route("**/api/**",async route=>{
-      const request=route.request();
-      const url=new URL(request.url());
-      let body;
-      if(url.pathname==="/api/me"){
-        body={user:{id:"admin",role:"admin"},csrf:"mock-csrf"};
-      }else if(url.pathname==="/api/v2/admin/i18n/overview"){
-        body=stats;
-      }else if(url.pathname==="/api/v2/admin/i18n/catalog"){
-        body={library:"food",page:1,page_size:25,total:1,items:[entry]};
-      }else if(url.pathname==="/api/v2/admin/i18n/import/preview"){
-        assert.equal(request.headers()["x-csrf-token"],"mock-csrf");
-        writes.push("preview");
-        assert.equal(request.postDataJSON().rows[0].source_text,"Aveia");
-        body={eligible:1,rejected:0,errors:[],saved:false,approved:false};
-      }else if(url.pathname==="/api/v2/admin/i18n/import/submit"){
-        assert.equal(request.headers()["x-csrf-token"],"mock-csrf");
-        writes.push("submit");
-        body={imported:1,status:"pending",approved:false};
-      }else if(url.pathname==="/api/v2/admin/i18n/propose" ||
-                url.pathname==="/api/v2/admin/i18n/approve"){
-        writes.push("unexpected");
-        throw Error("CSV import must never approve translations");
-      }else{
-        throw Error("Unexpected import mock URL "+url.pathname);
-      }
-      await route.fulfill(fmt({body}));
-    });
-    await page.goto(origin+"/admin-translations.html?entity_kind=food",
-      {waitUntil:"domcontentloaded"});
-    await page.locator("#i18n-work-panel:not([hidden])").waitFor();
-    const downloadPromise=page.waitForEvent("download");
-    await page.locator("#i18n-export").click();
-    const download=await downloadPromise;
-    assert.match(download.suggestedFilename(),/the-mile-traducoes-food[.]csv/);
-    const csv="entity_kind;entity_id;field_path;source_text;translated_text\n"+
-      "food;food-oats;display_name;Aveia;Oats\n";
-    await page.locator("#i18n-import-file").setInputFiles({
-      name:"translations.csv",mimeType:"text/csv",buffer:Buffer.from(csv)
-    });
-    await page.locator("#i18n-import-check").click();
-    await page.locator("#i18n-import-commit:not([disabled])").waitFor();
-    assert.deepEqual(writes,["preview"]);
-    await page.locator("#i18n-import-commit").click();
-    await page.getByText(/1 propostas importadas e pendentes de aprovação/).waitFor();
-    assert.deepEqual(writes,["preview","submit"]);
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+    const page=await browser.newPage();
+    await page.route("**/api/**",mockApi);
+    await page.goto(origin+"/admin-translations.html?entity_kind=dish");
+    await page.locator("#i18n-results .i18n-result").first().waitFor();
+    assert.equal(await page.locator("#i18n-import-panel, #i18n-export, input[type=file]").count(),0);
     await page.close();
   }
   process.stdout.write("Desktop/mobile dish and grouped library mock-browser flow passed\\n");

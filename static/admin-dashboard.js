@@ -336,7 +336,7 @@ function ensurePlanningOnlyView(){
    const css=document.createElement("link");css.rel="stylesheet";
    css.href="/admin-translations-embedded.css?v=23";
    await load(css);
-   for(const src of ["/admin-translations.js?v=16","/admin-translations-import.js?v=4","/admin-translations-plans.js?v=12"]){
+   for(const src of ["/admin-translations.js?v=17","/admin-translations-plans.js?v=13"]){
     const script=document.createElement("script");script.src=src;script.async=false;
     await load(script);
    }

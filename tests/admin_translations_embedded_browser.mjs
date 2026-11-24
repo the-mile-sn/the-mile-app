@@ -27,7 +27,7 @@ try{
     const publicRef="a".repeat(64);
     const privateRef="d".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
-    let commonImported=false,importApprovals=0,importRequests=0;
+    let commonImported=true,importApprovals=0,importRequests=0;
     const makePlanField=()=>({field_path:"meals/0/options/0/title",
       field_label:"Título da opção",group:"Pequeno almoço · Opção 1",
       sensitive:false,source_text:"Opção 1",source_hash:"b".repeat(64),
@@ -249,7 +249,7 @@ try{
     await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
-    assert.ok((await page.locator("#i18n-import-title").textContent()).includes("Importar"));
+    assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.ok((await page.locator("#i18n-auto-title").textContent()).includes("automáticas"));
     assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page h1").count(),0);
@@ -272,7 +272,6 @@ try{
         pillWeight:css(".i18n-status-pill").fontWeight,
         pillHeight:css(".i18n-status-pill").height,
         pillRadius:css(".i18n-status-pill").borderRadius,
-        csvInputOpacity:css("#i18n-import-file").opacity,
         statusCustom:!!document.querySelector("#i18n-status + .tm-select-trigger")||
           !!document.querySelector("#i18n-status ~ .tm-select-trigger"),
       };
@@ -284,7 +283,6 @@ try{
     assert.equal(visual.pillWeight,"400");
     assert.equal(visual.pillHeight,"26px");
     assert.equal(visual.pillRadius,"999px");
-    assert.equal(visual.csvInputOpacity,"0");
     assert.ok(visual.statusCustom,"Translation filter must use The Mile Select");
     assert.equal(new URL(page.url()).pathname,"/admin-microcycles.html");
     assert.equal(await page.locator("#tm-dashboard").getAttribute("hidden"),"");
@@ -293,7 +291,7 @@ try{
     const plansCard=page.locator("#i18n-libraries button").filter({hasText:"Planos alimentares publicados"});
     await plansCard.click();
     await page.locator("#i18n-plan-stage:not([hidden])").waitFor();
-    assert.equal(await page.locator("#i18n-import-panel").getAttribute("hidden"),"");
+    assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("data-plan-mode"),"1");
     assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
@@ -327,31 +325,13 @@ try{
     await page.getByText("2 ocorrências aprovadas. Grupo concluído.").waitFor();
     assert.equal(commonApprovals,1);
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
-    const downloadEvent=page.waitForEvent("download");
-    await page.locator(".i18n-plan-csv-tools .i18n-plan-csv-actions button").first().click();
-    const exported=await downloadEvent;
-    assert.equal(exported.suggestedFilename(),"the-mile-traducoes-planos-comuns.csv");
-    const csv=await fs.readFile(await exported.path(),"utf8");
-    assert.ok(csv.includes("Bowl de iogurte"));
-    assert.ok(csv.includes("Yoghurt bowl"));
-    assert.equal(csv.includes("Atleta fictício"),false);
-    assert.equal(csv.includes("Tomar 2 vezes"),false);
-    await page.locator(".i18n-plan-csv-upload input[type=file]").setInputFiles({
-      name:"the-mile-traducoes-planos-comuns.csv",mimeType:"text/csv",
-      buffer:Buffer.from(csv,"utf8")
-    });
-    await page.locator(".i18n-plan-csv-actions button").nth(1).click();
-    await page.getByText(/1 propostas prontas a importar/).waitFor();
-    assert.equal(importApprovals,0);
-    await page.locator(".i18n-plan-csv-actions button").nth(2).click();
-    await page.getByText(/1 propostas importadas/).waitFor();
-    assert.equal(importRequests,1);
-    assert.equal(importApprovals,0,"CSV import cannot automatically approve plans");
+    assert.equal(await page.locator("#i18n-plan-stage input[type=file], .i18n-plan-csv-tools").count(),0);
+    assert.equal(importRequests,0);
     const approval=page.locator(".i18n-plan-bulk-approval");
     const approvalButton=approval.locator("button.i18n-primary");
     assert.equal(await approval.locator("strong").innerText(),"Aprovação em massa");
     assert.match(await approval.locator(".i18n-plan-bulk-count").innerText(),
-      /1 expressões importadas prontas/);
+      /1 expressões guardadas prontas/);
     assert.match(await approvalButton.innerText(),/Aprovar em massa/);
     assert.equal(await approvalButton.isDisabled(),true,
       "Approval must require explicit review acknowledgement");
@@ -362,124 +342,12 @@ try{
     await approvalButton.click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
-    await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview):not(.i18n-plan-food-preview) summary").waitFor();
-    const unique=page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview):not(.i18n-plan-quantity-preview):not(.i18n-plan-food-preview)");
-    await unique.locator("summary").click();
-    assert.match(await unique.locator("summary").innerText(),/1 títulos únicos/);
-    const uniqueButton=unique.locator("button");
-    assert.equal(await uniqueButton.isDisabled(),true);
-    assert.equal(await unique.locator(".i18n-plan-unique-row").count(),1);
-    const visibleRow=unique.locator(".i18n-plan-unique-row").first();
-    assert.match(await visibleRow.innerText(),/Panquecas caseiras/);
-    const rowVisual=await visibleRow.evaluate(el=>{
-      const span=el.querySelector("span"),list=el.parentElement;
-      return {height:el.getBoundingClientRect().height,
-        textColor:getComputedStyle(span).color,
-        background:getComputedStyle(el).backgroundColor,
-        flow:getComputedStyle(list).gridAutoRows,
-        textHeight:span.getBoundingClientRect().height};
-    });
-    assert.ok(rowVisual.height < 110,"Candidate row must be compact");
-    assert.ok(rowVisual.textHeight > 10,"Candidate must contain visible text");
-    assert.notEqual(rowVisual.textColor,rowVisual.background,
-      "Candidate text must contrast against background");
-    assert.equal(rowVisual.flow,"max-content",
-      "Candidate rows must not stretch to fill list height");
-
-    const uniqueRow=unique.locator(".i18n-plan-unique-row input");
-    await uniqueRow.uncheck();
-    await unique.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await uniqueButton.isDisabled(),true);
-    await uniqueRow.check();
-    assert.equal(await uniqueButton.isDisabled(),true,
-      "Changing privacy selection requires a fresh acknowledgement");
-    await unique.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await uniqueButton.isEnabled(),true);
-    const uniqueDownload=page.waitForEvent("download");
-    await uniqueButton.click();
-    const uniqueFile=await uniqueDownload;
-    assert.equal(uniqueFile.suggestedFilename(),
-      "the-mile-traducoes-planos-titulos-unicos.csv");
-    const csvUnique=await fs.readFile(await uniqueFile.path(),"utf8");
-    assert.ok(csvUnique.includes("Panquecas caseiras"));
-    assert.ok(csvUnique.includes("Pequeno almoço / lanche"));
-    assert.equal(csvUnique.includes("Bowl de iogurte"),false);
-    assert.equal(csvUnique.includes("Atleta fictício"),false);
-    assert.equal(csvUnique.includes("Tomar 2 vezes"),false);
-    const notes=page.locator(".i18n-plan-notes-preview");
-    await notes.locator("summary").click();
-    assert.match(await notes.locator("summary").innerText(),/1 notas de consumo/);
-    assert.match(await notes.locator(".i18n-plan-unique-row").innerText(),
-      /Podes aquecer o pão/);
-    assert.equal(await notes.locator("button").isDisabled(),true);
-    await notes.locator(".i18n-bulk-attestation input").check();
-    const noteDownload=page.waitForEvent("download");
-    await notes.locator("button").click();
-    const noteFile=await noteDownload;
-    assert.equal(noteFile.suggestedFilename(),"the-mile-traducoes-planos-notas.csv");
-    const csvNote=await fs.readFile(await noteFile.path(),"utf8");
-    assert.ok(csvNote.includes("Podes aquecer o pão"));
-    assert.ok(csvNote.includes("individual_note"));
-    assert.equal(csvNote.includes("Atleta fictício"),false);
-
-    const quantities=page.locator(".i18n-plan-quantity-preview");
-    await quantities.locator("summary").click();
-    assert.match(await quantities.locator("summary").innerText(),
-      /1 quantidades únicas \(3 ocorrências/);
-    assert.match(await quantities.locator(".i18n-plan-quantity-stats").innerText(),
-      /1 expressões com símbolos/);
-    assert.match(await quantities.locator(".i18n-plan-unique-row").innerText(),
-      /100 g/);
-    assert.equal(await quantities.locator("button").isDisabled(),true);
-    const quantityChoice=quantities.locator(".i18n-plan-unique-row input");
-    await quantityChoice.uncheck();
-    await quantities.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await quantities.locator("button").isDisabled(),true);
-    await quantityChoice.check();
-    assert.equal(await quantities.locator("button").isDisabled(),true);
-    await quantities.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await quantities.locator("button").isEnabled(),true);
-    const quantityDownload=page.waitForEvent("download");
-    await quantities.locator("button").click();
-    const quantityFile=await quantityDownload;
-    assert.equal(quantityFile.suggestedFilename(),
-      "the-mile-traducoes-planos-quantidades.csv");
-    const csvQuantity=await fs.readFile(await quantityFile.path(),"utf8");
-    assert.ok(csvQuantity.includes("100 g"));
-    assert.ok(csvQuantity.includes("display_quantity"));
-    assert.ok(csvQuantity.includes("3"));
-    assert.equal(csvQuantity.includes("Atleta fictício"),false);
-    assert.equal(csvQuantity.includes("Tomar 2 vezes"),false);
-
-    const foods=page.locator(".i18n-plan-food-preview");
-    await foods.locator("summary").click();
-    assert.match(await foods.locator("summary").innerText(),
-      /1 nomes alimentares \(2 ocorrências/);
-    assert.match(await foods.locator(".i18n-plan-food-stats").innerText(),
-      /1 nomes com tradução aprovada/);
-    assert.match(await foods.locator(".i18n-plan-unique-row").innerText(),
-      /Arroz branco cozido/);
-    assert.equal(await foods.locator("button").isDisabled(),true);
-    const choice=foods.locator(".i18n-plan-unique-row input");
-    await choice.uncheck();
-    await foods.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await foods.locator("button").isDisabled(),true);
-    await choice.check();
-    assert.equal(await foods.locator("button").isDisabled(),true);
-    await foods.locator(".i18n-bulk-attestation input").check();
-    assert.equal(await foods.locator("button").isEnabled(),true);
-    const foodDownload=page.waitForEvent("download");
-    await foods.locator("button").click();
-    const foodFile=await foodDownload;
-    assert.equal(foodFile.suggestedFilename(),
-      "the-mile-traducoes-planos-apresentacoes.csv");
-    const csvFood=await fs.readFile(await foodFile.path(),"utf8");
-    assert.ok(csvFood.includes("food_override"));
-    assert.ok(csvFood.includes("Arroz branco cozido"));
-    assert.ok(csvFood.includes("Cooked white rice"));
-    assert.equal(csvFood.includes("Atleta fictício"),false);
-    assert.equal(csvFood.includes("Tomar 2 vezes"),false);
-
+    for(const source of ["Panquecas caseiras","Podes aquecer o pão","100 g","Arroz branco cozido"]){
+      await page.locator(".i18n-plan-common-item").filter({hasText:source}).click();
+      assert.match(await page.locator(".i18n-plan-common-detail .i18n-plan-pt").innerText(),new RegExp(source));
+      assert.equal(await page.locator(".i18n-plan-common-detail .i18n-primary").isDisabled(),true);
+    }
+    assert.equal(importRequests,0);
     const privateQueue=page.locator(".i18n-plan-private-queue");
     await privateQueue.locator("button").waitFor();
     assert.match(await privateQueue.locator("button").innerText(),
