@@ -52,8 +52,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=10/);
- assert.match(html,/chef-chat-demo\.js\?v=9/);
+ assert.match(html,/chef-chat-demo\.css\?v=11/);
+ assert.match(html,/chef-chat-demo\.js\?v=10/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
  assert.match(demoJs,/if\(mode!=="real"\|\|!dialog\.open\|\|document\.hidden\)return/);
@@ -91,6 +91,14 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send\{[^}]*width:44px;height:44px;[^}]*border:0;border-radius:50%/);
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send::before\{[^}]*inset:3px;border-radius:50%/);
  assert.match(demoCss,/\.chef-chat-form textarea\{[^}]*height:46px;min-height:46px;max-height:108px/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack\{[\s\S]*?border:0;border-radius:999px/);
+ assert.match(demoCss,/\.chef-chat-form textarea:disabled\{opacity:1/);
+ assert.match(demoJs,/input\.disabled=pending/);
+ assert.match(demoJs,/form\.hidden=false/);
+ assert.match(demoJs,/thread\.hidden=false/);
+ assert.match(demoJs,/input\.placeholder=pending\?t\(\)\.privacyRequired/);
+ assert.match(demoJs,/send\.disabled=loading\|\|\(mode==="real"&&!privacyAcknowledged\)/);
+ assert.match(demoJs,/if\(!dialog\.open\|\|loading\|\|\(mode==="real"&&!privacyAcknowledged\)\)return/);
  assert.match(demoJs,/function resizeComposer\(\)/);
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send:disabled\{/);
  assert.match(demoCss,/\.chef-chat-form\{\s*display:flex;align-items:center;gap:13px;/);

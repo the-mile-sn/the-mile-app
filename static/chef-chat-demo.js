@@ -21,7 +21,7 @@
    realDisclaimer:"Comunicação com a equipa The Mile. As conversas são conservadas enquanto necessário durante a relação profissional e, depois de arquivadas, são revistas ao fim de 12 meses, salvo obrigações legais ou pedidos relativos aos teus direitos.",
    realSend:"Enviar mensagem",realThread:"Conversa com a equipa The Mile",realPlaceholder:"Escreve uma mensagem…",realEmpty:"Ainda não há mensagens nesta conversa.",
    realError:"Não foi possível carregar a conversa. Tenta novamente.",realSendError:"Não foi possível enviar. A mensagem continua no campo.",realSent:"Mensagem enviada.",privacy:"Informações e privacidade",
-   privacyAcknowledge:"Li e compreendi",privacyError:"Não foi possível registar a confirmação. Tenta novamente."
+   privacyAcknowledge:"Li e compreendi",privacyRequired:"Tens de aceitar o aviso de privacidade antes de enviar mensagens.",privacyError:"Não foi possível registar a confirmação. Tenta novamente."
   },
   en:{
    open:"Open messages (demo)",title:"Messages",unread:"unread",close:"Close messages",
@@ -34,7 +34,7 @@
    realDisclaimer:"Messaging with The Mile team. Messages are kept as needed during the professional relationship. After the conversation is archived, retention is reviewed after 12 months, subject to legal duties and your data rights.",
    realSend:"Send message",realThread:"Conversation with The Mile team",realPlaceholder:"Write a message…",realEmpty:"No messages in this conversation yet.",
    realError:"Unable to load the conversation. Try again.",realSendError:"Couldn't send. Your message remains in the field.",realSent:"Message sent.",privacy:"Information and privacy",
-   privacyAcknowledge:"I have read and understood",privacyError:"Unable to save your acknowledgement. Please try again."
+   privacyAcknowledge:"I have read and understood",privacyRequired:"You must accept the privacy notice before sending messages.",privacyError:"Unable to save your acknowledgement. Please try again."
   }
  };
  let language="pt",mode="demo",csrf="",chefId="",pendingKey=null;
@@ -76,6 +76,11 @@
   }finally{unreadBusy=false;}
  }
  function resizeComposer(){
+  if(mode==="real"&&!privacyAcknowledged){
+   // Allow the explanatory placeholder to wrap across lines on small phones.
+   input.style.height="86px";
+   return;
+  }
   input.style.height="46px";
   input.style.height=Math.min(108,Math.max(46,input.scrollHeight))+"px";
  }
@@ -128,8 +133,16 @@
   privacyAck.hidden=!pending;
   privacyAck.textContent=t().privacyAcknowledge;
   privacyAck.disabled=privacyBusy;
-  thread.hidden=pending;
-  form.hidden=pending;
+  // Keep the composer and send arrow visible but genuinely non-interactive.
+  // The empty thread retains flex height, anchoring the composer at the bottom.
+  thread.hidden=false;
+  form.hidden=false;
+  input.disabled=pending;
+  input.placeholder=pending?t().privacyRequired:(mode==="real"?t().realPlaceholder:t().placeholder);
+  input.setAttribute("aria-label",pending?t().privacyRequired:(mode==="real"?t().realPlaceholder:t().label));
+  send.setAttribute("aria-label",pending?t().privacyRequired:(mode==="real"?t().realSend:t().send));
+  send.title=pending?t().privacyRequired:(mode==="real"?t().realSend:t().sendTitle);
+  resizeComposer();
   updateSendState();
  }
  function showLiveLabels(){
@@ -186,6 +199,8 @@
    privacyNoticeVersion=status.privacy_notice?.version||"";
    privacyAcknowledged=status.privacy_notice?.acknowledged===true;
    mode="real";result.textContent="";realMessages=[];
+   // Remove the temporary demo messages before showing an empty, locked thread.
+   thread.replaceChildren();
    showLiveLabels();
    if(privacyAcknowledged){
     startRealPolling();
@@ -212,7 +227,7 @@
   send.title=t().sendTitle;
   if(mode==="real"){
    showLiveLabels();
-   if(dialog.open&&changed)renderRealMessages();
+   if(dialog.open&&changed&&privacyAcknowledged)renderRealMessages();
   }else{
    showPrivacyGate();
    if(dialog.open&&changed)reset();
