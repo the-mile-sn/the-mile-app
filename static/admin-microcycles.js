@@ -792,6 +792,33 @@ function showImportedDraft(draft){
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
   header.appendChild(edit);
+  const exportPdf=document.createElement("button");
+  exportPdf.type="button";
+  exportPdf.textContent="Gerar PDF";
+  exportPdf.title="Gerar PDF da versão guardada deste plano";
+  exportPdf.addEventListener("click",async()=>{
+    exportPdf.disabled=true;
+    try{
+      // The export is a read-only GET; save any pending option changes first.
+      await Promise.all(planPendingSaves);
+      const url=matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/pdf";
+      const response=await fetch(url,{credentials:"same-origin",cache:"no-store"});
+      if(!response.ok){
+        let err="Não foi possível gerar o PDF";
+        try{const data=await response.json();err=data.error||err;}catch(_){}
+        throw new Error(err);
+      }
+      const blob=await response.blob();
+      if(blob.type.indexOf("pdf")<0||blob.size<100)throw new Error("Resposta PDF inválida");
+      const objectUrl=URL.createObjectURL(blob);
+      const link=document.createElement("a");link.href=objectUrl;
+      link.download="The-Mile-Plano-"+(draft.color||"alimentar")+".pdf";
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+    }catch(e){status("Erro ao gerar PDF: "+e.message,"warn");}
+    finally{exportPdf.disabled=false;}
+  });
+  header.appendChild(exportPdf);
   if(selectedPlanMode==="consult"&&draft.status==="validated"){
     const publish=document.createElement("button");publish.type="button";publish.textContent="Publicar";header.appendChild(publish);
     publish.onclick=async()=>{
