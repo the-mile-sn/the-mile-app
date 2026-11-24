@@ -31,7 +31,7 @@ test("account chooser offers all three types and keeps real athlete creation unc
 test("Chefs creation sits only in Clientes; Planning retains only history",()=>{
   assert.match(html,/id="tm-clients-chefs-panel"/);
   assert.match(chefs,/clientsPanel\.append\(section\)/);
-  assert.match(chefs,/history\.insertAdjacentElement\("afterend",review\)/);
+  assert.match(chefs,/history\.insertAdjacentElement\("beforebegin",review\)/);
   assert.match(chefs,/review\.id="tm-chef-menu-review"/);
   assert.match(chefs,/section\.addEventListener\("toggle"/);
   assert.match(chefs,/review\.addEventListener\("toggle"/);

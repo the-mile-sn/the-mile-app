@@ -23,13 +23,16 @@ test("native Food Library mounts once as an internal Backoffice section",()=>{
 test("Food Library remains a native Backoffice section alongside native Planos",()=>{
  assert.match(nav,/const actions=\[[^\]]*"create-plan","food-library"/);
  assert.match(nav,/page!=="create-plan"&&page!=="food-library"/);
- assert.match(dashboard,/function openFoodLibrary\(\)/);
+ assert.match(dashboard,/function openFoodLibrary\(which="foods"\)/);
+ assert.match(dashboard,/foodLibraryPage\.hidden=selected==="supplements"/);
+ assert.match(dashboard,/supplementLibraryPage\.hidden=selected!=="supplements"/);
+ assert.match(dashboard,/selected==="foods"&&typeof window\.tmEnsureAdminFoodLibrary==="function"/);
  assert.match(dashboard,/navActive\(foodLibraryBtn\)/);
  assert.match(dashboard,/foodLibraryPage\.hidden=target!==foodLibraryBtn/);
  assert.match(dashboard,/window\.tmEnsureAdminFoodLibrary\(\)/);
  assert.match(dashboard,/function openPlans\(\)/);
  assert.match(dashboard,/plansPage\.hidden=target!==plansBtn/);
- assert.match(dashboard,/"players","planning","create-plan","food-library","menus-recipes"/);
+ assert.match(dashboard,/const allowed=new Set\(\[[^\]]*"create-plan","food-library","visual-portions","nutrition-supplements","menus-recipes"/);
  assert.match(adminHtml,/\/food-library\.js\?v=\d+/);
  assert.match(nav,/href=\\?"\/create-plan\\?"/); // legacy URL still reachable
 });

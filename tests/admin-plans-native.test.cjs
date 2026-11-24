@@ -58,6 +58,9 @@ test("Planos list uses title-cased display labels and an accessible, visually em
  assert.ok(editor.includes('replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"))'));
  assert.match(html,/<th aria-label="Ações"><\/th>/);
  assert.doesNotMatch(html,/<th>Ações<\/th>/);
- assert.match(editor,/data-view-id/);
+ assert.match(editor,/data-plan-open-id/);
+ assert.match(editor,/for\(const rootId of \["library-plan-rows","library-plan-cards"\]\)/);
+ assert.match(editor,/root\.addEventListener\("click",event=>\{[\s\S]*?if\(item&&root\.contains\(item\)\)openPlanPreview\(item\.dataset\.planOpenId,item\)/);
+ assert.match(editor,/root\.addEventListener\("keydown",event=>\{[\s\S]*?if\(event\.key!=="Enter"&&event\.key!==" "\)return;[\s\S]*?event\.preventDefault\(\);openPlanPreview\(item\.dataset\.planOpenId,item\)/);
  assert.match(editor,/data-edit-id/);
 });
