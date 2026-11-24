@@ -336,11 +336,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   overflow-wrap:anywhere;
 }
 .tm-admin-translations-page .i18n-import-preview p{margin:8px 0}
-/* Opt-in AI is informational, not a prominent control until configured. */
-.tm-admin-translations-page .i18n-auto-panel{
-  padding-top:18px;padding-bottom:18px;
-}
-.tm-admin-translations-page .i18n-auto-panel .i18n-section-heading{margin-bottom:8px}
 
 
 /* Planos: version-bound private translation editor, reusing the neutral Admin cards. */

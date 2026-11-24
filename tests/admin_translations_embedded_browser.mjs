@@ -250,7 +250,7 @@ try{
     assert.equal(await view.getAttribute("hidden"),null);
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
-    assert.ok((await page.locator("#i18n-auto-title").textContent()).includes("automáticas"));
+    assert.equal(await page.locator("#i18n-auto-title").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page h1").count(),0);
     assert.equal(await view.getAttribute("aria-label"),"Central de Traduções");
@@ -259,8 +259,6 @@ try{
     assert.equal(await page.locator("#i18n-work-help").count(),0);
     assert.equal(await page.locator("#i18n-import-panel .i18n-import-disclaimer").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page footer").count(),0);
-    assert.equal(await page.locator("#i18n-auto-title").count(),1);
-    assert.equal(await page.locator("#i18n-auto-title").locator("..").locator("..").locator("p").count(),0);
     const visual=await page.evaluate(()=>{
       const css=(sel)=>getComputedStyle(document.querySelector(sel));
       return {
