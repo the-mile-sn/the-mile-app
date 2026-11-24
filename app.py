@@ -295,6 +295,10 @@ def initialize():
         chef_accounts_v2.initialize(c)
         player_language_v2.initialize(c)
         chef_collaboration_v2.initialize(c)
+        if SITE_ROLE == 'player' and os.environ.get('MILE_CHAT_API_ENABLED') == '1':
+            # Gated, add-only migration of privacy acknowledgements only.
+            # Do not activate the older full chat schema on app startup.
+            chat_api_v2.domain.initialize_privacy_acknowledgements(c)
         meal_option_selection_v2.initialize(c)
         consumption_records_v2.initialize(c)
         player_recipes_v2.initialize(c)
