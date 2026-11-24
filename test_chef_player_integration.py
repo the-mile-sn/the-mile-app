@@ -93,12 +93,11 @@ class ChefPlayerReleaseTests(unittest.TestCase):
 
     def test_chef_language_is_independent_of_linked_player_and_initial_default(self):
         with app.connect() as c:
-            uid=c.execute("SELECT id FROM users WHERE role='admin' LIMIT 1").fetchone()["id"]
             c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
                 VALUES(?,?,?,?,?,?,1)""",("linked-player-test","Player","linked-player@test.invalid",
                 "linkedplayer","player",app.password_hash("player-secret-pass-123")))
-            c.execute("INSERT INTO v2_player_links(athlete_id,user_id) VALUES(?,?)",
-                      (self.a,"linked-player-test"))
+            c.execute("INSERT INTO v2_player_links(athlete_id,user_id,linked_at) VALUES(?,?,?)",
+                      (self.a,"linked-player-test",1))
             import player_language_v2
             player_language_v2.set_language(c,"linked-player-test","pt")
         with patch.object(app,"SITE_ROLE","player"):
