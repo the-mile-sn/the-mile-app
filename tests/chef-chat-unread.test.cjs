@@ -185,7 +185,7 @@ test("first real chat visit requires an explicit, durable acknowledgement once p
  assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/messages"&&r.method==="POST").length,0);
  input.value="";
  h.switchLanguage("en");
- assert.equal(ack.textContent,"I have read and understood");
+ assert.equal(ack.textContent,"I've read and understood");
  assert.equal(input.placeholder,"You must accept the privacy notice before sending messages.");
  assert.equal(input.disabled,true);
  assert.equal(thread.children.length,0);

@@ -48,9 +48,11 @@
    All existing chat cards, bubbles, spacing and typography remain unchanged. */
 .chef-chat-privacy-ack{
  flex:none;align-self:flex-start;margin:7px 16px 10px;padding:11px 16px;
- border:0;border-radius:999px;background:#414148;color:#f5f5f7;
- font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
+ border:0;border-radius:999px;background:rgba(52,172,109,.19);color:#94e7b6;
+ min-height:44px;font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
 }
+@media(hover:hover){.chef-chat-privacy-ack:not(:disabled):hover{background:rgba(52,172,109,.26)}}
+.chef-chat-privacy-ack:not(:disabled):active{background:rgba(52,172,109,.33)}
 .chef-chat-privacy-ack:disabled{opacity:.6;cursor:default}
 .chef-chat-privacy-ack:focus-visible{outline:2px solid #f5f5f7;outline-offset:3px}
 .chef-chat-privacy-ack[hidden],.chef-chat-disclaimer[hidden],

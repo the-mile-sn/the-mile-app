@@ -34,7 +34,7 @@
    realDisclaimer:"Messaging with The Mile team. Messages are kept as needed during the professional relationship. After the conversation is archived, retention is reviewed after 12 months, subject to legal duties and your data rights.",
    realSend:"Send message",realThread:"Conversation with The Mile team",realPlaceholder:"Write a message…",realEmpty:"No messages in this conversation yet.",
    realError:"Unable to load the conversation. Try again.",realSendError:"Couldn't send. Your message remains in the field.",realSent:"Message sent.",privacy:"Information and privacy",
-   privacyAcknowledge:"I have read and understood",privacyRequired:"You must accept the privacy notice before sending messages.",privacyError:"Unable to save your acknowledgement. Please try again."
+   privacyAcknowledge:"I've read and understood",privacyRequired:"You must accept the privacy notice before sending messages.",privacyError:"Unable to save your acknowledgement. Please try again."
   }
  };
  let language="pt",mode="demo",csrf="",chefId="",pendingKey=null;
