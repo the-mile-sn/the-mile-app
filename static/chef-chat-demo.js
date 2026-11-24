@@ -6,8 +6,8 @@
  const close=$("chef-chat-close"),thread=$("chef-chat-thread");
  const form=$("chef-chat-form"),input=$("chef-chat-input"),result=$("chef-chat-result");
  const send=$("chef-chat-submit"),unreadBadge=$("chef-chat-unread");
- const disclaimer=$("chef-chat-disclaimer"),privacyAck=$("chef-chat-privacy-ack");
- if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send||!unreadBadge||!disclaimer||!privacyAck)return;
+ const disclaimer=$("chef-chat-disclaimer"),privacyAck=$("chef-chat-privacy-ack"),privacyAckLabel=$("chef-chat-privacy-ack-label");
+ if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send||!unreadBadge||!disclaimer||!privacyAck||!privacyAckLabel)return;
  const copy={
   pt:{
    open:"Abrir mensagens (simulação)",title:"Mensagens",unread:"por ler",
@@ -131,7 +131,8 @@
   const pending=mode==="real"&&!privacyAcknowledged;
   disclaimer.hidden=mode==="real"&&!pending;
   privacyAck.hidden=!pending;
-  privacyAck.textContent=t().privacyAcknowledge;
+  // Only change the text span; replacing button.textContent destroys its SVG.
+  privacyAckLabel.textContent=t().privacyAcknowledge;
   privacyAck.disabled=privacyBusy;
   // Keep the composer and send arrow visible but genuinely non-interactive.
   // The empty thread retains flex height, anchoring the composer at the bottom.
