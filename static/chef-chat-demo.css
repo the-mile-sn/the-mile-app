@@ -48,7 +48,7 @@
    All existing chat cards, bubbles, spacing and typography remain unchanged. */
 .chef-chat-privacy-ack{
  flex:none;align-self:flex-start;margin:7px 16px 10px;padding:11px 16px;
- border:0;border-radius:13px;background:#414148;color:#f5f5f7;
+ border:0;border-radius:999px;background:#414148;color:#f5f5f7;
  font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
 }
 .chef-chat-privacy-ack:disabled{opacity:.6;cursor:default}
@@ -79,6 +79,9 @@
  border-radius:18px;padding:11px 13px;font-size:16px;line-height:1.4;
 }
 .chef-chat-form textarea::placeholder{color:#9f9fa7}
+/* The locked composer remains visible, with readable multi-line guidance. */
+.chef-chat-form textarea:disabled{opacity:1;cursor:default;-webkit-text-fill-color:#9f9fa7}
+.chef-chat-form textarea:disabled::placeholder{color:#9f9fa7;opacity:1}
 .chef-chat-form .chef-chat-send{
  position:relative;flex:0 0 44px;display:flex;align-items:center;justify-content:center;
  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
