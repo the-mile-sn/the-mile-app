@@ -5655,3 +5655,44 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #overview .weight-detail-row small{font-size:13px;color:#aaaab4;text-align:right}
 #overview .weight-detail-row strong{font-size:16px;font-weight:600;text-align:right}
 #overview #day-details .day-widget-value.empty{color:#6c6c76!important}
+
+/* ===== Registado = só o ícone (24/11) — à direita, junto à seta, na cor da refeição ===== */
+/* Closed meal: the icon sits after the kcal (order 1) and before the arrow (:after, order 2, always last). Open meal: it moves to the recorded option (rule above). */
+#overview #day-details .daily-meal:not([open])>.daily-meal-head>.meal-registered-meal-badge{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;order:2!important;flex:none!important;
+ margin:0 2px 0 4px!important;padding:0!important;border-radius:0!important;background:none!important;color:inherit!important;
+}
+#overview #day-details .meal-registered-badge .consumption-action-icon{width:20px!important;height:20px!important;flex-basis:20px!important}
+#overview #day-details details.player-meal-option-subcard>summary{position:relative!important}
+#overview #day-details details.player-meal-option-subcard summary .plan-option-label:has(>.meal-registered-badge-closed){padding-right:30px!important}
+#overview #day-details details.player-meal-option-subcard summary .meal-registered-badge-closed{
+ position:absolute!important;top:50%!important;right:52px!important;transform:translateY(-50%)!important;margin:0!important;
+ padding:0!important;border-radius:0!important;background:none!important;color:inherit!important;
+}
+
+/* ===== Início — «Plano do dia» e «Registos» (24/11) ===== */
+#overview #day-details .day-section-heading{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:12px!important;margin:18px 2px 10px!important}
+#overview #day-details .day-section-heading[hidden]{display:none!important}
+#overview #day-details .day-section-heading h3{margin:0!important;font-size:20px!important;font-weight:700!important;line-height:1.2!important;color:#f4f4f7!important}
+#overview #day-details .day-plan-progress{font-size:14px!important;color:#aaaab4!important;white-space:nowrap!important}
+#overview #day-details .registos-card{box-sizing:border-box!important;margin:0 0 10px!important;padding:16px 14px 12px!important;border-radius:13px!important;background:#25262b!important;color:#f1f1f4!important}
+#overview #day-details .registos-card[hidden]{display:none!important}
+#overview #day-details .registos-top{padding:0 4px 14px!important;font-size:15px!important;color:#aaaab4!important}
+#overview #day-details .registos-days{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important}
+#overview #day-details .registos-day{
+ appearance:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:8px!important;
+ min-width:0!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#aaaab4!important;
+}
+#overview #day-details .registos-label{font-size:12px!important;font-weight:600!important;letter-spacing:.02em!important}
+#overview #day-details .registos-day.today .registos-label{color:#f4f4f7!important}
+#overview #day-details .registos-mark svg{display:block!important;width:34px!important;height:34px!important}
+#overview #day-details .registos-done-fill{fill:#72ebbd}
+#overview #day-details .registos-done-tick{fill:none;stroke:#0d0d10;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#overview #day-details .registos-track{fill:none;stroke:#45464c;stroke-width:4}
+#overview #day-details .registos-arc{fill:none;stroke:#72ebbd;stroke-width:4;stroke-linecap:round}
+#overview #day-details .registos-arc.today{stroke:#f3f3f5}
+#overview #day-details .registos-count{font-size:11px;font-weight:700;fill:#f1f1f4;font-family:inherit}
+#overview #day-details .registos-dot{display:block!important;width:4px!important;height:4px!important;border-radius:999px!important;background:transparent!important}
+#overview #day-details .registos-day.selected .registos-dot{background:#f4f4f7!important}
+#overview #day-details .registos-foot{display:flex!important;justify-content:space-between!important;gap:8px!important;margin-top:12px!important;padding:12px 4px 0!important;border-top:1px solid rgba(255,255,255,.08)!important;font-size:14px!important;color:#aaaab4!important}
+#overview #day-details .registos-foot strong{color:#f1f1f4!important;font-weight:650!important}
