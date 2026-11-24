@@ -282,7 +282,7 @@ def _event_sources(events,matches,overrides,first,last):
     return list(results.values())
 
 
-def player_peri_days(c,athlete_id,first,last,events=None,matches=None):
+def player_peri_days(c,athlete_id,first,last,events=None,matches=None,language="pt"):
     if events is None:
         import events_v2
         events=events_v2.list_events(c,athlete_id,first,last)
@@ -295,6 +295,13 @@ def player_peri_days(c,athlete_id,first,last,events=None,matches=None):
         (athlete_id,)).fetchall()}
     plans=_approved(c,athlete_id)
     library=_library(c)
+    # Calendar event meals use the SAME published Planos as the Plans view.
+    # Localise display-only copies before deriving event options; the canonical
+    # option_ref, nutrients, timings and published snapshots remain unchanged.
+    if language=="en":
+        import app_content_i18n_v2
+        plans,library=app_content_i18n_v2.localise_published_plans(
+            c,plans,library,language=language)
     result=[]
     for event in _event_sources(events,matches,overrides,first,last):
         kind=event["kind"]
@@ -307,7 +314,7 @@ def player_peri_days(c,athlete_id,first,last,events=None,matches=None):
             control=("pre_override" if named in
                      ("pre_training","pre_match","intra_match") else "post_override")
             if event.get(control,"auto")=="off":continue
-            options=_validated_options(meal,library)
+            options=_validated_options(meal,library,language)
             for opt in options:opt["source_draft_id"]=entry["draft_id"]
             if not options:continue
             result.append({"event_id":event["id"],"event_date":event["event_date"],
