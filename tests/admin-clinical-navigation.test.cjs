@@ -1,9 +1,10 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const dashboard=fs.readFileSync("static/admin-dashboard.js","utf8");
+const nav=fs.readFileSync("static/admin-nav-shell.js","utf8");
 const admin=fs.readFileSync("static/admin-microcycles.js","utf8");
 test("main navigation has real clinical pages",()=>{
- for(const key of ["assessments","forms"]){assert.match(html,new RegExp('id="tm-admin-nav-'+key+'"'));assert.match(html,new RegExp('id="tm-'+key+'-page"'));assert.match(html,new RegExp('id="tm-'+key+'-player"'));}
+ for(const key of ["assessments","forms"]){assert.equal(nav.split('id=\\"tm-admin-nav-'+key+'\\"').length-1,1);assert.match(html,new RegExp('id="tm-'+key+'-page"'));assert.match(html,new RegExp('id="tm-'+key+'-player"'));}
 });
 test("shared editors stay singular, not duplicated",()=>{
  for(const id of ["assessments-admin-panel","profile-monitoring","assessment-review-form","monitoring-weight-form","monitoring-game-form"])assert.equal(html.split('id="'+id+'"').length-1,1,id);
@@ -39,7 +40,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  const match=html.match(/<nav class="calendar-panel" id="backoffice-nav"[^>]*>([\s\S]*?)<\/nav>/);
  assert.ok(match,"Planning navigation is present");
  const tabs=[...match[1].matchAll(/data-view="([^"]+)"/g)].map(v=>v[1]);
- assert.deepEqual(tabs,["calendar","plans","supplements","matrix","menus","player-preview"]);
+ assert.deepEqual(tabs,["calendar","supplements","matrix","menus","consumption"]);
  for(const id of ["athlete-weight-panel","profile-monitoring","assessments-admin-panel","admin-account-toggle","admin-access-panel"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id+" must remain mounted once");
  }
@@ -187,8 +188,12 @@ test("Menus loads and saves only for its selected athlete and current week",()=>
  assert.match(admin,/const stillCurrent=\(\)=>menusLoadRevision===revision&&menusAthleteId===athleteId/);
  assert.match(admin,/const data=await request\(base\+"\/menus\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/const calendarData=await request\(base\+"\/calendar\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
- assert.match(admin,/saveWeek\.onclick=async\(\)=>\{\s*if\(!stillCurrent\(\)\|\|!pending\.size\)return/);
- assert.match(admin,/await request\(base\+"\/menus\/batch"/);
+ assert.match(admin,/const entry=\{menu_date:date,meal,kind:kind\.value,value:selected,/);
+ assert.match(admin,/if\(!selected\)\{saveMessage\.textContent=/);
+ assert.match(admin,/const action=saveSerial\.then\(async\(\)=>\{\s*if\(version!==saveVersion\)return/);
+ assert.match(admin,/await request\(base\+"\/menus",\{method:"PUT",body:JSON\.stringify\(entry\)\}\)/);
+ assert.match(admin,/if\(version===saveVersion&&stillCurrent\(\)\)saveMessage\.textContent="Guardado automaticamente"/);
+ assert.match(admin,/menuDraftFlushers\.add\(flush\);saveTimer=setTimeout\(flush,650\)/);
  assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });
 
@@ -267,7 +272,7 @@ test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL"
 test("Player profile uses a top-left back arrow outside the detail card",()=>{
  assert.match(html,/id="tm-players-profile-nav" class="tm-subpage-nav" hidden/);
  assert.ok(html.indexOf('id="tm-players-profile-back"')<html.indexOf('id="tm-players-profile"'));
- assert.match(html,/id="tm-players-profile-back" class="tm-subpage-back" aria-label="Voltar à lista de jogadores"/);
+ assert.match(html,/id="tm-players-profile-back" class="tm-subpage-back tm-action-secondary" aria-label="Voltar à lista de clientes"/);
  assert.match(dashboard,/profileNav\.hidden=true;playersHeader\.hidden=false;/);
  assert.match(dashboard,/playersHeader\.hidden=true;profileNav\.hidden=false;/);
  assert.match(dashboard,/\$\("tm-players-profile-back"\)\.addEventListener\("click",closePlayerProfile\)/);
@@ -285,10 +290,11 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
  assert.match(html,/viewBox="0 0 1605 244" role="img" aria-label="The Mile"/);
  assert.doesNotMatch(html,/class="tm-admin-brand-mark"/);
- assert.match(html,/id="tm-admin-brand-home"/);
+ assert.match(nav,/toButton\(brand,"tm-admin-brand-home"\)/);
+ assert.match(nav,/brandButton\.setAttribute\("aria-label","Voltar ao Início"\)/);
  assert.match(html,/id="tm-dashboard-return" class="tm-subpage-nav tm-dashboard-return"[^>]*hidden/);
  assert.match(html,/id="tm-dashboard-return-button"/);
- assert.match(dashboard,/\$\("tm-dashboard-return-button"\)\.addEventListener\("click",openDashboard\)/);
+ assert.match(dashboard,/dashboardReturnButton\.addEventListener\("click",\(\)=>\{\s*if\(planDetailVisible\(\)\)\{\s*window\.tmReturnToPlanLibrary\?\.\(\);\s*return;\s*\}\s*openDashboard\(\)/);
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
@@ -464,12 +470,17 @@ test("archived players have their own collapsible card below the active list",()
 });
 
 test("Player Gerir acesso uses approved hierarchy and preserves secure actions",()=>{
- const profile=html.slice(html.indexOf('id="tm-players-profile"'),html.indexOf('id="tm-players-profile"')+6500);
+ const profileStart=html.indexOf('id="tm-players-profile"'),profileEnd=html.indexOf('id="tm-players-filter-panel"',profileStart);
+ assert.ok(profileStart>=0&&profileEnd>profileStart);
+ const profile=html.slice(profileStart,profileEnd);
  assert.match(profile,/Gerir acesso/);
  assert.doesNotMatch(profile,/Dados do jogador · geridos em Jogadores|Oculta o jogador das listas|Utilizador: @|Acesso à App do Jogador/);
  for(const id of ["tm-players-archive","tm-players-access-toggle","tm-players-password-toggle","tm-players-password-new","tm-players-password-confirm","tm-players-password-save","tm-players-password-cancel"])
    assert.equal(profile.split('id="'+id+'"').length-1,1,id);
  assert.ok(profile.indexOf('id="tm-players-archive"')>profile.indexOf('id="tm-players-access-management"'));
+ for(const id of ["tm-players-password-new","tm-players-password-confirm"]){
+  assert.match(profile,new RegExp('id="'+id+'" type="password" minlength="12" maxlength="256" autocomplete="new-password" required'));
+ }
  assert.equal((profile.match(/class="tm-access-visibility-toggle"/g)||[]).length,2);
  assert.match(dashboard,/resetPasswordForm\(\)/);
  assert.match(dashboard,/dataset\.passwordTarget/);
