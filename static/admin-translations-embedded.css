@@ -757,3 +757,11 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 #i18n-results .i18n-inventory-record>.i18n-review{grid-column:1/-1;min-width:0;margin:0 0 8px}
 #i18n-results .i18n-inline-edit{min-height:40px;align-self:center}
 @media(max-width:620px){#i18n-results .i18n-inventory-record{grid-template-columns:minmax(0,1fr)}#i18n-results .i18n-inline-edit{justify-self:end}}
+
+/* Multi-field library context, using the same inline review and status controls. */
+#i18n-results .i18n-record-fields{grid-column:1/-1;display:grid;gap:1px;margin:0 0 6px;padding:4px 12px;background:var(--tm-ui-card);border-radius:12px;min-width:0}
+#i18n-results .i18n-record-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:10px 0;border:0;border-bottom:1px solid var(--tm-ui-divider);background:transparent;min-width:0}
+#i18n-results .i18n-record-field:last-child{border-bottom:0}
+#i18n-results .i18n-record-field-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;overflow-wrap:anywhere;min-width:0}
+#i18n-results .i18n-record-field-pair small{display:block;color:var(--tm-ui-muted);font-size:11px;margin-bottom:3px}
+@media(max-width:620px){#i18n-results .i18n-record-field{grid-template-columns:minmax(0,1fr)}#i18n-results .i18n-record-field>.i18n-status-pill{justify-self:start}}

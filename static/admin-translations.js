@@ -329,15 +329,31 @@
        english.append(create("small","","EN"),create("span","i18n-result-translation",
          primary.translation_text||primary.legacy_candidate||entry.translation_text||entry.legacy_candidate||"Por traduzir"));
        b.append(main,english,badge(displayedState),arrow);
-       b.addEventListener("click",()=>openReview(entry));
        const wrapper=create("div","i18n-inventory-record");
+       b.addEventListener("click",()=>openReview(entry,wrapper));
        wrapper.append(b);
        const fields=entry.fields?.length?entry.fields:[entry];
-       if(fields.length===1){
-         const edit=create("button","i18n-secondary i18n-inline-edit","Editar");
+       {
+         const edit=create("button","i18n-secondary i18n-inline-edit",fields.length===1?"Editar":"Rever "+fields.length+" textos");
          edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
          edit.addEventListener("click",()=>openReview(entry,wrapper));
          wrapper.append(edit);
+       }
+       if(fields.length>1){
+         const context=create("div","i18n-record-fields");
+         for(const field of fields){
+           const fieldButton=create("button","i18n-record-field");
+           fieldButton.type="button";
+           fieldButton.setAttribute("aria-label","Rever "+(field.field_label||field.field_path)+" de "+entry.source_text);
+           const pair=create("span","i18n-record-field-pair");
+           const pt=create("span",""),en=create("span","");
+           pt.append(create("small","",field.field_label||field.field_path),create("span","",field.source_text));
+           en.append(create("small","","EN"),create("span","",field.translation_text||field.legacy_candidate||"Por traduzir"));
+           pair.append(pt,en);fieldButton.append(pair,badge(field.state));
+           fieldButton.addEventListener("click",()=>openReview(entry,wrapper,field.field_path));
+           context.append(fieldButton);
+         }
+         wrapper.append(context);
        }
        wrapper.dataset.entityId=entry.entity_id;
        if(inlineRecord&&state.selected?.entity_kind===entry.entity_kind&&state.selected?.entity_id===entry.entity_id)
@@ -364,12 +380,13 @@
    $("i18n-history-panel").open=false;
  };
  const reviewHome=$("i18n-review").parentElement;
- const openReview=async(entry,inlineHost=null)=>{
+ const openReview=async(entry,inlineHost=null,fieldPath=null)=>{
    if(state.busy)return;
+   if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
    if(inlineHost)inlineHost.append($("i18n-review"));
    else reviewHome.append($("i18n-review"));
    const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
-   const primary=fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
+   const primary=fields.find(f=>f.field_path===fieldPath)||fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
    const chooseField=(field)=>{
      if(!field)return;
      state.selected={...entry,field_path:field.field_path};
@@ -396,7 +413,12 @@
      select.append(option);
    }
    select.value=primary.field_path;
-   select.onchange=()=>chooseField(fields.find(f=>f.field_path===select.value));
+   select.onchange=()=>{
+     if(state.busy||(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))){
+       select.value=state.selected?.field_path||primary.field_path;return;
+     }
+     chooseField(fields.find(f=>f.field_path===select.value));
+   };
    $("i18n-review").hidden=false;
    chooseField(primary);
    $("i18n-review").scrollIntoView({behavior:"smooth",block:"start"});
@@ -546,7 +568,11 @@
      }
      updateBulkActions();
    });
-   $("i18n-close").addEventListener("click",closeReview);
+   $("i18n-close").addEventListener("click",()=>{
+     if(state.busy)return;
+     if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
+     closeReview();
+   });
    $("i18n-library-link").addEventListener("click",()=>{
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;

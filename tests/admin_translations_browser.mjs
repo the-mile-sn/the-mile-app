@@ -203,14 +203,17 @@ try {
     await page.goto(origin + "/admin-translations.html?entity_kind=" + kind,
       { waitUntil: "domcontentloaded" });
     await page.locator("#i18n-results .i18n-result").first().waitFor();
-    assert.equal(await page.locator("#i18n-results .i18n-status-pill").innerText(),
+    assert.equal(await page.locator("#i18n-results .i18n-result .i18n-status-pill").innerText(),
       "Vários estados", kind);
+    assert.equal(await page.locator(".i18n-record-field").count(),2);
+    assert.match(await page.locator(".i18n-record-fields").innerText(),/Reviewed/);
     await page.locator("#i18n-results .i18n-result").first().click();
     await page.locator("#i18n-fields option").nth(1).waitFor({ state: "attached" });
     assert.equal(await page.locator("#i18n-fields option").count(), 2, kind);
     assert.equal(await page.locator("#i18n-field-picker").isVisible(),true,
       "Keep field switching when a record has multiple translatable fields.");
-    await page.locator("#i18n-fields").selectOption("note");
+    await page.getByRole("button",{name:"Rever Texto adicional de "+original,exact:true}).click();
+    await page.locator("#i18n-results #i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(text =>
       document.querySelector("#i18n-source-text")?.textContent === text, secondary);
     assert.equal(await page.locator("#i18n-source-text").innerText(), secondary);
