@@ -402,3 +402,12 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 #i18n-results .i18n-record-field-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;overflow-wrap:anywhere;min-width:0}
 #i18n-results .i18n-record-field-pair small{display:block;color:var(--tm-ui-muted);font-size:11px;margin-bottom:3px}
 @media(max-width:620px){#i18n-results .i18n-record-field{grid-template-columns:minmax(0,1fr)}#i18n-results .i18n-record-field>.i18n-status-pill{justify-self:start}}
+
+/* Selection of reviewed inventory pairs; approval uses the canonical batch preview. */
+.i18n-inventory-selection{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0;color:var(--tm-ui-muted);font-size:12px}
+#i18n-results .i18n-inventory-selectable{grid-template-columns:auto minmax(0,1fr) auto}
+#i18n-results .i18n-inventory-check{width:18px;height:18px;accent-color:var(--tm-shell-focus,#7b9fbc);margin:0 4px}
+#i18n-results .i18n-record-field-row{display:flex;align-items:center;gap:8px;min-width:0;border-bottom:1px solid var(--tm-ui-divider)}
+#i18n-results .i18n-record-field-row:last-child{border-bottom:0}
+#i18n-results .i18n-record-field-row>.i18n-record-field{flex:1;border:0}
+@media(max-width:620px){#i18n-results .i18n-inventory-selectable{grid-template-columns:auto minmax(0,1fr)}#i18n-results .i18n-inventory-selectable>.i18n-inline-edit{grid-column:2}}

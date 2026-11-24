@@ -109,6 +109,35 @@
    $("i18n-library-link").dataset.libraryKind=state.kind;
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
+ const batchKinds=["food","dish","recipe","supplement"];
+ const inventorySelected=new Map();
+ const inventoryKey=(entry,field)=>JSON.stringify([entry.entity_id,field.field_path]);
+ const inventoryToolbar=create("div","i18n-inventory-selection");
+ const inventoryCount=create("span","","");
+ const inventoryApprove=create("button","i18n-secondary","Rever seleção");
+ inventoryApprove.type="button";
+ inventoryToolbar.append(inventoryCount,inventoryApprove);
+ $("i18n-results").before(inventoryToolbar);
+ const syncInventorySelection=()=>{
+   inventoryCount.textContent=inventorySelected.size+" textos selecionados nesta página";
+   inventoryApprove.disabled=!inventorySelected.size;
+   inventoryToolbar.hidden=!inventorySelected.size;
+ };
+ syncInventorySelection();
+ const inventoryCheck=(entry,field)=>{
+   if(!batchKinds.includes(state.kind)||!(field.state==="pending"||(state.kind==="dish"&&field.state==="legacy_review")))return null;
+   const english=field.translation_text||field.legacy_candidate||(entry.field_path===field.field_path?(entry.translation_text||entry.legacy_candidate):"");
+   if(!english)return null;
+   const box=create("input","i18n-inventory-check");box.type="checkbox";
+   box.setAttribute("aria-label","Selecionar "+(field.field_label||field.field_path)+" de "+entry.source_text);
+   const key=inventoryKey(entry,field);
+   box.addEventListener("change",()=>{
+     if(box.checked)inventorySelected.set(key,{entity_id:entry.entity_id,field_path:field.field_path,source_text:field.source_text,translated_text:english});
+     else inventorySelected.delete(key);
+     syncInventorySelection();
+   });
+   return box;
+ };
  let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0,bulkKind=null;
  const bulkEntryRows=()=>[...$("i18n-bulk-items").querySelectorAll(".i18n-bulk-row")];
  const updateBulkActions=()=>{
@@ -138,7 +167,8 @@
    $("i18n-bulk-filter").value="";
    msg("",false,"i18n-bulk-feedback");
  };
- const openBulk=async()=>{
+ const openBulk=async(selection=null)=>{
+   if(state.busy||state.edited){msg("Guarda ou fecha a edição antes de iniciar a aprovação em lote.",true);return;}
    if(bulkBusy||!["food","dish","recipe","supplement"].includes(state.kind))return;
    resetBulk();
    const kind=state.kind;
@@ -160,6 +190,17 @@
        "Selecionar todas as propostas pendentes":kind==="dish"?
        "Selecionar todas as traduções por rever":"Selecionar todos os textos por rever";
      bulkRows=data.items||[];
+     if(Array.isArray(selection)){
+       const chosen=new Map(selection.map(row=>[inventoryKey(row,row),row]));
+       bulkRows=bulkRows.filter(row=>{
+         const prior=chosen.get(inventoryKey(row,row));
+         return prior&&prior.source_text===row.source_text&&prior.translated_text===row.translated_text;
+       });
+       if(bulkRows.length!==selection.length){
+         resetBulk();msg("Algumas traduções mudaram. Atualiza a lista e revê novamente a seleção.",true);return;
+       }
+       bulkSelected=new Set(bulkRows.map((_,i)=>i));
+     }
      const list=$("i18n-bulk-items");
      list.replaceChildren();
      const recipeGroups=new Map();
@@ -203,6 +244,7 @@
        const checkbox=create("input");checkbox.type="checkbox";
        checkbox.value=entry.entity_id;
        checkbox.dataset.index=String(i);
+       checkbox.checked=bulkSelected.has(i);
        const details=create("span","i18n-bulk-entry");
        if(kind==="recipe"||kind==="supplement"){
          details.append(create("small","i18n-bulk-field",entry.field_label||entry.field_path));
@@ -274,6 +316,7 @@
  };
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
+   inventorySelected.clear();syncInventorySelection();
    buildTabs();
    const isPlan=state.kind==="plan";
    $("i18n-bulk-tools").hidden=!["food","dish","recipe","supplement"].includes(state.kind);
@@ -333,6 +376,10 @@
        b.addEventListener("click",()=>openReview(entry,wrapper));
        wrapper.append(b);
        const fields=entry.fields?.length?entry.fields:[entry];
+       if(fields.length===1){
+         const check=inventoryCheck(entry,fields[0]);
+         if(check){wrapper.classList.add("i18n-inventory-selectable");wrapper.prepend(check);}
+       }
        {
          const edit=create("button","i18n-secondary i18n-inline-edit",fields.length===1?"Editar":"Rever "+fields.length+" textos");
          edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
@@ -351,7 +398,10 @@
            en.append(create("small","","EN"),create("span","",field.translation_text||field.legacy_candidate||"Por traduzir"));
            pair.append(pt,en);fieldButton.append(pair,badge(field.state));
            fieldButton.addEventListener("click",()=>openReview(entry,wrapper,field.field_path));
-           context.append(fieldButton);
+           const fieldRow=create("div","i18n-record-field-row");
+           const check=inventoryCheck(entry,field);
+           if(check)fieldRow.append(check);
+           fieldRow.append(fieldButton);context.append(fieldRow);
          }
          wrapper.append(context);
        }
@@ -524,7 +574,8 @@
    if(embedded)window.addEventListener("mile:translations-open",event=>{
      activate(event.detail?.kind);
    });
-   $("i18n-bulk-open").addEventListener("click",openBulk);
+   $("i18n-bulk-open").addEventListener("click",()=>openBulk());
+   inventoryApprove.addEventListener("click",()=>openBulk([...inventorySelected.values()]));
    $("i18n-bulk-close").addEventListener("click",resetBulk);
    $("i18n-bulk-submit").addEventListener("click",submitBulk);
    $("i18n-bulk-select-100").addEventListener("click",()=>{

@@ -62,6 +62,14 @@ try{
     await page.goto(origin+"/admin-translations.html",{waitUntil:"domcontentloaded"});
     await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
     assert.equal(writes.length,0);
+    await page.locator("#i18n-results .i18n-inventory-check").first().check();
+    await page.getByRole("button",{name:"Rever seleção",exact:true}).click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    assert.equal(await page.locator("#i18n-bulk-items .i18n-bulk-row").count(),1);
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),1);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    assert.equal(writes.length,0);
+    await page.locator("#i18n-bulk-close").click();
     await page.locator("#i18n-bulk-open").click();
     await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-bulk-items .i18n-bulk-row").count(),2);
