@@ -14,9 +14,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest -v test_chat_messaging_v2
-      - run: python -m py_compile chat_messaging_v2.py
-      - name: Confirm domain remains unregistered in production startup
+      - run: python -m unittest -v test_chat_messaging_v2 test_chat_privacy_api_v2
+      - run: node --test tests/chef-chat-unread.test.cjs
+      - run: python -m py_compile chat_messaging_v2.py chat_api_v2.py test_chat_privacy_api_v2.py
+      - name: Confirm full chat schema migration remains opt-in
         run: |
           python - <<'PY'
           from pathlib import Path
