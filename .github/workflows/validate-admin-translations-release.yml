@@ -18,6 +18,9 @@ on:
       - "app_translation_recovery_v2.py"
       - "food_plan_publications_v2.py"
       - "test_admin_translation_plans_v2.py"
+      - "player_language_defaults_v2.py"
+      - "test_player_admin_lifecycle_v2.py"
+      - "tests/admin-player-initial-language.test.cjs"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "static/admin-microcycles.js"
@@ -44,6 +47,9 @@ on:
       - "app_translation_recovery_v2.py"
       - "food_plan_publications_v2.py"
       - "test_admin_translation_plans_v2.py"
+      - "player_language_defaults_v2.py"
+      - "test_player_admin_lifecycle_v2.py"
+      - "tests/admin-player-initial-language.test.cjs"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "static/admin-microcycles.js"
@@ -87,6 +93,28 @@ jobs:
           node --check tests/admin_translations_batch_browser.mjs
       - name: Run real WSGI tests (auth, CSRF, catalog, no app routes)
         run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2 test_admin_translation_batch_review_v2 test_admin_translation_plans_v2
+
+  initial-language:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      MILE_BACKOFFICE_TRANSLATIONS_ENABLED: "0"
+      MILE_APP_TRANSLATIONS_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install existing Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Test account lifecycle and initial language (isolated SQLite)
+        run: python -m unittest -v test_player_admin_lifecycle_v2
+      - name: Test initial language UI contract
+        run: node --test tests/admin-player-initial-language.test.cjs
 
   browser-mock:
     runs-on: ubuntu-24.04
