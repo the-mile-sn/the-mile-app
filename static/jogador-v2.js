@@ -83,12 +83,17 @@ function playerSupplementMomentLabel(value){
 const playerMenuCategoriesEnglish={
  "Carne branca":"White meat","Carne vermelha":"Red meat",
  "Peixe magro":"Lean fish","Peixe gordo":"Oily fish",
- "Livre":"Free choice","Pós-jogo":"Post-match","Mix":"Mix"
+ "Livre":"Free choice","Pós-jogo":"Post-match","Mix":"Mix",
+ "Estágio":"Training camp"
 };
 function playerMenuCategoryLabel(menu){
  const value=menu?.value||"";
- return playerUiLanguage==="en"&&menu?.kind==="category"
-  ?(playerMenuCategoriesEnglish[value]||value):value;
+ if(playerUiLanguage!=="en")return value;
+ if(menu?.kind==="category")return playerMenuCategoriesEnglish[value]||value;
+ // "Estágio" is a controlled menu preset saved historically as kind="text".
+ // Never translate arbitrary user-authored free text or approved dish names.
+ if(menu?.kind==="text"&&value.trim()==="Estágio")return "Training camp";
+ return value;
 }
 // Only built-in training/match captions are translated for display.
 // Custom event titles and canonical event data stay unchanged for editing and icons.

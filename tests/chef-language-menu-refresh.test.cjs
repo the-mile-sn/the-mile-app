@@ -111,10 +111,14 @@ test("Chef Home and Menus translate only menu-category display, never saved text
  const cases=[
   ["category","Carne branca","White meat"],
   ["category","Peixe magro","Lean fish"],
-  ["category","Livre","Livre"],
+  ["category","Livre","Free choice"],
+  ["category","Estágio","Training camp"],
   ["category","Pós-jogo","Post-match"],
   ["category","Mix","Mix"],
-  ["text","Estágio","Estágio"],
+  ["text","Estágio","Training camp"],
+  ["text"," Estágio ","Training camp"],
+  ["text","Estágio de inverno","Estágio de inverno"],
+  ["text","Livre","Livre"],
   ["text","Carne branca","Carne branca"],
   ["dish","Herb-crusted salmon","Herb-crusted salmon"]
  ];
