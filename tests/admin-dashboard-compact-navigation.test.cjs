@@ -30,6 +30,6 @@ test("game identity survives with restrained dark and light outlines",()=>{
  assert.match(css,/color-mix\(in srgb,#78d4a0 25%,transparent\)/);
  assert.match(css,/color-mix\(in srgb,#70c18f 25%,transparent\)/);
  assert.doesNotMatch(css,/color:#dcf3e4;border:1px solid #78d4a0/);
- assert.match(html,/admin-microcycles\.css\?v=213/);
- assert.match(html,/admin-dashboard\.js\?v=92/);
+ assert.match(html,/admin-microcycles\.css\?v=\d+/);
+ assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });

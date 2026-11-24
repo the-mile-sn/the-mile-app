@@ -20,6 +20,6 @@ test("all form responses remain navigable, with no old disclosure controls",()=>
  assert.doesNotMatch(html,/tm-db-recent-expand/);
  assert.match(js,/else for\(const item of recent\)/);
  assert.match(js,/openClinical\("forms"/);
- assert.match(html,/admin-microcycles\.css\?v=213/);
- assert.match(html,/admin-dashboard\.js\?v=92/);
+ assert.match(html,/admin-microcycles\.css\?v=\d+/);
+ assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });

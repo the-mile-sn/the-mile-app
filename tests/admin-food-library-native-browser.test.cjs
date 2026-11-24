@@ -89,7 +89,7 @@ test("Food Library operates inside the admin shell without changing URL or live 
   await page.locator("#tm-food-library-page #rows").getByText("Banana").waitFor({state:"visible"});
   assert.equal(posts.length,1,"creating a food must reuse the existing API");
 
-  await page.locator('#tm-food-library-page [data-edit="mock-new"]').click();
+  await page.locator('#tm-food-library-page #rows [data-edit="mock-new"]').click();
   await dialog.waitFor({state:"visible"});
   await dialog.locator('[name="kcal"]').fill("91");
   await dialog.getByRole("button",{name:"Guardar"}).click();
@@ -99,7 +99,7 @@ test("Food Library operates inside the admin shell without changing URL or live 
   assert.equal(posts[1].kcal,"91");
 
   page.once("dialog",dlg=>dlg.accept());
-  await page.locator('#tm-food-library-page [data-delete="mock-new"]').click();
+  await page.locator('#tm-food-library-page #rows [data-delete="mock-new"]').click();
   await page.waitForFunction(()=>!document.querySelector('#tm-food-library-page [data-delete="mock-new"]'));
   assert.deepEqual(deletes,["mock-new"]);
   assert.equal(await page.locator("#tm-food-library-page #rows").getByText("Aveia").isVisible(),true);
@@ -110,7 +110,7 @@ test("Food Library operates inside the admin shell without changing URL or live 
 });
 
 
-test("Food Library opens from mobile More menu without a page navigation",async()=>{
+test("Food Library opens from mobile native navigation without a page navigation",async()=>{
  const browser=await chromium.launch({headless:true});
  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const errors=[];
@@ -131,10 +131,9 @@ test("Food Library opens from mobile More menu without a page navigation",async(
   await page.goto("http://127.0.0.1:8765/admin-microcycles.html",{waitUntil:"domcontentloaded"});
   await page.locator("#admin-workspace").waitFor({state:"visible"});
   const url=page.url();
-  await page.locator(".tm-admin-more-trigger").click();
   await page.locator("#tm-admin-nav-food-library").click();
   await page.locator("#tm-food-library-page").waitFor({state:"visible"});
-  await page.locator("#tm-food-library-page #rows").getByText("Maçã").waitFor({state:"visible"});
+  await page.getByRole("button",{name:"Editar Maçã"}).filter({visible:true}).waitFor({state:"visible"});
   assert.equal(page.url(),url);
   await page.screenshot({path:"food-library-native-mobile.png",fullPage:true});
   assert.deepEqual(errors,[]);
