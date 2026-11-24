@@ -29,7 +29,8 @@ test("legacy clinical and account functions remain available",()=>{
 });
 
 test("dashboard shortcuts target clinical main pages, not legacy planning",()=>{
- assert.match(dashboard,/target==="assessments"\?openClinical\("assessments",item\.athlete_id\)/);
+ assert.match(dashboard,/window\.tmOpenAdminAssessments=aid=>openClinical\("assessments",aid\)/);
+ assert.match(dashboard,/\$\("tm-admin-nav-"\+kind\)\.addEventListener\("click",\(\)=>openClinical\(kind\)\)/);
  assert.match(dashboard,/openClinical\("forms",item\.athlete_id,kind==="pitch"\?"game":"weight"/);
  assert.match(dashboard,/row\.dataset\.monitoringDate===recordDate/);
  assert.doesNotMatch(html,/Os formulários ainda não estão ativos/);
@@ -85,8 +86,8 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.doesNotMatch(html,/id="model-legend"/);
  assert.equal(html.split('id="model-legend"').length-1,0);
  assert.match(html,/admin-microcycles\.js\?v=\d+/);
- const elements={};
- for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","menus-panel","player-preview-panel"]){
+ const elements={athlete:{value:"test"}};
+ for(const id of ["athlete-weight-panel","calendar-section","consumption-panel","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
  }
  const tabs=["calendar","plans","supplements","matrix","menus","player-preview"].map(view=>({dataset:{view},setAttribute(k,v){this[k]=v;}}));
@@ -115,10 +116,10 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.equal(elements.matrix.hidden,true);
  assert.equal(elements.matrix.hidden,true);
  assert.equal(elements["menus-panel"].hidden,false);
- const renderAt=admin.indexOf("function render(){"),renderEnd=admin.indexOf("\n",renderAt);
+ const renderAt=admin.indexOf("function render(){"),renderEnd=admin.indexOf('\n$("filipe-activate")',renderAt);
  assert.ok(renderAt>=0&&renderEnd>renderAt);
  const renderSource=admin.slice(renderAt,renderEnd);
- const node=()=>({children:[],appendChild(child){this.children.push(child);}});
+ const node=()=>({children:[],setAttribute(){},append(...children){this.children.push(...children);},appendChild(child){this.children.push(child);}});
  elements.matrix={...node(),hidden:true,replaceChildren(){this.children=[];}};
  ctx.document.createElement=()=>node();
  const render=vm.runInNewContext(renderSource+"\nrender",ctx);
@@ -401,7 +402,7 @@ test("Bottle-green VP and compact high-visibility meal controls apply to both ma
  assert.match(css,/min-height:46px!important/);
 });
 
-test("Calendar day editing keeps the color endpoint and nutrition without option browser",()=>{
+test("Calendar day editing keeps the color endpoint, current nutrition and scoped option browser",()=>{
  const start=admin.indexOf("function renderDayPreview(day,host){");
  const end=admin.indexOf("let dayWeightReferences={};",start);
  assert.ok(start>=0&&end>start);
@@ -413,7 +414,10 @@ test("Calendar day editing keeps the color endpoint and nutrition without option
  assert.match(section,/else if\(liveDay\.state!=="complete"\)/);
  assert.match(section,/else nutritionCards\(currentBlock,effectiveLiveDayNutrition\(day\.date,liveDay\),dayWeightReferences\?\.\[day\.date\]\?\.weight_kg\)/);
  assert.match(section,/Não são usados valores antigos como substituição/);
- assert.doesNotMatch(section,/Ver opções/);
+ assert.match(section,/button\.textContent="Ver opções";button\.setAttribute\("aria-expanded","false"\)/);
+ assert.match(section,/button\.addEventListener\("click",\(\)=>toggleOptions\(entry\.meal\)\)/);
+ assert.match(section,/renderLiveMealOptions\(day,meal\)/);
+ assert.match(admin,/const editable=Boolean\(mealChoiceAssignments\.enabled&&model\?\.athlete\?\.meal_option_selection_enabled&&record\?\.status==="ok"&&record\?\.publication_state==="published"\)/);
  assert.doesNotMatch(section,/opções disponíveis/);
  assert.doesNotMatch(section,/Pré-visualização administrativa/);
  assert.match(section,/className="day-meal-nutrients calendar-live-meal-nutrients"/);
@@ -521,11 +525,11 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(py,/u\.photo IS NOT NULL/);
  assert.match(py,/week_rows\.append\(\{"id": aid,[\s\S]*?"has_photo": False/);
  assert.match(dashboard,/if\(player\.has_photo&&player\.user_id\)/);
- assert.ok(dashboard.includes('img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo"'));
+ assert.ok(dashboard.includes('img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1"'));
  assert.match(dashboard,/img\.addEventListener\("error",\(\)=>img\.remove\(\)\)/);
- assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
- assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
- assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
+ assert.match(dashboard,/item\.classification==="MD"\?" tm-db-match"/);
+ assert.match(dark,/\.tm-db-cell\.tm-db-match\{background:#193126!important/);
+ assert.match(lightCss,/\.tm-db-cell\.tm-db-match\{\s*background:#e5f3e9!important/);
  assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });
 
