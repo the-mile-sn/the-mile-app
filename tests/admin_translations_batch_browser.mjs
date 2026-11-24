@@ -35,9 +35,10 @@ try{
       if(path==="/api/v2/admin/i18n/catalog"){
         return route.fulfill(respond({language:"en",library:"food",total:2,
           page:1,page_size:25,items:samples.map(entry=>({
-            ...entry,category:"Cereais",state:"pending",
+            ...entry,category:"Cereais",state:"pending",translation_text:entry.translated_text,
             fields:[{field_path:"display_name",state:"pending",
-             source_text:entry.source_text,field_label:"Nome do alimento"}]
+             source_text:entry.source_text,translation_text:entry.translated_text,
+             field_label:"Nome do alimento"}]
           }))}));
       }
       if(path==="/api/v2/admin/i18n/batch/preview"){
