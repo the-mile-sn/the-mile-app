@@ -2129,7 +2129,9 @@ def application(env, start_response):
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
                 matches=[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last]
-                peri_meals=food_plan_player_v2.player_peri_days(c,link['athlete_id'],first,last,event_data,matches)
+                peri_meals=food_plan_player_v2.player_peri_days(
+                    c,link['athlete_id'],first,last,event_data,matches,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 published_choices=meal_option_selection_v2.published_for_player(
                     c,link['athlete_id'],first,last)
                 # Only approved selections can affect the daily/wk player view.
