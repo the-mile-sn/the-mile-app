@@ -3158,6 +3158,26 @@ def application(env, start_response):
                 c.execute("DELETE FROM sessions WHERE user_id=?",(target_id,))
                 c.commit()
                 return respond(200,{'ok':True,'sessions_revoked':True})
+            if path.startswith('/api/v2/admin/chefs/') and path.endswith('/initial-language') and method in ('GET','PUT'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=6 or parts[:4]!=['api','v2','admin','chefs'] or parts[5]!='initial-language':
+                    raise Problem(404,'not_found')
+                chef_id=parts[4]
+                target=c.execute("""SELECT l.language FROM v2_chef_links l
+                    JOIN users u ON u.id=l.user_id AND u.role='chef'
+                    WHERE l.user_id=? AND l.archived_at IS NULL""",(chef_id,)).fetchone()
+                if not target: raise Problem(404,'chef_not_found')
+                if method=='GET':
+                    return respond(200,{'language':target['language']})
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'language'} or type(body['language']) is not str or body['language'] not in ('pt','en'):
+                    raise Problem(400,'invalid_initial_language')
+                c.execute("UPDATE v2_chef_links SET language=? WHERE user_id=? AND archived_at IS NULL",
+                          (body['language'],chef_id))
+                c.commit()
+                return respond(200,{'language':body['language']})
             if path.startswith('/api/v2/admin/chefs/'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -3468,8 +3488,7 @@ def application(env, start_response):
                     body=read_json(env)
                     if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
                         raise Problem(400,'invalid_language')
-                    c.execute("UPDATE v2_chef_links SET language=? WHERE user_id=?",
-                              (body['language'],user['id']))
+                    chef_accounts_v2.set_language_preference(c,user['id'],body['language'])
                     c.commit()
                     return respond(200,{'language':body['language']})
                 if path == '/api/v2/chef/me' and method == 'GET':

@@ -88,6 +88,7 @@
   // The chef card opens a profile subpage, like a player card. Account actions
   // live only in that profile; the phone control opens a read-only admin preview.
   let selectedChef=null;
+  let pendingChefLanguage=null, savingChefLanguage=false, chefProfileToken=0;
   const chefProfile=$("tm-clients-chef-profile");
   const profileFeedback=$("tm-chef-profile-feedback");
   const passwordForm=$("tm-chef-profile-password-form");
@@ -98,6 +99,50 @@
     passwordForm.hidden=true;
     passwordOpen.setAttribute("aria-expanded","false");
   }
+  const languageOptions=$("tm-chef-initial-language-options");
+  const languageSave=$("tm-chef-initial-language-save");
+  const languageFeedback=$("tm-chef-initial-language-feedback");
+  function paintChefLanguage(){
+    const saved=selectedChef?.initial_language||selectedChef?.language||"pt";
+    for(const button of languageOptions.querySelectorAll("button[data-initial-language]")){
+      button.setAttribute("aria-pressed",String(button.dataset.initialLanguage===(pendingChefLanguage||saved)));
+      button.disabled=!selectedChef||savingChefLanguage;
+    }
+    languageSave.hidden=!selectedChef||!pendingChefLanguage||pendingChefLanguage===saved;
+    languageSave.disabled=savingChefLanguage;
+  }
+  languageOptions.addEventListener("click",event=>{
+    const button=event.target.closest("button[data-initial-language]");
+    if(!button||!selectedChef||savingChefLanguage)return;
+    pendingChefLanguage=button.dataset.initialLanguage;
+    languageFeedback.textContent="";
+    paintChefLanguage();
+  });
+  languageSave.addEventListener("click",async()=>{
+    const item=selectedChef,token=chefProfileToken,language=pendingChefLanguage;
+    if(!item||savingChefLanguage||!["pt","en"].includes(language)||language===(item.initial_language||item.language))return;
+    savingChefLanguage=true;
+    languageFeedback.textContent="";
+    paintChefLanguage();
+    try{
+      const result=await api("/api/v2/admin/chefs/"+encodeURIComponent(item.id)+"/initial-language",{
+        method:"PUT",body:JSON.stringify({language})
+      });
+      item.initial_language=result.language;
+      if(token===chefProfileToken&&selectedChef===item){
+        pendingChefLanguage=null;
+        languageFeedback.textContent="Idioma inicial guardado.";
+      }
+      await loadAccounts();
+    }catch(error){
+      if(token===chefProfileToken&&selectedChef===item)languageFeedback.textContent=noteMessage(error);
+    }finally{
+      if(token===chefProfileToken&&selectedChef===item){
+        savingChefLanguage=false;
+        paintChefLanguage();
+      }
+    }
+  });
   function paintChefProfile(){
     if(!selectedChef)return;
     const item=selectedChef;
@@ -108,7 +153,7 @@
     $("tm-chef-profile-fullname").textContent=item.name;
     $("tm-chef-profile-username").textContent="@"+item.username;
     $("tm-chef-profile-player").textContent=item.athlete_name;
-    $("tm-chef-profile-language").textContent=item.language==="en"?"Inglês":"Português";
+    paintChefLanguage();
     const state=$("tm-chef-profile-status");
     state.textContent=item.active?"Ativo":"Inativo";
     state.className="tm-p-status tm-p-"+(item.active?"active":"inactive");
@@ -120,6 +165,10 @@
     enter.title=item.active?"Entrar na app Chef em modo de visualização":"Conta Chef inativa";
   }
   function openChefProfile(item){
+    chefProfileToken++;
+    pendingChefLanguage=null;
+    savingChefLanguage=false;
+    languageFeedback.textContent="";
     selectedChef=item;
     profileFeedback.textContent="";
     resetChefPasswordEditor();
@@ -129,6 +178,9 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function dismissChefProfile(){
+    chefProfileToken++;
+    pendingChefLanguage=null;
+    savingChefLanguage=false;
     selectedChef=null;
     resetChefPasswordEditor();
     profileFeedback.textContent="";
