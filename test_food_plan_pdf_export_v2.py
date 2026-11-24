@@ -56,8 +56,9 @@ class PlanPdfTests(unittest.TestCase):
         plan={"player_name":"Jogador","plan_type":"Plano amarelo","meals":groups}
         pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
         text=" ".join(p.extract_text() for p in pages)
-        for name in ("Pequeno-almoço","Almoço","Lanche","Jantar","1500 kcal"):
+        for name in ("Pequeno-almoço","Almoço","Lanche","Jantar"):
             self.assertIn(name,text)
+        self.assertRegex(pages[1].extract_text(),r"(?m)^kcal\s+1500\s*$")
 
     def test_selection_excludes_dinner_and_recomputes_energy(self):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
@@ -66,7 +67,7 @@ class PlanPdfTests(unittest.TestCase):
         pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan,["0:0","1:0","0:1"]))).pages
         text=" ".join(p.extract_text() for p in pages)
         self.assertNotIn("Jantar",text)
-        self.assertIn("1000 kcal",text)
+        self.assertRegex(pages[1].extract_text(),r"(?m)^kcal\s+1000\s*$")
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),plan,["0:0","99:0"])
         with self.assertRaises(ValueError):

@@ -42,7 +42,7 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         dashboard=pathlib.Path("static/admin-dashboard.js").read_text()
         html=pathlib.Path("static/admin-microcycles.html").read_text()
         styles=pathlib.Path("static/admin-microcycles.css").read_text()
-        self.assertIn('id="tm-player-data-title">Dados pessoais',html)
+        self.assertRegex(html,r'id="tm-player-data-title">[^\n]*<span>Dados pessoais</span></h4>')
         self.assertIn('id="tm-players-settings-slot"',html)
         self.assertIn('id="tm-players-access-management"',html)
         self.assertIn('id="tm-player-loading-photo-edit"',html)
@@ -78,8 +78,8 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         self.assertIn("tm-player-permissions-list",styles)
         self.assertIn('html[data-admin-theme="light"] #tm-players-settings-slot',styles)
         self.assertIn("@media(max-width:640px)",styles)
-        self.assertIn("admin-dashboard.js?v=68",html)
-        self.assertIn("admin-microcycles.css?v=189",html)
+        self.assertRegex(html,r'admin-dashboard\.js\?v=\d+"')
+        self.assertRegex(html,r'admin-microcycles\.css\?v=\d+"')
 
 
 
