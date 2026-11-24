@@ -1,3 +1,4 @@
+# Full backoffice regression audit: include this path-filtered workflow in PR #400.
 name: Validate Backoffice-only PT EN translations pilot
 
 on:
