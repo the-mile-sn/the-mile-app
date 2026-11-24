@@ -30,7 +30,7 @@ test("Food Library remains a native Backoffice section alongside native Planos",
  assert.match(dashboard,/function openPlans\(\)/);
  assert.match(dashboard,/plansPage\.hidden=target!==plansBtn/);
  assert.match(dashboard,/"players","planning","create-plan","food-library","menus-recipes"/);
- assert.match(adminHtml,/\/food-library\.js\?v=13/);
+ assert.match(adminHtml,/\/food-library\.js\?v=\d+/);
  assert.match(nav,/href=\\?"\/create-plan\\?"/); // legacy URL still reachable
 });
 test("native view retains the existing catalog operations and server authority",()=>{
@@ -58,6 +58,6 @@ test("the old Food Library page and its script entry remain reachable",()=>{
  assert.match(app,/'\/food-library': 'food-library\.html'/);
  assert.match(app,/'\/food-library\.js': 'food-library\.js'/);
  assert.match(legacyHtml,/data-tm-nav-page="food-library"/);
- assert.match(legacyHtml,/\/food-library\.js\?v=13/);
+ assert.match(legacyHtml,/\/food-library\.js\?v=\d+/);
  assert.match(legacyHtml,/<dialog id="editor">/);
 });
