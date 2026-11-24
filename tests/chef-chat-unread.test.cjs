@@ -162,6 +162,7 @@ test("first real chat visit requires an explicit, durable acknowledgement once p
  await h.showMessageWindow();
  const notice=h.get("chef-chat-disclaimer");
  const ack=h.get("chef-chat-privacy-ack");
+ const privacyLabel=h.get("chef-chat-privacy-ack-label");
  const composer=h.get("chef-chat-form");
  const thread=h.get("chef-chat-thread");
  const input=h.get("chef-chat-input");
@@ -169,6 +170,7 @@ test("first real chat visit requires an explicit, durable acknowledgement once p
  assert.equal(h.dialog.open,true);
  assert.equal(notice.hidden,false);
  assert.equal(ack.hidden,false);
+ assert.equal(privacyLabel.textContent,"Li e compreendi");
  assert.equal(composer.hidden,false,"The message box remains visible");
  assert.equal(thread.hidden,false,"Empty thread keeps the composer at the bottom");
  assert.equal(thread.children.length,0,"Temporary demo messages must not be shown");
@@ -185,7 +187,8 @@ test("first real chat visit requires an explicit, durable acknowledgement once p
  assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/messages"&&r.method==="POST").length,0);
  input.value="";
  h.switchLanguage("en");
- assert.equal(ack.textContent,"I've read and understood");
+ assert.equal(h.get("chef-chat-privacy-ack-label").textContent,"I've read and understood");
+ assert.equal(ack.hidden,false);
  assert.equal(input.placeholder,"You must accept the privacy notice before sending messages.");
  assert.equal(input.disabled,true);
  assert.equal(thread.children.length,0);
