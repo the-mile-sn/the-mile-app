@@ -84,6 +84,43 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
                 self.assertEqual(client.request("/api/v2/player/me")["body"]
                                  ["player"]["language"],"pt")
 
+    def test_admin_initial_language_is_used_only_before_player_selection(self):
+        first,second=self.players
+        with app.connect() as c:
+            first_id=c.execute("SELECT id FROM users WHERE username=?",("languageone",)).fetchone()["id"]
+            second_id=c.execute("SELECT id FROM users WHERE username=?",("languagetwo",)).fetchone()["id"]
+            import player_language_defaults_v2 as defaults
+            defaults.set_initial(c,first_id,"en")
+            self.assertEqual(defaults.get(c,first_id),"en")
+            self.assertEqual(defaults.get(c,second_id),"pt")
+            self.assertEqual(c.execute("SELECT COUNT(*) AS n FROM v2_player_language_preferences").fetchone()["n"],0)
+            c.commit()
+        with patch.dict(app.os.environ,{
+                "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
+                "MILE_APP_TRANSLATIONS_ENABLED":"1",
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":"languageone,languagetwo"}), \
+             patch("app_content_i18n_v2.translation_store_available",
+                   return_value=True):
+            self.assertEqual(first.request("/api/v2/player/preferences")["body"],
+                {"language":"en","enabled":True})
+            self.assertEqual(second.request("/api/v2/player/preferences")["body"],
+                {"language":"pt","enabled":True})
+            self.assertEqual(first.request("/api/v2/player/me")["body"]["player"]["language"],"en")
+            # Explicit player choice of PT overrides the admin EN default.
+            self.assertEqual(first.request("/api/v2/player/preferences","PUT",{"language":"pt"})["status"],200)
+            with app.connect() as c:
+                import player_language_defaults_v2 as defaults
+                defaults.set_initial(c,first_id,"en")
+                self.assertEqual(defaults.get(c,first_id),"en")
+                c.commit()
+            self.assertEqual(first.request("/api/v2/player/preferences")["body"]["language"],"pt")
+            self.assertEqual(first.request("/api/v2/player/me")["body"]["player"]["language"],"pt")
+            self.assertEqual(second.request("/api/v2/player/preferences","PUT",{"language":"en"})["status"],200)
+            self.assertEqual(second.request("/api/v2/player/me")["body"]["player"]["language"],"en")
+        # Disabled release flags always preserve the safe Portuguese presentation.
+        with patch.dict(app.os.environ,{"MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"0"}):
+            self.assertEqual(second.request("/api/v2/player/me")["body"]["player"]["language"],"pt")
+
     def test_english_food_search_is_authenticated_and_locale_scoped(self):
         first,second=self.players
         fake={"id":"food-test","display_name":"White rice","variant":"",
