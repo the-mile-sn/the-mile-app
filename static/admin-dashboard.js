@@ -623,6 +623,7 @@ function ensurePlanningOnlyView(){
   const athlete={...playerProfile,...(playerDetails||{})},host=$("tm-players-profile-fields");host.replaceChildren();
   const settingsSlot=$("tm-players-settings-slot");
   settingsSlot.querySelector(".tm-player-permissions")?.remove();
+  settingsSlot.querySelector(".tm-player-language-default")?.remove();
   const photoHost=$("tm-players-profile-photo");photoHost.replaceChildren();
   const accountId=playerDetails?.user_id;
   const avatar=el("span","tm-player-photo-placeholder",(athlete.name||"").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase());
@@ -735,6 +736,81 @@ function ensurePlanningOnlyView(){
   settingsFeedback.setAttribute("aria-live","polite");
   permissions.append(settingsActions,settingsFeedback);
   settingsSlot.prepend(permissions);
+
+  // Only a starting preference: the player's own PT/EN choice always wins.
+  // Keep this separate from editing clinical data and account permissions.
+  const languageSection=el("section","tm-player-language-default");
+  languageSection.setAttribute("aria-labelledby","tm-player-initial-language-title");
+  const languageHeading=el("div","tm-player-permissions-heading");
+  const languageGlyph=el("span","tm-player-permissions-shield");
+  languageGlyph.append(permissionGlyph(["M4 5h16","M9 3v2","M15 3v2","M5 9h14","M7 14h4","M7 18h7"]));
+  const languageTitle=el("h4","tm-player-permissions-title","Idioma inicial da app");
+  languageTitle.id="tm-player-initial-language-title";
+  languageHeading.append(languageGlyph,languageTitle);
+  languageSection.append(languageHeading);
+  const languageBody=el("div","tm-player-language-default-body");
+  languageBody.append(el("p","tm-player-language-default-description",
+    "Define o idioma inicial do jogador. Se escolher outro idioma na app, essa escolha prevalece."));
+  if(!accountId){
+   languageBody.append(el("p","tm-player-language-default-unlinked",
+     "Disponível quando este cliente tiver uma conta de jogador associada."));
+  }else{
+   const initialLanguage=athlete.initial_language==="en"?"en":"pt";
+   let selectedLanguage=initialLanguage,savedLanguage=initialLanguage,savingLanguage=false;
+   const options=el("div","tm-player-language-default-options");
+   options.setAttribute("role","group");
+   options.setAttribute("aria-label","Escolher idioma inicial");
+   const buttons=[];
+   for(const [value,label] of [["pt","Português"],["en","English"]]){
+    const button=el("button","tm-player-language-default-choice",label);
+    button.type="button";button.dataset.initialLanguage=value;
+    button.addEventListener("click",()=>{if(savingLanguage||playerProfileEditing)return;
+     selectedLanguage=value;syncLanguageControls();
+    });
+    buttons.push(button);options.append(button);
+   }
+   const languageActions=el("div","tm-player-language-default-actions");
+   const saveLanguage=el("button","tm-player-settings-save","Guardar idioma inicial");
+   saveLanguage.type="button";
+   const feedback=el("p","tm-player-settings-feedback");
+   feedback.setAttribute("role","status");feedback.setAttribute("aria-live","polite");
+   languageActions.append(saveLanguage);
+   function syncLanguageControls(){
+    for(const button of buttons){
+     button.setAttribute("aria-pressed",String(button.dataset.initialLanguage===selectedLanguage));
+     button.disabled=savingLanguage||playerProfileEditing;
+    }
+    saveLanguage.hidden=selectedLanguage===savedLanguage||playerProfileEditing;
+    saveLanguage.disabled=savingLanguage;
+    if(!savingLanguage)feedback.textContent="";
+   }
+   saveLanguage.addEventListener("click",async()=>{
+    if(savingLanguage||selectedLanguage===savedLanguage||playerProfileEditing)return;
+    const token=profileLoadToken,athleteId=playerProfile.id,language=selectedLanguage;
+    savingLanguage=true;syncLanguageControls();
+    try{
+     const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/initial-language",{
+      method:"PUT",body:JSON.stringify({language})});
+     if(token!==profileLoadToken||playerProfile?.id!==athleteId)return;
+     savedLanguage=result.language;
+     if(playerDetails)playerDetails.initial_language=result.language;
+     feedback.textContent="Idioma inicial guardado. A escolha do jogador mantém prioridade.";
+    }catch(e){
+     if(token===profileLoadToken)feedback.textContent="Não foi possível guardar: "+e.message;
+    }finally{
+     if(token===profileLoadToken&&playerProfile?.id===athleteId){
+      savingLanguage=false;syncLanguageControls();
+      // Preserve the result/error across the redraw of enabled controls.
+      feedback.textContent=savedLanguage===language?
+       "Idioma inicial guardado. A escolha do jogador mantém prioridade.":feedback.textContent;
+     }
+    }
+   });
+   syncLanguageControls();
+   languageBody.append(options,languageActions,feedback);
+  }
+  languageSection.append(languageBody);
+  permissions.after(languageSection);
   let savedSettings={
    meal_option_selection_enabled:!!athlete.meal_option_selection_enabled,
    visual_portions_enabled:!!athlete.visual_portions_enabled
