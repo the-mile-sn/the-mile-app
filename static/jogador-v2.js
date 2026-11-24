@@ -494,6 +494,8 @@ hugeiconsOfficial["CheckmarkCircle02Icon"]=[
 ];
 function consumptionActionIcon(name){const span=document.createElement('span');span.className='consumption-action-icon';span.setAttribute('aria-hidden','true');span.append(iconToSvg(hugeiconsOfficial[name]));return span;}
 function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionActionIcon(name),document.createTextNode(label));}
+/* Registered meal/option marker: the check icon alone, with the full meaning kept for assistive technology. */
+function registeredMark(el,label){el.replaceChildren(consumptionActionIcon('CheckmarkCircle02Icon'));el.setAttribute('role','img');el.setAttribute('aria-label',label);el.title=label;}
 /* One recorded-action component for meals, alternative colours and peri-events. */
 /* Universal registered-consumption action family for meals and peri-events.
    Surface differences are inherited as colour tokens, never separate markup. */
@@ -945,6 +947,71 @@ function weeklySummary(data,relativeMeans={}){
  }
  return section;
 }
+// Meals with a planned colour on a date, read from one calendar response (same precedence as the day view:
+// canonical effective colour, then the player's own colour change, then the day classification).
+function plannedMealsForDay(calendar,dateKey){
+ const day=calendar?.days?.find(x=>x.date===dateKey);if(!day)return [];
+ const overrides=Object.fromEntries((calendar.meal_color_overrides||[]).map(x=>[x.meal_date+"|"+x.meal,x.color]));
+ return (calendar.meals||[]).filter(meal=>{
+  const effective=calendar.effective_colors?.[dateKey]?.[meal];
+  if(effective&&Object.prototype.hasOwnProperty.call(effective,"color"))return !!effective.color;
+  const own=overrides[dateKey+"|"+meal];
+  if(own)return own!=="none";
+  return !!(calendar.classifications||[]).find(x=>x.name===(day.classification||"Geral"))?.meals?.[meal];
+ });
+}
+// A day's records: each planned meal registered (outside peri-events) plus the fasting weight.
+function dayRecordProgress(planned,records,dateKey,weighed){
+ const done=planned.filter(meal=>records.some(r=>r.meal_key===meal&&r.meal_date===dateKey&&!r.event_id)).length+(weighed?1:0);
+ return {done,total:planned.length+1};
+}
+const REGISTOS_CHECK='<svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="17" class="registos-done-fill"/><path d="M11 17.5l4 4 8-9" class="registos-done-tick"/></svg>';
+function registosRing(done,total,today){
+ const r=15,c=2*Math.PI*r,arc=total?c*done/total:0;
+ return '<svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="'+r+'" class="registos-track"/>'+
+  (arc?'<circle cx="17" cy="17" r="'+r+'" class="registos-arc'+(today?' today':'')+'" stroke-dasharray="'+arc.toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 17 17)"/>':'')+
+  (done?'<text x="17" y="21" text-anchor="middle" class="registos-count">'+done+'/'+total+'</text>':'')+'</svg>';
+}
+// Registos: the last 7 days (ending on the selected day, never after today), complete = all meals + fasting weight.
+async function renderRegistosCard(root,selectedKey,isCurrent){
+ const todayKey=iso(new Date()),endKey=selectedKey<todayKey?selectedKey:todayKey;
+ const end=new Date(endKey+"T12:00:00"),start=new Date(end);start.setDate(end.getDate()-6);const startKey=iso(start);
+ const heading=document.createElement("div");heading.className="day-section-heading registos-heading";
+ const title=document.createElement("h3");title.textContent=playerText("Registos","Records");heading.append(title);
+ const card=document.createElement("section");card.className="registos-card";card.setAttribute("aria-label",playerText("Registos dos últimos 7 dias","Records for the last 7 days"));
+ heading.hidden=true;card.hidden=true;root.append(heading,card);
+ let calendar,records,weights;
+ try{[calendar,records,weights]=await Promise.all([
+  cachedOverviewRead("/api/v2/player/calendar?start="+startKey+"&end="+endKey),
+  api("/api/v2/player/consumption-records?start="+startKey+"&end="+endKey),
+  api("/api/v2/player/weight-history?end="+endKey+"&days=7&local_date="+todayKey)]);}
+ catch{heading.remove();card.remove();return;}
+ if(!isCurrent()||!card.isConnected)return;
+ const weighed=new Set((weights.entries||[]).map(x=>x.weigh_date));
+ const recs=records.records||[];
+ const top=document.createElement("div");top.className="registos-top";top.textContent=playerText("Últimos 7 dias","Last 7 days");
+ const row=document.createElement("div");row.className="registos-days";
+ let complete=0,counted=0;
+ for(let i=0;i<7;i++){
+  const dt=new Date(start);dt.setDate(start.getDate()+i);const key=iso(dt);
+  const {done,total}=dayRecordProgress(plannedMealsForDay(calendar,key),recs,key,weighed.has(key));
+  const full=done>=total,isToday=key===todayKey;
+  if(!isToday||full)counted++;if(full)complete++;
+  const b=document.createElement("button");b.type="button";b.className="registos-day"+(key===selectedKey?" selected":"")+(isToday?" today":"");
+  const label=document.createElement("span");label.className="registos-label";label.textContent=dt.toLocaleDateString(playerDateLocale(),{weekday:"long"}).replace(/-feira$/,"").slice(0,3).replace(/^./,x=>x.toLocaleUpperCase(playerDateLocale()));
+  const mark=document.createElement("span");mark.className="registos-mark"+(full?" done":done?" partial":" none");mark.innerHTML=full?REGISTOS_CHECK:registosRing(done,total,isToday);
+  const dot=document.createElement("span");dot.className="registos-dot";dot.setAttribute("aria-hidden","true");
+  b.append(label,mark,dot);
+  b.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+": "+(full?playerText("completo","complete"):done?done+playerText(" de "," of ")+total+playerText(" registos"," records"):playerText("sem registos","no records")));
+  b.onclick=()=>{day=dt;weeklySelection=null;overview().catch(error);};
+  row.append(b);
+ }
+ const foot=document.createElement("div");foot.className="registos-foot";
+ const summary=document.createElement("span");const strong=document.createElement("strong");strong.textContent=complete+playerText(" de "," of ")+counted;summary.append(strong,document.createTextNode(playerText(" dias completos"," complete days")));
+ const rule=document.createElement("span");rule.textContent=playerText("Refeições + peso","Meals + weight");
+ foot.append(summary,rule);
+ card.append(top,row,foot);heading.hidden=false;card.hidden=false;
+}
 // Planned calories and macros of the week, day by day (moved from the Dia ring card to Semana).
 // g/kg divides each day by that day's reference weight, as in the weekly daily average.
 function buildWeeklyNutritionCharts(weekDays,referenceWeights={}){
@@ -1121,7 +1188,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  // before independent timing entries can be created, never silently migrated.
  if(previous&&!previous.timing_records?.length){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';registeredMark(badge,playerText('Refeição registada','Meal recorded'));title.after(badge);}
   card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:playerText('consumo anterior de Jogo','previous match consumption')}));
   return true;
  }
@@ -1129,7 +1196,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  const available=new Set(entries.map(x=>x.timing));
  if(current.length&&[...available].every(t=>current.some(row=>row.timing===t))){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';registeredMark(badge,playerText('Refeição registada','Meal recorded'));title.after(badge);}
  }
  for(const {group,index,timing} of entries){
   const optionRef=options[index].option_ref;
@@ -1312,7 +1379,7 @@ function appendPeriConsumption(card,item,records){
  if(item.selection_phase==='intra_match'&&appendIntraTimingConsumption(card,item,previous,date,meal,eventId))return;
  if(previous){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';registeredMark(badge,playerText('Refeição registada','Meal recorded'));title.after(badge);}
  }
  const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
@@ -2747,6 +2814,16 @@ async function overview(){
  }
  renderWeightCard(root,d,r).catch(()=>{});
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
+ const planHeading=document.createElement("div");planHeading.className="day-section-heading day-plan-heading";
+ const planTitle=document.createElement("h3");planTitle.textContent=playerText("Plano do dia","Day plan");planHeading.append(planTitle);
+ if(consumptionEnabled&&d<=iso(new Date())){
+  const progress=document.createElement("span");progress.className="day-plan-progress";planHeading.append(progress);
+  const planned=plannedMealsForDay(r,d);
+  const show=weighed=>{const {done,total}=dayRecordProgress(planned,consumptionRecords,d,weighed);progress.textContent=done+playerText(" de "," of ")+total+playerText(" registos"," records");};
+  show(false);
+  cachedOverviewRead("/api/v2/player/weight?date="+d).then(data=>{if(planHeading.isConnected)show(!!data?.entries?.some(x=>x.weigh_date===d));}).catch(()=>{});
+ }
+ root.append(planHeading);
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning",consumptionEnabled,consumptionRecords);
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon",consumptionEnabled,consumptionRecords);
@@ -2757,8 +2834,8 @@ async function overview(){
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
    const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
-   consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));badge.setAttribute('aria-label',playerText('Refeição registada','Meal recorded'));
-   title.append(badge);
+   registeredMark(badge,playerText('Refeição registada','Meal recorded'));
+   head.append(badge);
   }
   section.append(head);
   const options=color?datedPlanOptions(d,meal,color):[];
@@ -2815,7 +2892,7 @@ async function overview(){
     if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
     if(optionCard?.tagName==='DETAILS'){
      const summaryLabel=optionCard.querySelector('summary .plan-option-label');
-     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));closedBadge.setAttribute('aria-label',playerText('Opção registada','Option recorded'));summaryLabel.append(closedBadge);}
+     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';registeredMark(closedBadge,playerText('Opção registada','Option recorded'));summaryLabel.append(closedBadge);}
     }
    }
    cards.forEach((card,i)=>{
@@ -2855,6 +2932,7 @@ async function overview(){
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
+ if(consumptionEnabled)renderRegistosCard(root,d,()=>requestId===overviewRequestId&&epoch===playerSessionEpoch).catch(()=>{});
  // Reveal a complete day's content only after consumption state is resolved.
  root.hidden=false;setOverviewLoading(false);
  injectPostMatchCard();
