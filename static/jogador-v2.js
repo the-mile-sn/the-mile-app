@@ -1687,18 +1687,15 @@ async function loadPlayerPostMatch(){
  injectPostMatchCard();
 }
 // Início widgets: Peso (fasting weight) and Semana, side by side. The weight entry form still opens below them.
-const WEIGHT_WIDGET_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
-const WEEK_WIDGET_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="4"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>';
-function dayWidget(className,iconSvg,label){
+function dayWidget(className,label){
  const card=document.createElement("section");card.className="day-widget "+className;
  const head=document.createElement("div");head.className="day-widget-head";
- const glyph=document.createElement("span");glyph.className="day-widget-icon";glyph.innerHTML=iconSvg;
  const title=document.createElement("span");title.className="day-widget-label";title.textContent=label;
- head.append(glyph,title);card.append(head);
+ head.append(title);card.append(head);
  return {card,head};
 }
 function renderWeekWidget(row,date,calendar){
- const {card,head}=dayWidget("day-week-widget",WEEK_WIDGET_ICON,playerText("Semana","Week"));
+ const {card,head}=dayWidget("day-week-widget",playerText("Semana","Week"));
  const open=document.createElement("button");open.type="button";open.className="day-widget-action";
  open.setAttribute("aria-label",playerText("Abrir vista semanal","Open week view"));
  open.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
@@ -1821,7 +1818,7 @@ async function openWeightDetail(date,editToday){
 }
 async function renderWeightCard(root,date,calendar=null){
  const row=document.createElement("div");row.className="day-widgets";
- const {card,head:header}=dayWidget("daily-weight-card day-weight-widget",WEIGHT_WIDGET_ICON,playerText("Peso","Weight"));
+ const {card,head:header}=dayWidget("daily-weight-card day-weight-widget",playerText("Peso","Weight"));
  card.setAttribute("aria-label",playerText("Peso em jejum","Fasting weight"));
  const value=document.createElement("span");value.className="day-widget-value";
  const spark=document.createElement("div");spark.className="day-weight-widget-spark";
