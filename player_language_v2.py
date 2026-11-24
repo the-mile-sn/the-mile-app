@@ -2,11 +2,14 @@
 
 The player's preferred language belongs to their own session, never to a
 client-supplied athlete ID. Default remains pt-PT. This module does not touch
-translations, prescriptions, or account permissions.
+translations, prescriptions, or account permissions. The player's explicit choice
+always overrides the separate initial language configured in the backoffice.
 """
 
 
 def initialize(c):
+    import player_language_defaults_v2
+    player_language_defaults_v2.initialize(c)
     c.execute("""CREATE TABLE IF NOT EXISTS v2_player_language_preferences (
         user_id TEXT PRIMARY KEY REFERENCES users(id),
         language TEXT NOT NULL DEFAULT 'pt' CHECK(language IN ('pt','en'))
@@ -17,7 +20,11 @@ def get(c, user_id):
     row = c.execute(
         "SELECT language FROM v2_player_language_preferences WHERE user_id=?",
         (user_id,)).fetchone()
-    return row["language"] if row and row["language"] in ("pt","en") else "pt"
+    if row and row["language"] in ("pt","en"):
+        return row["language"]
+    # No player choice yet: use the backoffice's initial default (PT by default).
+    import player_language_defaults_v2
+    return player_language_defaults_v2.get(c,user_id) or "pt"
 
 
 def set_language(c, user_id, language):
