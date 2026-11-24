@@ -410,6 +410,20 @@ def list_publications(c, actor):
             "scope":"published_versions_only", "csv_export":False}
 
 
+def inspect_draft(c, actor, draft_id):
+    """Resolve the current immutable publication of this exact editor draft."""
+    admin._admin(c, actor)
+    if not isinstance(draft_id, str) or not draft_id or len(draft_id) > 256:
+        raise PlanTranslationError(400, "invalid_plan_draft")
+    row = c.execute("""SELECT draft_id, snapshot_json
+        FROM v2_food_plan_editor_publications
+        WHERE draft_id=? AND state IN ('published','transitional')""",
+        (draft_id,)).fetchone()
+    if row is None:
+        raise PlanTranslationError(404, "plan_publication_not_found")
+    return inspect(c, actor, _ref(row["draft_id"], row["snapshot_json"]))
+
+
 def inspect(c, actor, public_ref):
     admin._admin(c, actor)
     row, value = _load(c, public_ref)

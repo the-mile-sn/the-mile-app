@@ -155,6 +155,28 @@ class PlanTranslationsTests(unittest.TestCase):
         with patch.dict(os.environ,{"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
             self.assertEqual(self.call()["status"],404)
 
+    def test_editor_draft_lookup_is_exact_private_and_version_bound(self):
+        with patch.dict(os.environ, FLAG):
+            ref = self.index()["publication_ref"]
+            url = ROOT + "/fields?draft_id=" + self.draft_id
+            answer = self.call(url)
+            self.assertEqual(answer["status"], 200, answer)
+            self.assertEqual(answer["body"], self.fields(ref)["body"])
+            self.assertEqual(self.call(ROOT + "/fields?draft_id=unknown")["status"], 404)
+            self.assertEqual(self.call(url + "&publication_ref=" + ref)["status"], 400)
+            self.assertEqual(Client().request(url)["status"], 401)
+            with patch.object(app, "SITE_ROLE", "player"):
+                self.assertEqual(self.call(url)["status"], 404)
+            with app.connect() as c:
+                updated = dict(self.plan, name="Nova versão")
+                c.execute("UPDATE v2_food_plan_editor_publications SET snapshot_json=? WHERE draft_id=?",
+                          (json.dumps(updated, ensure_ascii=False), self.draft_id))
+                c.commit()
+            self.assertEqual(self.fields(ref)["status"], 409)
+            self.assertNotEqual(self.call(url)["body"]["publication"]["publication_ref"], ref)
+        with patch.dict(os.environ, {"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
+            self.assertEqual(self.call(url)["status"], 404)
+
     def test_final_coverage_audit_reconciles_all_statuses(self):
         with patch.dict(os.environ, FLAG):
             audit=self.call()["body"]["reuse_audit"]

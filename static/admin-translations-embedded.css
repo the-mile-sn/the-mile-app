@@ -769,3 +769,9 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 #i18n-results .i18n-record-field-row:last-child{border-bottom:0}
 #i18n-results .i18n-record-field-row>.i18n-record-field{flex:1;border:0}
 @media(max-width:620px){#i18n-results .i18n-inventory-selectable{grid-template-columns:auto minmax(0,1fr)}#i18n-results .i18n-inventory-selectable>.i18n-inline-edit{grid-column:2}}
+
+/* Separate native dialog; reuse approved translation card styles. */
+dialog.tm-plan-translation-dialog{position:fixed;inset:0;margin:auto;width:min(900px,calc(100% - 32px));max-width:calc(100% - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:20px;border:0;border-radius:18px;background:var(--tm-ui-card);color:var(--tm-ui-text);box-shadow:none}
+dialog.tm-plan-translation-dialog::backdrop{background:rgba(0,0,0,.55)}
+.tm-plan-translation-dialog>.i18n-plan-detail-head{position:sticky;top:-20px;background:var(--tm-ui-card);padding:12px 0;z-index:1}
+@media(max-width:830px){dialog.tm-plan-translation-dialog{padding:14px;width:calc(100% - 24px);max-width:calc(100% - 24px)}.tm-plan-translation-dialog>.i18n-plan-detail-head{top:-14px}}

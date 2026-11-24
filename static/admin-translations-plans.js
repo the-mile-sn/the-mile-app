@@ -721,5 +721,52 @@
         create("p","i18n-feedback","Não foi possível consultar publicações: "+e.message));
     }
   };
-  window.tmI18nPlans={load,hide};
+  // Reuse the existing field renderer and version-bound translation endpoints.
+  const openDraft=async(draftId)=>{
+    if(document.getElementById("tm-plan-translation-dialog"))return;
+    const dialog=create("dialog","tm-admin-translations-page tm-plan-translation-dialog");
+    dialog.id="tm-plan-translation-dialog";
+    dialog.setAttribute("aria-labelledby","tm-plan-translation-title");
+    const heading=create("div","i18n-plan-detail-head");
+    const title=create("strong","","Traduções");
+    title.id="tm-plan-translation-title";
+    const close=create("button","i18n-quiet","Fechar");
+    close.type="button";close.onclick=()=>dialog.close();
+    heading.append(title,close);
+    const body=create("div","tm-plan-translation-body");
+    body.append(create("p","i18n-plan-policy","A consultar versão publicada…"));
+    dialog.append(heading,body);
+    dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+    document.body.append(dialog);
+    dialog.showModal();
+    try{
+      const session=await send("/api/me");
+      if(session?.user?.role!=="admin"||!session.csrf)throw Error("acesso_restrito");
+      csrf=session.csrf;
+      const result=await send("/api/v2/admin/i18n/plans/fields?"+
+        new URLSearchParams({draft_id:draftId}));
+      if(!dialog.open||!dialog.isConnected)return;
+      const ref=result.publication?.publication_ref;
+      if(!/^[a-f0-9]{64}$/.test(ref||""))throw Error("versão indisponível");
+      body.replaceChildren(create("strong","",labelPlan(result.publication)),
+        create("p","i18n-plan-policy","A rever apenas a versão publicada. A tradução não altera a prescrição nem publica o plano."));
+      let groupName=null,group=null;
+      for(const field of result.fields||[]){
+        if(field.group!==groupName||!group){
+          groupName=field.group;
+          group=create("section","i18n-plan-option");
+          group.append(create("h3","",groupName||"Textos do plano"));
+          body.append(group);
+        }
+        group.append(renderField(field,ref));
+      }
+      if(!group)body.append(create("p","i18n-plan-policy","Não existem textos específicos para tradução neste plano."));
+    }catch(e){
+      if(dialog.open&&dialog.isConnected)body.replaceChildren(
+        create("p","i18n-feedback",e.message==="plan_publication_not_found"?
+          "Este plano ainda não tem uma versão publicada para rever.":
+          "Não foi possível consultar a versão publicada: "+e.message));
+    }
+  };
+  window.tmI18nPlans={load,hide,openDraft};
 })();
