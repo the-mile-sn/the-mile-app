@@ -5591,11 +5591,12 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
  background:rgba(255,255,255,.045)!important;color:#f1f1f4!important; /* same muted surface as the ring card above (24/11) */
  cursor:pointer;min-height:0!important;height:auto!important;overflow:hidden!important;
 }
-#overview #day-details .day-widget-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:30px!important}
+/* Label sits right above its value, like "kcal" above the energy figure in the ring card (24/11). */
+#overview #day-details .day-widget-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:20px!important;height:20px!important;margin-bottom:-2px!important}
 #overview #day-details .day-widget-label{flex:1 1 auto!important;min-width:0!important;font-size:15px!important;color:#aaaab4!important}
 #overview #day-details .day-widget-action{
  appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;
- width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;border:0!important;border-radius:999px!important;
+ width:28px!important;height:28px!important;min-height:28px!important;margin:-4px -4px -4px 0!important;padding:0!important;border:0!important;border-radius:999px!important;
  background:transparent!important;box-shadow:none!important;color:#aaaab4!important;
 }
 #overview #day-details .day-widget-action svg{width:18px!important;height:18px!important}
