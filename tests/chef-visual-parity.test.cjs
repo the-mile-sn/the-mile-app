@@ -52,7 +52,7 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=12/);
+ assert.match(html,/chef-chat-demo\.css\?v=13/);
  assert.match(html,/chef-chat-demo\.js\?v=11/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
@@ -91,8 +91,15 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send\{[^}]*width:44px;height:44px;[^}]*border:0;border-radius:50%/);
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send::before\{[^}]*inset:3px;border-radius:50%/);
  assert.match(demoCss,/\.chef-chat-form textarea\{[^}]*height:46px;min-height:46px;max-height:108px/);
- assert.match(demoCss,/\.chef-chat-privacy-ack\{[\s\S]*?border:0;border-radius:999px;background:rgba\(52,172,109,\.19\);color:#94e7b6/);
- assert.match(demoCss,/\.chef-chat-privacy-ack:not\(:disabled\):active\{background:rgba\(52,172,109,\.33\)\}/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack\{[\s\S]*?display:inline-flex;align-items:center;gap:9px/);
+ assert.match(demoCss,/border:1px solid rgba\(148,231,182,\.38\);border-radius:999px/);
+ assert.match(demoCss,/background:rgba\(52,172,109,\.23\);color:#a9efc6/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack::before\{[\s\S]*?content:"";display:block;flex:none;width:20px;height:20px/);
+ assert.match(demoCss,/stroke='%23a9efc6'/);
+ assert.match(demoCss,/circle cx='12' cy='12' r='9'/);
+ assert.match(demoCss,/path d='m8\.2 12\.1 2\.7 2\.7 4\.9-5\.3'/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack:not\(:disabled\):active\{background:rgba\(52,172,109,\.36\);transform:scale\(\.98\)\}/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack:focus-visible\{outline:2px solid #f5f5f7/);
  assert.match(demoCss,/\.chef-chat-form textarea:disabled\{opacity:1/);
  assert.match(demoJs,/input\.disabled=pending/);
  assert.match(demoJs,/form\.hidden=false/);

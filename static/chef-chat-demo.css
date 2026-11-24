@@ -47,12 +47,23 @@
 /* Acknowledgement appears only for the first use of each notice version.
    All existing chat cards, bubbles, spacing and typography remain unchanged. */
 .chef-chat-privacy-ack{
- flex:none;align-self:flex-start;margin:7px 16px 10px;padding:11px 16px;
- border:0;border-radius:999px;background:rgba(52,172,109,.19);color:#94e7b6;
+ display:inline-flex;align-items:center;gap:9px;
+ flex:none;align-self:flex-start;margin:7px 16px 10px;padding:10px 16px;
+ border:1px solid rgba(148,231,182,.38);border-radius:999px;
+ background:rgba(52,172,109,.23);color:#a9efc6;
  min-height:44px;font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 8px rgba(0,0,0,.1);
+ transition:background-color .15s ease,border-color .15s ease,transform .12s ease;
 }
-@media(hover:hover){.chef-chat-privacy-ack:not(:disabled):hover{background:rgba(52,172,109,.26)}}
-.chef-chat-privacy-ack:not(:disabled):active{background:rgba(52,172,109,.33)}
+/* Outline check-circle signals an action to take, not an accepted state.
+   Decorative background icon survives the existing PT/EN textContent update. */
+.chef-chat-privacy-ack::before{
+ content:"";display:block;flex:none;width:20px;height:20px;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9efc6' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8.2 12.1 2.7 2.7 4.9-5.3'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+@media(hover:hover){.chef-chat-privacy-ack:not(:disabled):hover{background:rgba(52,172,109,.29);border-color:rgba(148,231,182,.58)}}
+.chef-chat-privacy-ack:not(:disabled):active{background:rgba(52,172,109,.36);transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.chef-chat-privacy-ack{transition:none}}
 .chef-chat-privacy-ack:disabled{opacity:.6;cursor:default}
 .chef-chat-privacy-ack:focus-visible{outline:2px solid #f5f5f7;outline-offset:3px}
 .chef-chat-privacy-ack[hidden],.chef-chat-disclaimer[hidden],
