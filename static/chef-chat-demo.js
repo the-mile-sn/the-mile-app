@@ -227,7 +227,7 @@
   send.title=t().sendTitle;
   if(mode==="real"){
    showLiveLabels();
-   if(dialog.open&&changed)renderRealMessages();
+   if(dialog.open&&changed&&privacyAcknowledged)renderRealMessages();
   }else{
    showPrivacyGate();
    if(dialog.open&&changed)reset();
