@@ -176,7 +176,8 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
             self.assertEqual(page["status"],200,page)
             self.assertIn(b"admin-translations-shortcuts.js",page["body"])
             self.assertIn(b'id="tm-admin-translations-page"',page["body"])
-            self.assertIn(b'id="i18n-import-file"',page["body"])
+            # CSV remains a server compatibility path, not a review UI control.
+            self.assertNotIn(b'id="i18n-import-file"',page["body"])
             self.assertIn(b'id="i18n-plan-stage"',page["body"])
             self.assertIn(b'id="tm-admin-translations-page"',page["body"])
             shell=self.admin.request("/admin-nav-shell.js")
