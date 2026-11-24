@@ -5,8 +5,9 @@ const fs=require("node:fs");
 const vm=require("node:vm");
 
 const code=fs.readFileSync("static/chef-chat-demo.js","utf8");
-function harness({apiEnabled=true}={}){
+function harness({apiEnabled=true,acknowledged=true,failAck=false}={}){
  const events=new Map(),timers=new Map(),observers=[];
+ let privacyAcked=acknowledged;
  let timerSeq=0, count=2, messages=[
   {id:"msg-1",author_id:"admin",body:"Primeira",created_at:1},
   {id:"msg-2",author_id:"admin",body:"Segunda",created_at:2}
@@ -44,12 +45,19 @@ function harness({apiEnabled=true}={}){
   clearInterval:id=>timers.delete(id)
  };
  const fetch=async (url,opts={})=>{
-  requests.push({url,method:opts.method||"GET"});
+  requests.push({url,method:opts.method||"GET",body:opts.body});
   let body;
   if(url==="/api/me")body={user:{role:"chef",id:"chef"},admin_preview:false,csrf:"csrf"};
   else if(url==="/api/v2/chef/chat"){
    if(!apiEnabled)return {ok:false,status:404,json:async()=>({})};
-   body={unread_count:count,conversation:{id:"thread"}};
+   body={unread_count:count,conversation:{id:"thread"},
+    privacy_notice:{version:"chef-chat-privacy-2026-11-v1",acknowledged:privacyAcked}};
+  }else if(url==="/api/v2/chef/chat/privacy-ack"){
+   if(failAck)return {ok:false,status:503,json:async()=>({})};
+   const payload=JSON.parse(opts.body||"{}");
+   assert.equal(payload.version,"chef-chat-privacy-2026-11-v1");
+   privacyAcked=true;
+   body={privacy_notice:{version:payload.version,acknowledged:true,acknowledged_at:1234}};
   }else if(url==="/api/v2/chef/chat/messages")body={messages};
   else if(url==="/api/v2/chef/chat/read"){
    count=0;body={changed:true,unread_count:0};
@@ -73,6 +81,7 @@ function harness({apiEnabled=true}={}){
   tick:async()=>{for(const callback of [...timers.values()])callback();await flush()},
   count:(value)=>{count=value},
   messages:value=>{messages=value},
+  privacyAcknowledged:()=>privacyAcked,
   switchLanguage:lang=>win.themileChefChatDemo.setLanguage(lang),
   showMessageWindow:async()=>{trigger.emit("click");await flush()},
   closeMessageWindow:async()=>{dialog.close();await flush()}
@@ -144,4 +153,54 @@ test("composer grows from one line to max only when needed",async()=>{
  input.scrollHeight=46;
  input.emit("input");
  assert.equal(input.style.height,"46px");
+});
+
+
+test("first real chat visit requires an explicit, durable acknowledgement once per Chef",async()=>{
+ const h=harness({acknowledged:false});
+ await h.reveal();
+ await h.showMessageWindow();
+ const notice=h.get("chef-chat-disclaimer");
+ const ack=h.get("chef-chat-privacy-ack");
+ const composer=h.get("chef-chat-form");
+ const thread=h.get("chef-chat-thread");
+ assert.equal(h.dialog.open,true);
+ assert.equal(notice.hidden,false);
+ assert.equal(ack.hidden,false);
+ assert.equal(composer.hidden,true);
+ assert.equal(thread.hidden,true);
+ assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/messages").length,0);
+ h.switchLanguage("en");
+ assert.equal(ack.textContent,"I have read and understood");
+ ack.emit("click");
+ await h.flush();
+ assert.equal(h.privacyAcknowledged(),true);
+ assert.equal(ack.hidden,true);
+ assert.equal(notice.hidden,true);
+ assert.equal(composer.hidden,false);
+ assert.equal(thread.hidden,false);
+ assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/privacy-ack").length,1);
+ assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/messages").length,1);
+ await h.closeMessageWindow();
+ await h.showMessageWindow();
+ assert.equal(ack.hidden,true);
+ assert.equal(notice.hidden,true);
+ assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/privacy-ack").length,1,
+  "acknowledgement must not be sent again on reopen");
+ await h.closeMessageWindow();
+});
+
+test("failed server acknowledgement never hides privacy info or unlocks composer",async()=>{
+ const h=harness({acknowledged:false,failAck:true});
+ await h.reveal();
+ await h.showMessageWindow();
+ const ack=h.get("chef-chat-privacy-ack");
+ ack.emit("click");
+ await h.flush();
+ assert.equal(h.privacyAcknowledged(),false);
+ assert.equal(ack.hidden,false);
+ assert.equal(ack.disabled,false);
+ assert.equal(h.get("chef-chat-form").hidden,true);
+ assert.equal(h.requests.filter(r=>r.url==="/api/v2/chef/chat/messages").length,0);
+ assert.match(h.get("chef-chat-result").textContent,/registar a confirmação/);
 });
