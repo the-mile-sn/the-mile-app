@@ -188,7 +188,9 @@ try{
         await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
           group_id:payload.group_id}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
-        const ref=url.searchParams.get("publication_ref");
+        const draft=url.searchParams.get("draft_id");
+        if(draft)assert.equal(draft,"editor-draft-test");
+        const ref=draft?publicRef:url.searchParams.get("publication_ref");
         assert.ok([publicRef,privateRef].includes(ref));
         await route.fulfill(fmt({
           publication:ref===publicRef?planPublication:privatePublication,
@@ -423,6 +425,30 @@ try{
     assert.ok(gap.aligned<=4,name+" plan icons are not vertically centred");
     assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
     assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
+    // Exercise the real editor shortcut and modal with an isolated draft identity.
+    // The actual draft-to-publication mapping is independently tested by WSGI.
+    await page.evaluate(()=>{
+      document.getElementById("plan-entry").hidden=true;
+      document.getElementById("plan-editor").hidden=false;
+      window.tmCurrentPlanTranslationDraft=()=> "editor-draft-test";
+      document.getElementById("plan-save-feedback").dataset.reviewProbe="unchanged";
+    });
+    const editorButton=page.locator("#tm-plan-editor-translation");
+    await editorButton.waitFor({state:"visible"});
+    const savesBefore=planSaveRequests;
+    await editorButton.click();
+    const dialog=page.locator("#tm-plan-translation-dialog");
+    await dialog.locator(".i18n-plan-field").waitFor();
+    assert.match(await dialog.innerText(),/Atleta fictício/);
+    assert.equal(await dialog.locator("textarea").inputValue(),"Option 1");
+    assert.equal(await dialog.locator(".i18n-primary").isDisabled(),true);
+    assert.equal(await dialog.locator("input[type=file]").count(),0);
+    assert.equal(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
+    await dialog.getByRole("button",{name:"Fechar",exact:true}).click();
+    await dialog.waitFor({state:"detached"});
+    assert.equal(await page.locator("#plan-editor").isVisible(),true);
+    assert.equal(await page.locator("#plan-save-feedback").getAttribute("data-review-probe"),"unchanged");
+    assert.equal(planSaveRequests,savesBefore,"Opening and closing must not save translations");
     await page.close();
     process.stdout.write("Embedded admin translation navigation "+name+" passed\n");
   }
