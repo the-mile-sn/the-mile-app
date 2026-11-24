@@ -54,6 +54,28 @@ class ChefAccountApiTests(unittest.TestCase):
         self.assertEqual(result["body"]["player"]["id"], self.first)
         self.assertEqual(result["body"]["chef"]["language"], "en")
 
+    def test_initial_language_is_account_scoped_and_does_not_replace_chef_choice(self):
+        chef, chef_id=self._chef()
+        path="/api/v2/admin/chefs/"+chef_id+"/initial-language"
+        player_path="/api/v2/athletes/"+self.first+"/initial-language"
+        self.assertEqual(self.admin.request(path)["body"]["language"],"en")
+        self.assertEqual(self.admin.request(player_path,"PUT",{"language":"pt"})["status"],200)
+        self.assertEqual(chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"en")
+        self.assertEqual(self.admin.request(path,"PUT",{"language":"pt"},csrf=False)["status"],403)
+        self.assertEqual(chef.request(path,"PUT",{"language":"pt"})["status"],403)
+        self.assertEqual(self.admin.request(path,"PUT",{"language":"es"})["status"],400)
+        self.assertEqual(self.admin.request(path,"PUT",{"language":"pt"})["status"],200)
+        self.assertEqual(chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"pt")
+        self.assertEqual(chef.request("/api/v2/chef/preferences","PUT",{"language":"en"})["status"],200)
+        self.assertEqual(self.admin.request(path,"PUT",{"language":"pt"})["status"],200)
+        self.assertEqual(self.admin.request(player_path)["body"]["language"],"pt")
+        self.assertEqual(chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"en")
+        self.assertEqual(self.admin.request(player_path,"PUT",{"language":"en"})["status"],200)
+        self.assertEqual(self.admin.request(path)["body"]["language"],"pt")
+        account=next(x for x in self.admin.request("/api/v2/admin/chefs")["body"]["chefs"] if x["id"]==chef_id)
+        self.assertEqual((account["initial_language"],account["language"]),("pt","en"))
+        self.assertEqual(self.admin.request("/api/v2/admin/chefs/missing/initial-language")["status"],404)
+
     def test_archive_chef_is_reversible_and_does_not_grant_access_on_restore(self):
         chef, chef_id = self._chef()
         path = "/api/v2/admin/chefs/" + chef_id
