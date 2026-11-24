@@ -110,11 +110,22 @@ class ChefPlayerReleaseTests(unittest.TestCase):
         import chat_messaging_v2 as domain
         with app.connect() as c:
             domain.initialize(c)
+            domain.initialize_privacy_acknowledgements(c)
         with patch.dict(os.environ,{"MILE_CHAT_API_ENABLED":"1"}):
             with patch.object(app,"SITE_ROLE","player"):
                 empty=self.chef.request("/api/v2/chef/chat")
                 self.assertEqual(empty["status"],200,empty)
                 self.assertIsNone(empty["body"]["conversation"])
+                self.assertFalse(empty["body"]["privacy_notice"]["acknowledged"])
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages")["status"],403)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages","POST",
+                    {"body":"Mensagem","client_key":"before-ack"})["status"],403)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/privacy-ack","POST",
+                    {"version":domain.CHEF_PRIVACY_NOTICE_VERSION},csrf=False)["status"],403)
+                ack=self.chef.request("/api/v2/chef/chat/privacy-ack","POST",
+                    {"version":domain.CHEF_PRIVACY_NOTICE_VERSION})
+                self.assertEqual(ack["status"],200,ack)
+                self.assertTrue(ack["body"]["privacy_notice"]["acknowledged"])
                 self.assertEqual(self.chef.request("/api/v2/chef/chat/messages")["body"]["messages"],[])
                 self.assertEqual(self.chef.request("/api/v2/chef/chat/messages","POST",
                     {"body":"Mensagem","client_key":"csrf-a"},csrf=False)["status"],403)
