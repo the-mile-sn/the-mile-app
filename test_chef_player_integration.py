@@ -91,6 +91,27 @@ class ChefPlayerReleaseTests(unittest.TestCase):
             self.assertEqual(self.chef.request("/api/v2/chef/preferences","PUT",{"language":"pt"})["status"],200)
             self.assertEqual(self.chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"pt")
 
+    def test_chef_language_is_independent_of_linked_player_and_initial_default(self):
+        with app.connect() as c:
+            c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
+                VALUES(?,?,?,?,?,?,1)""",("linked-player-test","Player","linked-player@test.invalid",
+                "linkedplayer","player",app.password_hash("player-secret-pass-123")))
+            c.execute("INSERT INTO v2_player_links(athlete_id,user_id,linked_at) VALUES(?,?,?)",
+                      (self.a,"linked-player-test",1))
+            import player_language_v2
+            player_language_v2.set_language(c,"linked-player-test","pt")
+        with patch.object(app,"SITE_ROLE","player"):
+            self.assertEqual(self.chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"en")
+            self.assertEqual(self.chef.request("/api/v2/chef/preferences","PUT",{"language":"pt"})["status"],200)
+            with app.connect() as c:
+                c.execute("UPDATE v2_chef_links SET language='en' WHERE user_id='chef-only-test'")
+                player_language_v2.set_language(c,"linked-player-test","en")
+            self.assertEqual(self.chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"pt")
+            self.assertEqual(self.chef.request("/api/v2/chef/preferences","PUT",{"language":"en"})["status"],200)
+        with app.connect() as c:
+            self.assertEqual(player_language_v2.get(c,"linked-player-test"),"en")
+            self.assertEqual(c.execute("SELECT language FROM v2_chef_links WHERE user_id='chef-only-test'").fetchone()["language"],"en")
+
     def test_chat_routes_are_off_until_migration_and_feature_gate(self):
         """No chat API leaks or creates schema in default deployed configuration."""
         import os
