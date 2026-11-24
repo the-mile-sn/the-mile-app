@@ -5,14 +5,17 @@ const dashboard=fs.readFileSync("static/admin-dashboard.js","utf8");
 const admin=fs.readFileSync("static/admin-microcycles.js","utf8");
 const css=fs.readFileSync("static/admin-microcycles.css","utf8");
 
-test("Menus e Receitas is a separate admin page, with two intended subsections",()=>{
- for(const id of ["tm-admin-nav-menus-recipes","tm-admin-recipes-subnav","tm-admin-nav-dishes","tm-menu-recipes-page"]){
+test("Dishes and recipes are independent pages inside the shared library navigation",()=>{
+ const nav=fs.readFileSync("static/admin-nav-shell.js","utf8");
+ for(const id of ["tm-admin-nav-food-library","tm-admin-food-subnav","tm-admin-nav-dishes","tm-admin-nav-recipe-library"]){
+  assert.equal(nav.split('id=\\"'+id+'\\"').length-1,1,id);
+ }
+ for(const id of ["tm-menu-recipes-page","tm-recipe-library-page"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
- assert.match(html,/id="tm-admin-nav-recipe-library"/);
+ assert.match(nav,/const actions=\[[^\]]*"dishes","recipe-library"/);
  assert.match(html,/id="tm-recipe-library-page"/);
  assert.doesNotMatch(html,/Biblioteca de receitas <small>Em breve<\/small>/);
- assert.match(html,/id="tm-admin-recipes-subnav" hidden/);
  assert.match(html,/id="tm-menu-recipes-page"[^>]* hidden/);
 });
 
@@ -40,7 +43,8 @@ test("only one existing dish editor is mounted, outside individual planning",()=
 
 test("navigation loads dishes without requiring a selected player",()=>{
  assert.match(dashboard,/function openMenusRecipes\(\)/);
- assert.match(dashboard,/navActive\(recipesBtn\)/);
+ assert.match(dashboard,/function openMenusRecipes\(\)\{[\s\S]*?navActive\(foodLibraryBtn\);[\s\S]*?recipesPage\.hidden=false;[\s\S]*?recipeLibraryPage\.hidden=true;/);
+ assert.match(dashboard,/dishesBtn\.setAttribute\("aria-current","page"\)/);
  assert.match(dashboard,/window\.tmLoadDishLibrary\(\)\.catch/);
  assert.match(admin,/async function loadDishLibrary\(\)/);
  assert.match(admin,/window\.tmLoadDishLibrary=loadDishLibrary/);
@@ -55,7 +59,7 @@ test("published plans and player-facing endpoints are not touched in navigation 
  const nav=html.match(/<nav class="calendar-panel" id="backoffice-nav"[^>]*>([\s\S]*?)<\/nav>/);
  assert.ok(nav);
  const tabs=[...nav[1].matchAll(/data-view="([^"]+)"/g)].map(v=>v[1]);
- assert.deepEqual(tabs,["calendar","plans","supplements","matrix","menus","player-preview"]);
+ assert.deepEqual(tabs,["calendar","supplements","matrix","menus","consumption"]);
  assert.match(admin,/function showBackofficeView\(view\)/);
  assert.match(css,/#tm-menu-recipes-page/);
  assert.match(css,/html\[data-admin-theme="light"\]/);
@@ -125,7 +129,7 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(recipes,/window\.tmOpenAdminDishRecipe=async id=>/);
  assert.match(recipes,/window\.tmOpenAdminRecipeLibrary\(\);\s*await openReadRecipe\(id\)/);
  assert.doesNotMatch(recipes,/await window\.tmOpenAdminRecipeLibrary\(\)/);
- assert.match(recipes,/panel\.hidden=false;\s*panel\.scrollIntoView/);
+ assert.match(recipes,/panel\.hidden=false;\s*syncRecipePopup\(\);\s*panel\.scrollTop=0;\s*panel\.focus\(\{preventScroll:true\}\)/);
  assert.match(recipes,/const response=await request\("\/api\/v2\/recipes\/"\+encodeURIComponent\(id\)\)/);
  assert.match(recipes,/\$\("recipe-reader-content"\)\.replaceChildren\(\)/);
  assert.match(dashboard,/return loadPromise;/);
