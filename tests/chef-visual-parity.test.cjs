@@ -52,8 +52,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=13/);
- assert.match(html,/chef-chat-demo\.js\?v=11/);
+ assert.match(html,/chef-chat-demo\.css\?v=14/);
+ assert.match(html,/chef-chat-demo\.js\?v=12/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
  assert.match(demoJs,/if\(mode!=="real"\|\|!dialog\.open\|\|document\.hidden\)return/);
@@ -94,10 +94,14 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoCss,/\.chef-chat-privacy-ack\{[\s\S]*?display:inline-flex;align-items:center;gap:9px/);
  assert.match(demoCss,/border:1px solid rgba\(148,231,182,\.38\);border-radius:999px/);
  assert.match(demoCss,/background:rgba\(52,172,109,\.23\);color:#a9efc6/);
- assert.match(demoCss,/\.chef-chat-privacy-ack::before\{[\s\S]*?content:"";display:block;flex:none;width:20px;height:20px/);
- assert.match(demoCss,/stroke='%23a9efc6'/);
- assert.match(demoCss,/circle cx='12' cy='12' r='9'/);
- assert.match(demoCss,/path d='m8\.2 12\.1 2\.7 2\.7 4\.9-5\.3'/);
+ assert.match(html,/id="chef-chat-privacy-ack"[^>]*>[\s\S]*?<svg class="chef-chat-privacy-ack-icon"[^>]*aria-hidden="true"[^>]*>/);
+ assert.match(html,/<circle cx="12" cy="12" r="9"><\/circle>/);
+ assert.match(html,/<path d="m8\.2 12\.1 2\.7 2\.7 4\.9-5\.3"><\/path>/);
+ assert.match(html,/<span id="chef-chat-privacy-ack-label">Li e compreendi<\/span>/);
+ assert.match(demoCss,/\.chef-chat-privacy-ack \.chef-chat-privacy-ack-icon\{[\s\S]*?display:block;flex:none;width:20px;height:20px/);
+ assert.doesNotMatch(demoCss,/\.chef-chat-privacy-ack::before/);
+ assert.match(demoJs,/privacyAckLabel\.textContent=t\(\)\.privacyAcknowledge/);
+ assert.doesNotMatch(demoJs,/privacyAck\.textContent=t\(\)\.privacyAcknowledge/);
  assert.match(demoCss,/\.chef-chat-privacy-ack:not\(:disabled\):active\{background:rgba\(52,172,109,\.36\);transform:scale\(\.98\)\}/);
  assert.match(demoCss,/\.chef-chat-privacy-ack:focus-visible\{outline:2px solid #f5f5f7/);
  assert.match(demoCss,/\.chef-chat-form textarea:disabled\{opacity:1/);
