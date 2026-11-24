@@ -99,6 +99,23 @@ def initialize(c):
         )
     """)
     c.execute("CREATE INDEX IF NOT EXISTS v2_chef_links_athlete ON v2_chef_links(athlete_id)")
+    initialize_language_preferences(c)
+
+
+def initialize_language_preferences(c):
+    """Keep the Chef's own choice independent of the initial account language."""
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_chef_language_preferences (
+        user_id TEXT PRIMARY KEY REFERENCES users(id),
+        language TEXT NOT NULL CHECK(language IN ('pt','en'))
+    )""")
+
+
+def set_language_preference(c, chef_id, language):
+    if type(language) is not str or language not in ('pt','en'):
+        raise ValueError("invalid_language")
+    c.execute("""INSERT INTO v2_chef_language_preferences(user_id,language)
+        VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET language=excluded.language""",
+        (chef_id,language))
 
 
 def list_accounts(c):
@@ -114,8 +131,9 @@ def list_accounts(c):
 def assigned_athlete(c, chef_id):
     """Resolve scope from the authenticated actor; never accept a client athlete id."""
     return c.execute("""
-        SELECT a.id,a.name,a.weight_kg,l.language
+        SELECT a.id,a.name,a.weight_kg,COALESCE(p.language,l.language) AS language
         FROM v2_chef_links l JOIN users u ON u.id=l.user_id
+        LEFT JOIN v2_chef_language_preferences p ON p.user_id=l.user_id
         JOIN v2_athletes a ON a.id=l.athlete_id
         WHERE l.user_id=? AND u.role='chef' AND u.active=1
           AND a.archived_at IS NULL

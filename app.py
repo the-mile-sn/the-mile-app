@@ -1415,8 +1415,7 @@ def application(env, start_response):
                     body=read_json(env)
                     if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
                         raise Problem(400,'invalid_language')
-                    c.execute("UPDATE v2_chef_links SET language=? WHERE user_id=?",
-                              (body['language'],user['id']))
+                    chef_accounts_v2.set_language_preference(c,user['id'],body['language'])
                     c.commit()
                     return respond(200,{'language':body['language']})
                 if path == '/api/v2/chef/me' and method == 'GET':
