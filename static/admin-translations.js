@@ -311,9 +311,8 @@
      }
      for(const entry of result.items){
        const b=create("button","i18n-result");b.type="button";
-       const main=create("span","");
-       const count=entry.fields?.length||1;
-       main.append(create("strong","",entry.source_text));
+       const main=create("span","i18n-result-portuguese");
+       main.append(create("small","","PT"),create("strong","",entry.source_text));
        if(entry.category)main.append(create("small","",entry.category));
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
@@ -322,7 +321,11 @@
        arrow.setAttribute("aria-hidden","true");
        // Reuse the same chevron shape already used by the Admin navigation.
        arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
-       b.append(main,badge(displayedState),arrow);
+       const primary=(entry.fields||[]).find(field=>field.field_path===entry.field_path)||entry;
+       const english=create("span","i18n-result-english");
+       english.append(create("small","","EN"),create("span","i18n-result-translation",
+         primary.translation_text||primary.legacy_candidate||entry.translation_text||entry.legacy_candidate||"Por traduzir"));
+       b.append(main,english,badge(displayedState),arrow);
        b.addEventListener("click",()=>openReview(entry));
        list.append(b);
      }
@@ -352,6 +355,12 @@
      state.selected={...entry,field_path:field.field_path};
      state.legacy=field.legacy_candidate||"";
      state.row=null;state.edited=false;
+     $("i18n-propose").disabled=true;$("i18n-approve").disabled=true;
+     $("i18n-source-text").textContent=field.source_text;
+     $("i18n-target-text").value=field.translation_text||field.legacy_candidate||"";
+     $("i18n-target-text").disabled=true;
+     $("i18n-history").replaceChildren();
+     $("i18n-translation-state").textContent="A carregar…";
      $("i18n-review-title").textContent=entry.source_text;
      $("i18n-existing").hidden=!state.legacy;
      msg("",false,"i18n-review-feedback");
@@ -382,8 +391,7 @@
      });
      const detail=await send("/api/v2/admin/i18n?"+q);
      // Keep selection only if it still refers to the current record.
-     if(!state.selected || state.selected.entity_id!==key.entity_id ||
-       state.selected.field_path!==key.field_path)return;
+     if(state.selected!==key)return;
      state.row=detail;
      state.edited=false;
      $("i18n-source-text").textContent=detail.source_text;
@@ -395,8 +403,10 @@
      $("i18n-translation-state").textContent=stateLabel;
      $("i18n-approve").disabled=!detail.candidate||
        detail.candidate.status!=="pending";
+     $("i18n-target-text").disabled=false;
      $("i18n-propose").disabled=false;
      const history=await send("/api/v2/admin/i18n/history?"+q+"&limit=25");
+     if(state.selected!==key)return;
      const panel=$("i18n-history");panel.replaceChildren();
      if(!history.history.length)panel.append(create("p","","Sem revisões anteriores."));
      for(const record of history.history){

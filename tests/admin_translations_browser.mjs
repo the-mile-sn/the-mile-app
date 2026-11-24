@@ -125,6 +125,8 @@ try {
     );
     assert.ok(scrollWidth <= width + 2,
       name + " has horizontal overflow: " + scrollWidth + " > " + width);
+    await page.locator("#i18n-results .i18n-result-english").first().waitFor();
+    assert.equal(await page.locator("#i18n-results .i18n-result-translation").first().innerText(),snap.english);
     await page.locator("#i18n-results .i18n-result").first().click();
     await page.locator("#i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(

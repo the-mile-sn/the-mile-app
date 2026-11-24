@@ -743,3 +743,10 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
     min-height:40px;
   }
 }
+
+/* Paired library inventory: same source, same review action, no new API. */
+#i18n-results .i18n-result{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;align-items:start;gap:12px}
+#i18n-results .i18n-result :is(.i18n-result-portuguese,.i18n-result-english){min-width:0;overflow-wrap:anywhere}
+#i18n-results .i18n-result :is(.i18n-result-portuguese,.i18n-result-english)>small:first-child{margin:0 0 5px;font-weight:500;color:var(--tm-ui-muted)}
+#i18n-results .i18n-result-translation{display:block;font-size:13px;line-height:1.45}
+@media(max-width:620px){#i18n-results .i18n-result{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px}#i18n-results .i18n-result-arrow{grid-row:1;grid-column:3}#i18n-results .i18n-result .i18n-status-pill{grid-column:1/-1;grid-row:2;justify-self:start}}
