@@ -74,7 +74,7 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(html,/id="chef-chat-input"[^>]*rows="1"[^>]*maxlength="600"/);
  assert.match(html,/id="chef-chat-submit" class="chef-chat-send"[^>]*aria-label="Simular envio \(não enviado\)"[^>]*disabled/);
  assert.match(html,/M12 5\.5V19/);
- assert.match(demoJs,/send\.disabled=loading\|\|!input\.value\.trim\(\)/);
+ assert.match(demoJs,/send\.disabled=loading\|\|\(mode==="real"&&!privacyAcknowledged\)\|\|!input\.value\.trim\(\)/);
  assert.match(demoJs,/input\.addEventListener\("input",\(\)=>\{pendingKey=null;resizeComposer\(\);updateSendState\(\);\}\)/);
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.send\)/);
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.realSend\)/);
