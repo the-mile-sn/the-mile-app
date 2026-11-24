@@ -15,9 +15,9 @@
   <link rel="icon" href="/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link href="/chef.css?v=23" rel="stylesheet">
-  <link href="/chef-chat-demo.css?v=13" rel="stylesheet">
+  <link href="/chef-chat-demo.css?v=14" rel="stylesheet">
   <script src="/chef.js?v=32" defer></script>
-  <script src="/chef-chat-demo.js?v=11" defer></script>
+  <script src="/chef-chat-demo.js?v=12" defer></script>
 </head>
 <body>
   <header class="top">
@@ -73,7 +73,13 @@
         <button id="chef-chat-close" class="chef-chat-close" type="button" aria-label="Fechar mensagens">×</button>
       </header>
       <p id="chef-chat-disclaimer" class="chef-chat-disclaimer">Pré-visualização. As mensagens não são enviadas nem guardadas.</p>
-      <button id="chef-chat-privacy-ack" class="chef-chat-privacy-ack" type="button" aria-describedby="chef-chat-disclaimer" hidden>Li e compreendi</button>
+      <button id="chef-chat-privacy-ack" class="chef-chat-privacy-ack" type="button" aria-describedby="chef-chat-disclaimer" hidden>
+        <svg class="chef-chat-privacy-ack-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="m8.2 12.1 2.7 2.7 4.9-5.3"></path>
+        </svg>
+        <span id="chef-chat-privacy-ack-label">Li e compreendi</span>
+      </button>
       <div id="chef-chat-thread" class="chef-chat-thread" role="log" aria-label="Mensagens de exemplo" aria-live="polite" aria-relevant="additions text"></div>
       <form id="chef-chat-form" class="chef-chat-form">
         <label id="chef-chat-input-label" for="chef-chat-input" class="chef-chat-visually-hidden">Mensagem de exemplo</label>
