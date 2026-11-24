@@ -5587,7 +5587,8 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #overview #day-details > .day-widgets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0 0 10px!important}
 #overview #day-details .day-widget{
  display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;box-sizing:border-box!important;
- margin:0!important;padding:12px 12px 12px 14px!important;border-radius:13px!important;background:#25262b!important;color:#f1f1f4!important;
+ margin:0!important;padding:12px 12px 12px 14px!important;border-radius:13px!important;
+ background:rgba(255,255,255,.045)!important;color:#f1f1f4!important; /* same muted surface as the ring card above (24/11) */
  cursor:pointer;min-height:0!important;height:auto!important;overflow:hidden!important;
 }
 #overview #day-details .day-widget-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:30px!important}
