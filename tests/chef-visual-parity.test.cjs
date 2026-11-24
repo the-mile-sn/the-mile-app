@@ -47,13 +47,13 @@ test("Chef message preview assets are explicitly served and never cached as 404s
  assert.match(sw,/the-mile-shell-v124-shared-player-chef/);
  assert.match(sw,/'\/chef-chat-demo\.js','\/chef-chat-demo\.css'/);
  assert.match(sw,/if \(response\.ok\) \{/);
- assert.doesNotMatch(html,/chef-chat-demo\.(css|js)\?v=1/);
+ assert.doesNotMatch(html,/chef-chat-demo\.(css|js)\?v=1(?:["&]|$)/);
 });
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=9/);
- assert.match(html,/chef-chat-demo\.js\?v=8/);
+ assert.match(html,/chef-chat-demo\.css\?v=10/);
+ assert.match(html,/chef-chat-demo\.js\?v=9/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
  assert.match(demoJs,/if\(mode!=="real"\|\|!dialog\.open\|\|document\.hidden\)return/);
