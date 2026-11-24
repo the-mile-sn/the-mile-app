@@ -44,6 +44,17 @@
  flex:none;margin:0 16px 4px;padding:12px 15px;border-radius:13px;background:#242429;
  color:#b8b8c0;font-size:12px;line-height:1.5;
 }
+/* Acknowledgement appears only for the first use of each notice version.
+   All existing chat cards, bubbles, spacing and typography remain unchanged. */
+.chef-chat-privacy-ack{
+ flex:none;align-self:flex-start;margin:7px 16px 10px;padding:11px 16px;
+ border:0;border-radius:13px;background:#414148;color:#f5f5f7;
+ font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
+}
+.chef-chat-privacy-ack:disabled{opacity:.6;cursor:default}
+.chef-chat-privacy-ack:focus-visible{outline:2px solid #f5f5f7;outline-offset:3px}
+.chef-chat-privacy-ack[hidden],.chef-chat-disclaimer[hidden],
+.chef-chat-thread[hidden],.chef-chat-form[hidden]{display:none}
 .chef-chat-thread{
  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
  display:flex;flex-direction:column;gap:20px;padding:24px 18px;
