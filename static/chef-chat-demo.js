@@ -6,8 +6,8 @@
  const close=$("chef-chat-close"),thread=$("chef-chat-thread");
  const form=$("chef-chat-form"),input=$("chef-chat-input"),result=$("chef-chat-result");
  const send=$("chef-chat-submit"),unreadBadge=$("chef-chat-unread");
- const disclaimer=$("chef-chat-disclaimer");
- if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send||!unreadBadge)return;
+ const disclaimer=$("chef-chat-disclaimer"),privacyAck=$("chef-chat-privacy-ack");
+ if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send||!unreadBadge||!disclaimer||!privacyAck)return;
  const copy={
   pt:{
    open:"Abrir mensagens (simulação)",title:"Mensagens",unread:"por ler",
@@ -20,7 +20,8 @@
    send:"Simular envio (não enviado)",sendTitle:"Simular envio",notSent:"Mensagem apresentada apenas neste exemplo. Não foi enviada nem guardada.",
    realDisclaimer:"Comunicação com a equipa The Mile. As conversas são conservadas enquanto necessário durante a relação profissional e, depois de arquivadas, são revistas ao fim de 12 meses, salvo obrigações legais ou pedidos relativos aos teus direitos.",
    realSend:"Enviar mensagem",realThread:"Conversa com a equipa The Mile",realPlaceholder:"Escreve uma mensagem…",realEmpty:"Ainda não há mensagens nesta conversa.",
-   realError:"Não foi possível carregar a conversa. Tenta novamente.",realSendError:"Não foi possível enviar. A mensagem continua no campo.",realSent:"Mensagem enviada.",privacy:"Informações e privacidade"
+   realError:"Não foi possível carregar a conversa. Tenta novamente.",realSendError:"Não foi possível enviar. A mensagem continua no campo.",realSent:"Mensagem enviada.",privacy:"Informações e privacidade",
+   privacyAcknowledge:"Li e compreendi",privacyError:"Não foi possível registar a confirmação. Tenta novamente."
   },
   en:{
    open:"Open messages (demo)",title:"Messages",unread:"unread",close:"Close messages",
@@ -32,12 +33,14 @@
    notSent:"Message shown in this demo only. It was not sent or saved.",
    realDisclaimer:"Messaging with The Mile team. Messages are kept as needed during the professional relationship. After the conversation is archived, retention is reviewed after 12 months, subject to legal duties and your data rights.",
    realSend:"Send message",realThread:"Conversation with The Mile team",realPlaceholder:"Write a message…",realEmpty:"No messages in this conversation yet.",
-   realError:"Unable to load the conversation. Try again.",realSendError:"Couldn't send. Your message remains in the field.",realSent:"Message sent.",privacy:"Information and privacy"
+   realError:"Unable to load the conversation. Try again.",realSendError:"Couldn't send. Your message remains in the field.",realSent:"Message sent.",privacy:"Information and privacy",
+   privacyAcknowledge:"I have read and understood",privacyError:"Unable to save your acknowledgement. Please try again."
   }
  };
  let language="pt",mode="demo",csrf="",chefId="",pendingKey=null;
  let loading=false,openingToken=0,realMessages=[],pollTimer=null,refreshingToken=null;
  let unreadCount=0,unreadEpoch=0,unreadBusy=false,apiUnavailable=false,liveAvailable=false;
+ let privacyAcknowledged=false,privacyNoticeVersion="",privacyBusy=false;
  const t=()=>copy[language];
  function updateTriggerLabel(){
   const base=liveAvailable?t().title:t().open;
@@ -89,7 +92,7 @@
   thread.append(item);thread.scrollTop=thread.scrollHeight;
  }
  function updateSendState(){
-  send.disabled=loading||!input.value.trim();
+  send.disabled=loading||(mode==="real"&&!privacyAcknowledged)||!input.value.trim();
  }
  function reset(){
   thread.replaceChildren();input.value="";result.textContent="";
@@ -119,6 +122,16 @@
   }
   thread.scrollTop=thread.scrollHeight;
  }
+ function showPrivacyGate(){
+  const pending=mode==="real"&&!privacyAcknowledged;
+  disclaimer.hidden=mode==="real"&&!pending;
+  privacyAck.hidden=!pending;
+  privacyAck.textContent=t().privacyAcknowledge;
+  privacyAck.disabled=privacyBusy;
+  thread.hidden=pending;
+  form.hidden=pending;
+  updateSendState();
+ }
  function showLiveLabels(){
   disclaimer.textContent=t().realDisclaimer;
   thread.setAttribute("aria-label",t().realThread);
@@ -126,6 +139,7 @@
   input.maxLength=2000;
   send.setAttribute("aria-label",t().realSend);
   send.title=t().realSend;
+  showPrivacyGate();
   updateTriggerLabel();
  }
  function stopRealPolling(){
@@ -142,7 +156,7 @@
  }
  async function refreshReal(){
   const token=openingToken;
-  if(mode!=="real"||!dialog.open||refreshingToken===token)return;
+  if(mode!=="real"||!privacyAcknowledged||!dialog.open||refreshingToken===token)return;
   refreshingToken=token;
   try{
    const data=await fetchReal("/api/v2/chef/chat/messages");
@@ -169,10 +183,14 @@
    const status=await fetchReal("/api/v2/chef/chat");
    if(!dialog.open||token!==openingToken)return;
    liveAvailable=true;apiUnavailable=false;setUnreadCount(status.unread_count);
+   privacyNoticeVersion=status.privacy_notice?.version||"";
+   privacyAcknowledged=status.privacy_notice?.acknowledged===true;
    mode="real";result.textContent="";realMessages=[];
    showLiveLabels();
-   startRealPolling();
-   await refreshReal();
+   if(privacyAcknowledged){
+    startRealPolling();
+    await refreshReal();
+   }
   }catch(error){
    if(!dialog.open||token!==openingToken)return;
    if(error.status===404){apiUnavailable=true;return;} // No API rollout: retain local-only demonstration.
@@ -195,7 +213,10 @@
   if(mode==="real"){
    showLiveLabels();
    if(dialog.open&&changed)renderRealMessages();
-  }else if(dialog.open&&changed)reset();
+  }else{
+   showPrivacyGate();
+   if(dialog.open&&changed)reset();
+  }
  }
  trigger.addEventListener("click",()=>{
   if(trigger.hidden||dialog.open)return;
@@ -206,12 +227,36 @@
   // around the close button or opening the iPhone keyboard.
   $("chef-chat-title").focus({preventScroll:true});
  });
+ privacyAck.addEventListener("click",async()=>{
+  if(mode!=="real"||privacyAcknowledged||privacyBusy||!privacyNoticeVersion)return;
+  const token=openingToken,actorId=chefId,version=privacyNoticeVersion;
+  privacyBusy=true;showPrivacyGate();result.textContent="";
+  try{
+   const data=await fetchReal("/api/v2/chef/chat/privacy-ack","POST",{version});
+   if(!dialog.open||mode!=="real"||token!==openingToken||actorId!==chefId)return;
+   if(data.privacy_notice?.acknowledged!==true||data.privacy_notice.version!==version)
+    throw new Error("privacy_ack_not_saved");
+   privacyAcknowledged=true;
+   showPrivacyGate();
+   startRealPolling();
+   await refreshReal();
+  }catch(_error){
+   if(dialog.open&&mode==="real"&&token===openingToken)
+    result.textContent=t().privacyError;
+  }finally{
+   if(token===openingToken){
+    privacyBusy=false;
+    if(mode==="real")showPrivacyGate();
+   }
+  }
+ });
  close.addEventListener("click",closeDemo);
  dialog.addEventListener("click",event=>{if(event.target===dialog)closeDemo();});
  dialog.addEventListener("close",()=>{
   openingToken++;
   stopRealPolling();
   mode="demo";csrf="";chefId="";pendingKey=null;realMessages=[];
+  privacyAcknowledged=false;privacyNoticeVersion="";privacyBusy=false;
   input.maxLength=600;
   thread.replaceChildren();input.value="";result.textContent="";
   setLanguage(language);
@@ -220,7 +265,7 @@
  });
  form.addEventListener("submit",async event=>{
   event.preventDefault();
-  if(!dialog.open||loading)return;
+  if(!dialog.open||loading||(mode==="real"&&!privacyAcknowledged))return;
   const message=input.value.trim();
   if(!message)return;
   if(mode==="real"){

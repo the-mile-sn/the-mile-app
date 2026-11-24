@@ -44,12 +44,12 @@ jobs:
       - run: node --check static/jogador-v2.js
       - run: node --check static/player-recipes.js
       - run: node --check static/player-visual-portions.js
-      - name: Block all visual changes except the single approved Player Profile language card
+      - name: Block visual changes outside approved Player language and Chef privacy acknowledgement
         run: |
           git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" |
           while IFS= read -r path; do
             case "$path" in
-              static/jogador-v2.html|static/jogador-v2.css) ;;
+              static/jogador-v2.html|static/jogador-v2.css|static/chef.html|static/chef-chat-demo.css) ;;
               *.css|*.html|*.svg)
                 echo "Unapproved visual asset: $path" >&2
                 exit 1;;

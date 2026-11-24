@@ -23,6 +23,7 @@ MAX_MESSAGE_CHARS=2000
 MAX_PAGE_SIZE=100
 MAX_CLIENT_KEY_CHARS=96
 RETENTION_MONTHS_AFTER_CLOSURE=12
+CHEF_PRIVACY_NOTICE_VERSION="chef-chat-privacy-2026-11-v1"
 
 
 class ChatAccessError(PermissionError):
@@ -69,6 +70,60 @@ def initialize(c):
         FOREIGN KEY(conversation_id,user_id)
             REFERENCES v2_chat_memberships(conversation_id,user_id)
     )""")
+
+
+
+def initialize_privacy_acknowledgements(c):
+    """Add-only, idempotent migration for per-account privacy notice acknowledgement.
+
+    Separate from the full chat schema: the Player service creates only this
+    table, and only when the explicitly enabled Chef chat is deployed.
+    """
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_chat_privacy_acknowledgements(
+        user_id TEXT PRIMARY KEY REFERENCES users(id),
+        notice_version TEXT NOT NULL,
+        acknowledged_at BIGINT NOT NULL
+    )""")
+
+
+def privacy_notice_status(c,actor_id):
+    """Status belongs to authenticated, active, athlete-linked Chef only."""
+    actor=_active_actor(c,actor_id)
+    if actor["role"]!="chef" or not _is_active_chef(c,actor_id):
+        raise ChatAccessError("forbidden")
+    row=c.execute("""SELECT notice_version,acknowledged_at
+        FROM v2_chat_privacy_acknowledgements WHERE user_id=?""",
+        (actor_id,)).fetchone()
+    approved=bool(row and row["notice_version"]==CHEF_PRIVACY_NOTICE_VERSION)
+    return {"version":CHEF_PRIVACY_NOTICE_VERSION,
+            "acknowledged":approved,
+            "acknowledged_at":row["acknowledged_at"] if approved else None}
+
+
+def acknowledge_privacy_notice(c,actor_id,notice_version):
+    """Explicit acknowledgement, never inferred from opening/reading messages.
+
+    This records information received, not a legal-basis/marketing consent.
+    Repeating the same acknowledgement retains its original timestamp.
+    """
+    if not isinstance(notice_version,str) or notice_version!=CHEF_PRIVACY_NOTICE_VERSION:
+        raise ValueError("invalid_notice_version")
+    status=privacy_notice_status(c,actor_id)
+    if status["acknowledged"]:
+        return status
+    c.execute("""INSERT INTO v2_chat_privacy_acknowledgements
+        (user_id,notice_version,acknowledged_at) VALUES(?,?,?)
+        ON CONFLICT(user_id) DO UPDATE SET
+          notice_version=excluded.notice_version,
+          acknowledged_at=excluded.acknowledged_at""",
+        (actor_id,CHEF_PRIVACY_NOTICE_VERSION,_now()))
+    return privacy_notice_status(c,actor_id)
+
+
+def require_privacy_notice(c,actor_id):
+    """Prevent messages from bypassing the acknowledgement screen."""
+    if not privacy_notice_status(c,actor_id)["acknowledged"]:
+        raise ChatAccessError("privacy_ack_required")
 
 
 def _now():

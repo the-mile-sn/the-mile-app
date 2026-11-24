@@ -25,6 +25,7 @@ def db():
         INSERT INTO v2_chef_links VALUES ('chef-a','a'),('chef-b','b');
     """)
     chat.initialize(c)
+    chat.initialize_privacy_acknowledgements(c)
     return c
 
 
@@ -42,6 +43,43 @@ class ChatDomainTests(unittest.TestCase):
         self.assertEqual(self.a,chat.get_or_create_chef_conversation(self.c,"chef-a"))
         self.assertNotEqual(self.a,self.b)
         self.assertEqual(self.c.execute("SELECT COUNT(*) FROM v2_chat_conversations").fetchone()[0],2)
+
+    def test_privacy_acknowledgement_is_explicit_versioned_and_per_chef(self):
+        first=chat.privacy_notice_status(self.c,"chef-a")
+        second=chat.privacy_notice_status(self.c,"chef-b")
+        self.assertFalse(first["acknowledged"])
+        self.assertFalse(second["acknowledged"])
+        self.assertEqual(first["version"],chat.CHEF_PRIVACY_NOTICE_VERSION)
+        self.assertIsNone(first["acknowledged_at"])
+        with self.assertRaises(chat.ChatAccessError):
+            chat.require_privacy_notice(self.c,"chef-a")
+        with self.assertRaises(ValueError):
+            chat.acknowledge_privacy_notice(self.c,"chef-a","wrong-version")
+        with self.assertRaises(chat.ChatAccessError):
+            chat.acknowledge_privacy_notice(self.c,"admin-a",chat.CHEF_PRIVACY_NOTICE_VERSION)
+        self.assertEqual(self.c.execute(
+            "SELECT COUNT(*) FROM v2_chat_privacy_acknowledgements").fetchone()[0],0)
+        accepted=chat.acknowledge_privacy_notice(self.c,"chef-a",chat.CHEF_PRIVACY_NOTICE_VERSION)
+        self.assertTrue(accepted["acknowledged"])
+        self.assertIsInstance(accepted["acknowledged_at"],int)
+        repeat=chat.acknowledge_privacy_notice(self.c,"chef-a",chat.CHEF_PRIVACY_NOTICE_VERSION)
+        self.assertEqual(repeat,accepted)
+        self.assertEqual(chat.privacy_notice_status(self.c,"chef-a"),accepted)
+        self.assertFalse(chat.privacy_notice_status(self.c,"chef-b")["acknowledged"])
+        chat.require_privacy_notice(self.c,"chef-a")
+        with self.assertRaises(chat.ChatAccessError):
+            chat.require_privacy_notice(self.c,"chef-b")
+        # Re-running the additive migration never erases an acknowledgement.
+        chat.initialize_privacy_acknowledgements(self.c)
+        self.assertEqual(chat.privacy_notice_status(self.c,"chef-a"),accepted)
+        # A newer notice version can require the Chef to acknowledge again.
+        old=chat.CHEF_PRIVACY_NOTICE_VERSION
+        try:
+            chat.CHEF_PRIVACY_NOTICE_VERSION="chef-chat-privacy-new-version"
+            self.assertFalse(chat.privacy_notice_status(self.c,"chef-a")["acknowledged"])
+        finally:
+            chat.CHEF_PRIVACY_NOTICE_VERSION=old
+        self.assertTrue(chat.privacy_notice_status(self.c,"chef-a")["acknowledged"])
 
     def test_cannot_infer_another_chef_or_access_foreign_messages(self):
         for function in (
