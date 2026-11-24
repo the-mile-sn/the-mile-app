@@ -77,7 +77,9 @@ const chefDishCategoryEnglish={
  "Aves":"Poultry","Marisco":"Seafood","Ovos":"Eggs",
  "Vegetariano":"Vegetarian","Vegetariana":"Vegetarian",
  "Pratos":"Dishes","Pratos principais":"Main dishes",
- "Crustáceos / Moluscos":"Crustaceans / molluscs","Pós-jogo":"Post-match"
+ "Crustáceos / Moluscos":"Crustaceans / molluscs",
+ "Livre":"Free choice","Pós-jogo":"Post-match","Mix":"Mix",
+ "Estágio":"Training camp"
 };
 function chefDishCategoryLabel(value){
  return lang==="en"?(chefDishCategoryEnglish[String(value||"").trim()]||value):value;
@@ -750,12 +752,14 @@ function chefMenuPhoto(item){
 }
 function appendChefMenuDish(host,item,emptyLabel){
  const wrap=node("div","chef-meal-dish");
- // Menu categories are canonical Portuguese values. Translate only their display
- // in English, using the same dictionary as the approved-dish search.
- // Dish IDs, free text (e.g. "Estágio") and the stored menu are unchanged.
+ // Canonical category values and the explicitly defined "Estágio" menu
+ // preset are translated only for display. Other free text remains verbatim.
+ // Dish identities, menu assignments and original stored strings never change.
+ const original=item?asText(item.value):emptyLabel;
  const display=item?.kind==="category"
-  ?chefDishCategoryLabel(asText(item.value))
-  :item?asText(item.value):emptyLabel;
+  ?chefDishCategoryLabel(original)
+  :item?.kind==="text"&&lang==="en"&&original.trim()==="Estágio"
+   ?"Training camp":original;
  wrap.append(node("div",item?"chef-dish-name":"chef-dish-pending",display));
  const photo=chefMenuPhoto(item);if(photo)wrap.append(photo);
  host.append(wrap);
