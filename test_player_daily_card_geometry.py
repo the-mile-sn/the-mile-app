@@ -69,7 +69,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn("height:61px", rules[0])
         self.assertIn("padding-block:9px", rules[0])
         # Início now shows fasting weight as a widget (Peso) beside the Semana widget.
-        self.assertIn('dayWidget("daily-weight-card day-weight-widget",WEIGHT_WIDGET_ICON,playerText("Peso","Weight"))', JS)
+        self.assertIn('dayWidget("daily-weight-card day-weight-widget",playerText("Peso","Weight"))', JS)
         self.assertIn('renderWeekWidget(row,date,calendar)', JS)
         self.assertIn("#overview #day-details > .day-widgets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important", CSS)
         self.assertNotIn(".daily-weight-icon{width:40px;height:40px", CSS)

@@ -5592,9 +5592,7 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
  cursor:pointer;min-height:0!important;height:auto!important;overflow:hidden!important;
 }
 #overview #day-details .day-widget-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:30px!important}
-#overview #day-details .day-widget-icon{display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;width:30px!important;height:30px!important;border-radius:9px!important;background:rgba(0,0,0,.16)!important}
-#overview #day-details .day-widget-icon svg{width:19px!important;height:19px!important}
-#overview #day-details .day-widget-label{flex:1 1 auto!important;min-width:0!important;font-size:15px!important}
+#overview #day-details .day-widget-label{flex:1 1 auto!important;min-width:0!important;font-size:15px!important;color:#aaaab4!important}
 #overview #day-details .day-widget-action{
  appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;
  width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;border:0!important;border-radius:999px!important;
