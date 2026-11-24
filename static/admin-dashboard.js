@@ -765,7 +765,7 @@ function ensurePlanningOnlyView(){
     const button=el("button","tm-player-language-default-choice",label);
     button.type="button";button.dataset.initialLanguage=value;
     button.addEventListener("click",()=>{if(savingLanguage||playerProfileEditing)return;
-     selectedLanguage=value;syncLanguageControls();
+     selectedLanguage=value;feedback.textContent="";syncLanguageControls();
     });
     buttons.push(button);options.append(button);
    }
@@ -782,12 +782,11 @@ function ensurePlanningOnlyView(){
     }
     saveLanguage.hidden=selectedLanguage===savedLanguage||playerProfileEditing;
     saveLanguage.disabled=savingLanguage;
-    if(!savingLanguage)feedback.textContent="";
    }
    saveLanguage.addEventListener("click",async()=>{
     if(savingLanguage||selectedLanguage===savedLanguage||playerProfileEditing)return;
     const token=profileLoadToken,athleteId=playerProfile.id,language=selectedLanguage;
-    savingLanguage=true;syncLanguageControls();
+    savingLanguage=true;feedback.textContent="";syncLanguageControls();
     try{
      const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/initial-language",{
       method:"PUT",body:JSON.stringify({language})});
@@ -800,9 +799,6 @@ function ensurePlanningOnlyView(){
     }finally{
      if(token===profileLoadToken&&playerProfile?.id===athleteId){
       savingLanguage=false;syncLanguageControls();
-      // Preserve the result/error across the redraw of enabled controls.
-      feedback.textContent=savedLanguage===language?
-       "Idioma inicial guardado. A escolha do jogador mantém prioridade.":feedback.textContent;
      }
     }
    });
