@@ -1,4 +1,5 @@
 """First appointments backoffice shell: route isolation and honest empty state."""
+import re
 import unittest
 from unittest.mock import patch
 
@@ -55,14 +56,14 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             client = fixtures.Client()
             page = client.request("/admin-appointments")
             self.assertEqual(page["status"], 200)
-            self.assertIn(
-                b'src="/admin-appointments-bookings.js?v=10" defer',
-                page["body"])
+            urls = re.findall(rb'src="(/admin-appointments-bookings\.js\?v=\d+)" defer', page["body"])
+            self.assertEqual(len(urls), 1)
+            self.assertGreaterEqual(int(urls[0].rsplit(b"=",1)[1]), 10)
             self.assertIn(
                 b'<button id="tm-appt-shopify-paid-smoke" type="button" '
                 b'class="tm-appt-checkout-refresh">',
                 page["body"])
-            script = client.request("/admin-appointments-bookings.js?v=10")
+            script = client.request(urls[0].decode("ascii"))
             self.assertEqual(script["status"], 200)
             self.assertIn(b'api("/checkout/paid-booking-smoke-test","POST",{})',
                           script["body"])

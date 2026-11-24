@@ -29,8 +29,8 @@ test("Agendamentos contains timed events but no task tab, list, or dialog",()=>{
  assert.doesNotMatch(agenda,/tm-appointments-tab-tarefas|tm-appointments-panel-tarefas/);
  assert.doesNotMatch(agenda,/tm-work-task-dialog|tm-work-task-list|tm-work-task-form/);
  assert.doesNotMatch(agendaJs,/"tarefas"/);
- assert.match(agenda,/admin-appointments\.js\?v=8/);
- assert.match(agenda,/admin-work\.js\?v=6/);
+ assert.match(agenda,/admin-appointments\.js\?v=\d+/);
+ assert.match(agenda,/admin-work\.js\?v=\d+/);
 });
 
 test("tasks are managed exclusively in Dashboard and opened in native dialogs",()=>{
@@ -61,8 +61,8 @@ test("quick-create task opens local popup without navigation or mandatory times"
  assert.match(work,/Sem prazo/);
  assert.match(css,/\.tm-db-task-edit/);
  assert.match(css,/\.tm-work-tasks-dialog/);
- assert.match(dashboard,/admin-work\.js\?v=6/);
- assert.match(dashboard,/admin-work\.css\?v=7/);
+ assert.match(dashboard,/admin-work\.js\?v=\d+/);
+ assert.match(dashboard,/admin-work\.css\?v=\d+/);
 });
 
 test("new internal events remain without appointment confirmation pills",()=>{

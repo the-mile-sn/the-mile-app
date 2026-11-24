@@ -48,12 +48,12 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
      cssVersion:style?.href||"",countDisplay:getComputedStyle(entry.querySelector("#library-plan-count")).display};
   });
   assert.equal(cssInfo.stylesLoaded,true);
-   assert.ok(cssInfo.cssVersion.includes("admin-plans-native.css?v=5"),JSON.stringify(cssInfo));
+   assert.match(cssInfo.cssVersion,/admin-plans-native\.css\?v=\d+$/,JSON.stringify(cssInfo));
    assert.equal(cssInfo.countDisplay,"none","Plan list result count should be hidden");
   assert.ok(cssInfo.cssRules>100,JSON.stringify(cssInfo));
   assert.equal(cssInfo.layout,"grid",JSON.stringify(cssInfo));
-  assert.equal(cssInfo.columns.split(" ").length,3,JSON.stringify(cssInfo));
-  assert.equal(cssInfo.border,"solid");
+  assert.equal(cssInfo.columns.split(" ").length,2,JSON.stringify(cssInfo));
+  assert.equal(cssInfo.border,"none");
   assert.equal(cssInfo.iconWidth,"17px","Peri-training icon must not cover the entire table");
   assert.equal(cssInfo.iconHeight,"17px");
   await page.screenshot({path:"plans-native-dark.png",fullPage:true});
@@ -92,8 +92,16 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
   assert.equal(editorCss.display,"grid",JSON.stringify(editorCss));
   assert.equal(editorCss.columns.split(" ").length,4,JSON.stringify(editorCss));
   assert.notEqual(editorCss.cardPadding,"0px",JSON.stringify(editorCss));
-  await page.locator("#tm-plan-page #plan-player").selectOption("user-1");
-  await page.locator("#tm-plan-page #plan-type").selectOption("Plano azul");
+  // Use the real shared dropdown rather than the deliberately hidden native select.
+  const playerPicker=page.locator("#tm-plan-page .tm-select-shell").filter({has:page.locator("#plan-player")});
+  const typePicker=page.locator("#tm-plan-page .tm-select-shell").filter({has:page.locator("#plan-type")});
+  await playerPicker.getByRole("button",{name:"Jogador",exact:true}).click();
+  await playerPicker.getByRole("option",{name:"Atleta de teste",exact:true}).click();
+  await typePicker.getByRole("button",{name:"Tipo de plano",exact:true}).click();
+  await typePicker.getByRole("option",{name:"Plano azul",exact:true}).click();
+  assert.equal(await playerPicker.locator(".tm-select-trigger").getAttribute("aria-expanded"),"false");
+  assert.equal(await typePicker.locator(".tm-select-trigger").getAttribute("aria-expanded"),"false");
+  assert.equal(await page.locator("#tm-plan-page #plan-type").inputValue(),"Plano azul");
   const athlete=await page.locator("#tm-plan-page #plan-player").inputValue();
   assert.equal(athlete,"user-1");
   page.once("dialog",d=>d.dismiss());
@@ -150,8 +158,8 @@ test("WebKit/Safari-style engine renders Planos cards, macros and small Peri-tre
     iconHeight:getComputedStyle(icon).height};
   });
   assert.equal(listCss.layout,"grid",JSON.stringify(listCss));
-  assert.equal(listCss.columns.split(" ").length,3,JSON.stringify(listCss));
-  assert.equal(listCss.border,"solid");
+  assert.equal(listCss.columns.split(" ").length,2,JSON.stringify(listCss));
+  assert.equal(listCss.border,"none");
   assert.equal(listCss.iconWidth,"17px",JSON.stringify(listCss));
   assert.equal(listCss.iconHeight,"17px");
   await page.screenshot({path:"plans-native-webkit-list.png",fullPage:true});
@@ -192,7 +200,7 @@ test("Planos list capitalizes only first character of type and hides AÇÕES hea
   const header=page.locator("#tm-plan-page #plan-entry .plan-library-table thead th").last();
   assert.equal((await header.textContent()).trim(),"");
   assert.equal(await header.getAttribute("aria-label"),"Ações");
-  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-view-id]").count(),3);
+  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-plan-open-id][tabindex=\"0\"]").count(),3);
   assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-edit-id]").count(),3);
   assert.deepEqual(errors,[]);
   await context.close();

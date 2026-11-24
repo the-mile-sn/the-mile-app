@@ -6,7 +6,9 @@ const ui=fs.readFileSync("static/admin-recipes.js","utf8");
 const backend=fs.readFileSync("app.py","utf8");
 const model=fs.readFileSync("recipe_library_v2.py","utf8");
 test("recipe library lives in a dedicated sidebar page with a single editor",()=>{
- for(const id of ["tm-admin-nav-recipe-library","tm-recipe-library-page","recipe-list","recipe-editor-panel","recipe-category","recipe-add","recipe-save","recipe-add-section","recipe-add-step","recipe-create-category","recipe-photo-file"]){
+ const nav=fs.readFileSync("static/admin-nav-shell.js","utf8");
+ assert.equal(nav.split('id=\\"tm-admin-nav-recipe-library\\"').length-1,1);
+ for(const id of ["tm-recipe-library-page","recipe-list","recipe-editor-panel","recipe-category","recipe-add","recipe-save","recipe-add-section","recipe-add-step","recipe-create-category","recipe-photo-file"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
  assert.match(html,/id="tm-recipe-library-page"[^>]*hidden/);
@@ -58,7 +60,8 @@ test("recipe category management opens from toolbar in compact separate panel",(
  const table=html.indexOf('id="recipe-list"',start);
  assert.ok(table>start&&search>table&&category>search);
  assert.match(html,/id="recipe-category-toggle"[^>]*aria-expanded="false"/);
- assert.match(html,/id="recipe-category-manage"[^>]*hidden/);
+ assert.match(html,/id="recipe-category-body"[^>]*hidden/);
+ assert.match(ui,/\$\("recipe-category-body"\)\.hidden=!open/);
  assert.match(ui,/function setRecipeCategoriesOpen\(open\)/);
  assert.match(ui,/recipe-category-toggle"\)\.addEventListener\("click"/);
  assert.doesNotMatch(html,/<details class="recipe-category-manage"/);
@@ -191,10 +194,12 @@ test("manual editor and PDF review reorder ingredients without recreating IDs",(
  assert.match(ui,/ingredients\.splice\(next,0,ingredients\.splice\(index,1\)\[0\]\)/);
  assert.match(ui,/ingredientMoveButtons\(section,ii,paintSections\)/);
  assert.match(ui,/ingredientMoveButtons\(section,ii,\(\)=>paintPdfDetail\(recipe,detail\)\)/);
- assert.match(ui,/action\.disabled=delta<0\?index===0:index===section\.ingredients\.length-1/);
- assert.match(ui,/Mover ingrediente para /);
+ assert.match(ui,/if\(next<0\|\|next>=section\.ingredients\.length\)return/);
+ assert.match(ui,/aria-keyshortcuts","ArrowUp ArrowDown"/);
+ assert.match(ui,/moveRecipeIngredient\(section\.ingredients,index,offset,onMove\)/);
+ assert.match(ui,/if\(moved&&targetIndex!==index\)moveRecipeIngredient\(section\.ingredients,index,targetIndex-index,onMove\)/);
  assert.match(ui,/recipe-ingredient-movers/);
- assert.match(ui,/recipe-move-button/);
+ assert.match(ui,/recipe-drag-handle/);
  assert.match(ui,/recipe_ref_id:i\.recipe_ref_id\|\|null/);
  assert.match(model,/ingredients_json|sections_json/);
 });
@@ -218,7 +223,7 @@ test("recipe toolbar filters all displayed metadata and keeps actions secondary"
  assert.match(ui,/norm\(r\.name\)\.includes\(q\)/);
  assert.match(ui,/function activeRecipeFilters\(\)/);
  assert.match(ui,/recipe-clear-filters"\)\.addEventListener\("click"/);
- assert.match(html,/id="recipe-add"[^>]*>\+ Nova<\/button>/);
+ assert.match(html,/id="recipe-add"[^>]*>\+ Nova receita<\/button>/);
  assert.match(html,/id="recipe-pdf-toggle"[^>]*aria-label="Importar receitas de PDF"/);
  assert.ok(html.indexOf('id="recipe-category-toggle"')>html.indexOf('class="recipe-library-utilities"'));
 });
@@ -227,7 +232,8 @@ test("read-only recipe view uses real saved fields and lets linked recipes be op
                   "recipe-reader-content","recipe-reader-feedback"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
- assert.match(ui,/button\("Ver",\(\)=>openReadRecipe\(r\.id\),"recipe-view"\)/);
+ assert.match(ui,/tr\.addEventListener\("click",event=>\{if\(!event\.target\.closest\("button,a,input,select,textarea"\)\)openReadRecipe\(r\.id\)/);
+ assert.match(ui,/tr\.addEventListener\("keydown",event=>\{if\(\(event\.key==="Enter"\|\|event\.key===" "\)&&event\.target===tr\)\{event\.preventDefault\(\);openReadRecipe\(r\.id\)/);
  assert.match(ui,/recipeListIcon\("edit"\)/);
  assert.match(ui,/recipeListIcon\("trash"\)/);
  assert.match(html,/class="recipe-reader-panel"/);

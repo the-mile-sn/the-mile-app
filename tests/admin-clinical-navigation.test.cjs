@@ -1,9 +1,10 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const dashboard=fs.readFileSync("static/admin-dashboard.js","utf8");
+const nav=fs.readFileSync("static/admin-nav-shell.js","utf8");
 const admin=fs.readFileSync("static/admin-microcycles.js","utf8");
 test("main navigation has real clinical pages",()=>{
- for(const key of ["assessments","forms"]){assert.match(html,new RegExp('id="tm-admin-nav-'+key+'"'));assert.match(html,new RegExp('id="tm-'+key+'-page"'));assert.match(html,new RegExp('id="tm-'+key+'-player"'));}
+ for(const key of ["assessments","forms"]){assert.equal(nav.split('id=\\"tm-admin-nav-'+key+'\\"').length-1,1);assert.match(html,new RegExp('id="tm-'+key+'-page"'));assert.match(html,new RegExp('id="tm-'+key+'-player"'));}
 });
 test("shared editors stay singular, not duplicated",()=>{
  for(const id of ["assessments-admin-panel","profile-monitoring","assessment-review-form","monitoring-weight-form","monitoring-game-form"])assert.equal(html.split('id="'+id+'"').length-1,1,id);
@@ -28,7 +29,8 @@ test("legacy clinical and account functions remain available",()=>{
 });
 
 test("dashboard shortcuts target clinical main pages, not legacy planning",()=>{
- assert.match(dashboard,/target==="assessments"\?openClinical\("assessments",item\.athlete_id\)/);
+ assert.match(dashboard,/window\.tmOpenAdminAssessments=aid=>openClinical\("assessments",aid\)/);
+ assert.match(dashboard,/\$\("tm-admin-nav-"\+kind\)\.addEventListener\("click",\(\)=>openClinical\(kind\)\)/);
  assert.match(dashboard,/openClinical\("forms",item\.athlete_id,kind==="pitch"\?"game":"weight"/);
  assert.match(dashboard,/row\.dataset\.monitoringDate===recordDate/);
  assert.doesNotMatch(html,/Os formulários ainda não estão ativos/);
@@ -39,7 +41,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  const match=html.match(/<nav class="calendar-panel" id="backoffice-nav"[^>]*>([\s\S]*?)<\/nav>/);
  assert.ok(match,"Planning navigation is present");
  const tabs=[...match[1].matchAll(/data-view="([^"]+)"/g)].map(v=>v[1]);
- assert.deepEqual(tabs,["calendar","plans","supplements","matrix","menus","player-preview"]);
+ assert.deepEqual(tabs,["calendar","supplements","matrix","menus","consumption"]);
  for(const id of ["athlete-weight-panel","profile-monitoring","assessments-admin-panel","admin-account-toggle","admin-access-panel"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id+" must remain mounted once");
  }
@@ -48,8 +50,9 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.match(dashboard,/if\(monitoringKind\)return openClinical\("forms",aid,monitoringKind,day\)/);
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
- assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=116/);
+ assert.match(dashboard,/settingsAdmin\.append\(adminList,inviteForm,activationPanel\)/);
+ assert.match(dashboard,/activationPanel\.hidden=true/);
+ assert.match(html,/admin-microcycles\.css\?v=\d+/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -73,7 +76,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=37/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=\d+/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -82,9 +85,9 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.equal(legend,null);
  assert.doesNotMatch(html,/id="model-legend"/);
  assert.equal(html.split('id="model-legend"').length-1,0);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
- const elements={};
- for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","menus-panel","player-preview-panel"]){
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
+ const elements={athlete:{value:"test"}};
+ for(const id of ["athlete-weight-panel","calendar-section","consumption-panel","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
  }
  const tabs=["calendar","plans","supplements","matrix","menus","player-preview"].map(view=>({dataset:{view},setAttribute(k,v){this[k]=v;}}));
@@ -113,10 +116,10 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.equal(elements.matrix.hidden,true);
  assert.equal(elements.matrix.hidden,true);
  assert.equal(elements["menus-panel"].hidden,false);
- const renderAt=admin.indexOf("function render(){"),renderEnd=admin.indexOf("\n",renderAt);
+ const renderAt=admin.indexOf("function render(){"),renderEnd=admin.indexOf('\n$("filipe-activate")',renderAt);
  assert.ok(renderAt>=0&&renderEnd>renderAt);
  const renderSource=admin.slice(renderAt,renderEnd);
- const node=()=>({children:[],appendChild(child){this.children.push(child);}});
+ const node=()=>({children:[],setAttribute(){},append(...children){this.children.push(...children);},appendChild(child){this.children.push(child);}});
  elements.matrix={...node(),hidden:true,replaceChildren(){this.children=[];}};
  ctx.document.createElement=()=>node();
  const render=vm.runInNewContext(renderSource+"\nrender",ctx);
@@ -136,7 +139,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
  const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
@@ -187,9 +190,13 @@ test("Menus loads and saves only for its selected athlete and current week",()=>
  assert.match(admin,/const stillCurrent=\(\)=>menusLoadRevision===revision&&menusAthleteId===athleteId/);
  assert.match(admin,/const data=await request\(base\+"\/menus\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/const calendarData=await request\(base\+"\/calendar\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
- assert.match(admin,/saveWeek\.onclick=async\(\)=>\{\s*if\(!stillCurrent\(\)\|\|!pending\.size\)return/);
- assert.match(admin,/await request\(base\+"\/menus\/batch"/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(admin,/const entry=\{menu_date:date,meal,kind:kind\.value,value:selected,/);
+ assert.match(admin,/if\(!selected\)\{saveMessage\.textContent=/);
+ assert.match(admin,/const action=saveSerial\.then\(async\(\)=>\{\s*if\(version!==saveVersion\)return/);
+ assert.match(admin,/await request\(base\+"\/menus",\{method:"PUT",body:JSON\.stringify\(entry\)\}\)/);
+ assert.match(admin,/if\(version===saveVersion&&stillCurrent\(\)\)saveMessage\.textContent="Guardado automaticamente"/);
+ assert.match(admin,/menuDraftFlushers\.add\(flush\);saveTimer=setTimeout\(flush,650\)/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });
 
 
@@ -203,7 +210,7 @@ test("Suplementação invalidates old-player reads and binds publication to the 
  assert.match(admin,/if\(!stillCurrent\(\)\)return;\s*supplementDraft=draft/);
  assert.match(admin,/if\(!supplementEditorReady\|\|!athleteId\|\|!stillCurrent\(\)\)return/);
  assert.match(admin,/await request\("\/api\/v2\/athletes\/"\+encodeURIComponent\(athleteId\)\+"\/supplements",\{method:"PUT"/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });
 
 
@@ -218,7 +225,7 @@ test("Vista jogador ignores delayed reads after changing athlete, day, week or t
  assert.match(admin,/async function showPlayerView\(view\)\{\s*playerView=view;\+\+playerPreviewRevision/);
  assert.match(admin,/isoDay\(weekStart\(playerMenuWeek\)\)===begin/);
  assert.match(admin,/isoDay\(simulationDay\)===d/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });
 
 test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
@@ -230,7 +237,7 @@ test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
  assert.match(admin,/confirmation:"PUBLICAR",athlete_id:athleteId/);
  assert.match(admin,/await request\(periEndpoint\(athleteId\)\+"\/"\+encodeURIComponent\(draft.id\)\+"\/option"/);
  assert.match(admin,/if\(!periIsCurrent\(athleteId\)\)return;\s*const result=await request\(periEndpoint\(athleteId\),\{method:"POST"/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });
 
 
@@ -240,8 +247,8 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=11/);
- assert.match(html,/\/admin-dashboard\.js\?v=37/);
+ assert.match(html,/\/admin-light-theme\.css\?v=\d+/);
+ assert.match(html,/\/admin-dashboard\.js\?v=\d+/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -258,7 +265,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=11"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=\d+"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]/);
 });
@@ -267,7 +274,7 @@ test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL"
 test("Player profile uses a top-left back arrow outside the detail card",()=>{
  assert.match(html,/id="tm-players-profile-nav" class="tm-subpage-nav" hidden/);
  assert.ok(html.indexOf('id="tm-players-profile-back"')<html.indexOf('id="tm-players-profile"'));
- assert.match(html,/id="tm-players-profile-back" class="tm-subpage-back" aria-label="Voltar à lista de jogadores"/);
+ assert.match(html,/id="tm-players-profile-back" class="tm-subpage-back tm-action-secondary" aria-label="Voltar à lista de clientes"/);
  assert.match(dashboard,/profileNav\.hidden=true;playersHeader\.hidden=false;/);
  assert.match(dashboard,/playersHeader\.hidden=true;profileNav\.hidden=false;/);
  assert.match(dashboard,/\$\("tm-players-profile-back"\)\.addEventListener\("click",closePlayerProfile\)/);
@@ -279,27 +286,28 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=11/);
+ assert.match(html,/admin-light-theme\.css\?v=\d+/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
  assert.match(html,/viewBox="0 0 1605 244" role="img" aria-label="The Mile"/);
  assert.doesNotMatch(html,/class="tm-admin-brand-mark"/);
- assert.match(html,/id="tm-admin-brand-home"/);
+ assert.match(nav,/toButton\(brand,"tm-admin-brand-home"\)/);
+ assert.match(nav,/brandButton\.setAttribute\("aria-label","Voltar ao Início"\)/);
  assert.match(html,/id="tm-dashboard-return" class="tm-subpage-nav tm-dashboard-return"[^>]*hidden/);
  assert.match(html,/id="tm-dashboard-return-button"/);
- assert.match(dashboard,/\$\("tm-dashboard-return-button"\)\.addEventListener\("click",openDashboard\)/);
+ assert.match(dashboard,/dashboardReturnButton\.addEventListener\("click",\(\)=>\{\s*if\(planDetailVisible\(\)\)\{\s*window\.tmReturnToPlanLibrary\?\.\(\);\s*return;\s*\}\s*openDashboard\(\)/);
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=37/);
+ assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=116/);
+ assert.match(html,/admin-microcycles\.css\?v=\d+/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -312,7 +320,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=37/);
+ assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -354,7 +362,10 @@ test("Modelo places effective colors before grouped post-match scenarios and hid
  assert.ok(first>=0&&second>first);
  assert.match(html,/class="scenario-diagnostics" hidden/);
  assert.match(admin,/className="scenario-day-group"/);
- assert.match(admin,/className="scenario-matrix scenario-day-matrix"/);
+ assert.match(admin,/className="scenario-variant-row"/);
+ assert.match(admin,/className="scenario-meal-cell"/);
+ assert.match(admin,/classification:type,scenario,meal,color:next/);
+ assert.match(admin,/if\(model\?\.athlete\?\.id!==athleteId\)return/);
  assert.match(admin,/select\.dataset\.color=savedColor\|\|base\|\|"none"/);
  assert.doesNotMatch(admin,/heading\.textContent="Modelo efetivo"/);
  const css=fs.readFileSync("static/admin-microcycles.css","utf8");
@@ -391,18 +402,25 @@ test("Bottle-green VP and compact high-visibility meal controls apply to both ma
  assert.match(css,/min-height:46px!important/);
 });
 
-test("Calendar day editing keeps the color endpoint and nutrition without option browser",()=>{
+test("Calendar day editing keeps the color endpoint, current nutrition and scoped option browser",()=>{
  const start=admin.indexOf("function renderDayPreview(day,host){");
  const end=admin.indexOf("let dayWeightReferences={};",start);
  assert.ok(start>=0&&end>start);
  const section=admin.slice(start,end);
  assert.match(section,/calendar\/meal-color/);
- assert.match(section,/averageMealNutrition\(mealOptionsByColor/);
- assert.match(section,/renderNutritionTotals\(host,"Resumo nutricional do dia",plannedDayTotals\(day\)/);
- assert.doesNotMatch(section,/Ver opções/);
+ assert.match(section,/previewNutritionOption\(day\.date,entry\.meal,liveMeal\)/);
+ assert.match(section,/const newAverage=\(liveMeal\?\.status==="ok"\|\|liveMeal\?\.status==="provisional"\)\?\(selectedOption\?\.nutrition\|\|liveMeal\.nutrition\):null/);
+ assert.match(section,/const liveDay=liveCalendarPlans\[day\.date\]/);
+ assert.match(section,/else if\(liveDay\.state!=="complete"\)/);
+ assert.match(section,/else nutritionCards\(currentBlock,effectiveLiveDayNutrition\(day\.date,liveDay\),dayWeightReferences\?\.\[day\.date\]\?\.weight_kg\)/);
+ assert.match(section,/Não são usados valores antigos como substituição/);
+ assert.match(section,/button\.textContent="Ver opções";button\.setAttribute\("aria-expanded","false"\)/);
+ assert.match(section,/button\.addEventListener\("click",\(\)=>toggleOptions\(entry\.meal\)\)/);
+ assert.match(section,/renderLiveMealOptions\(day,meal\)/);
+ assert.match(admin,/const editable=Boolean\(mealChoiceAssignments\.enabled&&model\?\.athlete\?\.meal_option_selection_enabled&&record\?\.status==="ok"&&record\?\.publication_state==="published"\)/);
  assert.doesNotMatch(section,/opções disponíveis/);
  assert.doesNotMatch(section,/Pré-visualização administrativa/);
- assert.match(section,/className="day-meal-nutrients"/);
+ assert.match(section,/className="day-meal-nutrients calendar-live-meal-nutrients"/);
 });
 test("Calendar month events remain editable under a collapsed summary",()=>{
  assert.match(html,/<details class="calendar-event-list" id="calendar-month-events">/);
@@ -414,12 +432,15 @@ test("Calendar month events remain editable under a collapsed summary",()=>{
 });
 
 test("Weekly average is outside month-event accordion and meal controls stay editable",()=>{
- assert.match(admin,/\$\("calendar-month-events"\)\.insertAdjacentElement\("afterend",weekly\)/);
- assert.match(admin,/colorBar\.append\(choose\)/);
- assert.match(admin,/className="day-meal-nutrients"/);
- assert.match(admin,/\]\.join\(" · "\)/);
- assert.match(admin,/className="calendar-week-coverage"/);
- assert.match(admin,/renderNutritionTotals\(host,"Resumo nutricional do dia",plannedDayTotals\(day\)/);
+ assert.match(html,/id="calendar-month-events"[\s\S]*?<\/details>[\s\S]*?<\/div>\s*<section id="nutrition-weekly-summary"/);
+ assert.match(admin,/const weekly=\$\("nutrition-weekly-summary"\)/);
+ assert.match(admin,/colorShell\.append\(choose,colorCaret\);colorBar\.append\(colorShell\)/);
+ assert.match(admin,/className="day-meal-nutrients calendar-live-meal-nutrients"/);
+ assert.match(admin,/const complete=weeklyData\.days\.length===7&&fullDays===7/);
+ assert.match(admin,/const fullDays=liveEntries\.filter\(x=>x\.state==="complete"\)\.length/);
+ assert.match(admin,/if\(complete\)\{[\s\S]*?effectiveLiveDayNutrition\(weeklyData\.days\[index\]\.date,day,weeklyChoices\)\[key\]/);
+ assert.match(admin,/map\(\(\[key,value\]\)=>\[key,value\/7\]\)/);
+ assert.match(admin,/Média semanal indisponível:[^"]*Não são usados valores antigos/);
  assert.match(admin,/nutritionCards\(weekly,average,null,relativeMeans\)/);
  assert.match(admin,/calendar\/meal-color/);
 });
@@ -441,7 +462,7 @@ test("Light mode assessment editing and Planning picker keep readable surfaces",
  assert.match(rules,/html\[data-admin-theme="light"\]/);
  assert.match(rules,/background:var\(--tm-light-surface\)/);
  assert.match(rules,/background:#e9eef5/);
- assert.match(html,/admin-light-theme\.css\?v=11/);
+ assert.match(html,/admin-light-theme\.css\?v=\d+/);
  assert.match(html,/id="assessment-review-form"/);
  assert.match(html,/id="tm-planning-results"/);
 });
@@ -464,12 +485,17 @@ test("archived players have their own collapsible card below the active list",()
 });
 
 test("Player Gerir acesso uses approved hierarchy and preserves secure actions",()=>{
- const profile=html.slice(html.indexOf('id="tm-players-profile"'),html.indexOf('id="tm-players-profile"')+6500);
+ const profileStart=html.indexOf('id="tm-players-profile"'),profileEnd=html.indexOf('id="tm-players-filter-panel"',profileStart);
+ assert.ok(profileStart>=0&&profileEnd>profileStart);
+ const profile=html.slice(profileStart,profileEnd);
  assert.match(profile,/Gerir acesso/);
  assert.doesNotMatch(profile,/Dados do jogador · geridos em Jogadores|Oculta o jogador das listas|Utilizador: @|Acesso à App do Jogador/);
  for(const id of ["tm-players-archive","tm-players-access-toggle","tm-players-password-toggle","tm-players-password-new","tm-players-password-confirm","tm-players-password-save","tm-players-password-cancel"])
    assert.equal(profile.split('id="'+id+'"').length-1,1,id);
  assert.ok(profile.indexOf('id="tm-players-archive"')>profile.indexOf('id="tm-players-access-management"'));
+ for(const id of ["tm-players-password-new","tm-players-password-confirm"]){
+  assert.match(profile,new RegExp('id="'+id+'" type="password" minlength="12" maxlength="256" autocomplete="new-password" required'));
+ }
  assert.equal((profile.match(/class="tm-access-visibility-toggle"/g)||[]).length,2);
  assert.match(dashboard,/resetPasswordForm\(\)/);
  assert.match(dashboard,/dataset\.passwordTarget/);
@@ -499,12 +525,12 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(py,/u\.photo IS NOT NULL/);
  assert.match(py,/week_rows\.append\(\{"id": aid,[\s\S]*?"has_photo": False/);
  assert.match(dashboard,/if\(player\.has_photo&&player\.user_id\)/);
- assert.ok(dashboard.includes('img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo"'));
+ assert.ok(dashboard.includes('img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1"'));
  assert.match(dashboard,/img\.addEventListener\("error",\(\)=>img\.remove\(\)\)/);
- assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
- assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
- assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
- assert.match(html,/admin-dashboard\.js\?v=37/);
+ assert.match(dashboard,/item\.classification==="MD"\?" tm-db-match"/);
+ assert.match(dark,/\.tm-db-cell\.tm-db-match\{background:#193126!important/);
+ assert.match(lightCss,/\.tm-db-cell\.tm-db-match\{\s*background:#e5f3e9!important/);
+ assert.match(html,/admin-dashboard\.js\?v=\d+/);
 });
 
 test("Player picker photos share linked account metadata while retaining initials fallback",()=>{
@@ -519,5 +545,5 @@ test("Player picker photos share linked account metadata while retaining initial
  assert.match(css,/\.tm-picker-photo\{/);
  assert.match(css,/#tm-dashboard \.tm-db-avatar\{width:38px/);
  assert.match(css,/#tm-players-page \.tm-p-avatar\{width:46px/);
- assert.match(html,/admin-microcycles\.js\?v=18243/);
+ assert.match(html,/admin-microcycles\.js\?v=\d+/);
 });

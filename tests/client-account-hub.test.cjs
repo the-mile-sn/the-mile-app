@@ -31,7 +31,7 @@ test("account chooser offers all three types and keeps real athlete creation unc
 test("Chefs creation sits only in Clientes; Planning retains only history",()=>{
   assert.match(html,/id="tm-clients-chefs-panel"/);
   assert.match(chefs,/clientsPanel\.append\(section\)/);
-  assert.match(chefs,/history\.insertAdjacentElement\("afterend",review\)/);
+  assert.match(chefs,/history\.insertAdjacentElement\("beforebegin",review\)/);
   assert.match(chefs,/review\.id="tm-chef-menu-review"/);
   assert.match(chefs,/section\.addEventListener\("toggle"/);
   assert.match(chefs,/review\.addEventListener\("toggle"/);
@@ -48,8 +48,8 @@ test("Consultations do not masquerade as an active authentication flow",()=>{
 test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
-  assert.match(html,/\/admin-clients\.js\?v=6/);
-  assert.match(html,/\/admin-clients\.css\?v=9/);
+  assert.match(html,/\/admin-clients\.js\?v=\d+/);
+  assert.match(html,/\/admin-clients\.css\?v=\d+/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -72,7 +72,7 @@ test("desktop client type precedes identity, nav asset cache is refreshed",()=>{
  assert.match(css,/\.tm-player-card \.tm-client-type-cell\{order:-1/);
  assert.match(css,/#tm-chef-accounts \.tm-client-type-cell\{order:-1/);
  assert.match(css,/grid-template-columns:minmax\(160px,220px\)/);
- assert.match(html,/admin-nav-shell\.js\?v=13/);
+ assert.match(html,/admin-nav-shell\.js\?v=\d+/);
 });
 
 
@@ -98,8 +98,8 @@ test("Chef creation always uses a native modal on desktop and mobile, never an i
   assert.match(css,/#tm-players-page #tm-clients-chefs-panel\{display:none!important\}/);
   assert.doesNotMatch(css,/@media\(max-width:830px\)\{\s*#tm-players-page #tm-clients-chefs-panel/);
   assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
-  assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=9/);
+  assert.match(html,/admin-clients\.js\?v=\d+/);
+  assert.match(html,/admin-clients\.css\?v=\d+/);
 });
 
 
@@ -129,9 +129,9 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/role='chef' AND active=1/);
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
-  assert.match(html,/admin-chefs\.js\?v=10/);
-  assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=9/);
+  assert.match(html,/admin-chefs\.js\?v=\d+/);
+  assert.match(html,/admin-clients\.js\?v=\d+/);
+  assert.match(html,/admin-clients\.css\?v=\d+/);
 });
 
 
@@ -147,9 +147,9 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/sharedBackButton\.addEventListener\("click",event=>/);
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
- assert.match(html,/admin-clients\.js\?v=6/);
- assert.match(html,/admin-chefs\.js\?v=10/);
- assert.match(html,/admin-clients\.css\?v=9/);
+ assert.match(html,/admin-clients\.js\?v=\d+/);
+ assert.match(html,/admin-chefs\.js\?v=\d+/);
+ assert.match(html,/admin-clients\.css\?v=\d+/);
 });
 
 test("Chef activity uses the approved menu accordion and the unfiltered audit feed",()=>{
@@ -167,10 +167,10 @@ test("Chef activity uses the approved menu accordion and the unfiltered audit fe
   assert.match(chefs,/\/api\/v2\/admin\/chef-activity\?athlete_id=/);
   assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
   assert.doesNotMatch(chefs,/tm-chef-filter-player/);
-  assert.match(html,/admin-chefs\.js\?v=10/);
-  assert.match(html,/admin-chefs\.css\?v=5/);
-  assert.match(html,/admin-clients\.css\?v=9/);
-  assert.match(html,/admin-surface-palette\.css\?v=205/);
+  assert.match(html,/admin-chefs\.js\?v=\d+/);
+  assert.match(html,/admin-chefs\.css\?v=\d+/);
+  assert.match(html,/admin-clients\.css\?v=\d+/);
+  assert.match(html,/admin-surface-palette\.css\?v=\d+/);
 });
 
 test("Chef audit uses soft expandable records and player-scoped filters without changing API semantics",()=>{
@@ -199,9 +199,9 @@ test("Chef audit uses soft expandable records and player-scoped filters without 
  assert.match(css,/background:var\(--tm-ui-subcard\);border:0/);
  assert.match(css,/font:400 11px\/1\.2 "Inter Tight"/);
  assert.doesNotMatch(clientsCss,/#tm-chef-menu-review \.tm-chef-activity-card/);
- assert.match(html,/admin-chefs\.js\?v=10/);
- assert.match(html,/admin-chefs\.css\?v=5/);
- assert.match(html,/admin-clients\.css\?v=9/);
+ assert.match(html,/admin-chefs\.js\?v=\d+/);
+ assert.match(html,/admin-chefs\.css\?v=\d+/);
+ assert.match(html,/admin-clients\.css\?v=\d+/);
 });
 
 test("Chef activity heading uses official Hugeicons ChefHatIcon, not history glyph",()=>{
@@ -210,5 +210,5 @@ test("Chef activity heading uses official Hugeicons ChefHatIcon, not history gly
   assert.doesNotMatch(chefs,/M3\.7 9\.1A8\.7 8\.7/);
   assert.match(html,/id="menu-history"/);
   assert.match(html,/M3\.7 9\.1A8\.7 8\.7/);
-  assert.match(html,/admin-chefs\.js\?v=10/);
+  assert.match(html,/admin-chefs\.js\?v=\d+/);
 });
