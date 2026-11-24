@@ -141,7 +141,7 @@ class PlayerPlanPublicationTests(unittest.TestCase):
         raw=self.c.execute(
             "SELECT snapshot_json FROM v2_food_plan_editor_publications WHERE draft_id='peri'"
         ).fetchone()["snapshot_json"]
-        pub_ref="pub:"+hashlib.sha256(("peri\\0"+raw).encode("utf-8")).hexdigest()
+        pub_ref="pub:"+hashlib.sha256(("peri\0"+raw).encode("utf-8")).hexdigest()
         self.c.execute("""CREATE TABLE v2_content_translations (
             entity_kind TEXT,entity_id TEXT,field_path TEXT,language TEXT,
             source_hash TEXT,translated_text TEXT,status TEXT)""")
