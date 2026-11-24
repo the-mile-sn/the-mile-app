@@ -48,7 +48,7 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
      cssVersion:style?.href||"",countDisplay:getComputedStyle(entry.querySelector("#library-plan-count")).display};
   });
   assert.equal(cssInfo.stylesLoaded,true);
-   assert.ok(cssInfo.cssVersion.includes("admin-plans-native.css?v=5"),JSON.stringify(cssInfo));
+   assert.match(cssInfo.cssVersion,/admin-plans-native\.css\?v=\d+$/,JSON.stringify(cssInfo));
    assert.equal(cssInfo.countDisplay,"none","Plan list result count should be hidden");
   assert.ok(cssInfo.cssRules>100,JSON.stringify(cssInfo));
   assert.equal(cssInfo.layout,"grid",JSON.stringify(cssInfo));
@@ -192,7 +192,7 @@ test("Planos list capitalizes only first character of type and hides AÇÕES hea
   const header=page.locator("#tm-plan-page #plan-entry .plan-library-table thead th").last();
   assert.equal((await header.textContent()).trim(),"");
   assert.equal(await header.getAttribute("aria-label"),"Ações");
-  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-view-id]").count(),3);
+  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-plan-open-id][tabindex=\"0\"]").count(),3);
   assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-edit-id]").count(),3);
   assert.deepEqual(errors,[]);
   await context.close();

@@ -49,7 +49,8 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.match(dashboard,/if\(monitoringKind\)return openClinical\("forms",aid,monitoringKind,day\)/);
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
- assert.match(dashboard,/activationPanel\.hidden=false/);
+ assert.match(dashboard,/settingsAdmin\.append\(adminList,inviteForm,activationPanel\)/);
+ assert.match(dashboard,/activationPanel\.hidden=true/);
  assert.match(html,/admin-microcycles\.css\?v=\d+/);
 });
 
@@ -360,7 +361,10 @@ test("Modelo places effective colors before grouped post-match scenarios and hid
  assert.ok(first>=0&&second>first);
  assert.match(html,/class="scenario-diagnostics" hidden/);
  assert.match(admin,/className="scenario-day-group"/);
- assert.match(admin,/className="scenario-matrix scenario-day-matrix"/);
+ assert.match(admin,/className="scenario-variant-row"/);
+ assert.match(admin,/className="scenario-meal-cell"/);
+ assert.match(admin,/classification:type,scenario,meal,color:next/);
+ assert.match(admin,/if\(model\?\.athlete\?\.id!==athleteId\)return/);
  assert.match(admin,/select\.dataset\.color=savedColor\|\|base\|\|"none"/);
  assert.doesNotMatch(admin,/heading\.textContent="Modelo efetivo"/);
  const css=fs.readFileSync("static/admin-microcycles.css","utf8");
@@ -403,12 +407,16 @@ test("Calendar day editing keeps the color endpoint and nutrition without option
  assert.ok(start>=0&&end>start);
  const section=admin.slice(start,end);
  assert.match(section,/calendar\/meal-color/);
- assert.match(section,/averageMealNutrition\(mealOptionsByColor/);
- assert.match(section,/renderNutritionTotals\(host,"Resumo nutricional do dia",plannedDayTotals\(day\)/);
+ assert.match(section,/previewNutritionOption\(day\.date,entry\.meal,liveMeal\)/);
+ assert.match(section,/const newAverage=\(liveMeal\?\.status==="ok"\|\|liveMeal\?\.status==="provisional"\)\?\(selectedOption\?\.nutrition\|\|liveMeal\.nutrition\):null/);
+ assert.match(section,/const liveDay=liveCalendarPlans\[day\.date\]/);
+ assert.match(section,/else if\(liveDay\.state!=="complete"\)/);
+ assert.match(section,/else nutritionCards\(currentBlock,effectiveLiveDayNutrition\(day\.date,liveDay\),dayWeightReferences\?\.\[day\.date\]\?\.weight_kg\)/);
+ assert.match(section,/Não são usados valores antigos como substituição/);
  assert.doesNotMatch(section,/Ver opções/);
  assert.doesNotMatch(section,/opções disponíveis/);
  assert.doesNotMatch(section,/Pré-visualização administrativa/);
- assert.match(section,/className="day-meal-nutrients"/);
+ assert.match(section,/className="day-meal-nutrients calendar-live-meal-nutrients"/);
 });
 test("Calendar month events remain editable under a collapsed summary",()=>{
  assert.match(html,/<details class="calendar-event-list" id="calendar-month-events">/);
@@ -420,12 +428,15 @@ test("Calendar month events remain editable under a collapsed summary",()=>{
 });
 
 test("Weekly average is outside month-event accordion and meal controls stay editable",()=>{
- assert.match(admin,/\$\("calendar-month-events"\)\.insertAdjacentElement\("afterend",weekly\)/);
- assert.match(admin,/colorBar\.append\(choose\)/);
- assert.match(admin,/className="day-meal-nutrients"/);
- assert.match(admin,/\]\.join\(" · "\)/);
- assert.match(admin,/className="calendar-week-coverage"/);
- assert.match(admin,/renderNutritionTotals\(host,"Resumo nutricional do dia",plannedDayTotals\(day\)/);
+ assert.match(html,/id="calendar-month-events"[\s\S]*?<\/details>[\s\S]*?<\/div>\s*<section id="nutrition-weekly-summary"/);
+ assert.match(admin,/const weekly=\$\("nutrition-weekly-summary"\)/);
+ assert.match(admin,/colorShell\.append\(choose,colorCaret\);colorBar\.append\(colorShell\)/);
+ assert.match(admin,/className="day-meal-nutrients calendar-live-meal-nutrients"/);
+ assert.match(admin,/const complete=weeklyData\.days\.length===7&&fullDays===7/);
+ assert.match(admin,/const fullDays=liveEntries\.filter\(x=>x\.state==="complete"\)\.length/);
+ assert.match(admin,/if\(complete\)\{[\s\S]*?effectiveLiveDayNutrition\(weeklyData\.days\[index\]\.date,day,weeklyChoices\)\[key\]/);
+ assert.match(admin,/map\(\(\[key,value\]\)=>\[key,value\/7\]\)/);
+ assert.match(admin,/Média semanal indisponível:[^"]*Não são usados valores antigos/);
  assert.match(admin,/nutritionCards\(weekly,average,null,relativeMeans\)/);
  assert.match(admin,/calendar\/meal-color/);
 });
