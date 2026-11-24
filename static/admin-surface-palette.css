@@ -12752,3 +12752,46 @@ html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-s
   max-height:min(46dvh,290px)!important;
  }
 }
+
+
+/* Player profile / account initial language (not the player's chosen language).
+   Reuse existing profile heading and subcard depth, in light and dark themes. */
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot > .tm-player-language-default{
+ display:flex;flex-direction:column;gap:14px;min-width:0;
+ margin:25px 0 0;padding:0;background:transparent;border:0;box-shadow:none;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-body{
+ display:flex;flex-direction:column;gap:11px;
+ padding:16px 18px;border:0;border-radius:14px;background:var(--tm-ui-subcard);
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-description,
+html[data-admin-theme] #tm-players-page .tm-player-language-default-unlinked{
+ margin:0;font-size:13px;line-height:1.5;color:var(--tm-ui-muted);
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-options{
+ display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-choice{
+ box-sizing:border-box;min-height:42px;min-width:100px;padding:9px 17px;
+ border:1px solid var(--tm-ui-divider);border-radius:12px;
+ background:var(--tm-ui-field-on-card);color:var(--tm-ui-text);
+ font:600 13px "Inter Tight",system-ui,sans-serif;cursor:pointer;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-choice[aria-pressed="true"]{
+ border-color:var(--tm-ui-text);background:var(--tm-ui-hover);
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-choice:focus-visible{
+ outline:2px solid var(--tm-ui-text);outline-offset:2px;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-choice:disabled{
+ cursor:default;opacity:.65;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-actions{
+ display:flex;align-items:center;gap:10px;
+}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-actions [hidden]{display:none!important}
+html[data-admin-theme] #tm-players-page .tm-player-language-default-body .tm-player-settings-feedback{margin:0}
+@media(max-width:620px){
+ html[data-admin-theme] #tm-players-page .tm-player-language-default-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-admin-theme] #tm-players-page .tm-player-language-default-choice{min-width:0}
+}
