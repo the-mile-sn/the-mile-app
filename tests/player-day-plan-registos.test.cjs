@@ -32,3 +32,9 @@ test("Plano do dia heading, Registos card and icon-only registered marker are wi
  assert.match(css,/#overview #day-details \.daily-meal:not\(\[open\]\)>\.daily-meal-head>\.meal-registered-meal-badge\{/);
  assert.match(css,/#overview #day-details \.registos-card\{/);
 });
+test("Semana opened from the widget shows a back button to that day; the Dia/Semana menu does not",()=>{
+ assert.match(source,/open\.onclick=\(\)=>\{weekReturnDay=date;overviewMode="week";/);
+ assert.match(source,/const back=\$\("overview-back"\);back\.hidden=!\(isWeek&&weekReturnDay\);/);
+ assert.match(source,/b\.onclick=\(\)=>\{overviewMode=b\.dataset\.view;weekReturnDay=null;/);
+ assert.match(fs.readFileSync("static/jogador-v2.html","utf8"),/<button type="button" id="overview-back" class="overview-back" hidden aria-label="Voltar ao dia">/);
+});

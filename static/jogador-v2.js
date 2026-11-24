@@ -1702,7 +1702,7 @@ function renderWeekWidget(row,date,calendar){
  const open=document.createElement("button");open.type="button";open.className="day-widget-action";
  open.setAttribute("aria-label",playerText("Abrir vista semanal","Open week view"));
  open.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
- open.onclick=()=>{overviewMode="week";weeklySelection=null;overview().catch(error);};
+ open.onclick=()=>{weekReturnDay=date;overviewMode="week";weeklySelection=null;overview().catch(error);};
  head.append(open);head.onclick=event=>{if(!event.target.closest("button"))open.click();};
  const entry=calendar?.days?.find(x=>x.date===date);
  const value=document.createElement("strong");value.className="day-widget-value";value.textContent=playerClassification(entry?.classification||"Geral");card.append(value);
@@ -2462,6 +2462,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
 
 let consumptionPilotAllowed=null;
 // Início heading: the selected day (or week) as a large title, with a compact Dia/Semana menu.
+// Day the Semana widget was opened from: Semana then shows a back button to it (the menu does not set it).
+let weekReturnDay=null;
 function updateOverviewHeading(){
  const locale=playerDateLocale(),todayKey=iso(new Date()),dayKey=iso(day),isWeek=overviewMode==="week";
  const mon=monday(day),sun=new Date(mon);sun.setDate(mon.getDate()+6);
@@ -2480,6 +2482,9 @@ function updateOverviewHeading(){
  }
  $("overview-kicker").textContent=kicker;$("overview-title").textContent=title;
  $("overview-view-label").textContent=isWeek?playerText("Semana","Week"):playerText("Dia","Day");
+ if(!isWeek)weekReturnDay=null;
+ const back=$("overview-back");back.hidden=!(isWeek&&weekReturnDay);
+ back.setAttribute("aria-label",playerText("Voltar ao dia","Back to the day"));
  const today=$("overview-today");today.textContent=playerText("Hoje","Today");
  today.hidden=isWeek?iso(monday(new Date()))===iso(mon):dayKey===todayKey;
 }
@@ -3225,7 +3230,7 @@ async function menusView(){
  }
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;toggleOverviewMenu(false);overview().catch(error);};$("overview-view-button").onclick=event=>{event.stopPropagation();toggleOverviewMenu();};$("overview-today").onclick=()=>{day=new Date();weeklySelection=null;overview().catch(error);};document.addEventListener("click",event=>{if(!event.target.closest("#overview-mode,#overview-view-button"))toggleOverviewMenu(false);});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("overview-mode").classList.contains("open")){toggleOverviewMenu(false);$("overview-view-button").focus();}});$("profile-logout").onclick=()=>$("logout").click();
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weekReturnDay=null;weeklySelection=null;toggleOverviewMenu(false);overview().catch(error);};$("overview-back").onclick=()=>{const key=weekReturnDay;if(!key)return;day=new Date(key+"T12:00:00");weekReturnDay=null;overviewMode="day";weeklySelection=null;overview().catch(error);};$("overview-view-button").onclick=event=>{event.stopPropagation();toggleOverviewMenu();};$("overview-today").onclick=()=>{day=new Date();weeklySelection=null;overview().catch(error);};document.addEventListener("click",event=>{if(!event.target.closest("#overview-mode,#overview-view-button"))toggleOverviewMenu(false);});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("overview-mode").classList.contains("open")){toggleOverviewMenu(false);$("overview-view-button").focus();}});$("profile-logout").onclick=()=>$("logout").click();
 for(const button of document.querySelectorAll("#profile-language-selector button[data-language]")){
  button.onclick=()=>updatePlayerLanguageChoice(button.dataset.language);
 }

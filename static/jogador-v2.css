@@ -5698,3 +5698,13 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #overview #day-details .registos-day.selected .registos-dot{background:#f4f4f7!important}
 #overview #day-details .registos-foot{display:flex!important;justify-content:space-between!important;gap:8px!important;margin-top:12px!important;padding:12px 4px 0!important;border-top:1px solid rgba(255,255,255,.08)!important;font-size:14px!important;color:#aaaab4!important}
 #overview #day-details .registos-foot strong{color:#f1f1f4!important;font-weight:650!important}
+
+/* Semana opened from the Semana widget: back to that day, same circular back button as Perfil subpages (24/11). */
+#overview .overview-heading-text>button.overview-back{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;margin:0 0 12px!important;padding:0 0 3px!important;
+ border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important;
+}
+#overview .overview-heading-text>button.overview-back[hidden]{display:none!important}
+#overview .overview-back span{font-size:30px;font-weight:400;line-height:1}
+#overview .overview-heading-text>button.overview-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
