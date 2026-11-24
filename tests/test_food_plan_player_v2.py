@@ -2,9 +2,12 @@
 
 Only in-memory fixtures. Never write to any actual athlete's database.
 """
+import hashlib
 import json
+import os
 import sqlite3
 import unittest
+from unittest.mock import patch
 
 import food_plan_player_v2 as player
 
@@ -129,6 +132,56 @@ class PlayerPlanPublicationTests(unittest.TestCase):
         self.assertEqual(len(rows),1)
         self.assertEqual(rows[0]["phase"],"post")
         self.assertEqual(rows[0]["options"][0]["totals"]["kcal"],80)
+
+    def test_event_peri_uses_approved_library_english_without_mutating_prescription(self):
+        # Both plan types use the same published editor and library identifiers.
+        self.add(plan("Plano Peri-treino",[
+            meal("Pós-treino",opt(f("bread",80),title="Lanche rápido",
+                                 notes=["Consumir depois do treino."]))]),"peri")
+        raw=self.c.execute(
+            "SELECT snapshot_json FROM v2_food_plan_editor_publications WHERE draft_id='peri'"
+        ).fetchone()["snapshot_json"]
+        pub_ref="pub:"+hashlib.sha256(("peri\\0"+raw).encode("utf-8")).hexdigest()
+        self.c.execute("""CREATE TABLE v2_content_translations (
+            entity_kind TEXT,entity_id TEXT,field_path TEXT,language TEXT,
+            source_hash TEXT,translated_text TEXT,status TEXT)""")
+        rows=[
+            ("food","bread","display_name","Pão","Bread","approved"),
+            ("plan",pub_ref,"meals/0/options/0/title","Lanche rápido","Quick snack","approved"),
+            ("plan",pub_ref,"meals/0/options/0/notes/0",
+             "Consumir depois do treino.","Consume after training.","approved")
+        ]
+        for kind,entity,path,pt,en,status in rows:
+            sha=hashlib.sha256(pt.encode("utf-8")).hexdigest()
+            self.c.execute("INSERT INTO v2_content_translations VALUES(?,?,?,?,?,?,?)",
+                           (kind,entity,path,"en",sha,en,status))
+        ev={"id":"training1","kind":"training","event_date":"2026-11-06",
+            "session":"morning","post_override":"auto"}
+        args=(self.c,"a1","2026-11-06","2026-11-06")
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            pt=player.player_peri_days(*args,events=[ev],matches=[],language="pt")
+            en=player.player_peri_days(*args,events=[ev],matches=[],language="en")
+        self.assertEqual(len(pt),len(en))
+        original=pt[0]["options"][0]
+        translated=en[0]["options"][0]
+        self.assertEqual(original["title"],"Lanche rápido")
+        self.assertEqual(translated["title"],"Quick snack")
+        self.assertEqual(original["items"][0]["name"],"Pão")
+        self.assertEqual(translated["items"][0]["name"],"Bread")
+        self.assertEqual(original["option_ref"],translated["option_ref"])
+        self.assertEqual(original["totals"],translated["totals"])
+        self.assertEqual(original["source_draft_id"],translated["source_draft_id"])
+        self.assertEqual(translated["items"][1]["text"],"Consume after training.")
+        self.assertEqual(pt[0]["event_id"],en[0]["event_id"])
+        # A stale or unapproved approval cannot leak into the calendar.
+        self.c.execute("UPDATE v2_content_translations SET status='pending' WHERE entity_kind='food'")
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            pending=player.player_peri_days(*args,events=[ev],matches=[],language="en")
+        self.assertEqual(pending[0]["options"][0]["items"][0]["name"],"Pão")
+        snapshot=self.c.execute(
+            "SELECT snapshot_json FROM v2_food_plan_editor_publications WHERE draft_id='peri'"
+        ).fetchone()["snapshot_json"]
+        self.assertEqual(snapshot,raw)
 
     def test_match_intra_maps_to_existing_match_card_without_double_counting(self):
         self.add(plan("Plano Peri-jogo",[
