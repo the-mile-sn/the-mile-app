@@ -39,6 +39,7 @@ import recipe_pdf_import_v2
 import calendar_v2
 import dashboard_v2
 import admin_players_v2
+import player_language_defaults_v2
 import events_v2
 import day_colors_v2
 import peri_v2
@@ -300,6 +301,8 @@ def initialize():
         chef_accounts_v2.enable_role(c)
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
+        if SITE_ROLE != 'player':
+            player_language_defaults_v2.initialize(c)
         chef_accounts_v2.initialize(c)
         chef_collaboration_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
@@ -2822,6 +2825,26 @@ def application(env, start_response):
                         if args.get('menu') == ['1']
                         else admin_library_thumbnail(image_data))
                 return respond(200,image_data,'image/webp')
+            # Admin sets only the INITIAL language; the player's own selection is separate.
+            # This endpoint never edits v2_player_language_preferences or prescriptions.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/initial-language') and method in ('GET','PUT'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5 or parts[:3]!=['api','v2','athletes'] or parts[4]!='initial-language':
+                    raise Problem(404,'not_found')
+                link=c.execute("""SELECT u.id FROM v2_player_links l
+                    JOIN users u ON u.id=l.user_id AND u.role='player'
+                    WHERE l.athlete_id=?""",(parts[3],)).fetchone()
+                if not link: raise Problem(409,'player_account_not_linked')
+                if method=='GET':
+                    return respond(200,{'language':player_language_defaults_v2.get(c,link['id'])})
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'language'} or type(body['language']) is not str or body['language'] not in ('pt','en'):
+                    raise Problem(400,'invalid_initial_language')
+                player_language_defaults_v2.set_initial(c,link['id'],body['language'])
+                c.commit()
+                return respond(200,{'language':body['language']})
             if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method in ('GET', 'PUT'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -2830,7 +2853,7 @@ def application(env, start_response):
                 details=c.execute("SELECT followup_plan,followup_renewal_date,meal_option_selection_enabled,visual_portions_enabled FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone()
                 if details is None: raise Problem(404,'not_found')
                 if method=='GET':
-                    return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date'],'meal_option_selection_enabled':bool(details['meal_option_selection_enabled']),'visual_portions_enabled':bool(details['visual_portions_enabled'])}})
+                    return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'initial_language':player_language_defaults_v2.get(c,linked['id']) if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date'],'meal_option_selection_enabled':bool(details['meal_option_selection_enabled']),'visual_portions_enabled':bool(details['visual_portions_enabled'])}})
                 body=read_json(env)
                 # Omitted by older Planning profile forms: preserve the saved preference.
                 selection_enabled=body.get('meal_option_selection_enabled',bool(details['meal_option_selection_enabled']))
