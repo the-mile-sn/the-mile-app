@@ -44,3 +44,9 @@ test('widget trend lines are neutral (cut-point colours stay in the chart)',()=>
  assert.match(css,/#plans \.progress-spark-line\{fill:none;stroke:#f1f1f4;stroke-opacity:\.5/);
  assert.match(css,/#plans \.progress-tile\{[^}]*background:rgba\(255,255,255,\.045\)/s);
 });
+test('widgets use the spacing of the Início Peso widget: content from the top, 6 px rows, value right under the label',()=>{
+ assert.match(css,/#plans \.progress-tile\{[^}]*justify-content:flex-start;gap:6px;/s);
+ assert.doesNotMatch(css,/#plans \.progress-tile\{[^}]*aspect-ratio/s);
+ assert.match(css,/#plans \.progress-tile-head\{[^}]*min-height:20px;margin-bottom:-2px\}/);
+ assert.match(css,/#overview #day-details \.day-widget-head\{[^}]*margin-bottom:-2px!important\}/);
+});
