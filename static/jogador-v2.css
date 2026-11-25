@@ -3316,7 +3316,7 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 /* Assessments: footer timestamp and formula note only in expanded body-fat card.
    Existing metric cards, charts and navigation remain unchanged. */
 #plans #plans-assessments .progress-chart-card>.assessment-formula{
- margin:0 16px 16px;
+ margin:0 0 10px;
  padding:8px 0 0;
  border-top:1px solid rgba(255,255,255,.09);
  color:#a8a8b1;
@@ -5422,7 +5422,7 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 :is(#overview,#plans-assessments) .weight-detail-summary strong{font-size:34px;font-weight:720;line-height:1.1}
 :is(#overview,#plans-assessments) .weight-detail-summary strong span{font-size:17px;font-weight:500;color:#aaaab4}
 :is(#overview,#plans-assessments) .weight-detail-period{font-size:13px;color:#aaaab4}
-:is(#overview,#plans-assessments) .weight-detail-chart{padding:14px 14px 6px;border-radius:13px;background:#25262b}
+:is(#overview,#plans-assessments) .weight-detail-chart,#plans .progress-chart-card{padding:14px 14px 6px;border-radius:13px;background:#25262b}
 :is(#overview,#plans-assessments) .weight-detail-chart svg{display:block;width:100%;height:auto}
 :is(#overview,#plans-assessments) .weight-detail-grid{stroke:rgba(255,255,255,.08);stroke-width:1}
 :is(#overview,#plans-assessments) .weight-detail-tick{font-size:11px;fill:#aaaab4}
@@ -5576,7 +5576,8 @@ body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #plans .progress-page-value{font-size:40px;font-weight:720;line-height:1.1;color:#f4f4f7}
 #plans .progress-page-value span{font-size:18px;font-weight:500;color:#aaaab4}
 #plans .progress-page-sub{margin:0;font-size:14px;color:#aaaab4}
-#plans .progress-chart-card{background:#242429;border-radius:18px;overflow:hidden;padding:4px 0 1px}
+/* One surface, as in Peso em jejum: the chart sits directly on the card (no inner #1b1b20 panel). */
+#plans .progress-chart-card>.assessment-trend{margin:0;padding:0;border-radius:0;background:transparent}
 #plans .progress-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:22px 4px 10px}
 #plans .progress-section-head h3{margin:0;font-size:17px;font-weight:650}
 #plans .progress-section-head strong{font-size:17px;font-weight:650;white-space:nowrap}
