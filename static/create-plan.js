@@ -83,6 +83,7 @@ const label=t=>t.map((n,i)=>fmt(n)+(i===0?" kcal":" g")).join(" · ");
 const status=s=>$("status").textContent=s;
 
 /* Total macros use the same date-specific reference-weight resolver as Planeamento. */
+let previewEnglish=null,previewLanguageToken=0;
 const planRef={key:"",weight:null,token:0,error:false};
 const planRefDate=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const tmMonthAbbrev=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -99,7 +100,7 @@ function renderPlanReference(){
    !plan.athlete_id?"Seleciona um jogador para calcular os rácios":
    planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
  if(note){note.textContent=label;if(valid)note.dataset.tmMobileWeight=fmt(w)+" kg";else delete note.dataset.tmMobileWeight;}
- const previewNote=$("plan-preview-weight");if(previewNote){const previewDate=valid?new Date(planRefDate()+"T12:00:00Z").toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}):"";previewNote.textContent=valid?"Referência: "+fmt(w)+" kg · "+previewDate:label;}
+ const previewNote=$("plan-preview-weight");if(previewNote){const en=!!previewEnglish;const previewDate=valid?new Date(planRefDate()+"T12:00:00Z").toLocaleDateString(en?"en-GB":"pt-PT",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}):"";previewNote.textContent=valid?(en?"Reference: ":"Referência: ")+fmt(w)+" kg · "+previewDate:en?(planRef.error?"Reference weight unavailable.":"Loading reference weight…"):label;}
  queryAll("[data-plan-preview-kg]").forEach(el=>{
   const index=Number(el.dataset.planPreviewKg);
   el.textContent=valid?fmt(values[index]/w)+(index===0?" kcal/kg":" g/kg"):"";
@@ -545,7 +546,7 @@ async function openPlanPreview(id,source){
  if(previewOpening||!id)return;
  rememberPlanLibraryPosition(id,source);
  previewOpening=true;
- try{await loadExistingPlan(id);renderPlanPreview();showEntry("preview")}
+ try{await loadExistingPlan(id);resetPreviewLanguage();renderPlanPreview();showEntry("preview")}
  catch(err){planLibraryReturnPoint=null;status("Não foi possível visualizar o plano: "+err.message)}
  finally{previewOpening=false}
 }
@@ -619,19 +620,50 @@ const previewPalette=type=>{
  return "neutral";
 };
 const previewNutrition=t=>'<span class="preview-kcal">'+fmtKcal(t[0])+' kcal</span><span class="preview-protein">'+fmt(t[1])+' g</span><span class="preview-carbs">'+fmt(t[2])+' g</span><span class="preview-fat">'+fmt(t[3])+' g</span>';
-const renderPlanPreview=()=>{
- const body=$("plan-preview-content"),total=totals(),palette=previewPalette(plan.plan_type);
- body.innerHTML='<div class="plan-preview-heading"><div id="plan-preview-weight" class="plan-preview-weight"></div><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(plan.plan_type)+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"][i]+'</small>'+'<small class="plan-preview-perkg" data-plan-preview-kg="'+i+'"></small>'+'</div>').join("")+'</div></div><div class="plan-preview-group" data-palette="'+palette+'"><h3 class="plan-preview-group-title">'+esc(plan.plan_type.replace(/^Plano\s+/i,""))+'</h3>'+plan.meals.map((meal,mi)=>{
+const previewLabels={"Plano laranja":"Orange plan","Plano amarelo":"Yellow plan","Plano azul":"Blue plan","Plano verde":"Green plan","Plano verde preparação":"Green preparation plan","Plano Peri-jogo":"Peri-match plan","Plano Peri-treino":"Peri-training plan","Plano geral":"General plan","Pequeno almoço":"Breakfast","Pequeno almoço / lanche":"Breakfast / snack","Almoço / jantar":"Lunch / dinner","Almoço":"Lunch","Lanche":"Snack","Jantar":"Dinner","Ceia":"Supper","Pré treino":"Pre-training","Pós treino":"Post-training","Pré jogo":"Pre-match","Intra jogo":"In-match","Pós jogo":"Post-match","Pré-treino":"Pre-training","Pós-treino":"Post-training","Pré-jogo":"Pre-match","Intra-jogo":"In-match","Intrajogo":"In-match","Pós-jogo":"Post-match"};
+const previewLabel=value=>previewEnglish?(previewLabels[value]||value):value;
+const syncPreviewLanguage=()=>{
+ const button=$("tm-plan-preview-language");
+ if(!button)return;
+ button.setAttribute("aria-pressed",String(!!previewEnglish));
+ button.title=previewEnglish?"Ver plano em português":"Ver plano em inglês";
+ button.setAttribute("aria-label",button.title);
+ button.querySelector("span").textContent=previewEnglish?"EN":"PT";
+};
+const resetPreviewLanguage=()=>{previewLanguageToken++;previewEnglish=null;syncPreviewLanguage();};
+const previewComparable=meals=>{
+ const copy=JSON.parse(JSON.stringify(meals));
+ for(const meal of copy)for(const opt of meal.options){opt.notes=opt.notes||[];ensureOrder(opt);}
+ return JSON.stringify(copy,(_,v)=>v&&typeof v==="object"&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+};
+window.tmTogglePlanPreviewLanguage=async()=>{
+ if($("plan-preview").hidden)return;
+ if(previewEnglish){resetPreviewLanguage();renderPlanPreview(true);return;}
+ if(publicationState.state!=="published"||publicationState.pending_changes){
+  alert("A tradução está disponível apenas na versão publicada, sem alterações por publicar.");return;
+ }
+ const id=String(plan.id),token=++previewLanguageToken;
+ const data=await request("/api/v2/admin/i18n/plans/preview?"+new URLSearchParams({draft_id:id}),{cache:"no-store"});
+ if(token!==previewLanguageToken||$("plan-preview").hidden||String(plan.id)!==id)return;
+ if(data.draft_id!==id||data.plan_type!==plan.plan_type||!Array.isArray(data.meals)||previewComparable(data.source_meals)!==previewComparable(plan.meals))throw Error("plan_publication_changed");
+ previewEnglish=data;syncPreviewLanguage();renderPlanPreview(true);
+};
+const renderPlanPreview=(preserveOpen=false)=>{
+ const body=$("plan-preview-content"),total=totals(),palette=previewPalette(plan.plan_type),en=!!previewEnglish;
+ const openStates=preserveOpen?Array.from(body.querySelectorAll("details"),el=>el.open):[];
+ body.innerHTML='<div class="plan-preview-heading"><div id="plan-preview-weight" class="plan-preview-weight"></div><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(previewLabel(plan.plan_type))+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+(en?["kcal","Protein (g)","Carbohydrates (g)","Fat (g)"]:["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"])[i]+'</small>'+'<small class="plan-preview-perkg" data-plan-preview-kg="'+i+'"></small>'+'</div>').join("")+'</div></div><div class="plan-preview-group" data-palette="'+palette+'"><h3 class="plan-preview-group-title">'+esc(en?previewLabel(plan.plan_type).replace(/ plan$/i,""):plan.plan_type.replace(/^Plano\s+/i,""))+'</h3>'+plan.meals.map((meal,mi)=>{
  const mealTotals=average(meal);
- return '<details class="plan-preview-meal"><summary class="plan-preview-meal-heading"><span class="plan-preview-meal-name">'+esc(mealDisplayName(meal))+'</span><span class="plan-preview-meal-macros">'+previewNutrition(mealTotals)+'</span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-options">'+meal.options.map((opt,oi)=>{
- const entries=displayOrder(opt).map(item=>item.type==="food"?(()=>{const f=opt.foods[item.index];if(!f)return "";const ref=foodById.get(f.id);return '<div class="plan-preview-food'+(f.alternative_to!=null?' plan-preview-alternative':'')+'">'+(f.alternative_to!=null?'<span class="alternative-or">ou</span> ':'')+esc(f.display_quantity||(f.grams==null?'⚠ Quantidade por definir':fmt(f.grams)+' g'))+' '+esc(f.display_name||(f.kind==='supplement'?f.label:(ref?.display_name||'Alimento indisponível')))+'</div>'})():(()=>{const note=opt.notes?.[item.index];return note?'<div class="plan-preview-note">'+esc(note)+'</div>':""})()).join("");
- return '<details class="plan-preview-option"><summary class="plan-preview-option-heading"><span><small>Opção '+(oi+1)+'</small><strong>'+esc(opt.title||"Opção "+(oi+1))+'</strong></span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-option-body"><div class="plan-preview-option-macros">'+previewNutrition(sum(opt.foods))+'</div>'+entries+'</div></details>'
+ return '<details class="plan-preview-meal"><summary class="plan-preview-meal-heading"><span class="plan-preview-meal-name">'+esc(previewLabel(mealDisplayName(meal)))+'</span><span class="plan-preview-meal-macros">'+previewNutrition(mealTotals)+'</span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-options">'+meal.options.map((opt,oi)=>{
+ const shown=previewEnglish?.meals[mi]?.options[oi]||opt;
+ const entries=displayOrder(opt).map(item=>item.type==="food"?(()=>{const f=opt.foods[item.index];if(!f)return "";const ref=foodById.get(f.id);const shownFood=shown.foods[item.index]||f;return '<div class="plan-preview-food'+(f.alternative_to!=null?' plan-preview-alternative':'')+'">'+(f.alternative_to!=null?'<span class="alternative-or">'+(en?'or':'ou')+'</span> ':'')+esc(shownFood.display_quantity||(f.grams==null?(en?'⚠ Quantity not defined':'⚠ Quantidade por definir'):fmt(f.grams)+' g'))+' '+esc(shownFood.display_name||(f.kind==='supplement'?shownFood.label:(previewEnglish?.food_names[f.id]||ref?.display_name||(en?'Food unavailable':'Alimento indisponível'))))+'</div>'})():(()=>{const note=shown.notes?.[item.index];return note?'<div class="plan-preview-note">'+esc(note)+'</div>':""})()).join("");
+ return '<details class="plan-preview-option"><summary class="plan-preview-option-heading"><span><small>'+(en?'Option ':'Opção ')+(oi+1)+'</small><strong>'+esc(shown.title||(en?"Option ":"Opção ")+(oi+1))+'</strong></span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-option-body"><div class="plan-preview-option-macros">'+previewNutrition(sum(opt.foods))+'</div>'+entries+'</div></details>'
  }).join("")+'</div></details>'
  }).join("")+'</div>';
+  if(preserveOpen)body.querySelectorAll("details").forEach((el,i)=>{el.open=!!openStates[i]});
   ensurePlanReference();
 };
-$("preview-back").onclick=returnToPlanLibrary;
-$("preview-edit").onclick=()=>showEntry("editor");
+$("preview-back").onclick=()=>{resetPreviewLanguage();returnToPlanLibrary();};
+$("preview-edit").onclick=()=>{resetPreviewLanguage();showEntry("editor");};
 const switchExistingPlan=async(playerId,type)=>{const owner=players.find(p=>p.id===playerId);if(!owner){status("Seleciona um jogador válido.");draw();return}const match=plansForPlayer(playerId).find(d=>d.plan_type===type);if(match){try{await loadExistingPlan(match.id)}catch(err){status("Não foi possível mudar de plano: "+err.message)}return}
  if(!confirm("Ainda não existe "+type+" para "+owner.name+". Criar um novo rascunho separado, sem alterar o plano atual?")){draw();return}
  const initialMeal=type==="Plano Peri-treino"?"Pré treino":type==="Plano Peri-jogo"?"Pré jogo":"Pequeno almoço";

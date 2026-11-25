@@ -43,3 +43,8 @@
 
 /* Keep the translation action immediately beside the existing New Plan button. */
 #tm-plan-page #plan-editor .tm-plan-editor-actions{display:inline-flex;align-items:center;justify-content:flex-end;gap:12px;margin-left:auto;flex:0 0 auto}
+
+/* Existing Planos preview actions, no change to the card layout. */
+#tm-plan-page #plan-preview .tm-plan-preview-actions{display:inline-flex;align-items:center;gap:12px;margin-left:auto}
+#tm-plan-page #plan-preview #tm-plan-preview-language{width:auto;max-width:none;gap:6px;padding:0 10px;font:inherit;font-size:12px}
+#tm-plan-page #plan-preview #tm-plan-preview-language:disabled{opacity:.65;cursor:default}

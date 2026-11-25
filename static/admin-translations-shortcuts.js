@@ -52,6 +52,26 @@
       add("supp-library-new","supplement","Traduções · Suplementação");
       add("entry-create","plan","Traduções · Planos");
       add("entry-create-mobile","plan","Traduções · Planos");
+      const edit=document.querySelector("#tm-plan-page #preview-edit");
+      if(edit&&!document.getElementById("tm-plan-preview-language")){
+        const button=document.createElement("button");
+        button.type="button";button.id="tm-plan-preview-language";
+        button.className="tm-i18n-library-link tm-action-secondary";
+        button.title="Ver plano em inglês";
+        button.setAttribute("aria-label",button.title);
+        button.setAttribute("aria-pressed","false");
+        const glyph=nav?.querySelector(".tm-admin-nav-icon svg");
+        if(glyph){const copy=glyph.cloneNode(true);copy.setAttribute("aria-hidden","true");button.append(copy);}
+        const label=document.createElement("span");label.textContent="PT";button.append(label);
+        button.addEventListener("click",async()=>{
+          button.disabled=true;
+          try{await window.tmTogglePlanPreviewLanguage();}
+          catch(_){alert("Não foi possível visualizar esta versão em inglês. Confirma se o plano está publicado e atualizado.");}
+          finally{button.disabled=false;}
+        });
+        const actions=document.createElement("span");actions.className="tm-plan-preview-actions";
+        edit.before(actions);actions.append(button,edit);
+      }
       const newPlan=document.querySelector("#tm-plan-page #new-plan");
       if(newPlan&&!document.getElementById("tm-plan-editor-translation")){
         const button=document.createElement("button");

@@ -28,7 +28,7 @@ try{
     const editorDraft={id:"editor-draft-test",athlete_id:"athlete-test",
       player_id:"player-test",player_name:"Atleta fictício",name:"Atleta fictício - Plano azul",
       plan_type:"Plano azul",publication:{state:"published",pending_changes:false,published_at:100},
-      meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[]}]}]};
+      meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[],order:[]}]}]};
     const publicRef="a".repeat(64);
     const privateRef="d".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
@@ -205,6 +205,11 @@ try{
         }
         await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
           group_id:payload.group_id}));
+      }else if(path==="/api/v2/admin/i18n/plans/preview"){
+        assert.equal(url.searchParams.get("draft_id"),editorDraft.id);
+        const meals=JSON.parse(JSON.stringify(editorDraft.meals));
+        meals[0].options[0].title="Option 1";
+        await route.fulfill(fmt({draft_id:editorDraft.id,publication_ref:publicRef,plan_type:editorDraft.plan_type,source_meals:editorDraft.meals,meals,food_names:{}}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
         const draft=url.searchParams.get("draft_id");
         if(draft)assert.equal(draft,"editor-draft-test");
@@ -443,8 +448,28 @@ try{
     assert.ok(gap.aligned<=4,name+" plan icons are not vertically centred");
     assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
     assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
-    // Exercise the actual editor with a published fixture and an unsaved title.
+    // Toggle the same published preview, preserving expansion and clinical writes.
     await page.locator("#tm-admin-nav-create-plan").click();
+    await page.locator("[data-plan-open-id='editor-draft-test']:visible").first().click({position:{x:10,y:10}});
+    const preview=page.locator("#plan-preview");
+    await preview.waitFor({state:"visible"});
+    await preview.locator(".plan-preview-meal > summary").click();
+    const toggle=preview.locator("#tm-plan-preview-language");
+    await toggle.click();
+    await preview.getByText("Breakfast",{exact:true}).waitFor();
+    assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Option 1");
+    assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+    assert.equal(await preview.locator(".plan-preview-meal").first().getAttribute("open"),"");
+    await toggle.click();
+    await preview.getByText("Pequeno almoço",{exact:true}).waitFor();
+    assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Opção 1");
+    assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+    // The existing desktop header replaces the lower back button; mobile keeps its own.
+    await page.locator('#tm-dashboard-return-button:visible, #plan-preview #preview-back:visible').first().click();
+    await page.locator("#plan-entry").waitFor({state:"visible"});
+    assert.equal(await preview.isVisible(),false);
+    assert.deepEqual(clinicalWrites,[]);
+    // Exercise the actual editor with a published fixture and an unsaved title.
     const edit=page.locator("[data-edit-id='editor-draft-test']:visible").first();
     await edit.waitFor();
     await edit.click();

@@ -177,6 +177,39 @@ class PlanTranslationsTests(unittest.TestCase):
         with patch.dict(os.environ, {"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
             self.assertEqual(self.call(url)["status"], 404)
 
+    def test_preview_only_approved_current_version_and_no_writes(self):
+        with patch.dict(os.environ, FLAG):
+            url=ROOT+"/preview?draft_id="+self.draft_id
+            with app.connect() as c:
+                c.execute("INSERT INTO v2_food_plan_drafts(id,name,content,created_at,updated_at) VALUES(?,?,?,?,?)",
+                          (self.draft_id,self.plan["name"],self.original,100,100))
+                c.commit()
+            ref=self.index()["publication_ref"]
+            field=self.fields(ref)["body"]["fields"][0]
+            self.assertEqual(self.propose(ref,field,"Option 1")["status"],201)
+            pending=self.call(url)
+            self.assertEqual(pending["status"],200,pending)
+            self.assertEqual(pending["body"]["meals"][0]["options"][0]["title"],"Opção 1")
+            self.assertEqual(self.approve(ref,self.fields(ref)["body"]["fields"][0])["status"],200)
+            preview=self.call(url)
+            self.assertEqual(preview["status"],200,preview)
+            self.assertEqual(preview["body"]["meals"][0]["options"][0]["title"],"Option 1")
+            self.assertEqual(preview["body"]["source_meals"],self.plan["meals"])
+            self.assertEqual(preview["body"]["meals"][0]["options"][0]["foods"][0]["grams"],100)
+            self.assertEqual(Client().request(url)["status"],401)
+            with patch.object(app,"SITE_ROLE","player"):
+                self.assertEqual(self.call(url)["status"],404)
+            with app.connect() as c:
+                self.assertEqual(c.execute("SELECT snapshot_json FROM v2_food_plan_editor_publications WHERE draft_id=?",(self.draft_id,)).fetchone()["snapshot_json"],self.original)
+                self.assertEqual(c.execute("SELECT content FROM v2_food_plan_drafts WHERE id=?",(self.draft_id,)).fetchone()["content"],self.original)
+                changed=json.loads(self.original)
+                changed["meals"][0]["options"][0]["title"]="Alterado"
+                c.execute("UPDATE v2_food_plan_drafts SET content=? WHERE id=?",(json.dumps(changed),self.draft_id))
+                c.commit()
+            self.assertEqual(self.call(url)["status"],409)
+        with patch.dict(os.environ,{"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
+            self.assertEqual(self.call(url)["status"],404)
+
     def test_compact_review_approved_and_stale_candidate(self):
         with patch.dict(os.environ, FLAG):
             ref = self.index()["publication_ref"]

@@ -18,6 +18,7 @@ PATHS = frozenset((
     ROOT + "/batch/preview", ROOT + "/batch/approve",
     ROOT + "/plans", ROOT + "/plans/fields", ROOT + "/plans/history",
     ROOT + "/plans/propose", ROOT + "/plans/approve", ROOT + "/plans/save-approved",
+    ROOT + "/plans/preview",
     ROOT + "/plans/common", ROOT + "/plans/common/approve",
     ROOT + "/plans/common/import",
     ROOT + "/plans/recovery", ROOT + "/plans/recovery/approve",
@@ -83,6 +84,11 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                 if query:
                     raise APIError(400, "invalid_translation_query")
                 return 200, plans.list_publications(c, user)
+            if path == ROOT + "/plans/preview":
+                q = _query(query or {}, ("draft_id",))
+                if set(q) != {"draft_id"}:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, plans.preview_draft(c, user, q["draft_id"])
             if path == ROOT + "/plans/fields":
                 q = _query(query or {}, ("publication_ref", "draft_id"))
                 if set(q) == {"draft_id"}:

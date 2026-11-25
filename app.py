@@ -928,6 +928,7 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/import/submit',
                 '/api/v2/admin/i18n/plans',
                 '/api/v2/admin/i18n/plans/fields',
+                '/api/v2/admin/i18n/plans/preview',
                 '/api/v2/admin/i18n/plans/history',
                 '/api/v2/admin/i18n/plans/propose',
                 '/api/v2/admin/i18n/plans/approve',
