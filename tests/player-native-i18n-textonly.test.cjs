@@ -34,7 +34,6 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(document.documentElement.lang,"en-GB");
   assert.equal(nodes.get("#tabs [data-tab='overview'] > span:last-child")
                    .textContent,"Home");
-  assert.equal(nodes.get("#overview-mode [data-view='week']").textContent,"Week");
   assert.equal(nodes.get("#profile-password-open > span:nth-child(2)")
                    .textContent,"Change password");
   assert.equal(vm.runInContext("names.breakfast",ctx),"Breakfast");

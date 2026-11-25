@@ -351,9 +351,6 @@ header{padding:10px 0 24px}
 }
 
 /* Weekly view — seven perfectly aligned columns, no horizontal scrolling */
-#overview-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#202127;border-radius:14px;padding:4px;margin:14px 0}
-#overview-mode button{border:0;background:transparent;box-shadow:none;padding:10px;font-weight:600;font-size:14px}
-#overview-mode button[aria-pressed=true]{background:#42434b;border-radius:11px}
 .weekly-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:3px;row-gap:5px;width:100%}
 .weekly-day-header{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;overflow:hidden;background:transparent;border:0;padding:9px 0;color:#fafafa}
 .weekly-day-header .weekday{color:#aeb0b9;font-size:clamp(8px,1.9vw,12px)}
@@ -938,9 +935,6 @@ header{padding:10px 0 24px}
 
 /* iOS pill geometry for Plans selectors and Day/Week segmented control. */
 #plan-colors button{border-radius:999px!important}
-#overview-mode{border-radius:999px!important}
-#overview-mode button{border-radius:999px!important}
-#overview-mode button[aria-pressed=true]{border-radius:999px!important}
 
 /* Weekly grid: compact iOS-style meal cells with a tighter label/kcal stack. */
 #weekly-view .weekly-meal{
@@ -1511,8 +1505,6 @@ header{padding:10px 0 24px}
 .player-top{display:flex!important;justify-content:space-between!important;align-items:center!important;min-height:51px!important}
 #player-avatar{border:0!important;border-radius:50%!important;width:43px!important;height:43px!important;min-width:43px!important;padding:0!important;background:#3c3c42!important;color:#fff!important;font-weight:700!important}
 #player-panel .welcome{margin-top:4px!important}
-#overview-mode{min-height:0!important;padding:4px!important}
-#overview-mode button{padding:7px 12px!important;min-height:34px!important;font-size:13px!important}
 .placeholder-screen{padding:28px 10px 100px}
 .nutrition-donut-summary{position:relative!important;display:flex!important;flex-wrap:wrap!important;gap:0!important;align-items:flex-start!important;padding-right:47px!important}
 .nutrition-donut-summary .nutrition-hero{flex:1 1 24%!important;min-width:0!important}
@@ -1696,22 +1688,6 @@ header{padding:10px 0 24px}
 
 /* Apple Screen Time inspired day/week segmented switch. */
 #player-panel #overview{margin-top:0!important}
-#overview #overview-mode{
- display:grid!important;grid-template-columns:1fr 1fr!important;
- width:100%!important;box-sizing:border-box!important;
- background:#202024!important;border:none!important;
- border-radius:999px!important;padding:3px!important;gap:3px!important;
- min-height:0!important;margin:0 0 10px!important;
-}
-#overview #overview-mode button{
- appearance:none!important;background:transparent!important;border:0!important;
- border-radius:999px!important;box-shadow:none!important;
- min-height:35px!important;padding:6px 8px!important;
- font-size:14px!important;font-weight:500!important;color:#f2f2f5!important;
-}
-#overview #overview-mode button[aria-pressed="true"]{
- background:#55555b!important;box-shadow:0 1px 2px rgba(0,0,0,.18)!important;
-}
 /* Reduce the gap beneath the avatar only on the home view. */
 #player-panel:has(#overview:not([hidden])){margin-top:-9px!important}
 /* Stable kcal chevron: same button coordinates in both states. */
@@ -3664,36 +3640,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* iOS Screen Time reference: equal-width, full-height rounded segments.
    Keep existing Dia/Semana order and aria-pressed behaviour unchanged. */
-#overview #overview-mode{
- display:grid!important;
- grid-template-columns:repeat(2,minmax(0,1fr))!important;
- align-items:stretch!important;
- gap:3px!important;
- padding:3px!important;
- min-height:54px!important;
- border-radius:999px!important;
- background:#202024!important;
- overflow:hidden!important;
-}
-#overview #overview-mode button,
-#overview #overview-mode button[aria-pressed="true"]{
- display:flex!important;
- justify-content:center!important;
- align-items:center!important;
- width:100%!important;
- min-width:0!important;
- min-height:48px!important;
- margin:0!important;
- padding:9px 10px!important;
- border:0!important;
- border-radius:999px!important;
- font-size:15px!important;
- font-weight:500!important;
- line-height:1.2!important;
- box-shadow:none!important;
-}
-#overview #overview-mode button:not([aria-pressed="true"]){background:transparent!important;color:#f2f2f5!important}
-#overview #overview-mode button[aria-pressed="true"]{background:#55555b!important;color:#fff!important}
 /* Training and match cells must have the same 9px corners as meal cells,
    overriding older 15px sport-event rules without changing their colours. */
 #weekly-view .weekly-event-slot>.weekly-event-card,
@@ -3707,22 +3653,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 }
 
 /* iPhone Screen Time reference: compact control, not the oversized 54px switch. */
-#overview #overview-mode{
- min-height:38px!important;
- height:38px!important;
- padding:3px!important;
- gap:3px!important;
- border-radius:999px!important;
-}
-#overview #overview-mode button,
-#overview #overview-mode button[aria-pressed="true"]{
- min-height:32px!important;
- height:32px!important;
- padding:4px 8px!important;
- font-size:13px!important;
- line-height:1.1!important;
- border-radius:999px!important;
-}
 /* Match cards with intra content had a legacy 68px min-height.
    Both match and training event tiles now use the same compact row height. */
 #weekly-view .weekly-event-slot>.weekly-event-card,
@@ -4601,9 +4531,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 
 /* v segmented 1: App Store-like moving selection pill */
-#overview-mode.mile-segment-animated,
-#menus-recipe-switch.mile-segment-animated,
-#plans-assessments .assessment-tabs.mile-segment-animated{position:relative!important;isolation:isolate}
+#menus-recipe-switch.mile-segment-animated,#plans-assessments .assessment-tabs.mile-segment-animated{position:relative!important;isolation:isolate}
 .mile-segment-animated>.mile-segment-indicator{
  position:absolute!important;left:0;top:0;z-index:0;pointer-events:none;
  border-radius:999px;background:#55555b;opacity:0;
@@ -4612,9 +4540,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 .mile-segment-animated>.mile-segment-indicator.mile-segment-ready{opacity:1}
 .mile-segment-animated>button{position:relative!important;z-index:1!important;transition:color .18s ease!important}
-#overview-mode.mile-segment-animated>button[aria-pressed="true"],
-#menus-recipe-switch.mile-segment-animated>button[aria-pressed="true"],
-#plans-assessments .assessment-tabs.mile-segment-animated>button[aria-pressed="true"]{background:transparent!important;box-shadow:none!important}
+#menus-recipe-switch.mile-segment-animated>button[aria-pressed="true"],#plans-assessments .assessment-tabs.mile-segment-animated>button[aria-pressed="true"]{background:transparent!important;box-shadow:none!important}
 @media(prefers-reduced-motion:reduce){.mile-segment-animated>.mile-segment-indicator{transition:none!important}}
 
 
@@ -5550,25 +5476,7 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
  background:#202024!important;color:#f2f2f5!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;
 }
 #overview .overview-heading-actions button[hidden]{display:none!important}
-#overview .overview-view-button{padding:0 10px 0 14px!important}
-#overview .overview-view-button svg{width:14px!important;height:14px!important;color:#aaaab4!important}
 /* The Dia/Semana buttons become the menu that opens from "Dia ⌄". */
-#overview #overview-heading #overview-mode{
- position:absolute!important;top:calc(100% - 6px)!important;right:2px!important;z-index:40!important;
- display:none!important;grid-template-columns:none!important;gap:0!important;
- left:auto!important;width:190px!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;
- padding:5px!important;margin:0!important;overflow:hidden!important;
- border-radius:14px!important;background:#2a2a30!important;box-shadow:0 12px 32px rgba(0,0,0,.5)!important;
-}
-#overview #overview-heading #overview-mode.open{display:grid!important}
-#overview #overview-heading #overview-mode button,
-#overview #overview-heading #overview-mode button[aria-pressed="true"]{
- display:flex!important;justify-content:flex-start!important;align-items:center!important;width:100%!important;
- min-height:44px!important;padding:0 12px!important;border-radius:10px!important;
- background:transparent!important;box-shadow:none!important;font-size:16px!important;font-weight:500!important;color:#f2f2f5!important;
-}
-#overview #overview-heading #overview-mode button[aria-pressed="true"]{background:rgba(255,255,255,.08)!important}
-#overview #overview-heading #overview-mode>.mile-segment-indicator{display:none!important}
 /* Semana: the weekly calories/macros block (moved from the Dia ring card) sits in its own card. */
 #overview #weekly-view .nutrition-weekly-charts{
  margin:18px 0 0!important;padding:16px 14px 4px!important;border-radius:20px!important;background:#1b1b20!important;
