@@ -128,6 +128,7 @@ try {
     await page.locator("#i18n-results .i18n-result-english").first().waitFor();
     assert.equal(await page.locator("#i18n-results .i18n-result-translation").first().innerText(),snap.english);
     assert.equal(await page.locator("#i18n-results .i18n-result-arrow").count(),0);
+    assert.equal(await page.locator("#i18n-results .i18n-inline-edit svg path").first().getAttribute("d"),"M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z");
     await page.getByRole("button",{name:"Editar tradução de "+snap.source,exact:true}).click();
     await page.locator("#i18n-review-dialog[open] #i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(
@@ -209,6 +210,17 @@ try {
     assert.equal(await page.locator("#i18n-results .i18n-result .i18n-status-pill").innerText(),
       "Vários estados", kind);
     assert.equal(await page.locator(".i18n-record-field").count(),2);
+    if(["recipe","supplement"].includes(kind)){
+      const toggle=page.locator(".i18n-record-toggle");
+      assert.equal(await toggle.getAttribute("aria-expanded"),"false");
+      assert.equal(await page.locator(".i18n-record-fields").isHidden(),true);
+      await toggle.click();
+      assert.equal(await toggle.getAttribute("aria-expanded"),"true");
+      assert.equal(await page.locator(".i18n-record-fields").isVisible(),true);
+      await toggle.click();
+      assert.equal(await page.locator(".i18n-record-fields").isHidden(),true);
+      await toggle.click();
+    }
     assert.match(await page.locator(".i18n-record-fields").innerText(),/Reviewed/);
     await page.locator("#i18n-results .i18n-inline-edit").first().click();
     await page.locator("#i18n-fields option").nth(1).waitFor({ state: "attached" });
