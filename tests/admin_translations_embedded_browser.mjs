@@ -273,7 +273,8 @@ try{
     await page.locator("#i18n-library-panel:not([hidden])").waitFor({timeout:15000});
     await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
-    assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
+    assert.equal(await page.locator("#i18n-work-title").textContent(),"Alimentos");
+    assert.equal(await page.locator("#i18n-libraries progress").count(),6);
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-auto-title").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro").count(),0);
@@ -311,16 +312,20 @@ try{
     assert.equal(await page.locator("#tm-dashboard").getAttribute("hidden"),"");
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3),
       name+" has horizontal overflow");
-    const plansCard=page.locator("#i18n-libraries button").filter({hasText:"Planos alimentares publicados"});
+    const plansCard=page.locator("#i18n-libraries button").filter({hasText:"Planos"});
     await plansCard.click();
     await page.locator("#i18n-plan-stage:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("data-plan-mode"),"1");
-    assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
+    assert.equal(await page.locator("#i18n-tabs").count(),0);
+    assert.equal(await page.locator("#i18n-libraries button[aria-pressed=true]").count(),1);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
     const coverage=page.locator(".i18n-plan-audit");
+    const diagnostic=page.locator(".i18n-plan-manager-section").filter({has:coverage});
+    assert.equal(await diagnostic.getAttribute("open"),null);
+    await diagnostic.locator(":scope > summary").click();
     await coverage.locator(".i18n-plan-coverage-table").waitFor();
     assert.equal(await coverage.locator(".i18n-plan-coverage-stat").count(),4);
     assert.match(await coverage.locator(".i18n-plan-coverage-intro").first().innerText(),
@@ -337,6 +342,7 @@ try{
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),2);
+    await page.locator(".i18n-plan-manager-section").filter({has:page.locator(".i18n-plan-common")}).locator(":scope > summary").click();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
     assert.equal(await page.locator(".i18n-plan-common-detail textarea").inputValue(),
@@ -372,9 +378,10 @@ try{
     }
     assert.equal(importRequests,0);
     const privateQueue=page.locator(".i18n-plan-private-queue");
+    await page.locator(".i18n-plan-manager-section").filter({has:privateQueue}).locator(":scope > summary").click();
     await privateQueue.locator("button").waitFor();
     assert.match(await privateQueue.locator("button").innerText(),
-      /Abrir revisão privada · 2 textos/);
+      /Rever 2 textos/);
     assert.equal(await privateQueue.locator(".i18n-plan-field").count(),0,
       "Private texts should load only after the administrator opens the queue");
     const proposalsBefore=planSaveRequests;

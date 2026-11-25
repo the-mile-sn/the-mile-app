@@ -17,8 +17,7 @@ html[data-admin-theme="light"] .tm-admin-translations-page{
 .tm-admin-translations-page :is(button,input,textarea,select){font:inherit;color:inherit}
 .tm-admin-translations-page button{cursor:pointer}
 .tm-admin-translations-page button:disabled{opacity:.48;cursor:not-allowed}
-.tm-admin-translations-page :is(button,input,textarea,select,a):focus-visible,
-.tm-admin-translations-page .i18n-import-file:focus-within{
+.tm-admin-translations-page :is(button,input,textarea,select,a):focus-visible{
   outline:2px solid var(--tm-shell-focus,#7b9fbc);outline-offset:3px;
 }
 .tm-admin-translations-page .i18n-shell{
@@ -35,7 +34,7 @@ html[data-admin-theme="light"] .tm-admin-translations-page{
 
 /* Dashboard-style scorecard: a single principal card with neutral subcards. */
 .tm-admin-translations-page .i18n-stats{
-  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
   margin:0 0 20px;padding:12px;background:var(--tm-ui-card);
   border:0;border-radius:18px;box-shadow:none;
 }
@@ -110,29 +109,11 @@ html[data-admin-theme="light"] .tm-admin-translations-page{
   .tm-admin-translations-page .i18n-link:hover{background:var(--tm-ui-hover)}
 }
 
-/* Clear separation of content-scope tabs from filters.
-   Controls follow the guide's one-surface / two-line label-value pattern. */
+/* Existing filter controls; library cards are the sole scope selector. */
 .tm-admin-translations-page .i18n-toolbar{
   display:grid;grid-template-columns:minmax(178px,224px) minmax(0,1fr);
   align-items:stretch;gap:12px;margin:0 0 17px;min-width:0;
 }
-.tm-admin-translations-page #i18n-tabs{
-  display:flex;flex-wrap:wrap;gap:7px;grid-column:1/-1;min-width:0;margin-bottom:3px;
-}
-.tm-admin-translations-page #i18n-tabs button{
-  display:inline-flex;align-items:center;justify-content:center;
-  padding:8px 13px;min-height:36px;border:0;border-radius:10px;
-  color:var(--tm-ui-muted);background:var(--tm-ui-subcard);
-  font:500 12px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif;
-  transition:background-color .15s ease,color .15s ease,transform .14s ease;
-}
-.tm-admin-translations-page #i18n-tabs button[aria-pressed="true"]{
-  background:var(--tm-ui-hover);color:var(--tm-ui-text);
-}
-@media (hover:hover) and (pointer:fine){
-  .tm-admin-translations-page #i18n-tabs button:hover{background:var(--tm-ui-hover)}
-}
-.tm-admin-translations-page #i18n-tabs button:active{transform:scale(.992)}
 .tm-admin-translations-page .i18n-toolbar>label,
 .tm-admin-translations-page .i18n-field-label{
   display:flex;flex-direction:column;justify-content:center;gap:5px;
@@ -308,36 +289,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 .tm-admin-translations-page .i18n-history-entry strong{color:var(--tm-ui-text);font-weight:600}
 .tm-admin-translations-page .i18n-history-entry p{white-space:pre-wrap}
 
-/* CSV actions: one designed file chooser, no nested native-button appearance. */
-.tm-admin-translations-page .i18n-import-controls{
-  display:flex;flex-wrap:wrap;align-items:center;gap:9px;min-width:0;
-}
-.tm-admin-translations-page .i18n-import-file{
-  display:inline-flex;align-items:center;justify-content:center;
-  position:relative;min-height:40px;max-width:100%;
-  margin:0;padding:9px 15px;
-  border:0;border-radius:12px;background:var(--tm-ui-subcard);
-  color:var(--tm-ui-text);cursor:pointer;
-  font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
-}
-.tm-admin-translations-page .i18n-import-file input{
-  position:absolute;inset:0;width:100%;height:100%;
-  opacity:0;cursor:pointer;z-index:1;font-size:16px;
-}
-.tm-admin-translations-page .i18n-import-filename{
-  display:inline-block;max-width:240px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;color:var(--tm-ui-muted);font-size:12px;font-weight:400;
-}
-@media(hover:hover) and (pointer:fine){
-  .tm-admin-translations-page .i18n-import-file:hover{background:var(--tm-ui-hover)}
-}
-.tm-admin-translations-page .i18n-import-preview{
-  color:var(--tm-ui-text);font:400 12px/1.5 "Inter Tight","SF Pro Text",Arial,sans-serif;
-  overflow-wrap:anywhere;
-}
-.tm-admin-translations-page .i18n-import-preview p{margin:8px 0}
-
-
 /* Planos: version-bound private translation editor, reusing the neutral Admin cards. */
 .tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar>label{display:grid}
@@ -391,7 +342,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 }
 @media(max-width:620px){
   .tm-admin-translations-page .i18n-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tm-admin-translations-page .i18n-stat:last-child{grid-column:span 2}
   .tm-admin-translations-page .i18n-library-grid{grid-template-columns:1fr}
   .tm-admin-translations-page .i18n-library{min-height:0;padding:14px}
   .tm-admin-translations-page .i18n-section-heading{align-items:flex-start;gap:8px}
@@ -399,7 +349,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-toolbar{grid-template-columns:1fr;gap:9px}
   /* iOS/Safari: focused editable inputs must not trigger viewport zoom. */
   .tm-admin-translations-page .i18n-toolbar input{font-size:16px}
-  .tm-admin-translations-page #i18n-tabs{grid-column:auto}
   .tm-admin-translations-page .i18n-work-heading{flex-direction:column}
   .tm-admin-translations-page .i18n-result{
     grid-template-columns:minmax(0,1fr) 18px;gap:8px;padding:12px;
@@ -410,11 +359,9 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-result-arrow{grid-column:2;grid-row:1}
   .tm-admin-translations-page .i18n-compare{grid-template-columns:1fr}
   .tm-admin-translations-page .i18n-pagination{justify-content:center}
-  .tm-admin-translations-page .i18n-import-filename{max-width:100%;flex-basis:100%}
-  .tm-admin-translations-page .i18n-import-controls>*{max-width:100%}
 }
 @media(prefers-reduced-motion:reduce){
-  .tm-admin-translations-page :is(.i18n-library,.i18n-result,#i18n-tabs button,.i18n-primary,.i18n-secondary,.i18n-quiet,.i18n-pagination button){
+  .tm-admin-translations-page :is(.i18n-library,.i18n-result,.i18n-primary,.i18n-secondary,.i18n-quiet,.i18n-pagination button){
     transition:none!important;transform:none!important;
   }
 }
@@ -543,14 +490,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 @media(max-width:720px){.tm-admin-translations-page .i18n-plan-common-list{grid-template-columns:1fr}.tm-admin-translations-page .i18n-plan-common{padding:12px}}
 
 
-/* Planos CSV: neutral, explicit preview/import/approval controls. */
-.tm-admin-translations-page .i18n-plan-csv-tools{display:grid;gap:10px;margin:10px 0 18px;padding:13px;border-radius:11px;background:var(--tm-ui-subcard);min-width:0}
-.tm-admin-translations-page .i18n-plan-csv-tools>strong{font-size:13px;font-weight:600}
-.tm-admin-translations-page .i18n-plan-csv-tools>.i18n-plan-policy{margin:0}
-.tm-admin-translations-page .i18n-plan-csv-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tm-admin-translations-page .i18n-plan-csv-actions button{min-height:38px}
-.tm-admin-translations-page .i18n-plan-csv-upload{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:12px;color:var(--tm-ui-text);min-height:40px}
-.tm-admin-translations-page .i18n-plan-csv-upload input{max-width:235px;min-width:0;font-size:11px}
 /* One explicit approval zone; the button stays legible even before confirmation. */
 .tm-admin-translations-page .i18n-plan-bulk-approval{
   display:grid;gap:10px;justify-items:start;min-width:0;
@@ -582,9 +521,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-plan-bulk-approval{padding:13px}
   .tm-admin-translations-page .i18n-plan-bulk-approval>button.i18n-primary{width:100%}
 }
-.tm-admin-translations-page .i18n-plan-csv-tools>button{justify-self:start;min-height:38px}
-.tm-admin-translations-page .i18n-plan-csv-tools>.i18n-feedback{font-size:12px;line-height:1.5;margin:0}
-@media(max-width:720px){.tm-admin-translations-page .i18n-plan-csv-actions{align-items:stretch;flex-direction:column}.tm-admin-translations-page .i18n-plan-csv-actions button,.i18n-plan-csv-tools>button{width:100%}.tm-admin-translations-page .i18n-plan-csv-upload{width:100%}}
 
 
 /* Planos: second CSV only after private review of individually authored titles. */
@@ -684,30 +620,6 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-plan-coverage-head button{width:auto}
 }
 
-/* Reviewed Planos quantity queue, reusing the established CSV preview rows. */
-.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-quantity-stats{
-  margin:0 0 8px;color:var(--tm-ui-muted);
-  font-size:11px;line-height:1.5;overflow-wrap:anywhere;
-}
-.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-unique-row{
-  align-items:flex-start;
-}
-.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-unique-row span{
-  white-space:pre-wrap;overflow-wrap:anywhere;
-}
-
-/* Final reviewed Planos food-name CSV, same visual hierarchy as other previews. */
-.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-food-stats{
-  margin:0 0 8px;color:var(--tm-ui-muted);font-size:11px;
-  line-height:1.5;overflow-wrap:anywhere;
-}
-.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-unique-row{
-  align-items:flex-start;min-height:38px;
-}
-.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-unique-row span{
-  white-space:pre-wrap;overflow-wrap:anywhere;
-}
-
 /* Final private review: no export and no new approval endpoint. */
 .tm-admin-translations-page .i18n-plan-private-queue{
   min-width:0;margin:0 0 18px;padding:14px;border-radius:12px;
@@ -798,3 +710,17 @@ dialog.tm-plan-translation-dialog::backdrop{background:rgba(0,0,0,.55)}
 .tm-plan-translation-dialog .tm-plan-review-row .i18n-plan-field-state{display:inline-flex;align-items:center;justify-content:flex-end}
 @media(prefers-reduced-motion:reduce){.tm-plan-translation-dialog .tm-plan-review-group>summary>svg{transition:none}}
 @media(max-width:830px){.tm-plan-translation-dialog .tm-plan-review-footer{bottom:-14px}}
+
+/* Shared library scorecard elements: native progress, no invented palette. */
+.tm-admin-translations-page .i18n-library-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.tm-admin-translations-page .i18n-library-progress{display:block;width:100%;height:4px;margin:5px 0 2px;border:0;border-radius:999px;overflow:hidden;appearance:none;background:var(--tm-ui-divider);accent-color:var(--i18n-positive)}
+.tm-admin-translations-page .i18n-library-progress::-webkit-progress-bar{background:var(--tm-ui-divider);border-radius:999px}
+.tm-admin-translations-page .i18n-library-progress::-webkit-progress-value{background:var(--i18n-positive);border-radius:999px}
+.tm-admin-translations-page .i18n-library-progress::-moz-progress-bar{background:var(--i18n-positive);border-radius:999px}
+
+.i18n-plan-manager-section{min-width:0;border:0;border-radius:12px;background:var(--tm-ui-card);padding:12px;margin:0 0 9px}
+.i18n-plan-manager-section>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer;font-size:14px;font-weight:600;min-height:36px}
+.i18n-plan-manager-section>summary::-webkit-details-marker{display:none}
+.i18n-plan-manager-section>summary svg{width:19px;height:19px;flex:none;transition:transform .15s}
+.i18n-plan-manager-section[open]>summary{margin-bottom:10px}
+.i18n-plan-manager-section[open]>summary svg{transform:rotate(180deg)}
