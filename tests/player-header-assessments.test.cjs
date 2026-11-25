@@ -3,7 +3,7 @@ const html=fs.readFileSync('static/jogador-v2.html','utf8');
 const js=fs.readFileSync('static/jogador-v2.js','utf8');
 const css=fs.readFileSync('static/jogador-v2.css','utf8');
 test('bottom middle button uses the existing assessment chart icon',()=>{
- assert.match(html,/data-tab="assessments"[^>]*>.*icon-chart-03.*<span>Avaliações<\/span>/);
+ assert.match(html,/data-tab="assessments"[^>]*>.*icon-chart-03.*<span>Progresso<\/span>/);
  assert.doesNotMatch(html,/data-tab="new"/);
  assert.doesNotMatch(html,/id="plans-open-assessments"/);
 });
@@ -37,15 +37,15 @@ test('Original assessment CSS and module are preserved, no duplicated partial ru
  assert.ok(js.includes('$("plans-assessments").hidden=section!=="assessments"'));
 });
 
-test('Planos navigation opens prescriptions directly without a redundant page heading',()=>{
- assert.match(html,/data-tab="plans"[^>]*>.*<span>Planos<\/span>/);
+test('Planos left the tab bar (25/11): each plan opens from the Início widget, with a back button',()=>{
+ assert.doesNotMatch(html,/data-tab="plans"/);
  assert.match(html,/id="plans-prescriptions"/);
  assert.doesNotMatch(html,/<h1>Planos<\/h1>/);
  assert.doesNotMatch(html,/<h2 class="assessments-page-heading">Avaliações<\/h2>/);
- assert.doesNotMatch(html,/id="plans-back-prescriptions"/);
- assert.doesNotMatch(js,/plans-back-prescriptions/);
- assert.match(js,/if\(t==="plans"\)openPlansSection\("prescriptions"\)/);
- assert.match(js,/\$\("plans-landing"\)\.hidden=true/);
+ assert.doesNotMatch(html,/id="plans-landing"/);
+ assert.match(js,/b\.onclick=\(\)=>openPlanPage\(entry\);/);
+ assert.match(js,/back\.onclick=closePlanPage;/);
+ assert.match(js,/if\(ret\)requestAnimationFrame\(\(\)=>window\.scrollTo\(\{top:ret\.scrollY\}\)\);/);
 });
 test('assessment notes preserve the timestamp below metrics and the formula inside body fat details',()=>{
  assert.match(html,/id="assessment-measurements"><\/div><div class="assessment-most-recent" id="assessment-most-recent"/);

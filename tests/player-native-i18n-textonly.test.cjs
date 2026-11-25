@@ -93,46 +93,22 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.deepEqual(element.style,{});
 });
 
-test("Plans All list renders translated categories in both languages without timing context",()=>{
+test("Planos widget lists published plans in carbohydrate order, translated in both languages",()=>{
   const source=fs.readFileSync("static/jogador-v2.js","utf8");
-  const start=source.indexOf("function renderPlans(){");
-  const end=source.indexOf("\nconst dishPhotoCache=",start);
-  assert.ok(start>=0&&end>start,"Plans renderer boundaries");
-  const renderer=source.slice(start,end);
-  for(const [locale,expected] of [
-    ["pt",["Verde","Suplementação"]],
-    ["en",["Green","Supplements"]]
-  ]){
-    const createNode=()=>({
-      textContent:"",className:"",children:[],attributes:{},
-      replaceChildren(...children){this.children=children;},
-      append(...children){this.children.push(...children);},
-      setAttribute(key,value){this.attributes[key]=value;},
-      addEventListener(){}
-    });
-    const targets={
-      "plan-colors":createNode(),
-      "plan-subfilters":createNode(),
-      "plan-detail":createNode()
-    };
+  const grab=name=>{const start=source.indexOf(name);assert.ok(start>=0,name);let depth=0,i=source.indexOf("{",start);for(;i<source.length;i++){if(source[i]==="{")depth++;else if(source[i]==="}"&&--depth===0)break;}return source.slice(start,i+1);};
+  const consts=source.slice(source.indexOf("const PLAN_CARB_LEVEL="),source.indexOf("function planCarbBars("));
+  const code=consts+grab("function planDailyTotals(")+"\n"+grab("function availablePlanEntries(");
+  for(const [locale,expected] of [["pt",["Verde","Azul","Laranja","Suplementação"]],["en",["Green","Blue","Orange","Supplements"]]]){
+    const names={pt:{green:"Verde",blue:"Azul",orange:"Laranja"},en:{green:"Green",blue:"Blue",orange:"Orange"}}[locale];
     const context={
-      $:id=>targets[id],
-      document:{createElement:()=>createNode()},
-      plans:{green:{breakfast:[{items:[]}]}},
-      periPlans:{training:{options:{}},match:{options:{}}},
-      plansCategory:"todos",
-      selectedColor:null,
-      planPhase:null,
-      colorNames:{green:locale==="en"?"Green":"Verde"},
+      plans:{orange:{lunch:[{totals:{kcal:800}}]},green:{breakfast:[{totals:{kcal:600}}]},blue:{dinner:[{totals:{kcal:700}}]},yellow:{lunch:[]}},
+      periPlans:{training:{options:{}},match:{options:{}}},colorNames:names,
+      average:o=>o.length?{kcal:o[0].totals.kcal,protein_g:0,carbs_g:0,fat_g:0}:null,fmtKcal:v=>String(v),
       playerText:(pt,en)=>locale==="en"?en:pt
     };
-    assert.doesNotThrow(()=>vm.runInNewContext(renderer+"\nrenderPlans();",context),
-      "Plans All must render without any peri-match timing variable: "+locale);
-    assert.deepEqual(
-      targets["plan-detail"].children.map(group=>group.children[0].textContent),
-      expected,"Visible plan categories must be localised: "+locale);
-    assert.equal(targets["plan-colors"].children.length,5,
-      "Existing Plans navigation is preserved");
+    const entries=JSON.parse(JSON.stringify(vm.runInNewContext(code+"\navailablePlanEntries();",context)));
+    assert.deepEqual(entries.map(e=>e.label),expected,"Visible plans must be localised: "+locale);
+    assert.deepEqual(entries.filter(e=>e.tone).map(e=>e.carbs),[4,3,1],"Verde 4, Azul 3, Laranja 1 bars");
   }
 });
 

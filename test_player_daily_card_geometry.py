@@ -43,9 +43,8 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn('if(opts.length===1)appendMealItems(section,opts[0].items);', JS)
         self.assertIn('else opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});', JS)
         self.assertIn('const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);', JS)
-        self.assertIn('const content=document.createElement("div");content.className="plans-all-body"', JS)
-        self.assertIn('renderPlanContent(key,content)', JS)
-        self.assertIn('renderPlanContent("peri-"+kind,detail)', JS)
+        # 25/11: each plan (colour, Treino, Jogo, Suplementação) opens from the Início widget into the same renderer.
+        self.assertIn('detail.replaceChildren();planPhase=null;renderPlanContent(entry.key,detail);', JS)
         self.assertIn('if(opts.length===1){', JS)
         self.assertIn('appendGroupedPeriItems(section,opts[0].items,opts[0].timing_groups)', JS)
         self.assertIn('Planos → Treino/Jogo — opção única (20/11)', GUIDE)

@@ -12,12 +12,10 @@ const playerColourLanguages={
 };
 const playerTextBindings=[
   ["#tabs [data-tab='overview'] > span:last-child","Início","Home"],
-  ["#tabs [data-tab='plans'] > span:last-child","Planos","Plans"],
-  ["#tabs [data-tab='assessments'] > span:last-child","Avaliações","Assessments"],
+  ["#tabs [data-tab='assessments'] > span:last-child","Progresso","Progress"],
   ["#tabs [data-tab='menus'] > span:last-child","Menus","Menus"],
   ["#tabs [data-tab='profile'] > span:last-child","Perfil","Profile"],
   ["#menus-recipe-switch [data-menu-mode='recipes']","Receitas","Recipes"],
-  ["#plans-open-prescriptions span:not(.plans-entry-arrow)","Planos","Plans"],
   ["#player-panel .welcome p","Planeamento nutricional","Nutrition planning"],
   ["#profile-main .profile-plan-detail:first-child > span","Plano de acompanhamento","Support plan"],
   ["#profile-main .profile-renewal-detail > span","Data de renovação","Renewal date"],
@@ -117,7 +115,7 @@ function applyPlayerNativeLanguage(language){
  }
  const assessments=document.querySelector("#tabs [data-tab='assessments']");
  if(assessments){
-  const label=playerText("Avaliações","Assessments");
+  const label=playerText("Progresso","Progress");
   assessments.setAttribute("aria-label",label);assessments.title=label;
  }
 }
@@ -175,7 +173,7 @@ async function updatePlayerLanguageChoice(code){
 
 let visualPortionsByColor={};
 let pendingIntraMatchExpansion=null;
-let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 // A week swipe lands on its boundary: previous Sunday, next Monday.
@@ -302,9 +300,9 @@ function revokePlayerView(){
  calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
- weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];selectedColor=null;
+ weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];
  tab="overview";document.body.classList.add("overview-active");overviewMode="day";day=new Date();menuWeek=new Date();
- for(const id of ["day-details","week-strip","weekly-view","plan-colors","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
+ for(const id of ["day-details","week-strip","weekly-view","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
   const el=$(id);if(el)el.replaceChildren();
  }
  document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
@@ -790,6 +788,8 @@ window.addEventListener("scroll",()=>{
  if(!mileScrollFrame)mileScrollFrame=window.requestAnimationFrame(updateAdaptiveNav);
 },{passive:true});
 async function show(t){
+ // Leaving through the tab bar closes an open plan page (no scroll restore: the tab is re-shown fresh).
+ if(document.body.classList.contains("plan-page-open")){document.body.classList.remove("plan-page-open");planPageReturn=null;$("plans-prescriptions").querySelector(".plan-page-head")?.remove();}
  if(t!=="overview")pendingDailySwipeDirection=0;
  $("tabs").classList.remove("tabs-compact");mileScrollAccum=0;mileLastScrollY=Math.max(0,window.scrollY||0);
  if(t!=="profile")resetProfileSubpage();
@@ -813,7 +813,6 @@ async function show(t){
   ],{duration:500,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
  }
  if(t==="overview")await overview();
- if(t==="plans")openPlansSection("prescriptions");
  if(t==="assessments")openPlansSection("assessments");
  if(t==="menus"){
   window.themileRecipes?.onShow();
@@ -981,6 +980,87 @@ function registosRing(done,total,today){
  return '<svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="'+r+'" class="registos-track"/>'+
   (arc?'<circle cx="17" cy="17" r="'+r+'" class="registos-arc'+(today?' today':'')+'" stroke-dasharray="'+arc.toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 17 17)"/>':'')+
   (done?'<text x="17" y="21" text-anchor="middle" class="registos-count">'+done+'/'+total+'</text>':'')+'</svg>';
+}
+// Planos widget (25/11): the full plans, reached from Início instead of a tab.
+// Carbohydrate level is fixed per colour (decided with the nutrition team): 4 = most carbohydrates.
+const PLAN_CARB_LEVEL={green:4,vp:4,blue:3,yellow:2,orange:1};
+const PLAN_ORDER=["green","vp","blue","yellow","orange"];
+function planCarbBars(level){
+ let bars="";for(let i=0;i<4;i++){const h=0.28+i*0.22,x=0.14+i*0.19;bars+='<rect x="'+(x*40).toFixed(1)+'" y="'+((0.92-h*0.85)*40).toFixed(1)+'" width="5.2" height="'+(h*0.85*40).toFixed(1)+'" rx="1.6" class="'+(i<level?"on":"off")+'"/>';}
+ return '<svg viewBox="0 0 40 40" aria-hidden="true">'+bars+'</svg>';
+}
+function planDailyTotals(color){
+ const sum={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let any=false;
+ for(const meal of ["breakfast","lunch","snack","dinner","supper"]){const avg=average(plans[color]?.[meal]||[]);if(!avg)continue;any=true;for(const k in sum)sum[k]+=avg[k];}
+ return any?sum:null;
+}
+function availablePlanEntries(){
+ const hasPeri=kind=>Object.values(periPlans[kind]?.options||{}).some(options=>options?.length);
+ const colours=PLAN_ORDER.filter(c=>plans[c]&&Object.values(plans[c]).some(a=>a.length));
+ const out=colours.map(c=>{const t=planDailyTotals(c);return {key:c,label:colorNames[c]||c,tone:c,carbs:PLAN_CARB_LEVEL[c]||0,sub:t?fmtKcal(t.kcal)+playerText(" kcal/dia"," kcal/day"):""};});
+ if(hasPeri("training"))out.push({key:"peri-training",label:playerText("Treino","Training"),icon:"soft-drink-01",sub:playerText("Pré e pós-treino","Pre and post-training")});
+ if(hasPeri("match"))out.push({key:"peri-match",label:playerText("Jogo","Match"),icon:"football",sub:playerText("Intra e pós-jogo","Intra and post-match")});
+ out.push({key:"supplements",label:playerText("Suplementação","Supplements"),icon:"pill",sub:playerText("Ver plano","View plan")});
+ return out;
+}
+function planBadge(entry){
+ const badge=document.createElement("span");badge.className="plan-badge"+(entry.tone?" tone-"+entry.tone:" neutral");
+ if(entry.tone)badge.innerHTML=planCarbBars(entry.carbs);else badge.append(mealIcon(entry.icon));
+ return badge;
+}
+function renderPlansWidget(root){
+ const entries=availablePlanEntries();if(!entries.length)return;
+ const heading=document.createElement("div");heading.className="day-section-heading plans-heading";
+ const title=document.createElement("h3");title.textContent=playerText("Planos","Plans");heading.append(title);
+ const card=document.createElement("section");card.className="plans-widget";card.setAttribute("aria-label",playerText("Planos completos","Full plans"));
+ const top=document.createElement("div");top.className="plans-widget-top";top.textContent=playerText("Os teus planos completos","Your full plans");
+ const row=document.createElement("div");row.className="plans-widget-row";row.id="plans-widget-row";
+ for(const entry of entries){
+  const b=document.createElement("button");b.type="button";b.className="plans-widget-item";
+  const name=document.createElement("span");name.className="plans-widget-name";name.textContent=entry.label;
+  const sub=document.createElement("span");sub.className="plans-widget-sub";sub.textContent=entry.sub;
+  b.append(planBadge(entry),name,sub);
+  b.setAttribute("aria-label",entry.label+(entry.tone?playerText(", hidratos ",", carbohydrates ")+entry.carbs+playerText(" de 4"," of 4"):"")+(entry.sub?", "+entry.sub:""));
+  b.onclick=()=>openPlanPage(entry);
+  row.append(b);
+ }
+ card.append(top,row);root.append(heading,card);
+}
+// Plan page: opened over Início and closed back to the exact place (Início is not re-rendered).
+let planPageReturn=null;
+function openPlanPage(entry){
+ planPageReturn={scrollY:window.scrollY};
+ const detail=$("plan-detail"),host=$("plans-prescriptions");
+ $("overview").hidden=true;$("plans").hidden=false;openPlansSection("prescriptions");
+ document.body.classList.add("plan-page-open");
+ host.querySelector(".plan-page-head")?.remove();
+ const head=document.createElement("div");head.className="plan-page-head";
+ const back=document.createElement("button");back.type="button";back.className="plan-page-back";back.setAttribute("aria-label",playerText("Voltar ao Início","Back to Home"));
+ const arrow=document.createElement("span");arrow.setAttribute("aria-hidden","true");arrow.textContent="‹";back.append(arrow);back.onclick=closePlanPage;
+ const titleRow=document.createElement("div");titleRow.className="plan-page-title";
+ const words=document.createElement("div");const kicker=document.createElement("span");kicker.textContent=playerText("Plano","Plan");
+ const name=document.createElement("h2");name.textContent=entry.label;words.append(kicker,name);
+ titleRow.append(planBadge(entry),words);head.append(back,titleRow);
+ if(entry.tone){
+  const t=planDailyTotals(entry.key);
+  if(t){
+   const stats=document.createElement("div");stats.className="plan-page-stats";
+   for(const [label,value,cls] of [[playerText("kcal/dia","kcal/day"),fmtKcal(t.kcal),"kcal"],[playerMacroLabel("protein_g"),fmt(t.protein_g,0)+" g","protein"],[playerMacroLabel("carbs_g"),fmt(t.carbs_g,0)+" g","carbs"],[playerMacroLabel("fat_g"),fmt(t.fat_g,0)+" g","fat"]]){
+    const cell=document.createElement("div");const l=document.createElement("small");l.textContent=label;const v=document.createElement("strong");v.className=cls;v.textContent=value;cell.append(l,v);stats.append(cell);
+   }
+   head.append(stats);
+  }
+ }
+ host.prepend(head);
+ detail.replaceChildren();planPhase=null;renderPlanContent(entry.key,detail);
+ window.scrollTo({top:0});back.focus({preventScroll:true});
+}
+function closePlanPage(){
+ const ret=planPageReturn;planPageReturn=null;
+ document.body.classList.remove("plan-page-open");
+ $("plans-prescriptions").querySelector(".plan-page-head")?.remove();$("plan-detail").replaceChildren();
+ $("plans").hidden=true;$("overview").hidden=false;
+ if(ret)requestAnimationFrame(()=>window.scrollTo({top:ret.scrollY}));
 }
 // Registos: the last 7 days (ending on the selected day, never after today), complete = all meals + fasting weight.
 async function renderRegistosCard(root,selectedKey,isCurrent){
@@ -2936,19 +3016,19 @@ async function overview(){
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
  if(consumptionEnabled)renderRegistosCard(root,d,()=>requestId===overviewRequestId&&epoch===playerSessionEpoch).catch(()=>{});
+ renderPlansWidget(root);
  // Reveal a complete day's content only after consumption state is resolved.
  root.hidden=false;setOverviewLoading(false);
  injectPostMatchCard();
  animateDailySwipeEntry();
 }
+// The «plans» section now only hosts Progresso (assessments) and, from Início, the page of one plan.
 function openPlansSection(section){
- $("plans-landing").hidden=true;
  $("plans-prescriptions").hidden=section!=="prescriptions";
  $("plans-assessments").hidden=section!=="assessments";
  if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent=playerText("Não foi possível carregar as avaliações.","Could not load assessments.");});
- if(section==="prescriptions")renderPlans();
 }
-let plansCategory="todos",planPhase=null;
+let planPhase=null;
 function renderPlanContent(key,target){
  if(key==="supplements"){renderSupplementPlan(target).catch(error);return;}
  if(key.startsWith("peri-")){
@@ -2982,57 +3062,6 @@ function renderPlanContent(key,target){
    section.append(body);
   }else opts.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   target.append(section);
- }
-}
-function renderPlans(){
- const nav=$("plan-colors"),sub=$("plan-subfilters"),detail=$("plan-detail");
- nav.replaceChildren();sub.replaceChildren();detail.replaceChildren();
- const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
- const hasPeri=kind=>Object.values(periPlans[kind]?.options||{}).some(options=>options?.length);
- const categories=[["todos",playerText("Todos","All")],["cores",playerText("Cores","Colours")],
-  ["treino",playerText("Treino","Training")],["jogo",playerText("Jogo","Match")],
-  ["suplementacao",playerText("Suplementação","Supplements")]];
- for(const [id,label] of categories){
-  const b=document.createElement("button");b.type="button";b.textContent=label;
-  b.className="plans-filter"+(plansCategory===id?" selected":"");
-  b.setAttribute("aria-pressed",String(plansCategory===id));
-  b.onclick=()=>{plansCategory=id;selectedColor=null;planPhase=null;renderPlans();};
-  nav.append(b);
- }
- const addSub=(key,label,cb)=>{
-  const btn=document.createElement("button");btn.type="button";btn.textContent=label;
-  btn.className="plans-subfilter"+(selectedColor===key?" selected":"");
-  btn.setAttribute("aria-pressed",String(selectedColor===key));
-  btn.onclick=cb;sub.append(btn);
- };
- if(plansCategory==="cores"){
-  for(const color of available)addSub(color,colorNames[color]||color,()=>{selectedColor=color;renderPlans();});
-  if(!available.length){detail.textContent=playerText("Ainda não existem planos alimentares publicados.","No meal plans have been published yet.");return;}
-  if(!available.includes(selectedColor))selectedColor=available[0];
-  // Update the active subfilter after picking the default.
-  for(const b of sub.children){b.classList.toggle("selected",b.textContent===(colorNames[selectedColor]||selectedColor));b.setAttribute("aria-pressed",String(b.classList.contains("selected")));}
-  renderPlanContent(selectedColor,detail);
-  return;
- }
- if(plansCategory==="treino"||plansCategory==="jogo"){
-  const kind=plansCategory==="treino"?"training":"match";
-  if(!hasPeri(kind)){detail.textContent=playerText("Ainda não existem planos publicados nesta categoria.","No plans have been published in this category.");return;}
-  const phases=[["pre",playerPhaseLabel(periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino"))],["post",playerPhaseLabel(periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino"))]];
-  if(!planPhase)planPhase=phases.find(([p])=>(periPlans[kind]?.options?.[p]||[]).length)?.[0]||"pre";
-  for(const [phase,label] of phases){if(!(periPlans[kind]?.options?.[phase]||[]).length)continue;addSub("peri-"+kind+":"+phase,label,()=>{planPhase=phase;renderPlans();});}
-  sub.querySelectorAll("button").forEach(b=>{const match=b.textContent===phases.find(([p])=>p===planPhase)?.[1];b.classList.toggle("selected",match);b.setAttribute("aria-pressed",String(match));});
-  renderPlanContent("peri-"+kind,detail);
-  return;
- }
- if(plansCategory==="suplementacao"){renderPlanContent("supplements",detail);return;}
- // Todos: a compact list of published plan categories, each expandable on demand.
- const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training",playerText("Treino","Training")]]:[]),...(hasPeri("match")?[["peri-match",playerText("Jogo","Match")]]:[]),["supplements",playerText("Suplementação","Supplements")]];
- for(const [key,label] of entries){
-  const group=document.createElement("details");group.className="plans-all-group";
-  const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
-  const content=document.createElement("div");content.className="plans-all-body";group.append(content);
-  group.addEventListener("toggle",()=>{if(group.open&&!content.dataset.loaded){content.dataset.loaded="true";planPhase=null;renderPlanContent(key,content);}});
-  detail.append(group);
  }
 }
 const dishPhotoCache=new Map();
@@ -3263,10 +3292,9 @@ $("profile-password-form").onsubmit=async e=>{
 for(const item of document.querySelectorAll("#profile .mile-icon")){const name=[...item.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)item.replaceWith(mealIcon(name));}
 
 loadOfficialHugeicons();
-for(const icon of document.querySelectorAll("#plans-landing .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
 for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
 updateOfficialIcons();
-$("plans-open-prescriptions").onclick=()=>openPlansSection("prescriptions");
+
 
 
 
