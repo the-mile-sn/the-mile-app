@@ -14,6 +14,7 @@ async function createPage(browser,viewport,draftRows=[]){
   if(path==="/api/v2/athletes")return respond(route,{athletes:[{id:"athlete-1",user_id:"user-1",name:"Atleta de teste",sex:"M",has_photo:false}]});
   if(path==="/api/v2/food-library")return respond(route,{foods:[{id:"food-1",display_name:"Aveia",base_name:"Aveia",category:"Cereais",variant:"plain",edible_fraction:1,reference_g:100,kcal:370,protein_g:13,carbs_g:61,fat_g:7,notes:""}]});
   if(path==="/api/v2/food-plan-drafts")return respond(route,{drafts:draftRows});
+  if(path.startsWith("/api/v2/food-plan-drafts/")){const draft=draftRows.find(d=>d.id===path.split("/").pop());if(draft)return respond(route,{draft:{...draft,meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[]}]}]}});}
   if(path==="/api/v2/admin/dashboard")return respond(route,{players:[],events:[],recent:[],today:"2026-11-09",days:["2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-14","2026-11-15"]});
   return respond(route,{});
  });
@@ -202,6 +203,28 @@ test("Planos list capitalizes only first character of type and hides AÇÕES hea
   assert.equal(await header.getAttribute("aria-label"),"Ações");
   assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-plan-open-id][tabindex=\"0\"]").count(),3);
   assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-edit-id]").count(),3);
+  assert.deepEqual(errors,[]);
+  await context.close();
+ }finally{await browser.close();}
+});
+
+test("Planos programmatic selection stays synchronized with the shared dropdown",async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const {page,context,errors}=await createPage(browser,{width:1440,height:900},[{id:"existing-yellow",athlete_id:"athlete-1",player_id:"user-1",plan_type:"Plano amarelo",publication:{state:"published"}}]);
+  await page.locator("#tm-admin-nav-create-plan").click();
+  await page.locator('[data-edit-id="existing-yellow"]:visible').click();
+  const editor=page.locator("#tm-plan-page #plan-editor");
+  await editor.waitFor({state:"visible"});
+  for(const [id,value,label] of [["plan-player","user-1","Atleta de teste"],["plan-type","Plano amarelo","Plano amarelo"]]){
+   assert.equal(await editor.locator("#"+id).inputValue(),value);
+   const snapshot=await editor.locator("#"+id).evaluate(el=>({value:el.value,index:el.selectedIndex,option:el.options[el.selectedIndex]?.textContent,selectedOption:el.selectedOptions[0]?.textContent,display:el.closest(".tm-select-shell")?.querySelector(".tm-select-trigger .tm-select-value")?.textContent,refreshAvailable:typeof window.tmRefreshAdminSelect}));
+   assert.equal(snapshot.display?.trim(),label,JSON.stringify(snapshot));
+  }
+  await editor.locator('[data-toggle="0"]').click();
+  await editor.locator("[data-option-title]").fill("Alteração por guardar");
+  assert.equal(await editor.locator("#plan-type").inputValue(),"Plano amarelo");
+  assert.equal(await editor.locator("#plan-player").inputValue(),"user-1");
   assert.deepEqual(errors,[]);
   await context.close();
  }finally{await browser.close();}

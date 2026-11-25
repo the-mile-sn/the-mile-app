@@ -177,6 +177,22 @@ class PlanTranslationsTests(unittest.TestCase):
         with patch.dict(os.environ, {"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
             self.assertEqual(self.call(url)["status"], 404)
 
+    def test_compact_review_approved_and_stale_candidate(self):
+        with patch.dict(os.environ, FLAG):
+            ref = self.index()["publication_ref"]
+            field = self.fields(ref)["body"]["fields"][0]
+            row = {k:field[k] for k in ("field_path",)}
+            row.update(expected_source_hash=field["source_hash"],
+                       expected_candidate_hash=None,expected_status="missing",
+                       translated_text="Option 1")
+            payload = {"publication_ref":ref,"rows":[row]}
+            self.assertEqual(self.call(ROOT+"/save-approved","POST",payload,csrf=False)["status"],403)
+            self.assertEqual(self.call(ROOT+"/save-approved","POST",payload)["status"],200)
+            self.assertEqual(self.fields(ref)["body"]["fields"][0]["status"],"approved")
+            self.assertEqual(self.call(ROOT+"/save-approved","POST",payload)["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("SELECT snapshot_json FROM v2_food_plan_editor_publications WHERE draft_id=?",(self.draft_id,)).fetchone()["snapshot_json"],self.original)
+
     def test_final_coverage_audit_reconciles_all_statuses(self):
         with patch.dict(os.environ, FLAG):
             audit=self.call()["body"]["reuse_audit"]

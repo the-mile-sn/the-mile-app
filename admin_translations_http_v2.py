@@ -17,7 +17,7 @@ PATHS = frozenset((
     ROOT + "/import/preview", ROOT + "/import/submit",
     ROOT + "/batch/preview", ROOT + "/batch/approve",
     ROOT + "/plans", ROOT + "/plans/fields", ROOT + "/plans/history",
-    ROOT + "/plans/propose", ROOT + "/plans/approve",
+    ROOT + "/plans/propose", ROOT + "/plans/approve", ROOT + "/plans/save-approved",
     ROOT + "/plans/common", ROOT + "/plans/common/approve",
     ROOT + "/plans/common/import",
     ROOT + "/plans/recovery", ROOT + "/plans/recovery/approve",
@@ -137,6 +137,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                 return 200, plans.approve_common(c, user, body)
             if path == ROOT + "/plans/propose":
                 return 201, plans.propose(c, user, body)
+            if path == ROOT + "/plans/save-approved":
+                return 200, plans.save_approved(c, user, body)
             if path == ROOT + "/plans/approve":
                 return 200, plans.approve(c, user, body)
             if path == ROOT + "/batch/approve":

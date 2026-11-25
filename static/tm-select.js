@@ -22,8 +22,8 @@ function setup(select){
  trigger.setAttribute('aria-label',select.getAttribute('aria-label')||select.labels?.[0]?.textContent?.trim()||'Selecionar opção');
  const close=()=>{panel.hidden=true;trigger.setAttribute('aria-expanded','false');shell.classList.remove('tm-select-open')};
  const render=()=>{
-  label.textContent=select.selectedOptions[0]?.textContent?.trim()||'Selecionar';
-  if(legacy){const existing=legacy.querySelector('#'+select.id+'-value');if(existing)existing.textContent=label.textContent;}
+  label.textContent=select.options[select.selectedIndex]?.textContent?.trim()||'Selecionar';
+  if(legacy){const existing=legacy.querySelector(':scope > .tm-select-value');if(existing)existing.textContent=label.textContent;}
   trigger.disabled=select.disabled;
   if(panel.hidden)return;
   const current=state.search?.value?.toLocaleLowerCase('pt-PT')||'';
@@ -75,11 +75,14 @@ function setup(select){
  trigger.addEventListener('click',()=>panel.hidden?open():close());
  trigger.addEventListener('keydown',e=>{if(['ArrowDown','Enter',' '].includes(e.key)){e.preventDefault();open()}});
  shell.addEventListener('keydown',e=>{if(e.key==='Escape'){close();trigger.focus()}});
+ state.render=render;
  select.addEventListener('change',render);
+ select.addEventListener('tm-refresh-select',render);
  const observer=new MutationObserver(()=>{if(!select.isConnected){observer.disconnect();instances.delete(select);return}render()});
  observer.observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','selected','label','value']});
  render();
 }
+window.tmRefreshAdminSelect=select=>{if(!instances.has(select)&&IDS.includes(select.id))setup(select);instances.get(select)?.render();};
 function init(){IDS.forEach(id=>{const s=document.getElementById(id);if(s&&s.tagName==='SELECT')setup(s)})}
 document.addEventListener('pointerdown',e=>{instances.forEach(v=>{if(!v.shell.contains(e.target)){v.panel.hidden=true;v.trigger.setAttribute('aria-expanded','false');v.shell.classList.remove('tm-select-open')}})});
 document.addEventListener('DOMContentLoaded',()=>{init();const root=document.getElementById('admin-workspace')||document.body;let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;init()})}).observe(root,{childList:true,subtree:true})});

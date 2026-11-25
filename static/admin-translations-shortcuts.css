@@ -40,3 +40,6 @@
 @media(prefers-reduced-motion:reduce){
   .tm-i18n-library-link:active{transform:none}
 }
+
+/* Keep the translation action immediately beside the existing New Plan button. */
+#tm-plan-page #plan-editor .tm-plan-editor-actions{display:inline-flex;align-items:center;justify-content:flex-end;gap:12px;margin-left:auto;flex:0 0 auto}

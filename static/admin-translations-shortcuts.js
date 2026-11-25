@@ -70,7 +70,10 @@
           catch(_){alert("Não foi possível abrir as traduções.");}
           finally{button.disabled=false;}
         });
-        newPlan.before(button);
+        const actions=document.createElement("span");
+        actions.className="tm-plan-editor-actions";
+        newPlan.before(actions);
+        actions.append(button,newPlan);
       }
     }catch(_){/* An unavailable opt-in service must not change current UI. */}
   };

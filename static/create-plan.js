@@ -156,7 +156,7 @@ function renderPersistence(){
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 
 }
-const refreshSelectDisplays=()=>queryAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
+const refreshSelectDisplays=()=>queryAll("select").forEach(el=>{el.dispatchEvent(new Event("tm-refresh-select"));window.tmRefreshAdminSelect?.(el);});
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+(i===0?"kcal":"g")+'</small></span>').join("")+'</div>';
 function draw(){
@@ -434,7 +434,7 @@ $("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$(
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",athlete_id:"",player_name:"",plan_type:"",meals:[]};savedSignature=null;publicationState={state:"draft",pending_changes:false,published_at:null};lastSavedAt=null;persistenceError="";active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});const data=await r.json().catch(()=>null);if(!r.ok)throw Error(data?.error||data?.code||"HTTP "+r.status);return data||{}}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=(data.drafts||[]).filter(d=>draftOwner(d));$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+draftIndex.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value);if($("library-plan-rows"))populatePlanLibrary()}
-const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";if(nativeRoot)document.dispatchEvent(new CustomEvent("tm:plan-view-changed",{detail:{mode}}));};
+const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";if(mode==="editor")refreshSelectDisplays();if(nativeRoot)document.dispatchEvent(new CustomEvent("tm:plan-view-changed",{detail:{mode}}));};
 const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/\s+/g," ");
 const nameSearchRank=(name,q)=>{
   if(!q)return 0;
@@ -790,12 +790,13 @@ async function activatePlanModule(){
   const [data,roster]=await Promise.all([request("/api/v2/food-library"),request("/api/v2/athletes")]);
   foods=data.foods||[];foodById=new Map(foods.map(food=>[food.id,food]));
   players=(roster.athletes||[]).map(a=>({id:String(a.user_id||a.id),user_id:a.user_id||"",athlete_id:String(a.id),name:a.name}));
-  const selected=$("plan-player").value;
+  const selected=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";
   $("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");
   if(selected&&players.some(p=>p.id===selected))$("plan-player").value=selected;
+   refreshSelectDisplays();
   await loadDrafts();
   if(!planModuleInitialized){addMeal("Pequeno almoço");showEntry("entry");status("Biblioteca carregada: "+foods.length+" alimentos.");planModuleInitialized=true;}
-  else if(!$("plan-editor").hidden&&!planIsDirty())draw();
+  else if(!$("plan-editor").hidden){if(!planIsDirty())draw();else syncPlanSelectors();}
  })().finally(()=>{planModuleActivation=null});
  return planModuleActivation;
 }
@@ -819,7 +820,7 @@ if(nativeRoot){
  const nativeRoot=document.getElementById("tm-plan-page");
  const skip=el=>el.hidden||el.getAttribute("aria-hidden")==="true"||el.tabIndex===-1||el.classList.contains("tm-planning-native-select")||el.classList.contains("tm-clinical-native-select")||el.classList.contains("tm-select-native")||!!el.closest(".tm-select-shell")||["draft-list","supp-lib-select"].includes(el.id);
  const getTitle=el=>{const lbl=el.closest("label");let raw="";if(lbl){raw=[...lbl.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(" ").trim();if(!raw){const span=lbl.querySelector(":scope > span");if(span&&!span.classList.contains("sr-only"))raw=span.textContent.trim()}}return (raw||el.getAttribute("aria-label")||el.getAttribute("name")||el.id.replace(/[-_]/g," ")).replace(/\*/g,"").replace(/^(Filtrar |Selecionar )/i,"").trim()||"Selecionar"};
- const update=el=>{const w=el.parentElement;if(!w?.classList.contains("tm-two-line-select"))return;const selected=el.selectedOptions?.[0];const first=[...el.options].find(o=>o.value&&!o.disabled);const isAll=/^(todas?|todos?\s+as?|all)(\s|$)/i.test((selected?.textContent||"").trim());const text=selected?.value||isAll?selected?.textContent:(selected?.textContent||first?.textContent||"Selecionar");w.querySelector(".tm-select-value").textContent=text.trim();w.classList.toggle("tm-select-disabled",el.disabled)};
+ const update=el=>{const w=el.parentElement;if(!w?.classList.contains("tm-two-line-select"))return;const selected=el.options[el.selectedIndex];const first=[...el.options].find(o=>o.value&&!o.disabled);const isAll=/^(todas?|todos?\s+as?|all)(\s|$)/i.test((selected?.textContent||"").trim());const text=selected?.value||isAll?selected?.textContent:(selected?.textContent||first?.textContent||"Selecionar");w.querySelector(".tm-select-value").textContent=text.trim();w.classList.toggle("tm-select-disabled",el.disabled)};
  const setup=el=>{if(skip(el)||el.hasAttribute("hidden")||el.closest(".tm-two-line-select"))return;const parentLabel=el.closest("label");if(parentLabel&&parentLabel.querySelectorAll("select").length===1&&parentLabel.querySelectorAll("input,textarea").length===0)parentLabel.classList.add("tm-select-label-container");const w=document.createElement("span");w.className="tm-two-line-select";const caption=document.createElement("span");caption.className="tm-select-caption";caption.textContent=getTitle(el);const value=document.createElement("span");value.className="tm-select-value";const arrow=document.createElement("span");arrow.className="tm-select-arrow";arrow.setAttribute("aria-hidden","true");arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';el.parentNode.insertBefore(w,el);w.append(caption,value,arrow,el);el.addEventListener("change",()=>update(el));el.addEventListener("input",()=>update(el));el.addEventListener("tm-refresh-select",()=>update(el));new MutationObserver(()=>update(el)).observe(el,{childList:true,subtree:true,attributes:true,attributeFilter:["disabled","selected"]});update(el)};
  const scan=()=>(nativeRoot||document).querySelectorAll("select").forEach(setup);scan();new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.("select")||n.querySelector?.("select")))))scan()}).observe(nativeRoot||document.documentElement,{childList:true,subtree:true});
 })();
