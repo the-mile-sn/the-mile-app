@@ -19,11 +19,10 @@ function rule(selector){
 }
 function hasAll(s,terms){for(const t of terms)assert.ok(s.includes(t),"Missing: "+t);}
 
-test("The approved home control remains unchanged and defines the common geometry",()=>{
- assert.ok(css.includes("#overview #overview-mode{\n min-height:38px!important;\n height:38px!important;"));
- assert.ok(css.includes("min-height:32px!important;\n height:32px!important;"));
+test("Início no longer has the Dia/Semana selector (25/11); Menus and Avaliações keep their own geometry",()=>{
+ assert.ok(!html.includes('id="overview-mode"'));
+ assert.ok(!css.includes("#overview-mode"));
  assert.ok(css.includes("#player-panel:has(#overview:not([hidden])){margin-top:-9px!important}"));
- assert.ok(!patch.includes("#overview #overview-mode"));
 });
 test("Menus and Avaliações both use exact home exterior height, padding and top coordinate",()=>{
  const outer=rule("#player-panel #menus #menus-recipe-switch,\n#player-panel #plans #plans-assessments .assessment-tabs");
@@ -55,7 +54,7 @@ test("Both controls have 32px equal buttons, home typography, no legacy thick pa
  hasAll(selected,["background:#55555b!important","color:#fff!important"]);
 });
 test("Navigation and recipe subpage top inset remain intact",()=>{
- assert.ok(html.includes('id="overview-mode"'));
+ assert.ok(!html.includes('id="overview-mode"'));
  assert.ok(html.includes('class="assessment-tabs"'));
  assert.ok(html.includes('id="menus-recipe-switch"'));
  assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);

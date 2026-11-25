@@ -17,7 +17,7 @@ test("Day skeleton reflects the current nutritional strip, not legacy large bloc
  assert.match(css,/#overview \.overview-day-skeleton-nutrition\{[^}]*grid-template-columns:minmax\(0,1\.05fr\) minmax\(0,2\.95fr\)/s);
  assert.match(css,/#overview \.overview-day-skeleton-card\{[^}]*height:61px;[^}]*border-radius:13px/s);
  assert.match(css,/#overview \.overview-day-skeleton-icon\{[^}]*width:37px;height:37px;border-radius:11px/s);
- assert.match(html,/jogador-v2\.css\?v=281-widget-label-gap/);
+ assert.match(html,/jogador-v2\.css\?v=282-no-day-menu/);
  assert.match(html,/day-skeleton-v1/);
 });
 
@@ -60,7 +60,7 @@ test("fast same-week navigation avoids forced skeleton while keeping session gua
 test("the real Day calendar is a single, stable element before the loading skeleton",()=>{
  const overview=html.slice(html.indexOf('<section id="overview">'),html.indexOf('<section id="plans" hidden>'));
  const positions=[
-  overview.indexOf('id="overview-mode"'),
+  overview.indexOf('id="overview-heading"'),
   overview.indexOf('id="week-strip"'),
   overview.indexOf('id="date-title"'),
   overview.indexOf('id="overview-loading"'),

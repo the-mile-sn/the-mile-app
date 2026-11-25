@@ -16,8 +16,6 @@ const playerTextBindings=[
   ["#tabs [data-tab='assessments'] > span:last-child","Avaliações","Assessments"],
   ["#tabs [data-tab='menus'] > span:last-child","Menus","Menus"],
   ["#tabs [data-tab='profile'] > span:last-child","Perfil","Profile"],
-  ["#overview-mode [data-view='day']","Dia","Day"],
-  ["#overview-mode [data-view='week']","Semana","Week"],
   ["#menus-recipe-switch [data-menu-mode='recipes']","Receitas","Recipes"],
   ["#plans-open-prescriptions span:not(.plans-entry-arrow)","Planos","Plans"],
   ["#player-panel .welcome p","Planeamento nutricional","Nutrition planning"],
@@ -952,22 +950,29 @@ function weeklySummary(data,relativeMeans={}){
  }
  return section;
 }
-// Meals with a planned colour on a date, read from one calendar response (same precedence as the day view:
-// canonical effective colour, then the player's own colour change, then the day classification).
-function plannedMealsForDay(calendar,dateKey){
+// Everything the player can record on a date, read from one calendar response:
+// - main meals with a planned colour (same precedence as the day view: canonical effective colour,
+//   then the player's own colour change, then the day classification);
+// - meals tied to a training or match shown that day (Pré/Pós-treino, Pré/Intra/Pós-jogo), keyed by event.
+function plannedRecordItemsForDay(calendar,dateKey){
  const day=calendar?.days?.find(x=>x.date===dateKey);if(!day)return [];
  const overrides=Object.fromEntries((calendar.meal_color_overrides||[]).map(x=>[x.meal_date+"|"+x.meal,x.color]));
- return (calendar.meals||[]).filter(meal=>{
+ const main=(calendar.meals||[]).filter(meal=>{
   const effective=calendar.effective_colors?.[dateKey]?.[meal];
   if(effective&&Object.prototype.hasOwnProperty.call(effective,"color"))return !!effective.color;
   const own=overrides[dateKey+"|"+meal];
   if(own)return own!=="none";
   return !!(calendar.classifications||[]).find(x=>x.name===(day.classification||"Geral"))?.meals?.[meal];
- });
+ }).map(meal=>({meal,event_id:""}));
+ const shown=new Set((calendar.events||[]).filter(e=>e.kind!=="off"&&e.event_date===dateKey&&(e.session==="morning"||e.session==="afternoon")).map(e=>e.id)
+  .concat((calendar.matches||[]).filter(m=>m.match_date===dateKey).map(m=>m.id)));
+ const peri=(calendar.peri_meals||[]).filter(p=>p.event_date===dateKey&&shown.has(p.event_id)&&(p.options||[]).length)
+  .map(p=>({meal:p.selection_phase,event_id:p.event_id}));
+ return main.concat(peri);
 }
-// A day's records: each planned meal registered (outside peri-events) plus the fasting weight.
+// A day's records: each planned item registered plus the fasting weight.
 function dayRecordProgress(planned,records,dateKey,weighed){
- const done=planned.filter(meal=>records.some(r=>r.meal_key===meal&&r.meal_date===dateKey&&!r.event_id)).length+(weighed?1:0);
+ const done=planned.filter(item=>records.some(r=>r.meal_key===item.meal&&r.meal_date===dateKey&&(r.event_id||"")===(item.event_id||""))).length+(weighed?1:0);
  return {done,total:planned.length+1};
 }
 const REGISTOS_CHECK='<svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="17" class="registos-done-fill"/><path d="M11 17.5l4 4 8-9" class="registos-done-tick"/></svg>';
@@ -999,7 +1004,7 @@ async function renderRegistosCard(root,selectedKey,isCurrent){
  let complete=0,counted=0;
  for(let i=0;i<7;i++){
   const dt=new Date(start);dt.setDate(start.getDate()+i);const key=iso(dt);
-  const {done,total}=dayRecordProgress(plannedMealsForDay(calendar,key),recs,key,weighed.has(key));
+  const {done,total}=dayRecordProgress(plannedRecordItemsForDay(calendar,key),recs,key,weighed.has(key));
   const full=done>=total,isToday=key===todayKey;
   if(!isToday||full)counted++;if(full)complete++;
   const b=document.createElement("button");b.type="button";b.className="registos-day"+(key===selectedKey?" selected":"")+(isToday?" today":"");
@@ -2458,8 +2463,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
 }
 
 let consumptionPilotAllowed=null;
-// Início heading: the selected day (or week) as a large title, with a compact Dia/Semana menu.
-// Day the Semana widget was opened from: Semana then shows a back button to it (the menu does not set it).
+// Início heading: the selected day (or week) as a large title. Semana opens from the Semana widget (with a back button).
+// Day the Semana widget was opened from: Semana shows a back button to it.
 let weekReturnDay=null;
 function updateOverviewHeading(){
  const locale=playerDateLocale(),todayKey=iso(new Date()),dayKey=iso(day),isWeek=overviewMode==="week";
@@ -2478,21 +2483,15 @@ function updateOverviewHeading(){
   title=dayKey===todayKey?playerText("Hoje","Today"):dayKey===shift(-1)?playerText("Ontem","Yesterday"):dayKey===shift(1)?playerText("Amanhã","Tomorrow"):capital(day.toLocaleDateString(locale,{weekday:"long"}));
  }
  $("overview-kicker").textContent=kicker;$("overview-title").textContent=title;
- $("overview-view-label").textContent=isWeek?playerText("Semana","Week"):playerText("Dia","Day");
  if(!isWeek)weekReturnDay=null;
- const back=$("overview-back");back.hidden=!(isWeek&&weekReturnDay);
+ const back=$("overview-back");back.hidden=!isWeek; // Semana is only reached from the widget: always offer the way back.
  back.setAttribute("aria-label",playerText("Voltar ao dia","Back to the day"));
  const today=$("overview-today");today.textContent=playerText("Hoje","Today");
  today.hidden=isWeek?iso(monday(new Date()))===iso(mon):dayKey===todayKey;
 }
-function toggleOverviewMenu(open){
- const menu=$("overview-mode"),button=$("overview-view-button");
- const next=open===undefined?!menu.classList.contains("open"):open;
- menu.classList.toggle("open",next);button.setAttribute("aria-expanded",String(next));
-}
 async function overview(){
  cancelOverviewDaySkeletonTimer();
- closeWeightDetail();updateOverviewHeading();toggleOverviewMenu(false);
+ closeWeightDetail();updateOverviewHeading();
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const weekKey=iso(mon),snapshot=reusableOverviewSnapshot(weekKey);
@@ -2509,8 +2508,6 @@ async function overview(){
   // Do not flash skeletons for requests completed within a normal tap.
   if(overviewMode==="day")scheduleOverviewDaySkeleton(requestId,epoch,mon,d);
   else setOverviewLoading(true,mon,d);
-  for(const button of document.querySelectorAll("#overview-mode button"))
-   button.setAttribute("aria-pressed",String(button.dataset.view===overviewMode));
   try{
    [r,weekMenus,weekWeights]=await Promise.all([
     cachedOverviewRead("/api/v2/player/calendar?start="+weekKey+"&end="+iso(end)),
@@ -2566,7 +2563,6 @@ async function overview(){
  model=r.classifications;meals=r.meals;canonicalMealColorsByDay=r.effective_colors||{};dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
- for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;
  $("day-details").hidden=isWeek||!$("overview-loading").hidden;$("weekly-view").hidden=!isWeek;
  if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
@@ -2825,7 +2821,7 @@ async function overview(){
  const planTitle=document.createElement("h3");planTitle.textContent=playerText("Plano do dia","Day plan");planHeading.append(planTitle);
  if(consumptionEnabled&&d<=iso(new Date())){
   const progress=document.createElement("span");progress.className="day-plan-progress";planHeading.append(progress);
-  const planned=plannedMealsForDay(r,d);
+  const planned=plannedRecordItemsForDay(r,d);
   const show=weighed=>{const {done,total}=dayRecordProgress(planned,consumptionRecords,d,weighed);progress.textContent=done+playerText(" de "," of ")+total+playerText(" registos"," records");};
   show(false);
   cachedOverviewRead("/api/v2/player/weight?date="+d).then(data=>{if(planHeading.isConnected)show(!!data?.entries?.some(x=>x.weigh_date===d));}).catch(()=>{});
@@ -3227,7 +3223,7 @@ async function menusView(){
  }
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weekReturnDay=null;weeklySelection=null;toggleOverviewMenu(false);overview().catch(error);};$("overview-back").onclick=()=>{const key=weekReturnDay;if(!key)return;day=new Date(key+"T12:00:00");weekReturnDay=null;overviewMode="day";weeklySelection=null;overview().catch(error);};$("overview-view-button").onclick=event=>{event.stopPropagation();toggleOverviewMenu();};$("overview-today").onclick=()=>{day=new Date();weeklySelection=null;overview().catch(error);};document.addEventListener("click",event=>{if(!event.target.closest("#overview-mode,#overview-view-button"))toggleOverviewMenu(false);});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("overview-mode").classList.contains("open")){toggleOverviewMenu(false);$("overview-view-button").focus();}});$("profile-logout").onclick=()=>$("logout").click();
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));$("overview-back").onclick=()=>{const key=weekReturnDay||iso(new Date());day=new Date(key+"T12:00:00");weekReturnDay=null;overviewMode="day";weeklySelection=null;overview().catch(error);};$("overview-today").onclick=()=>{day=new Date();weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
 for(const button of document.querySelectorAll("#profile-language-selector button[data-language]")){
  button.onclick=()=>updatePlayerLanguageChoice(button.dataset.language);
 }
@@ -3448,7 +3444,7 @@ for(const button of document.querySelectorAll("[data-assessment-tab]"))button.on
 
 /* Shared App Store-style sliding selection indicator. */
 (function initSlidingSegmentedControls(){
- const selectors=['#overview-mode','#menus-recipe-switch','#plans-assessments .assessment-tabs','#tabs'];
+ const selectors=['#menus-recipe-switch','#plans-assessments .assessment-tabs','#tabs'];
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)');
  for(const selector of selectors){
   const nav=document.querySelector(selector);
