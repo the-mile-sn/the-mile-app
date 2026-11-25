@@ -19,6 +19,9 @@
  const embedded=!!document.getElementById("tm-admin-translations-page");
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
  let catalogRequestSeq=0;
+ const expandedRecords=new Set();
+ const pencilSvg='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg>';
+ const chevronSvg='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
  let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
                      row:null,edited:false,busy:false,legacy:""};
  const create=(tag,className,txt)=>{
@@ -356,8 +359,13 @@
      }
      for(const entry of result.items){
        const b=create("div","i18n-result");
+       const fields=entry.fields?.length?entry.fields:[entry];
+       const expandable=["recipe","supplement"].includes(state.kind)&&fields.length>1;
+       const recordKey=JSON.stringify([state.kind,entry.entity_id]);
        const main=create("span","i18n-result-portuguese");
-       main.append(create("small","","PT"),create("strong","",entry.source_text));
+       const name=create(expandable?"button":"strong",expandable?"i18n-record-toggle":"",entry.source_text);
+       if(expandable){name.type="button";name.insertAdjacentHTML("beforeend",chevronSvg);}
+       main.append(create("small","","PT"),name);
        if(entry.category)main.append(create("small","",entry.category));
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
@@ -369,14 +377,14 @@
        b.append(main,english,badge(displayedState));
        const wrapper=create("div","i18n-inventory-record");
        wrapper.append(b);
-       const fields=entry.fields?.length?entry.fields:[entry];
        if(fields.length===1){
          const check=inventoryCheck(entry,fields[0]);
          if(check){wrapper.classList.add("i18n-inventory-selectable");wrapper.prepend(check);}
        }
        {
-         const edit=create("button","i18n-secondary i18n-inline-edit",fields.length===1?"Editar":"Rever "+fields.length+" textos");
-         edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
+         const edit=create("button","tm-ui-action-icon i18n-inline-edit");
+         edit.type="button";edit.title="Editar";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
+         edit.innerHTML=pencilSvg;
          edit.addEventListener("click",()=>openReview(entry));
          b.append(edit);
        }
@@ -396,6 +404,14 @@
            const check=inventoryCheck(entry,field);
            if(check)fieldRow.append(check);
            fieldRow.append(fieldButton);context.append(fieldRow);
+         }
+         if(expandable){
+           wrapper.classList.add("i18n-collapsible-record");
+           context.id="i18n-record-fields-"+catalogRequestSeq+"-"+list.childElementCount;
+           name.setAttribute("aria-controls",context.id);
+           const sync=()=>{const open=expandedRecords.has(recordKey);context.hidden=!open;name.setAttribute("aria-expanded",String(open));wrapper.classList.toggle("is-expanded",open);};
+           name.addEventListener("click",()=>{if(expandedRecords.has(recordKey))expandedRecords.delete(recordKey);else expandedRecords.add(recordKey);sync();});
+           sync();
          }
          wrapper.append(context);
        }

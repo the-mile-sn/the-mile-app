@@ -47,7 +47,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-results-count{color:var(--tm-ui-muted);font-size:12px;margin:12px 0}
 .i18n-results{display:grid;gap:7px}
 .i18n-result{min-width:0;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) minmax(95px,150px) auto;align-items:center;gap:12px;padding:14px 15px;border-radius:10px;border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard)}
-.i18n-result:hover{background:var(--tm-ui-hover)}
+button.i18n-result:hover{background:var(--tm-ui-hover)}
 .i18n-result strong{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere}
 .i18n-result small{display:block;font-size:11px;color:var(--tm-ui-muted);margin-top:5px;overflow-wrap:anywhere}
 .i18n-status-pill{font-size:11px;border:1px solid var(--tm-ui-divider);border-radius:999px;padding:6px 9px;text-align:center}
@@ -99,18 +99,18 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 
 
 /* Planos: version-bound private translation editor, reusing the neutral Admin cards. */
-.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:grid;grid-template-columns:minmax(178px,224px) minmax(0,1fr);gap:12px;margin-bottom:16px}
 .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar>label{display:grid}
 .i18n-work-panel[data-plan-mode="1"] > :is(.i18n-results-count,.i18n-results,.i18n-pagination){display:none}
-.i18n-plan-stage{display:block;min-width:0;margin:12px 0 0;padding:16px;border:0;border-radius:12px;background:var(--tm-ui-subcard)}
+.i18n-plan-stage{display:block;min-width:0;margin:12px 0 0;padding:0;border:0;background:transparent}
 .i18n-plan-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 10px}
 .i18n-plan-detail-head strong{font-size:15px;font-weight:600;overflow-wrap:anywhere}
 .i18n-plan-detail-head small,.i18n-plan-policy{font-size:12px;line-height:1.55;color:var(--tm-ui-muted);margin:7px 0 14px}
-.i18n-plan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.i18n-plan-list{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .i18n-plan-item{display:flex;flex-direction:column;gap:4px;align-items:flex-start;justify-content:center;width:100%;min-width:0}
 .i18n-plan-item strong{overflow-wrap:anywhere}
 .i18n-plan-detail{margin-top:16px;min-width:0}
-.i18n-plan-option{margin-top:13px;padding:12px;border-radius:12px;background:var(--tm-ui-card);min-width:0}
+.i18n-plan-option{margin-top:13px;padding:12px;border-radius:12px;background:var(--tm-ui-search);min-width:0}
 .i18n-plan-option h3{font-size:13px;font-weight:600;margin:0 0 12px;overflow-wrap:anywhere}
 .i18n-plan-field{padding:12px;margin-bottom:8px;border-radius:12px;background:var(--tm-ui-subcard);min-width:0}
 .i18n-plan-field-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -131,12 +131,12 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
   .i18n-plan-compare{grid-template-columns:1fr}
   .i18n-plan-field-actions{justify-content:flex-start}
   .i18n-plan-field-actions button{min-height:40px}
-  .i18n-plan-stage{padding:12px}
+  .i18n-plan-stage{padding:0}
 }
 
 
 /* Keep navigation tabs accessible in the global hub while Planos is read-only. */
-.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:block;margin-bottom:0}
+.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{margin-bottom:16px}
 .i18n-work-panel[data-plan-mode="1"] .i18n-results-count,
 .i18n-work-panel[data-plan-mode="1"] .i18n-results,
 .i18n-work-panel[data-plan-mode="1"] .i18n-pagination{display:none}
@@ -144,7 +144,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 
 
 /* Plan translation coverage audit: neutral information, never an approval state. */
-.i18n-plan-audit{padding:12px 14px;margin:10px 0 18px;background:var(--tm-ui-card);border-radius:12px;min-width:0}
+.i18n-plan-audit{padding:0;margin:0;background:transparent;min-width:0}
 .i18n-plan-audit>strong{display:block;font-size:13px;font-weight:600;margin-bottom:10px}
 .i18n-plan-audit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .i18n-plan-audit-stat{background:var(--tm-ui-subcard);padding:10px 12px;border-radius:10px;min-width:0}
@@ -159,7 +159,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 
 
 /* Contextual Planos shared-text queue: compact and strictly within Admin. */
-.i18n-plan-common{margin:12px 0 18px;padding:14px;border-radius:12px;background:var(--tm-ui-card);min-width:0}
+.i18n-plan-common{margin:0;padding:0;background:transparent;min-width:0}
 .i18n-plan-common-search{display:block;width:100%;box-sizing:border-box;max-width:500px;padding:10px 12px;margin:8px 0 12px;border:0;border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);font:inherit}
 .i18n-plan-common-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:330px;overflow-y:auto;overscroll-behavior:contain}
 .i18n-plan-common-item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px;min-width:0;min-height:54px;padding:10px 12px;background:var(--tm-ui-subcard);border:0;border-radius:10px;color:var(--tm-ui-text);cursor:pointer;font:inherit}
@@ -328,8 +328,8 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 
 /* Final private review: no export and no new approval endpoint. */
 .i18n-plan-private-queue{
-  min-width:0;margin:0 0 18px;padding:14px;border-radius:12px;
-  background:var(--tm-ui-card);
+  min-width:0;margin:0;padding:0;
+  background:transparent;
 }
 .i18n-plan-private-queue .i18n-plan-detail-head{margin-bottom:8px}
 .i18n-plan-private-queue .i18n-plan-policy{margin:6px 0 0}
@@ -367,10 +367,10 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 /* One explicit edit action inside each inventory row. */
 #i18n-results .i18n-inventory-record{display:grid;grid-template-columns:minmax(0,1fr);align-items:center;gap:8px;min-width:0}
 #i18n-results .i18n-inventory-record>.i18n-result{width:100%;min-width:0}
-#i18n-results .i18n-inline-edit{min-height:40px;align-self:center}
+#i18n-results .i18n-inline-edit{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-height:36px;padding:6px;border:0;border-radius:var(--tm-action-compact-radius);cursor:pointer;align-self:center}
 
 /* Multi-field library context; field actions open the same review dialog. */
-#i18n-results .i18n-record-fields{grid-column:1/-1;display:grid;gap:1px;margin:0 0 6px;padding:4px 12px;background:var(--tm-ui-card);border-radius:12px;min-width:0}
+#i18n-results .i18n-record-fields{grid-column:1/-1;display:grid;gap:1px;margin:0;padding:4px 12px;background:var(--tm-ui-search);border-radius:12px;min-width:0}
 #i18n-results .i18n-record-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:10px 0;border:0;border-bottom:1px solid var(--tm-ui-divider);background:transparent;min-width:0}
 #i18n-results .i18n-record-field:last-child{border-bottom:0}
 #i18n-results .i18n-record-field-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;overflow-wrap:anywhere;min-width:0}
@@ -387,7 +387,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 
 .i18n-library-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}.i18n-library-progress{width:100%;height:4px;accent-color:var(--i18n-positive,#317154)}
 
-.i18n-plan-manager-section{min-width:0;border:0;border-radius:12px;background:var(--tm-ui-card);padding:12px;margin:0 0 9px}
+.i18n-plan-manager-section{min-width:0;border:0;border-radius:12px;background:var(--tm-ui-subcard);padding:12px;margin:0 0 9px}
 .i18n-plan-manager-section>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer;font-size:14px;font-weight:600;min-height:36px}
 .i18n-plan-manager-section>summary::-webkit-details-marker{display:none}
 .i18n-plan-manager-section>summary svg{width:19px;height:19px;flex:none;transition:transform .15s}
@@ -411,3 +411,18 @@ dialog.i18n-review-dialog #i18n-history-panel[open]>summary svg{transform:rotate
 #i18n-bulk-review[data-empty="1"] .i18n-results-count{margin-bottom:0}
 @media(max-width:830px){dialog.i18n-review-dialog{padding:14px;width:calc(100% - 24px);max-width:calc(100% - 24px)}}
 @media(prefers-reduced-motion:reduce){dialog.i18n-review-dialog #i18n-history-panel>summary svg{transition:none}}
+
+/* Translation manager depth: card > subcard > nested content. No reverse surfaces. */
+#i18n-results .i18n-collapsible-record{background:var(--tm-ui-subcard);border-radius:12px;gap:0}
+#i18n-results .i18n-collapsible-record>.i18n-record-fields{margin:0 12px 12px}
+#i18n-results .i18n-record-toggle{display:inline-flex;align-items:center;gap:7px;padding:0;max-width:100%;border:0;background:transparent;text-align:left;font:600 13px/1.45 "Inter Tight","SF Pro Text",Arial,sans-serif;color:var(--tm-ui-text);cursor:pointer;overflow-wrap:anywhere}
+#i18n-results .i18n-record-toggle svg{flex:none;color:var(--tm-ui-muted);transition:transform .18s}
+#i18n-results .i18n-record-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+#i18n-results .i18n-record-toggle:hover{color:var(--tm-action-secondary-fg)}
+#i18n-plan-items .i18n-plan-item{background:var(--tm-ui-search)}
+#i18n-plan-items .i18n-plan-item:hover{background:var(--tm-ui-hover)}
+.i18n-plan-manager-section :is(.i18n-plan-common-item,.i18n-plan-coverage-stat,.i18n-plan-audit-stat,.i18n-plan-private-publication){background:var(--tm-ui-search)}
+.i18n-plan-manager-section .i18n-plan-option .i18n-plan-field{background:transparent}
+.i18n-plan-manager-section :is(.i18n-plan-option,.i18n-plan-private-publication,.i18n-plan-common-detail) :is(.i18n-plan-pt,.i18n-plan-en){background:var(--tm-ui-search)}
+@media(max-width:620px){.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){#i18n-results .i18n-record-toggle svg{transition:none}}

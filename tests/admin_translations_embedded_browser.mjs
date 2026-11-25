@@ -275,6 +275,7 @@ try{
     assert.equal(await view.getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Alimentos");
     assert.equal(await page.locator("#i18n-results .i18n-result-arrow").count(),0);
+    assert.equal(await page.locator("#i18n-results .i18n-inline-edit").first().getAttribute("class"),"tm-ui-action-icon i18n-inline-edit");
     await page.locator("#i18n-results .i18n-inline-edit").first().click();
     await page.locator("#i18n-review-dialog[open]").waitFor();
     assert.equal(await page.locator("#i18n-review-dialog").evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
@@ -348,6 +349,7 @@ try{
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),2);
+    assert.equal(await page.locator("#i18n-plan-items").evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length),1);
     await page.locator(".i18n-plan-manager-section").filter({has:page.locator(".i18n-plan-common")}).locator(":scope > summary").click();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
