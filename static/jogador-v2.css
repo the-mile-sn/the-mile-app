@@ -25,7 +25,6 @@ header{padding:10px 0 24px}
 #plan-detail .meal .option:first-child{align-items:baseline}
 #plan-detail .meal .option h3{margin:0}
 #plan-detail .meal>div.option{margin-bottom:12px}
-#plan-colors button{min-height:46px}
 .day-menu .row{padding:12px 0;border-top:1px solid #34343b}
 .day-menu .row strong{min-width:60px}
 .day-menu h3{margin:0}
@@ -128,9 +127,8 @@ header{padding:10px 0 24px}
 /* Unified soft surfaces, no outlines: player-facing content */
 #plans .meal,#overview .daily-meal,#menus .day-menu,#overview .daily-nutrition,#overview .daily-nutrition-card{border:0!important;box-shadow:none!important;background:rgba(255,255,255,.035)}
 #plans .meal,#menus .day-menu{background:rgba(255,255,255,.045)}
-#plan-colors button,#tabs,#tabs button,#plan-detail details,#overview .daily-meal,#menus .menu-entry{border:0!important;box-shadow:none!important}
-#plan-colors button{background:rgba(255,255,255,.055)}
-#plan-colors button.selected,#tabs button[aria-pressed=true]{background:rgba(255,255,255,.17)}
+#tabs,#tabs button,#plan-detail details,#overview .daily-meal,#menus .menu-entry{border:0!important;box-shadow:none!important}
+#tabs button[aria-pressed=true]{background:rgba(255,255,255,.17)}
 #tabs{background:rgba(28,28,34,.96)}
 #menus .date-nav{margin:12px 0 16px}
 #menus .date-nav button{background:none;border:0;box-shadow:none;font-size:30px;padding:5px 10px;min-width:36px}
@@ -243,12 +241,6 @@ header{padding:10px 0 24px}
 #menus .menu-entry.tone-blue{background:var(--meal-blue)!important}
 #menus .menu-entry.tone-green{background:var(--meal-green)!important}
 #menus .menu-entry.tone-vp{background:var(--meal-vp)!important}
-#plan-colors button:has(.color-dot.orange){background:var(--meal-orange)!important}
-#plan-colors button:has(.color-dot.yellow){background:var(--meal-yellow)!important}
-#plan-colors button:has(.color-dot.blue){background:var(--meal-blue)!important}
-#plan-colors button:has(.color-dot.green){background:var(--meal-green)!important}
-#plan-colors button:has(.color-dot.vp){background:var(--meal-vp)!important}
-#plan-colors button.selected{box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)!important}
 #menus .menu-entry-body .dish-img{background:transparent!important;object-fit:contain!important;border:0!important;box-shadow:none!important}
 :is(#week-strip,#menu-week-strip) .week-day,:is(#week-strip,#menu-week-strip) .week-day.selected{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important}
 :is(#week-strip,#menu-week-strip) .week-day .day-number{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;margin:0 auto}
@@ -934,7 +926,6 @@ header{padding:10px 0 24px}
 }
 
 /* iOS pill geometry for Plans selectors and Day/Week segmented control. */
-#plan-colors button{border-radius:999px!important}
 
 /* Weekly grid: compact iOS-style meal cells with a tighter label/kcal stack. */
 #weekly-view .weekly-meal{
@@ -953,13 +944,6 @@ header{padding:10px 0 24px}
  gap:2px!important;
 }
 /* Plans selector: softer unselected tones, full color only when chosen, no outlines or dots. */
-#plan-colors button:has(.color-dot.orange):not(.selected){background:color-mix(in srgb,var(--meal-orange) 48%,#1c1c20)!important}
-#plan-colors button:has(.color-dot.yellow):not(.selected){background:color-mix(in srgb,var(--meal-yellow) 48%,#1c1c20)!important}
-#plan-colors button:has(.color-dot.blue):not(.selected){background:color-mix(in srgb,var(--meal-blue) 48%,#1c1c20)!important}
-#plan-colors button:has(.color-dot.green):not(.selected){background:color-mix(in srgb,var(--meal-green) 48%,#1c1c20)!important}
-#plan-colors button:has(.color-dot.vp):not(.selected){background:color-mix(in srgb,var(--meal-vp) 48%,#1c1c20)!important}
-#plan-colors button.selected{box-shadow:none!important;outline:none!important;border:0!important}
-#plan-colors button .color-dot{display:none!important}
 /* Removed legacy neutral kcal override: coloured plans use their palette ink. */
 
 /* Weekly grid: tighter meal/event heights; match follows identical cell rhythm. */
@@ -1497,7 +1481,7 @@ header{padding:10px 0 24px}
 #overview .daily-meal-head>strong{flex:1;min-width:0}
 #overview .daily-event-card>span:not(.meal-leading-icon){flex:1}
 #overview .peri-meal .daily-meal-head .meal-leading-icon{order:-1}
-#tabs{border-radius:999px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:1px!important;padding:5px!important}
+#tabs{border-radius:999px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:1px!important;padding:5px!important}
 #tabs button{border-radius:999px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;padding:8px 2px!important;font-size:10px!important}
 #tabs .mile-icon{width:21px;height:21px}
 #tabs button[data-tab="new"] .mile-icon{width:27px;height:27px}
@@ -1938,14 +1922,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 /* Plans tab starts with two compact navigation cards. */
 #plans [hidden]{display:none!important}
 #plans .plans-landing{display:flex;flex-direction:column;gap:12px;margin:9px 0 0}
-#plans .plans-entry-card{
- display:flex!important;align-items:center!important;justify-content:space-between!important;
- width:100%!important;box-sizing:border-box!important;min-height:70px!important;
- padding:18px 21px!important;background:#25252b!important;color:#f4f4f6!important;
- border:0!important;border-radius:17px!important;text-align:left!important;box-shadow:none!important;
- font-size:16px!important;font-weight:500!important;
-}
-#plans .plans-entry-arrow{font-size:25px;font-weight:300;color:#b9b9c1;line-height:1}
 #plans .plans-back{
  display:inline-flex!important;align-items:center!important;gap:9px!important;
  margin:3px 0 17px!important;padding:7px 4px!important;
@@ -1958,10 +1934,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
  padding:24px 18px;color:#a9a9b3;font-size:14px;text-align:center;
 }
 
-#plans .plans-entry-card{justify-content:flex-start!important;gap:14px!important}
-#plans .plans-entry-card>.mile-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:23px!important;height:23px!important;flex:0 0 23px!important}
-#plans .plans-entry-card>.mile-icon svg{width:23px!important;height:23px!important}
-#plans .plans-entry-card>.plans-entry-arrow{margin-left:auto!important}
 
 
 /* Three-way assessments navigation and expandable metric history. */
@@ -2481,10 +2453,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 
 /* Docs landing cards match the compact 65px daily-view cards. */
-#plans .plans-landing .plans-entry-card{
- height:65px!important;min-height:65px!important;max-height:65px!important;
- padding:0 16px!important;border-radius:13px!important;
-}
 /* The kcal expand control uses the same unfilled chevron as other daily cards.
    Override the legacy filled-triangle rules with more specific selectors. */
 
@@ -2543,36 +2511,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #plans #plans-prescriptions button.plans-back-round span{
  font-size:31px!important;font-weight:350!important;line-height:1!important;
  position:relative;top:-2px;left:-1px;
-}
-#plans #plan-colors.plans-filters{
- display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:9px!important;
- width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain;
- -webkit-overflow-scrolling:touch;scrollbar-width:none;
- padding:2px 1px 9px!important;margin:0 0 14px!important;
-}
-#plans #plan-colors.plans-filters::-webkit-scrollbar{display:none}
-#plans #plan-colors.plans-filters button.plans-filter{
- flex:0 0 auto!important;min-width:0!important;min-height:42px!important;
- border:0!important;outline:0!important;border-radius:999px!important;
- padding:10px 17px!important;background:#252529!important;
- color:#e7e7ea!important;font-size:14px!important;font-weight:550!important;
- box-shadow:none!important;white-space:nowrap!important;line-height:1.2!important;
-}
-#plans #plan-colors.plans-filters button.plans-filter.selected{
- background:#f0f0f2!important;color:#16161a!important;
-}
-#plans #plan-subfilters.plans-subfilters{
- display:flex!important;flex-wrap:wrap!important;gap:8px!important;
- margin:0 0 19px!important;
-}
-#plans #plan-subfilters:empty{display:none!important}
-#plans #plan-subfilters.plans-subfilters button.plans-subfilter{
- border:0!important;border-radius:999px!important;background:#29292e!important;
- color:#dddde3!important;min-height:35px!important;padding:8px 13px!important;
- font-size:13px!important;font-weight:500!important;box-shadow:none!important;
-}
-#plans #plan-subfilters.plans-subfilters button.plans-subfilter.selected{
- background:#44444b!important;color:#fff!important;
 }
 /* Plans > Todos: category-card family, matching the approved Recipes category language.
    This is not a universal meal card. Preserve independently expanding coloured plans. */
@@ -5615,3 +5553,46 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #overview .overview-heading-text>button.overview-back[hidden]{display:none!important}
 #overview .overview-back span{font-size:30px;font-weight:400;line-height:1}
 #overview .overview-heading-text>button.overview-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+/* ===== Início — widget «Planos» e página do plano (25/11) =====
+   Planos left the tab bar. Badges: colour plans show 4 carbohydrate bars (Verde/Verde preparação 4, Azul 3,
+   Amarelo 2, Laranja 1); Treino, Jogo and Suplementação use the same icons as their cards in Dia. */
+#overview #day-details .plans-widget{box-sizing:border-box!important;margin:0 0 10px!important;padding:16px 0 14px!important;border-radius:13px!important;background:rgba(255,255,255,.045)!important;color:#f1f1f4!important}
+#overview #day-details .plans-widget-top{padding:0 18px 12px!important;font-size:15px!important;color:#aaaab4!important}
+#overview #day-details .plans-widget-row{display:flex!important;gap:6px!important;overflow-x:auto!important;scroll-snap-type:x mandatory!important;padding:0 14px 2px!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch}
+#overview #day-details .plans-widget-row::-webkit-scrollbar{display:none}
+#overview #day-details .plans-widget-item{
+ appearance:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;flex:0 0 116px!important;
+ min-height:0!important;padding:6px 2px 4px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#f1f1f4!important;scroll-snap-align:start;
+}
+#overview #day-details .plans-widget-item .plan-badge{margin-bottom:4px}
+#overview #day-details .plans-widget-name{font-size:16px!important;font-weight:600!important}
+#overview #day-details .plans-widget-sub{font-size:12px!important;color:#aaaab4!important;white-space:nowrap!important}
+.plan-badge{display:flex;align-items:center;justify-content:center;flex:none;width:80px;height:80px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--plan-ink) 20%,transparent),var(--plan-bg) 70%);
+ box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--plan-ink) 33%,transparent),0 6px 18px rgba(0,0,0,.35);color:var(--plan-ink)}
+.plan-badge svg{width:46%;height:46%;display:block}
+.plan-badge .mile-icon{width:42%;height:42%;display:block}
+.plan-badge rect.on{fill:currentColor}.plan-badge rect.off{fill:currentColor;fill-opacity:.22}
+.plan-badge.tone-orange{--plan-bg:#54281B;--plan-ink:#FFA078}
+.plan-badge.tone-yellow{--plan-bg:#493713;--plan-ink:#FFD76F}
+.plan-badge.tone-blue{--plan-bg:#193F60;--plan-ink:#8DD0FF}
+.plan-badge.tone-green{--plan-bg:#174631;--plan-ink:#77E3A4}
+.plan-badge.tone-vp{--plan-bg:#10251A;--plan-ink:#4E996B}
+.plan-badge.neutral{--plan-bg:#2b2c33;--plan-ink:#d9d9e0}
+/* Plan page (over Início): back, badge + name, daily totals, then the plan exactly as before. */
+#plans .plan-page-head{display:flex;flex-direction:column;gap:14px;margin:0 0 16px}
+#plans .plan-page-back{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0 0 3px!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important}
+#plans .plan-page-back span{font-size:30px;font-weight:400;line-height:1}
+#plans .plan-page-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+#plans .plan-page-title{display:flex;align-items:center;gap:16px;padding:0 4px}
+#plans .plan-page-title .plan-badge{width:64px;height:64px}
+#plans .plan-page-title span{font-size:14px;color:#aaaab4}
+#plans .plan-page-title h2{margin:0;font-size:32px;font-weight:720;line-height:1.1;color:#f4f4f7}
+#plans .plan-page-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:13px 17px;border-radius:13px;background:rgba(255,255,255,.045)}
+#plans .plan-page-stats small{display:block;font-size:12px;color:#aaaab4}
+#plans .plan-page-stats strong{font-size:17px;font-weight:650}
+#plans .plan-page-stats .kcal{color:#72ebbd}#plans .plan-page-stats .protein{color:#45baff}#plans .plan-page-stats .carbs{color:#ff9d70}#plans .plan-page-stats .fat{color:#f4d778}
+#plans .plan-page-title .plan-badge svg rect.on,#overview .plans-widget .plan-badge svg rect.on{fill:var(--plan-ink)!important;fill-opacity:1!important;opacity:1!important}
+#plans .plan-page-title .plan-badge svg rect.off,#overview .plans-widget .plan-badge svg rect.off{fill:var(--plan-ink)!important;fill-opacity:.22!important;opacity:1!important}
+.plan-badge>.mile-icon{width:42%!important;height:42%!important;flex:none!important}
+.plan-badge>.mile-icon svg{width:100%!important;height:100%!important}

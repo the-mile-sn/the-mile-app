@@ -18,10 +18,10 @@ test('header avatar and profile photo are self-only and reset after account swit
  assert.match(player,/const epoch=playerSessionEpoch/);
  assert.match(player,/for\(const id of \["profile-photo","header-player-photo"\]\)/);
 });
-test('App navigation keeps Plans in Docs and moves published assessments to center',()=>{
+test('App navigation: Progresso (assessments) stays a tab; Plans moved to the Início widget',()=>{
  assert.match(html,/data-tab="assessments"/);
- assert.match(html,/data-tab="plans"/);
- assert.match(html,/id="plans-open-prescriptions"/);
+ assert.doesNotMatch(html,/data-tab="plans"/);
+ assert.doesNotMatch(html,/id="plans-open-prescriptions"/);
  assert.match(html,/id="assessment-measurements"/);
  assert.doesNotMatch(html,/data-tab="new"/);
  assert.doesNotMatch(html,/id="plans-open-assessments"/);
