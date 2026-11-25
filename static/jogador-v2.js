@@ -236,7 +236,7 @@ function enableOverviewDaySwipe(element){
   cleanup();
   if(tab!=='overview'||element.hidden||event.touches.length!==1)return;
   const target=event.target;
-  if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"],.consumption-editor'))return;
+  if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"],.consumption-editor,.consumption-sheet'))return;
   for(let node=target;node&&node!==element;node=node.parentElement){
    if(node.scrollWidth>node.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
   }
@@ -2253,10 +2253,101 @@ async function openDailyMealInMenus(dateKey,meal){
   });
  });
 }
+/* Editar consumo (25/11): the editor opens in a sheet that rises from the bottom instead of below the card.
+   Header: Cancelar · meal · Guardar (Guardar = the editor's own save). Closing (Cancelar, swipe down, tap
+   outside) asks before discarding changes. The editor itself (foods, grams wheel, add food, preview) is unchanged. */
+let consumptionSheet=null;
+function consumptionMealTitle(host){
+ const card=host.closest('.daily-meal')||host.closest('.peri-meal,.match-intra-card,.meal')||host.closest('details');
+ const title=card?.querySelector(':scope > summary strong, :scope > .daily-meal-head > strong, summary strong');
+ return (title?.childNodes[0]?.textContent||title?.textContent||'').trim()||playerText('Consumo','Consumption');
+}
+function consumptionSheetSync(){
+ const st=consumptionSheet;if(!st)return;
+ const panelSave=st.body.querySelector('.consumption-editor .consumption-save');
+ st.save.hidden=!panelSave;
+ st.save.disabled=!panelSave||panelSave.disabled||!st.dirty;
+ st.save.textContent=panelSave&&panelSave.disabled&&st.dirty?panelSave.textContent:playerText('Guardar','Save');
+}
+function consumptionSheetToast(text){
+ document.querySelector('.consumption-sheet-toast')?.remove();
+ const toast=document.createElement('div');toast.className='consumption-sheet-toast';toast.setAttribute('role','status');toast.textContent=text;
+ document.body.append(toast);requestAnimationFrame(()=>toast.classList.add('is-visible'));
+ setTimeout(()=>{toast.classList.remove('is-visible');setTimeout(()=>toast.remove(),260);},1800);
+}
+function closeConsumptionSheet(){
+ const st=consumptionSheet;if(!st)return;consumptionSheet=null;
+ st.observer.disconnect();st.parentObserver?.disconnect();document.removeEventListener('click',st.onDocClick,true);
+ document.body.classList.remove('consumption-sheet-open');
+ st.sheet.classList.remove('is-open');st.backdrop.classList.remove('is-open');
+ document.querySelectorAll('.consumption-food-sheet,.consumption-food-sheet-backdrop,.consumption-grams-wheel-backdrop,.consumption-sheet-confirm').forEach(node=>node.remove());
+ document.body.classList.remove('consumption-food-sheet-open');
+ setTimeout(()=>{st.sheet.remove();st.backdrop.remove();},260);
+ if(st.saved)consumptionSheetToast(playerText('Consumo guardado','Consumption saved'));
+}
+function requestCloseConsumptionSheet(){
+ const st=consumptionSheet;if(!st)return;
+ if(!st.dirty){closeConsumptionSheet();return;}
+ st.sheet.querySelector('.consumption-sheet-confirm')?.remove();
+ const layer=document.createElement('div');layer.className='consumption-sheet-confirm';
+ const box=document.createElement('div');box.className='consumption-sheet-confirm-box';box.setAttribute('role','alertdialog');box.setAttribute('aria-modal','true');
+ const group=document.createElement('div');group.className='consumption-sheet-confirm-group';
+ const text=document.createElement('p');text.textContent=playerText('Tens alterações por guardar em ','You have unsaved changes in ')+st.title+'. '+playerText('Queres guardar antes de fechar?','Save before closing?');
+ const make=(label,cls,onClick)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=onClick;return b;};
+ const saveBtn=st.body.querySelector('.consumption-editor .consumption-save');
+ group.append(text);
+ if(saveBtn&&!saveBtn.disabled)group.append(make(playerText('Guardar alterações','Save changes'),'is-primary',()=>{layer.remove();saveBtn.click();}));
+ group.append(make(playerText('Descartar alterações','Discard changes'),'is-destructive',()=>{layer.remove();closeConsumptionSheet();}));
+ const keep=document.createElement('div');keep.className='consumption-sheet-confirm-group';
+ keep.append(make(playerText('Continuar a editar','Keep editing'),'is-primary',()=>layer.remove()));
+ box.append(group,keep);layer.append(box);layer.addEventListener('click',e=>{if(e.target===layer)layer.remove();});
+ st.sheet.append(layer);
+}
+function consumptionSheetMount(host){
+ if(consumptionSheet&&consumptionSheet.sheet.isConnected){consumptionSheet.origin=host;consumptionSheet.dirty=false;consumptionSheet.body.replaceChildren();return consumptionSheet.body;}
+ if(consumptionSheet)closeConsumptionSheet();
+ const parent=host.closest('#day-details')||host.closest('#overview')||document.body;
+ const backdrop=document.createElement('div');backdrop.className='consumption-sheet-backdrop';
+ const sheet=document.createElement('section');sheet.className='consumption-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');
+ const tone=host.closest('[class*="tone-"]');if(tone)for(const c of tone.classList)if(c.startsWith('tone-'))sheet.classList.add(c);
+ const title=consumptionMealTitle(host);sheet.setAttribute('aria-label',playerText('Editar consumo · ','Edit consumption · ')+title);
+ const grabber=document.createElement('div');grabber.className='consumption-sheet-grabber';grabber.setAttribute('aria-hidden','true');
+ const head=document.createElement('header');head.className='consumption-sheet-head';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-sheet-cancel';cancel.textContent=playerText('Cancelar','Cancel');
+ const titles=document.createElement('div');titles.className='consumption-sheet-titles';
+ const strong=document.createElement('strong');strong.textContent=title;const small=document.createElement('small');small.textContent=playerText('Editar consumo','Edit consumption');titles.append(strong,small);
+ const save=document.createElement('button');save.type='button';save.className='consumption-sheet-save';save.textContent=playerText('Guardar','Save');save.disabled=true;
+ head.append(cancel,titles,save);
+ const body=document.createElement('div');body.className='consumption-sheet-body';
+ sheet.append(grabber,head,body);parent.append(backdrop,sheet);
+ const st={sheet,backdrop,body,save,origin:host,dirty:false,saved:false,title};
+ consumptionSheet=st;
+ const markDirty=()=>{st.dirty=true;requestAnimationFrame(consumptionSheetSync);};
+ body.addEventListener('input',markDirty);body.addEventListener('change',markDirty);
+ body.addEventListener('click',e=>{if(e.target.closest('.consumption-remove-all,.consumption-added-food'))markDirty();else requestAnimationFrame(consumptionSheetSync);});
+ st.onDocClick=e=>{if(e.target.closest?.('.consumption-add-confirm'))markDirty();};document.addEventListener('click',st.onDocClick,true);
+ // The editor removes its panel when it is done (saved, cancelled, failed): the sheet closes with it.
+ st.observer=new MutationObserver(()=>{if(consumptionSheet===st&&!body.querySelector('.consumption-editor')){closeConsumptionSheet();return;}consumptionSheetSync();});
+ st.observer.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+ // If Início re-renders underneath (the sheet lives in #day-details), release the sheet state too.
+ st.parentObserver=new MutationObserver(()=>{if(consumptionSheet===st&&!sheet.isConnected)closeConsumptionSheet();});
+ st.parentObserver.observe(parent,{childList:true});
+ cancel.onclick=requestCloseConsumptionSheet;backdrop.onclick=requestCloseConsumptionSheet;
+ save.onclick=()=>{const panelSave=body.querySelector('.consumption-editor .consumption-save');if(panelSave&&!panelSave.disabled)panelSave.click();};
+ // Swipe the sheet down from the grabber or the header.
+ let drag=null;
+ const startDrag=e=>{if(e.touches.length!==1||e.target.closest('button'))return;drag={y:e.touches[0].clientY,at:performance.now(),dy:0};sheet.style.transition='none';};
+ const moveDrag=e=>{if(!drag)return;drag.dy=Math.max(0,e.touches[0].clientY-drag.y);sheet.style.transform='translate3d(0,'+drag.dy+'px,0)';if(e.cancelable)e.preventDefault();};
+ const endDrag=()=>{if(!drag)return;const {dy,at}=drag;drag=null;sheet.style.transition='';sheet.style.transform='';
+  if(dy>120||(dy>40&&dy/Math.max(1,performance.now()-at)>.5))requestCloseConsumptionSheet();};
+ for(const el of [grabber,head]){el.addEventListener('touchstart',startDrag,{passive:true});el.addEventListener('touchmove',moveDrag,{passive:false});el.addEventListener('touchend',endDrag,{passive:true});el.addEventListener('touchcancel',endDrag,{passive:true});}
+ document.body.classList.add('consumption-sheet-open');
+ requestAnimationFrame(()=>{sheet.classList.add('is-open');backdrop.classList.add('is-open');});
+ return body;
+}
 async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
- for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar cores disponíveis…','Loading available colours…');panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar cores disponíveis…','Loading available colours…');panel.append(status);consumptionSheetMount(host).append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   const data=await api('/api/v2/player/consumption-options?'+qs);
@@ -2275,9 +2366,8 @@ async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
 }
 
 async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
- for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar opções…','Loading options…');panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar opções…','Loading options…');panel.append(status);consumptionSheetMount(host).append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId,consumed_color:color});
   const data=await api('/api/v2/player/consumption-options?'+qs);
@@ -2300,10 +2390,12 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
 }
 
 async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null, extraTiming=false, onCancel=null){
- for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
+ // A new intra-match moment keeps its own inline flow; every other edit opens in the sheet.
+ const sheetBody=extraTiming?null:consumptionSheetMount(host);
+ if(!sheetBody)for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
  const message=document.createElement('p');message.className='hint';message.textContent=extraTiming?playerText('A preparar registo de consumo…','Preparing consumption record…'):playerText('A carregar opções publicadas…','Loading published options…');
- panel.append(message);host.append(panel);
+ panel.append(message);(sheetBody||host).append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   if(consumedColor)qs.set('consumed_color',consumedColor);
@@ -2371,7 +2463,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent=playerText('Introduzir valor manualmente','Enter value manually');
     sheet.append(top,wrap,manual);overlay.append(sheet);document.body.append(overlay);
     let selected=current,previous=null;
-    const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
+    const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null&&previous!==selected)playerHaptic();if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
     viewport.scrollTop=current*44;update();
     let raf=0,settleTimer=0,touching=false;
     const settle=()=>{if(touching)return;const target=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)))*44;if(Math.abs(viewport.scrollTop-target)>0.5)viewport.scrollTo({top:target,behavior:'smooth'});};
@@ -2570,10 +2662,10 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
    if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent=playerText('Adiciona pelo menos um alimento da biblioteca.','Add at least one food from the library.');return;}
-   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent=playerText('A guardar o consumo…','Saving consumption…');await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent=playerText('Registo guardado.','Record saved.');panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent=playerText('Não foi possível guardar: ','Could not save: ')+(e.message||playerText('erro desconhecido','unknown error'));error(e);save.disabled=false;save.textContent=playerText('Tentar guardar novamente','Try saving again');}
+   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent=playerText('A guardar o consumo…','Saving consumption…');await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent=playerText('Registo guardado.','Record saved.');if(sheetBody&&consumptionSheet)consumptionSheet.saved=true;panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent=playerText('Não foi possível guardar: ','Could not save: ')+(e.message||playerText('erro desconhecido','unknown error'));error(e);save.disabled=false;save.textContent=playerText('Tentar guardar novamente','Try saving again');}
   };
   save.className='consumption-save';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar','Back');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel consumption-cancel-main';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar','Back');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
@@ -3684,7 +3776,7 @@ function visibleBackButton(){
  document.addEventListener("touchstart",event=>{
   reset();
   if(event.touches.length!==1)return;
-  const t=event.touches[0];if(t.clientX>PLAYER_EDGE_BACK_ZONE)return;
+  const t=event.touches[0];if(t.clientX>PLAYER_EDGE_BACK_ZONE||document.body.classList.contains("consumption-sheet-open"))return;
   if(event.target?.closest?.("input,select,textarea,[contenteditable],[role=\"slider\"],.consumption-editor"))return;
   button=visibleBackButton();if(!button)return;
   page=document.querySelector("#player-panel > section:not([hidden])");

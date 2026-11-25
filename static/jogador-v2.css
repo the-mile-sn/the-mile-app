@@ -5594,3 +5594,46 @@ body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #plans .progress-list-row span{font-size:16px}
 #plans .progress-list-row small{font-size:13px;color:#aaaab4}
 #plans .progress-list-row strong{font-size:16px;font-weight:600;text-align:right;white-space:nowrap}
+
+/* ===== Editar consumo numa folha (2026-11-25, canvas «Proposta E») =====
+   The editor opens in a sheet from the bottom (inside #day-details, so its existing styles apply).
+   Cancelar · refeição · Guardar on top; the editor's own Cancelar/Guardar row is hidden (no repetition). */
+body.consumption-sheet-open{overflow:hidden!important}
+body.consumption-sheet-open #tabs{visibility:hidden!important}
+.consumption-sheet-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);opacity:0;transition:opacity .26s ease}
+.consumption-sheet-backdrop.is-open{opacity:1}
+.consumption-sheet{
+ position:fixed;left:0;right:0;bottom:0;top:max(48px,calc(env(safe-area-inset-top,0px) + 12px));z-index:1001;
+ display:flex;flex-direction:column;box-sizing:border-box;margin:0;border-radius:24px 24px 0 0;
+ background:var(--meal-inner,#1c1d20);color:#f1f1f4;box-shadow:0 -8px 30px rgba(0,0,0,.4);
+ transform:translate3d(0,100%,0);transition:transform .26s cubic-bezier(.2,.8,.2,1);
+}
+.consumption-sheet.is-open{transform:translate3d(0,0,0)}
+.consumption-sheet-grabber{flex:none;width:38px;height:5px;margin:7px auto 0;border-radius:3px;background:rgba(255,255,255,.28)}
+.consumption-sheet-head{flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 14px 10px;touch-action:none}
+.consumption-sheet-head button{appearance:none;margin:0;border:0;box-shadow:none;min-height:36px;font:inherit;font-size:17px}
+.consumption-sheet-cancel{justify-self:start;padding:6px 4px;background:transparent!important;color:var(--meal-ink,#f1f1f4)!important}
+.consumption-sheet-save{justify-self:end;padding:7px 15px!important;border-radius:999px!important;background:#fff!important;color:#111!important;font-weight:650!important}
+.consumption-sheet-save:disabled{background:rgba(255,255,255,.12)!important;color:rgba(255,255,255,.4)!important;opacity:1!important}
+.consumption-sheet-save[hidden]{display:none!important}
+.consumption-sheet-titles{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
+.consumption-sheet-titles strong{font-size:17px;font-weight:650;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.consumption-sheet-titles small{font-size:12px;color:#aaaab4}
+.consumption-sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 16px calc(24px + env(safe-area-inset-bottom,0px))}
+/* #day-details keeps will-change:transform for the day swipe; it would make it the sheet's containing block. */
+#overview #day-details:has(> .consumption-sheet){will-change:auto!important;transform:none!important}
+#overview #day-details .consumption-sheet-body>.consumption-editor{display:flex!important;flex-direction:column!important;margin:0!important;padding:4px 0 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.consumption-sheet-body>.consumption-editor>.consumption-energy-progress{order:-1}
+.consumption-sheet-body .consumption-actions>.consumption-save,
+.consumption-sheet-body .consumption-actions>.consumption-cancel-main{display:none!important}
+.consumption-sheet-body .consumption-actions:not(:has(>:not(.consumption-save):not(.consumption-cancel-main))){display:none!important}
+.consumption-sheet-confirm{position:absolute;inset:0;z-index:5;display:flex;align-items:flex-end;padding:0 10px calc(22px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.35);border-radius:inherit}
+.consumption-sheet-confirm-box{display:flex;flex-direction:column;gap:8px;width:100%}
+.consumption-sheet-confirm-group{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:rgba(44,44,48,.97)}
+.consumption-sheet-confirm-group p{margin:0;padding:14px 18px 12px;text-align:center;font-size:13px;line-height:1.35;color:#aaaab4}
+.consumption-sheet-confirm-group button{appearance:none;margin:0;min-height:56px;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0;background:transparent!important;box-shadow:none;font:inherit;font-size:18px;color:#fff!important}
+.consumption-sheet-confirm-group button:first-child{border-top:0}
+.consumption-sheet-confirm-group button.is-primary{font-weight:650}
+.consumption-sheet-confirm-group button.is-destructive{color:#ff6b6b!important}
+.consumption-sheet-toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));z-index:1002;padding:10px 16px;border-radius:999px;background:rgba(44,44,48,.95);color:#f1f1f4;font-size:14px;opacity:0;transform:translate(-50%,8px);transition:opacity .22s ease,transform .22s ease;pointer-events:none}
+.consumption-sheet-toast.is-visible{opacity:1;transform:translate(-50%,0)}

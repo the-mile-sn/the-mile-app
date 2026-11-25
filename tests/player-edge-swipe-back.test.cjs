@@ -8,7 +8,7 @@ test('the swipe reuses the visible back button of each page',()=>{
 });
 test('only from the left edge, rightwards, past a distance or with speed; vertical scroll stays native',()=>{
  assert.match(js,/const PLAYER_EDGE_BACK_ZONE=28;/);
- assert.match(js,/if\(t\.clientX>PLAYER_EDGE_BACK_ZONE\)return;/);
+ assert.match(js,/if\(t\.clientX>PLAYER_EDGE_BACK_ZONE\|\|document\.body\.classList\.contains\("consumption-sheet-open"\)\)return;/);
  assert.match(js,/if\(Math\.abs\(dy\)>14&&Math\.abs\(dy\)>Math\.abs\(dx\)\)\{reset\(\);return;\}/);
  assert.match(js,/if\(dx>innerWidth\*\.28\|\|\(dx>40&&speed>\.45\)\)/);
 });
