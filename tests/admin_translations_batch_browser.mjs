@@ -35,9 +35,10 @@ try{
       if(path==="/api/v2/admin/i18n/catalog"){
         return route.fulfill(respond({language:"en",library:"food",total:2,
           page:1,page_size:25,items:samples.map(entry=>({
-            ...entry,category:"Cereais",state:"pending",
+            ...entry,category:"Cereais",state:"pending",translation_text:entry.translated_text,
             fields:[{field_path:"display_name",state:"pending",
-             source_text:entry.source_text,field_label:"Nome do alimento"}]
+             source_text:entry.source_text,translation_text:entry.translated_text,
+             field_label:"Nome do alimento"}]
           }))}));
       }
       if(path==="/api/v2/admin/i18n/batch/preview"){
@@ -62,6 +63,14 @@ try{
     await page.goto(origin+"/admin-translations.html",{waitUntil:"domcontentloaded"});
     await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
     assert.equal(writes.length,0);
+    await page.locator("#i18n-results .i18n-inventory-check").first().check();
+    await page.getByRole("button",{name:"Rever seleção",exact:true}).click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    assert.equal(await page.locator("#i18n-bulk-items .i18n-bulk-row").count(),1);
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),1);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    assert.equal(writes.length,0);
+    await page.locator("#i18n-bulk-close").click();
     await page.locator("#i18n-bulk-open").click();
     await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-bulk-items .i18n-bulk-row").count(),2);

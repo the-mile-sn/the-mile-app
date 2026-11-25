@@ -801,6 +801,8 @@ async function activatePlanModule(){
 }
 if(nativeRoot){
  window.tmEnsureAdminPlans=activatePlanModule;
+ // Read-only identity for independent translation review.
+ window.tmCurrentPlanTranslationDraft=()=>!$("plan-editor").hidden&&plan.id&&!saveBusy&&!publishBusy?String(plan.id):"";
  window.tmPlanCanLeave=()=>{
   if(saveBusy||publishBusy){alert("Existe uma operação de guardar ou publicar em curso. Aguarda a conclusão antes de mudar de secção.");return false;}
   if(!$("plan-editor").hidden&&planIsDirty())return confirm("Existem alterações por guardar neste plano. Queres mudar de secção sem guardar?");

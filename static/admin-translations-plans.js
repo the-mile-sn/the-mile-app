@@ -130,13 +130,10 @@
     const feedback=create("p","i18n-feedback");
     const notice=item.sensitive?create("p","i18n-plan-sensitive",
       item.field_kind==="individual_note"?
-        "Nota de consumo do plano. Revê o conteúdo antes de partilhar; "+
-        "a exportação CSV está disponível apenas para notas elegíveis.":
+        "Nota de consumo do plano. Confirma o contexto.":
       item.field_kind==="food_override"?
-        "Apresentação alimentar personalizada. Apenas nomes genéricos e "+
-        "revistos podem entrar no quinto CSV. Confirma o contexto.":
-        "Texto personalizado: revisão privada obrigatória. "+
-        "Alternativas e suplementos não entram no CSV."):null;
+        "Apresentação alimentar personalizada. Confirma o contexto.":
+        "Texto personalizado: revisão privada obrigatória."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
       save.disabled=!editor.value.trim()||!modified||busy;
@@ -198,7 +195,7 @@
       back.addEventListener("click",()=>{active=null;detail.replaceChildren();});
       header.append(back);
       detail.append(header,create("p","i18n-plan-policy",
-        "Traduções por versão publicada. Sem exportação CSV de dados clínicos. "+
+        "Traduções por versão publicada. "+
         "Aprovações só após revisão e confirmação. Quantidades e cálculos não são alterados."));
       // Historical approvals are never applied automatically across publications.
       // Present only unambiguous, hash-matched candidates for explicit review.
@@ -317,71 +314,19 @@
     const intro=create("p","i18n-plan-policy",
       "Textos idênticos agrupados para revisão, incluindo quantidades "+
       "de apresentação. Aprova até 100 ocorrências da mesma expressão. "+
-      "Notas, quantidades e nomes alimentares genéricos têm CSVs próprios "+
-      "com revisão de privacidade. Alternativas e suplementos exigem revisão privada.");
+      "Alternativas e suplementos exigem revisão privada.");
     const search=create("input","i18n-plan-common-search");
     search.type="search";
     search.placeholder="Pesquisar títulos, nomes, quantidades e notas…";
     search.setAttribute("aria-label","Pesquisar traduções comuns");
     const list=create("div","i18n-plan-common-list");
     const detail=create("div","i18n-plan-common-detail");
-    const csvPanel=create("section","i18n-plan-csv-tools");
-    panel.append(header,intro,csvPanel,search,list,detail);
-    let groups=[];
-    let validated=[],csvBusy=false;
-    const csvHeaders=["group_id","source_hash","expected_group_hash",
-      "expected_stage_hash","field_kind","meal_context","source_text",
-      "occurrences","translated_text"];
-    const csvCell=(value,protect=false)=>{
-      let content=String(value??"");
-      if(protect&&/^[\s\u0000-\u001f]*[=+\-@]/.test(content))content="'"+content;
-      return '"'+content.replaceAll('"','""')+'"';
-    };
-    const createCsv=rows=>"\uFEFF"+[csvHeaders,...rows.map(r=>
-      csvHeaders.map(k=>r[k]??""))].map((r,index)=>r.map((cell,j)=>
-        csvCell(cell,index>0&&["source_text","meal_context","translated_text"].includes(
-          csvHeaders[j]))).join(";")).join("\r\n")+"\r\n";
-    const parseCsv=raw=>{
-      const input=raw.replace(/^\uFEFF/,"");
-      const rows=[];let current=[],value="",quoted=false,atStart=true;
-      const cell=()=>{current.push(value);value="";atStart=true;};
-      const next=()=>{cell();if(current.some(x=>x!==""))rows.push(current);current=[];};
-      for(let i=0;i<input.length;i++){
-        const ch=input[i];
-        if(quoted){
-          if(ch==='"'&&input[i+1]==='"'){value+='"';i++;}
-          else if(ch==='"')quoted=false;
-          else value+=ch;
-        }else if(ch==='"'&&atStart){quoted=true;atStart=false;}
-        else if(ch===";")cell();
-        else if(ch==="\n")next();
-        else if(ch==="\r"&&input[i+1]==="\n"){}
-        else if(ch==='"')throw Error("CSV com aspas inválidas.");
-        else {value+=ch;atStart=false;}
-      }
-      if(quoted)throw Error("CSV com aspas por fechar.");
-      if(value!==""||current.length)next();
-      if(!rows.length||rows[0].join("|")!==csvHeaders.join("|"))
-        throw Error("Cabeçalho incorreto. Usa o modelo descarregado nesta área.");
-      if(rows.length>2501)throw Error("O CSV excede 2500 linhas.");
-      if(rows.some(r=>r.length!==csvHeaders.length))
-        throw Error("CSV com número incorreto de colunas.");
-      return rows.slice(1).map(r=>Object.fromEntries(csvHeaders.map((k,i)=>[k,r[i]])));
-    };
-    const exportButton=create("button","i18n-secondary","Descarregar CSV dos textos comuns");
-    exportButton.type="button";
-    const uploadLabel=create("label","i18n-plan-csv-upload","Importar CSV traduzido");
-    const fileInput=create("input","");
-    fileInput.type="file";fileInput.accept=".csv,text/csv";
-    uploadLabel.append(fileInput);
-    const previewButton=create("button","i18n-secondary","Verificar importação");
-    previewButton.type="button";
-    const importButton=create("button","i18n-primary","Importar propostas");
-    importButton.type="button";importButton.disabled=true;
+    let groups=[],approvalBusy=false;
+    panel.append(header,intro,search,list,detail);
     const ackLabel=create("label","i18n-bulk-attestation");
     const ackCheck=create("input");ackCheck.type="checkbox";
     ackLabel.append(ackCheck,create("span","",
-      "Confirmei a revisão das traduções importadas que vou aprovar"));
+      "Confirmei a revisão das traduções que vou aprovar"));
     const bulkButton=create("button","i18n-primary","Aprovar em massa");
     bulkButton.type="button";bulkButton.disabled=true;
     const approvalPanel=create("section","i18n-plan-bulk-approval");
@@ -389,386 +334,40 @@
     const approvalCount=create("p","i18n-plan-bulk-count");
     const approvalHint=create("p","i18n-plan-bulk-hint");
     approvalPanel.append(approvalHeading,approvalCount,ackLabel,bulkButton,approvalHint);
-    const csvFeedback=create("p","i18n-feedback");
-    const csvActions=create("div","i18n-plan-csv-actions");
-    csvActions.append(exportButton,uploadLabel,previewButton,importButton);
-    const uniquePreview=create("details","i18n-plan-unique-preview");
-    const uniqueSummary=create("summary","","Segundo CSV · títulos únicos");
-    const uniqueIntro=create("p","i18n-plan-policy",
-      "Pré-visualização privada. Um título único pode conter informação"+
-      " individualizada: confirma que não identifica jogadores e que não"+
-      " contém informação clínica antes de o partilhar. Desmarca os títulos"+
-      " que não devem sair do backoffice.");
-    const uniqueList=create("div","i18n-plan-unique-list");
-    const uniqueAcknowledge=create("label","i18n-bulk-attestation");
-    const uniqueCheck=create("input");uniqueCheck.type="checkbox";
-    uniqueAcknowledge.append(uniqueCheck,create("span","",
-      "Revisei os títulos selecionados e confirmei que podem ser exportados"));
-    const uniqueDownload=create("button","i18n-secondary",
-      "Descarregar CSV de títulos únicos");
-    uniqueDownload.type="button";uniqueDownload.disabled=true;
-    uniquePreview.append(uniqueSummary,uniqueIntro,uniqueList,
-      uniqueAcknowledge,uniqueDownload);
-    const notesPreview=create("details","i18n-plan-unique-preview i18n-plan-notes-preview");
-    const notesSummary=create("summary","","Terceiro CSV · notas de consumo dos planos");
-    const notesIntro=create("p","i18n-plan-policy",
-      "Notas escritas nas opções alimentares dos planos. Verifica o texto antes "+
-      "de o exportar e desmarca qualquer referência pessoal, clínica ou sensível.");
-    const notesList=create("div","i18n-plan-unique-list");
-    const notesConsent=create("label","i18n-bulk-attestation");
-    const notesCheck=create("input");notesCheck.type="checkbox";
-    notesConsent.append(notesCheck,create("span","",
-      "Revisei estas notas e confirmei que podem ser exportadas para tradução"));
-    const notesDownload=create("button","i18n-secondary",
-      "Descarregar CSV de notas dos planos");
-    notesDownload.type="button";notesDownload.disabled=true;
-    notesPreview.append(notesSummary,notesIntro,notesList,notesConsent,notesDownload);
-    const quantityPreview=create("details","i18n-plan-unique-preview i18n-plan-quantity-preview");
-    const quantitySummary=create("summary","","Quarto CSV · quantidades pendentes");
-    const quantityIntro=create("p","i18n-plan-policy",
-      "Quantidades de apresentação ainda por traduzir. Os símbolos internacionais"+
-      " podem permanecer iguais em inglês; outros termos precisam de tradução."+
-      " Revê cada expressão antes de exportar e desmarca as que não devam ser partilhadas.");
-    const quantityStats=create("p","i18n-plan-quantity-stats");
-    const quantityList=create("div","i18n-plan-unique-list");
-    const quantityConsent=create("label","i18n-bulk-attestation");
-    const quantityCheck=create("input");quantityCheck.type="checkbox";
-    quantityConsent.append(quantityCheck,create("span","",
-      "Revisei as quantidades selecionadas e confirmei que podem ser exportadas"));
-    const quantityDownload=create("button","i18n-secondary",
-      "Descarregar CSV de quantidades");
-    quantityDownload.type="button";quantityDownload.disabled=true;
-    quantityPreview.append(quantitySummary,quantityIntro,quantityStats,
-      quantityList,quantityConsent,quantityDownload);
-    const foodPreview=create("details",
-      "i18n-plan-unique-preview i18n-plan-food-preview");
-    const foodSummary=create("summary","","Quinto CSV · apresentações alimentares");
-    const foodIntro=create("p","i18n-plan-policy",
-      "Nomes próprios das apresentações alimentares dos planos, "+
-      "não provenientes da tradução automática da biblioteca. "+
-      "Revê a lista e desmarca qualquer texto individualizado, "+
-      "identificável ou sensível antes de exportar. "+
-      "Alternativas personalizadas e textos de suplementos não são exportados.");
-    const foodStats=create("p","i18n-plan-food-stats");
-    const foodList=create("div","i18n-plan-unique-list");
-    const foodConsent=create("label","i18n-bulk-attestation");
-    const foodCheck=create("input");foodCheck.type="checkbox";
-    foodConsent.append(foodCheck,create("span","",
-      "Revisei os nomes alimentares selecionados e confirmei que podem ser exportados"));
-    const foodDownload=create("button","i18n-secondary",
-      "Descarregar CSV de apresentações alimentares");
-    foodDownload.type="button";foodDownload.disabled=true;
-    foodPreview.append(foodSummary,foodIntro,foodStats,foodList,
-      foodConsent,foodDownload);
-    csvPanel.append(create("strong","","Tradução por ficheiro CSV"),
-      create("p","i18n-plan-policy",
-        "O CSV comum mantém os títulos repetidos e unidades simples."+
-        " O segundo CSV contém apenas títulos únicos candidatos, sujeitos"+
-        " a uma revisão de privacidade antes do download. Não exportamos"+
-        " dados pessoais, alternativas nem prescrições. Os nomes genéricos"+
-        " de apresentação têm um quinto CSV com confirmação de privacidade."+
-        " Preenche apenas translated_text; importar não aprova automaticamente."),
-      csvActions,uniquePreview,notesPreview,quantityPreview,foodPreview,
-      approvalPanel,csvFeedback);
-    const csvEntry=g=>({
-      group_id:g.group_id,source_hash:g.source_hash,
-      expected_group_hash:g.expected_group_hash,
-      expected_stage_hash:g.expected_stage_hash,
-      field_kind:g.field_kind,meal_context:g.meal_context,
-      source_text:g.source_text,occurrences:g.missing_count,
-      translated_text:g.imported_text||g.suggestion?.text||""
-    });
-    const downloadCsv=(rows,name)=>{
-      const blob=new Blob([createCsv(rows)],{type:"text/csv;charset=utf-8"});
-      const url=URL.createObjectURL(blob),link=document.createElement("a");
-      link.href=url;link.download=name;
-      document.body.append(link);link.click();link.remove();
-      URL.revokeObjectURL(url);
-    };
-    const renderUnique=()=>{
-      uniqueCheck.checked=false;
-      uniqueDownload.disabled=true;
-      uniqueList.replaceChildren();
-      const candidates=groups.filter(g=>g.single_title_candidate&&g.csv_eligible);
-      uniqueSummary.textContent="Segundo CSV · "+candidates.length+
-        " títulos únicos candidatos a tradução";
-      if(!candidates.length){
-        uniqueList.append(create("p","i18n-plan-policy",
-          "Não há títulos únicos elegíveis neste momento."));
-      }
-      for(const group of candidates){
-        const row=create("label","i18n-plan-unique-row");
-        const checkbox=create("input");checkbox.type="checkbox";
-        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
-        checkbox.addEventListener("change",()=>{
-          uniqueCheck.checked=false;uniqueDownload.disabled=true;
-        });
-        row.append(checkbox,create("span","",group.source_text+
-          " · "+group.meal_context));
-        uniqueList.append(row);
-      }
-    };
-    const renderNotes=()=>{
-      notesCheck.checked=false;
-      notesDownload.disabled=true;
-      notesList.replaceChildren();
-      const candidates=groups.filter(g=>g.plan_note_candidate&&g.csv_eligible);
-      notesSummary.textContent="Terceiro CSV · "+candidates.length+
-        " notas de consumo candidatas a tradução";
-      if(!candidates.length){
-        notesList.append(create("p","i18n-plan-policy",
-          "Não existem notas de consumo elegíveis neste momento."));
-      }
-      for(const group of candidates){
-        const row=create("label","i18n-plan-unique-row");
-        const checkbox=create("input");checkbox.type="checkbox";
-        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
-        checkbox.addEventListener("change",()=>{
-          notesCheck.checked=false;notesDownload.disabled=true;
-        });
-        row.append(checkbox,create("span","",group.source_text+
-          " · "+group.meal_context));
-        notesList.append(row);
-      }
-    };
-    notesCheck.addEventListener("change",()=>{
-      notesDownload.disabled=!notesCheck.checked||
-        !notesList.querySelector("input:checked");
-    });
-    notesDownload.addEventListener("click",()=>{
-      if(!notesCheck.checked)return;
-      const included=new Set(Array.from(notesList.querySelectorAll("input:checked"))
-        .map(el=>el.dataset.groupId));
-      const rows=groups.filter(g=>g.plan_note_candidate&&g.csv_eligible&&
-        included.has(g.group_id)).map(csvEntry);
-      if(!rows.length){csvFeedback.textContent="Não há notas selecionadas.";return;}
-      downloadCsv(rows,"the-mile-traducoes-planos-notas.csv");
-      csvFeedback.textContent=rows.length+
-        " notas exportadas. Confirma o conteúdo do CSV antes de o partilhar.";
-      notesCheck.checked=false;notesDownload.disabled=true;
-    });
-    const renderQuantities=()=>{
-      quantityCheck.checked=false;quantityDownload.disabled=true;
-      quantityList.replaceChildren();
-      const candidates=groups.filter(g=>g.quantity_candidate&&g.csv_eligible);
-      const occurrences=candidates.reduce((n,g)=>n+g.missing_count,0);
-      const neutral=candidates.filter(g=>g.quantity_neutral).length;
-      quantitySummary.textContent="Quarto CSV · "+candidates.length+
-        " quantidades únicas ("+occurrences+" ocorrências por traduzir)";
-      quantityStats.textContent=neutral+
-        " expressões com símbolos que podem manter-se iguais em inglês, "+
-        "sujeitas a revisão. As restantes exigem tradução ou confirmação.";
-      if(!candidates.length)quantityList.append(create("p","i18n-plan-policy",
-        "Não existem quantidades elegíveis na fila. Os restantes campos "+
-        "continuam disponíveis na revisão individual dos planos."));
-      for(const group of candidates){
-        const row=create("label","i18n-plan-unique-row");
-        const checkbox=create("input");checkbox.type="checkbox";
-        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
-        checkbox.addEventListener("change",()=>{
-          quantityCheck.checked=false;quantityDownload.disabled=true;
-        });
-        const hint=group.quantity_neutral?" · símbolo igual em inglês (a rever)":
-          group.suggestion?.text?" · tradução existente (a rever)":" · traduzir";
-        row.append(checkbox,create("span","",group.source_text+" · "+
-          group.missing_count+" ocorrências"+hint));
-        quantityList.append(row);
-      }
-    };
-    quantityCheck.addEventListener("change",()=>{
-      quantityDownload.disabled=!quantityCheck.checked||
-        !quantityList.querySelector("input:checked");
-    });
-    quantityDownload.addEventListener("click",()=>{
-      if(!quantityCheck.checked)return;
-      const chosen=new Set(Array.from(quantityList.querySelectorAll("input:checked"))
-        .map(el=>el.dataset.groupId));
-      const rows=groups.filter(g=>g.quantity_candidate&&g.csv_eligible&&
-        chosen.has(g.group_id)).map(csvEntry);
-      if(!rows.length){csvFeedback.textContent="Não há quantidades selecionadas.";return;}
-      downloadCsv(rows,"the-mile-traducoes-planos-quantidades.csv");
-      csvFeedback.textContent=rows.length+" quantidades exportadas. "+
-        "Preserva números e unidades antes de importar.";
-      quantityCheck.checked=false;quantityDownload.disabled=true;
-    });
-    const renderFoods=()=>{
-      foodCheck.checked=false;foodDownload.disabled=true;
-      foodList.replaceChildren();
-      const candidates=groups.filter(g=>g.food_override_candidate&&g.csv_eligible);
-      const occurrences=candidates.reduce((n,g)=>n+g.missing_count,0);
-      const reusable=candidates.filter(g=>
-        g.suggestion?.origin==="approved_exact_food_name").length;
-      foodSummary.textContent="Quinto CSV · "+candidates.length+
-        " nomes alimentares ("+occurrences+" ocorrências pendentes)";
-      foodStats.textContent=reusable+" nomes com tradução aprovada "+
-        "reutilizável da biblioteca, a confirmar antes da importação. "+
-        "Os restantes requerem tradução ou revisão do contexto.";
-      if(!candidates.length){
-        foodList.append(create("p","i18n-plan-policy",
-          "Não existem apresentações genéricas elegíveis. "+
-          "Os restantes textos são revistos individualmente no plano."));
-      }
-      for(const group of candidates){
-        const row=create("label","i18n-plan-unique-row");
-        const checkbox=create("input");checkbox.type="checkbox";
-        checkbox.checked=true;checkbox.dataset.groupId=group.group_id;
-        checkbox.addEventListener("change",()=>{
-          foodCheck.checked=false;foodDownload.disabled=true;
-        });
-        const hint=group.suggestion?.origin==="approved_exact_food_name"?
-          " · EN já aprovado na biblioteca (rever)":" · precisa de inglês";
-        row.append(checkbox,create("span","",
-          group.source_text+" · "+group.missing_count+" ocorrências"+hint));
-        foodList.append(row);
-      }
-    };
-    foodCheck.addEventListener("change",()=>{
-      foodDownload.disabled=!foodCheck.checked||
-        !foodList.querySelector("input:checked");
-    });
-    foodDownload.addEventListener("click",()=>{
-      if(!foodCheck.checked)return;
-      const included=new Set(
-        Array.from(foodList.querySelectorAll("input:checked"))
-          .map(el=>el.dataset.groupId));
-      const rows=groups.filter(g=>g.food_override_candidate&&g.csv_eligible&&
-        included.has(g.group_id)).map(csvEntry);
-      if(!rows.length){csvFeedback.textContent="Não há nomes selecionados.";return;}
-      downloadCsv(rows,"the-mile-traducoes-planos-apresentacoes.csv");
-      csvFeedback.textContent=rows.length+
-        " nomes alimentares exportados. Revê-os antes de partilhar o ficheiro.";
-      foodCheck.checked=false;foodDownload.disabled=true;
-    });
-    uniqueCheck.addEventListener("change",()=>{
-      uniqueDownload.disabled=!uniqueCheck.checked||
-        !uniqueList.querySelector("input:checked");
-    });
-    uniqueDownload.addEventListener("click",()=>{
-      if(!uniqueCheck.checked)return;
-      const included=new Set(Array.from(uniqueList.querySelectorAll("input:checked"))
-        .map(el=>el.dataset.groupId));
-      const rows=groups.filter(g=>g.single_title_candidate&&g.csv_eligible&&
-        included.has(g.group_id)).map(csvEntry);
-      if(!rows.length){csvFeedback.textContent="Não há títulos selecionados.";return;}
-      downloadCsv(rows,"the-mile-traducoes-planos-titulos-unicos.csv");
-      csvFeedback.textContent=rows.length+
-        " títulos únicos exportados. Confirma novamente o conteúdo do CSV"+
-        " antes de o partilhar.";
-      uniqueCheck.checked=false;uniqueDownload.disabled=true;
-    });
+    const approvalFeedback=create("p","i18n-feedback");
+    approvalPanel.append(approvalFeedback);
+    panel.insertBefore(approvalPanel,search);
     const matchingGroups=()=>groups.filter(g=>{
       const term=search.value.trim().toLocaleLowerCase("pt-PT");
       return !term||[g.source_text,g.meal_context,g.field_kind].join(" ")
         .toLocaleLowerCase("pt-PT").includes(term);
     });
-    const updateCsvButtons=()=>{
-      importButton.disabled=csvBusy||!validated.length;
+    const updateApprovalButtons=()=>{
       const ready=matchingGroups().filter(g=>g.csv_eligible&&g.imported_text&&
         (g.imported_status==="pending"||g.imported_status==="approved"));
       const count=ready.length,occurrences=ready.reduce((total,g)=>total+g.missing_count,0);
-      bulkButton.disabled=csvBusy||!ackCheck.checked||!count;
-      bulkButton.textContent=csvBusy?"A processar…":
+      bulkButton.disabled=approvalBusy||!ackCheck.checked||!count;
+      bulkButton.textContent=approvalBusy?"A processar…":
         "Aprovar em massa · até "+Math.min(100,count)+" expressões";
       approvalCount.textContent=count?
-        count+" expressões importadas prontas para aprovação · "+
+        count+" expressões guardadas prontas para aprovação · "+
           occurrences+" ocorrências por traduzir":
-        "Não existem traduções importadas por aprovar neste filtro.";
-      approvalHint.textContent=csvBusy?"A aprovação está em curso.":
-        !count?"Importa as traduções para ativar a aprovação em massa.":
+        "Não existem traduções guardadas por aprovar neste filtro.";
+      approvalHint.textContent=approvalBusy?"A aprovação está em curso.":
+        !count?"Revê os textos individualmente.":
         !ackCheck.checked?
           "Assinala a confirmação acima para ativar o botão. "+
           "Cada expressão é aprovada em grupos de até 100 ocorrências.":
           "Pronto para aprovar. Cada expressão é aprovada em grupos de "+
           "até 100 ocorrências, com histórico de revisão.";
     };
-    exportButton.addEventListener("click",()=>{
-      const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate&&
-        g.field_kind!=="food_override"&&
-        (g.field_kind!=="display_quantity"||
-         g.suggestion?.origin==="simple_unit_rule")).map(csvEntry);
-      if(!rows.length){
-        csvFeedback.textContent="Não há títulos repetidos ou unidades para exportar.";
-        return;
-      }
-      downloadCsv(rows,"the-mile-traducoes-planos-comuns.csv");
-      csvFeedback.textContent="CSV descarregado com "+rows.length+
-        " expressões. Revê o conteúdo antes de o partilhares.";
-    });
-    fileInput.addEventListener("change",()=>{
-      validated=[];ackCheck.checked=false;importButton.disabled=true;
-      csvFeedback.textContent=fileInput.files[0]?.name||"";
-      updateCsvButtons();
-    });
-    previewButton.addEventListener("click",async()=>{
-      validated=[];importButton.disabled=true;
-      const file=fileInput.files[0];
-      if(!file){csvFeedback.textContent="Seleciona primeiro um CSV.";return;}
-      if(file.size>1024*1024){
-        csvFeedback.textContent="O ficheiro não pode exceder 1 MB.";return;
-      }
-      try{
-        const entries=parseCsv(await file.text());
-        const byId=new Map(groups.filter(g=>g.csv_eligible).map(g=>[g.group_id,g]));
-        const unique=new Set();
-        let blanks=0;
-        for(const row of entries){
-          const g=byId.get(row.group_id);
-          if(!g||unique.has(row.group_id))throw Error(
-            "Existe um grupo duplicado ou alterado. Descarrega um novo modelo.");
-          unique.add(row.group_id);
-          const safeSource=String(row.source_text).replace(/^'(?=[=+\-@])/,"");
-          const safeContext=String(row.meal_context).replace(/^'(?=[=+\-@])/,"");
-          if(row.source_hash!==g.source_hash||
-             row.expected_group_hash!==g.expected_group_hash||
-             row.expected_stage_hash!==(g.expected_stage_hash||"")||
-             row.field_kind!==g.field_kind||safeContext!==g.meal_context||
-             safeSource!==g.source_text)
-            throw Error("O plano mudou desde a exportação. Descarrega um CSV novo.");
-          const translated=row.translated_text.trim().replace(/^'(?=[=+\-@])/,"");
-          if(!translated){blanks++;continue;}
-          validated.push({group_id:g.group_id,source_hash:g.source_hash,
-            expected_group_hash:g.expected_group_hash,
-            expected_stage_hash:g.expected_stage_hash||"",translated_text:translated});
-        }
-        if(!validated.length)throw Error("Preenche translated_text antes de importar.");
-        csvFeedback.textContent=validated.length+
-          " propostas prontas a importar. "+blanks+
-          " linhas vazias ficam por traduzir. Nenhuma será aprovada nesta etapa.";
-        updateCsvButtons();
-      }catch(e){validated=[];csvFeedback.textContent="CSV inválido: "+e.message;
-        updateCsvButtons();}
-    });
-    importButton.addEventListener("click",async()=>{
-      if(csvBusy||!validated.length)return;
-      csvBusy=true;updateCsvButtons();
-      let imported=0,unchanged=0;
-      try{
-        for(let i=0;i<validated.length;i+=100){
-          if(seq!==generation)break;
-          const result=await send("/api/v2/admin/i18n/plans/common/import","POST",
-            {rows:validated.slice(i,i+100)});
-          imported+=result.imported;unchanged+=result.unchanged;
-          csvFeedback.textContent="Importação: "+Math.min(i+100,validated.length)+
-            " / "+validated.length+" expressões processadas.";
-        }
-        validated=[];
-        await refresh();
-        csvFeedback.textContent=imported+" propostas importadas; "+unchanged+
-          " já existentes sem alterações. Revê e confirma a aprovação em lote.";
-      }catch(e){
-        csvFeedback.textContent="Importação interrompida após "+imported+
-          " propostas: "+e.message+". Atualiza o CSV e volta a verificar.";
-        validated=[];
-        await refresh();
-      }finally{csvBusy=false;updateCsvButtons();}
-    });
-    ackCheck.addEventListener("change",updateCsvButtons);
+    ackCheck.addEventListener("change",updateApprovalButtons);
     bulkButton.addEventListener("click",async()=>{
-      if(csvBusy||!ackCheck.checked)return;
+      if(approvalBusy||!ackCheck.checked)return;
       const queue=matchingGroups().filter(g=>g.csv_eligible&&g.imported_text&&
         (g.imported_status==="pending"||g.imported_status==="approved")).slice(0,100);
       if(!queue.length)return;
-      csvBusy=true;updateCsvButtons();
+      approvalBusy=true;updateApprovalButtons();
       let total=0,count=0;
       try{
         for(const item of queue){
@@ -779,19 +378,19 @@
             translated_text:item.imported_text,acknowledged:true
           });
           count++;total+=result.approved;
-          csvFeedback.textContent="Aprovadas "+total+
+          approvalFeedback.textContent="Aprovadas "+total+
             " ocorrências em "+count+" expressões…";
         }
         await refresh();
-        csvFeedback.textContent="Aprovadas "+total+" ocorrências de "+count+
+        approvalFeedback.textContent="Aprovadas "+total+" ocorrências de "+count+
           " expressões. Para grupos com mais de 100 ocorrências, confirma novo lote.";
       }catch(e){
-        csvFeedback.textContent="Aprovação interrompida após "+count+
+        approvalFeedback.textContent="Aprovação interrompida após "+count+
           " expressões e "+total+" ocorrências: "+e.message+
           ". Os lotes anteriores ficaram aprovados; atualiza e revê o restante.";
         await refresh();
       }finally{
-        ackCheck.checked=false;csvBusy=false;updateCsvButtons();
+        ackCheck.checked=false;approvalBusy=false;updateApprovalButtons();
       }
     });
     const refresh=async()=>{
@@ -799,11 +398,7 @@
       if(seq!==generation||host.hidden)return;
       groups=result.items||[];
       showList();
-      renderUnique();
-      renderNotes();
-      renderQuantities();
-      renderFoods();
-      updateCsvButtons();
+              updateApprovalButtons();
     };
     const openGroup=item=>{
       detail.replaceChildren();
@@ -903,13 +498,13 @@
               item.field_kind==="food_override"?
               "Apresentação alimentar":"Unidade simples")+
             (item.missing_count>100?" · em grupos de 100":"")+
-            (item.imported_status?" · CSV "+(
-              item.imported_status==="approved"?"revisto":"importado por rever"):"")));
+            (item.imported_status?" · Tradução "+(
+              item.imported_status==="approved"?"revisto":"guardada por rever"):"")));
         row.addEventListener("click",()=>openGroup(item));
         list.append(row);
       }
     };
-    search.addEventListener("input",()=>{showList();updateCsvButtons();});
+    search.addEventListener("input",()=>{showList();updateApprovalButtons();});
     try{await refresh();}
     catch(e){
       if(seq===generation)list.replaceChildren(
@@ -1126,5 +721,52 @@
         create("p","i18n-feedback","Não foi possível consultar publicações: "+e.message));
     }
   };
-  window.tmI18nPlans={load,hide};
+  // Reuse the existing field renderer and version-bound translation endpoints.
+  const openDraft=async(draftId)=>{
+    if(document.getElementById("tm-plan-translation-dialog"))return;
+    const dialog=create("dialog","tm-admin-translations-page tm-plan-translation-dialog");
+    dialog.id="tm-plan-translation-dialog";
+    dialog.setAttribute("aria-labelledby","tm-plan-translation-title");
+    const heading=create("div","i18n-plan-detail-head");
+    const title=create("strong","","Traduções");
+    title.id="tm-plan-translation-title";
+    const close=create("button","i18n-quiet","Fechar");
+    close.type="button";close.onclick=()=>dialog.close();
+    heading.append(title,close);
+    const body=create("div","tm-plan-translation-body");
+    body.append(create("p","i18n-plan-policy","A consultar versão publicada…"));
+    dialog.append(heading,body);
+    dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+    document.body.append(dialog);
+    dialog.showModal();
+    try{
+      const session=await send("/api/me");
+      if(session?.user?.role!=="admin"||!session.csrf)throw Error("acesso_restrito");
+      csrf=session.csrf;
+      const result=await send("/api/v2/admin/i18n/plans/fields?"+
+        new URLSearchParams({draft_id:draftId}));
+      if(!dialog.open||!dialog.isConnected)return;
+      const ref=result.publication?.publication_ref;
+      if(!/^[a-f0-9]{64}$/.test(ref||""))throw Error("versão indisponível");
+      body.replaceChildren(create("strong","",labelPlan(result.publication)),
+        create("p","i18n-plan-policy","A rever apenas a versão publicada. A tradução não altera a prescrição nem publica o plano."));
+      let groupName=null,group=null;
+      for(const field of result.fields||[]){
+        if(field.group!==groupName||!group){
+          groupName=field.group;
+          group=create("section","i18n-plan-option");
+          group.append(create("h3","",groupName||"Textos do plano"));
+          body.append(group);
+        }
+        group.append(renderField(field,ref));
+      }
+      if(!group)body.append(create("p","i18n-plan-policy","Não existem textos específicos para tradução neste plano."));
+    }catch(e){
+      if(dialog.open&&dialog.isConnected)body.replaceChildren(
+        create("p","i18n-feedback",e.message==="plan_publication_not_found"?
+          "Este plano ainda não tem uma versão publicada para rever.":
+          "Não foi possível consultar a versão publicada: "+e.message));
+    }
+  };
+  window.tmI18nPlans={load,hide,openDraft};
 })();

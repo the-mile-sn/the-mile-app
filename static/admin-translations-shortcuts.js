@@ -52,6 +52,26 @@
       add("supp-library-new","supplement","Traduções · Suplementação");
       add("entry-create","plan","Traduções · Planos");
       add("entry-create-mobile","plan","Traduções · Planos");
+      const newPlan=document.querySelector("#tm-plan-page #new-plan");
+      if(newPlan&&!document.getElementById("tm-plan-editor-translation")){
+        const button=document.createElement("button");
+        button.type="button";button.id="tm-plan-editor-translation";
+        button.className="tm-i18n-library-link tm-action-secondary";
+        button.title="Traduções da versão publicada";
+        button.setAttribute("aria-label",button.title);
+        const glyph=nav?.querySelector(".tm-admin-nav-icon svg");
+        if(glyph){const copy=glyph.cloneNode(true);copy.setAttribute("width","18");copy.setAttribute("height","18");copy.setAttribute("aria-hidden","true");button.append(copy);}
+        else button.textContent="EN";
+        button.addEventListener("click",async()=>{
+          const id=window.tmCurrentPlanTranslationDraft?.();
+          if(!id){alert("Guarda o plano antes de rever as traduções da versão publicada.");return;}
+          button.disabled=true;
+          try{await window.tmOpenPlanTranslationReview(id);}
+          catch(_){alert("Não foi possível abrir as traduções.");}
+          finally{button.disabled=false;}
+        });
+        newPlan.before(button);
+      }
     }catch(_){/* An unavailable opt-in service must not change current UI. */}
   };
   new MutationObserver(activate).observe(workspace,{attributes:true,attributeFilter:["hidden"]});

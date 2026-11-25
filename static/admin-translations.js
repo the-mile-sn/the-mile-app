@@ -109,6 +109,35 @@
    $("i18n-library-link").dataset.libraryKind=state.kind;
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
+ const batchKinds=["food","dish","recipe","supplement"];
+ const inventorySelected=new Map();
+ const inventoryKey=(entry,field)=>JSON.stringify([entry.entity_id,field.field_path]);
+ const inventoryToolbar=create("div","i18n-inventory-selection");
+ const inventoryCount=create("span","","");
+ const inventoryApprove=create("button","i18n-secondary","Rever seleção");
+ inventoryApprove.type="button";
+ inventoryToolbar.append(inventoryCount,inventoryApprove);
+ $("i18n-results").before(inventoryToolbar);
+ const syncInventorySelection=()=>{
+   inventoryCount.textContent=inventorySelected.size+" textos selecionados nesta página";
+   inventoryApprove.disabled=!inventorySelected.size;
+   inventoryToolbar.hidden=!inventorySelected.size;
+ };
+ syncInventorySelection();
+ const inventoryCheck=(entry,field)=>{
+   if(!batchKinds.includes(state.kind)||!(field.state==="pending"||(state.kind==="dish"&&field.state==="legacy_review")))return null;
+   const english=field.translation_text||field.legacy_candidate||(entry.field_path===field.field_path?(entry.translation_text||entry.legacy_candidate):"");
+   if(!english)return null;
+   const box=create("input","i18n-inventory-check");box.type="checkbox";
+   box.setAttribute("aria-label","Selecionar "+(field.field_label||field.field_path)+" de "+entry.source_text);
+   const key=inventoryKey(entry,field);
+   box.addEventListener("change",()=>{
+     if(box.checked)inventorySelected.set(key,{entity_id:entry.entity_id,field_path:field.field_path,source_text:field.source_text,translated_text:english});
+     else inventorySelected.delete(key);
+     syncInventorySelection();
+   });
+   return box;
+ };
  let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0,bulkKind=null;
  const bulkEntryRows=()=>[...$("i18n-bulk-items").querySelectorAll(".i18n-bulk-row")];
  const updateBulkActions=()=>{
@@ -138,7 +167,8 @@
    $("i18n-bulk-filter").value="";
    msg("",false,"i18n-bulk-feedback");
  };
- const openBulk=async()=>{
+ const openBulk=async(selection=null)=>{
+   if(state.busy||state.edited){msg("Guarda ou fecha a edição antes de iniciar a aprovação em lote.",true);return;}
    if(bulkBusy||!["food","dish","recipe","supplement"].includes(state.kind))return;
    resetBulk();
    const kind=state.kind;
@@ -160,6 +190,17 @@
        "Selecionar todas as propostas pendentes":kind==="dish"?
        "Selecionar todas as traduções por rever":"Selecionar todos os textos por rever";
      bulkRows=data.items||[];
+     if(Array.isArray(selection)){
+       const chosen=new Map(selection.map(row=>[inventoryKey(row,row),row]));
+       bulkRows=bulkRows.filter(row=>{
+         const prior=chosen.get(inventoryKey(row,row));
+         return prior&&prior.source_text===row.source_text&&prior.translated_text===row.translated_text;
+       });
+       if(bulkRows.length!==selection.length){
+         resetBulk();msg("Algumas traduções mudaram. Atualiza a lista e revê novamente a seleção.",true);return;
+       }
+       bulkSelected=new Set(bulkRows.map((_,i)=>i));
+     }
      const list=$("i18n-bulk-items");
      list.replaceChildren();
      const recipeGroups=new Map();
@@ -203,6 +244,7 @@
        const checkbox=create("input");checkbox.type="checkbox";
        checkbox.value=entry.entity_id;
        checkbox.dataset.index=String(i);
+       checkbox.checked=bulkSelected.has(i);
        const details=create("span","i18n-bulk-entry");
        if(kind==="recipe"||kind==="supplement"){
          details.append(create("small","i18n-bulk-field",entry.field_label||entry.field_path));
@@ -274,6 +316,7 @@
  };
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
+   inventorySelected.clear();syncInventorySelection();
    buildTabs();
    const isPlan=state.kind==="plan";
    $("i18n-bulk-tools").hidden=!["food","dish","recipe","supplement"].includes(state.kind);
@@ -283,7 +326,6 @@
    $("i18n-results").hidden=isPlan;
    $("i18n-results-count").hidden=isPlan;
    $("i18n-prev").parentElement.hidden=isPlan;
-   $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
    $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
    $("i18n-work-title").textContent=isPlan?"Planos":"Revisão manual";
@@ -304,16 +346,18 @@
      });
      const result=await send("/api/v2/admin/i18n/catalog?"+params);
      if(currentRequest!==catalogRequestSeq)return;
-     const list=$("i18n-results");list.replaceChildren();
+     const list=$("i18n-results");
+     const inlineRecord=$("i18n-review").closest(".i18n-inventory-record");
+     if(inlineRecord)reviewHome.append($("i18n-review"));
+     list.replaceChildren();
      $("i18n-results-count").textContent=result.total+" registos encontrados";
      if(!result.items.length){
        list.append(create("p","i18n-results-count","Não existem conteúdos para estes filtros."));
      }
      for(const entry of result.items){
        const b=create("button","i18n-result");b.type="button";
-       const main=create("span","");
-       const count=entry.fields?.length||1;
-       main.append(create("strong","",entry.source_text));
+       const main=create("span","i18n-result-portuguese");
+       main.append(create("small","","PT"),create("strong","",entry.source_text));
        if(entry.category)main.append(create("small","",entry.category));
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
@@ -322,9 +366,48 @@
        arrow.setAttribute("aria-hidden","true");
        // Reuse the same chevron shape already used by the Admin navigation.
        arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
-       b.append(main,badge(displayedState),arrow);
-       b.addEventListener("click",()=>openReview(entry));
-       list.append(b);
+       const primary=(entry.fields||[]).find(field=>field.field_path===entry.field_path)||entry;
+       const english=create("span","i18n-result-english");
+       english.append(create("small","","EN"),create("span","i18n-result-translation",
+         primary.translation_text||primary.legacy_candidate||entry.translation_text||entry.legacy_candidate||"Por traduzir"));
+       b.append(main,english,badge(displayedState),arrow);
+       const wrapper=create("div","i18n-inventory-record");
+       b.addEventListener("click",()=>openReview(entry,wrapper));
+       wrapper.append(b);
+       const fields=entry.fields?.length?entry.fields:[entry];
+       if(fields.length===1){
+         const check=inventoryCheck(entry,fields[0]);
+         if(check){wrapper.classList.add("i18n-inventory-selectable");wrapper.prepend(check);}
+       }
+       {
+         const edit=create("button","i18n-secondary i18n-inline-edit",fields.length===1?"Editar":"Rever "+fields.length+" textos");
+         edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
+         edit.addEventListener("click",()=>openReview(entry,wrapper));
+         wrapper.append(edit);
+       }
+       if(fields.length>1){
+         const context=create("div","i18n-record-fields");
+         for(const field of fields){
+           const fieldButton=create("button","i18n-record-field");
+           fieldButton.type="button";
+           fieldButton.setAttribute("aria-label","Rever "+(field.field_label||field.field_path)+" de "+entry.source_text);
+           const pair=create("span","i18n-record-field-pair");
+           const pt=create("span",""),en=create("span","");
+           pt.append(create("small","",field.field_label||field.field_path),create("span","",field.source_text));
+           en.append(create("small","","EN"),create("span","",field.translation_text||field.legacy_candidate||"Por traduzir"));
+           pair.append(pt,en);fieldButton.append(pair,badge(field.state));
+           fieldButton.addEventListener("click",()=>openReview(entry,wrapper,field.field_path));
+           const fieldRow=create("div","i18n-record-field-row");
+           const check=inventoryCheck(entry,field);
+           if(check)fieldRow.append(check);
+           fieldRow.append(fieldButton);context.append(fieldRow);
+         }
+         wrapper.append(context);
+       }
+       wrapper.dataset.entityId=entry.entity_id;
+       if(inlineRecord&&state.selected?.entity_kind===entry.entity_kind&&state.selected?.entity_id===entry.entity_id)
+         wrapper.append($("i18n-review"));
+       list.append(wrapper);
      }
      const pages=Math.max(1,Math.ceil(result.total/state.pageSize));
      $("i18n-page-indicator").textContent="Página "+state.page+" / "+pages;
@@ -342,16 +425,28 @@
    state.selected=null;state.row=null;state.edited=false;state.legacy="";
    $("i18n-fields").replaceChildren();
    $("i18n-review").hidden=true;
+   reviewHome.append($("i18n-review"));
    $("i18n-history-panel").open=false;
  };
- const openReview=async(entry)=>{
+ const reviewHome=$("i18n-review").parentElement;
+ const openReview=async(entry,inlineHost=null,fieldPath=null)=>{
+   if(state.busy)return;
+   if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
+   if(inlineHost)inlineHost.append($("i18n-review"));
+   else reviewHome.append($("i18n-review"));
    const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
-   const primary=fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
+   const primary=fields.find(f=>f.field_path===fieldPath)||fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
    const chooseField=(field)=>{
      if(!field)return;
      state.selected={...entry,field_path:field.field_path};
      state.legacy=field.legacy_candidate||"";
      state.row=null;state.edited=false;
+     $("i18n-propose").disabled=true;$("i18n-approve").disabled=true;
+     $("i18n-source-text").textContent=field.source_text;
+     $("i18n-target-text").value=field.translation_text||field.legacy_candidate||"";
+     $("i18n-target-text").disabled=true;
+     $("i18n-history").replaceChildren();
+     $("i18n-translation-state").textContent="A carregar…";
      $("i18n-review-title").textContent=entry.source_text;
      $("i18n-existing").hidden=!state.legacy;
      msg("",false,"i18n-review-feedback");
@@ -367,7 +462,12 @@
      select.append(option);
    }
    select.value=primary.field_path;
-   select.onchange=()=>chooseField(fields.find(f=>f.field_path===select.value));
+   select.onchange=()=>{
+     if(state.busy||(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))){
+       select.value=state.selected?.field_path||primary.field_path;return;
+     }
+     chooseField(fields.find(f=>f.field_path===select.value));
+   };
    $("i18n-review").hidden=false;
    chooseField(primary);
    $("i18n-review").scrollIntoView({behavior:"smooth",block:"start"});
@@ -382,8 +482,7 @@
      });
      const detail=await send("/api/v2/admin/i18n?"+q);
      // Keep selection only if it still refers to the current record.
-     if(!state.selected || state.selected.entity_id!==key.entity_id ||
-       state.selected.field_path!==key.field_path)return;
+     if(state.selected!==key)return;
      state.row=detail;
      state.edited=false;
      $("i18n-source-text").textContent=detail.source_text;
@@ -395,8 +494,10 @@
      $("i18n-translation-state").textContent=stateLabel;
      $("i18n-approve").disabled=!detail.candidate||
        detail.candidate.status!=="pending";
+     $("i18n-target-text").disabled=false;
      $("i18n-propose").disabled=false;
      const history=await send("/api/v2/admin/i18n/history?"+q+"&limit=25");
+     if(state.selected!==key)return;
      const panel=$("i18n-history");panel.replaceChildren();
      if(!history.history.length)panel.append(create("p","","Sem revisões anteriores."));
      for(const record of history.history){
@@ -408,7 +509,7 @@
          create("p","",record.translated_text));
        panel.append(wrap);
      }
-   }catch(error){msg("Não foi possível abrir a tradução: "+error.message,true,"i18n-review-feedback");}
+   }catch(error){if(state.selected===key)msg("Não foi possível abrir a tradução: "+error.message,true,"i18n-review-feedback");}
  };
  const updateAfterWrite=async()=>{
    await Promise.all([loadOverview(),loadCatalog()]);
@@ -465,14 +566,11 @@
    return opening;
  };
  const init=()=>{
-   window.addEventListener("mile:translations-imported",()=>{
-     if(embedded&&document.getElementById("tm-admin-translations-page").hidden)return;
-     closeReview();loadOverview();loadCatalog();
-   });
    if(embedded)window.addEventListener("mile:translations-open",event=>{
      activate(event.detail?.kind);
    });
-   $("i18n-bulk-open").addEventListener("click",openBulk);
+   $("i18n-bulk-open").addEventListener("click",()=>openBulk());
+   inventoryApprove.addEventListener("click",()=>openBulk([...inventorySelected.values()]));
    $("i18n-bulk-close").addEventListener("click",resetBulk);
    $("i18n-bulk-submit").addEventListener("click",submitBulk);
    $("i18n-bulk-select-100").addEventListener("click",()=>{
@@ -516,7 +614,11 @@
      }
      updateBulkActions();
    });
-   $("i18n-close").addEventListener("click",closeReview);
+   $("i18n-close").addEventListener("click",()=>{
+     if(state.busy)return;
+     if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
+     closeReview();
+   });
    $("i18n-library-link").addEventListener("click",()=>{
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;

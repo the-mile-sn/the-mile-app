@@ -334,9 +334,9 @@ function ensurePlanningOnlyView(){
   });
   translationsAssetLoad=(async()=>{
    const css=document.createElement("link");css.rel="stylesheet";
-   css.href="/admin-translations-embedded.css?v=19";
+   css.href="/admin-translations-embedded.css?v=25";
    await load(css);
-   for(const src of ["/admin-translations.js?v=12","/admin-translations-import.js?v=4","/admin-translations-plans.js?v=12"]){
+   for(const src of ["/admin-translations.js?v=17","/admin-translations-plans.js?v=14"]){
     const script=document.createElement("script");script.src=src;script.async=false;
     await load(script);
    }
@@ -366,6 +366,11 @@ function ensurePlanningOnlyView(){
  }
  if(translationsBtn)translationsBtn.addEventListener("click",()=>openTranslations());
  window.tmOpenAdminTranslations=openTranslations;
+ window.tmOpenPlanTranslationReview=async draftId=>{
+   await loadTranslationsAssets();
+   if(window.tmCurrentPlanTranslationDraft?.()!==draftId)return;
+   return window.tmI18nPlans.openDraft(draftId);
+ };
  function openPlans(){
   if($("admin-workspace").hidden)return;
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;

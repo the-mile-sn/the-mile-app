@@ -84,7 +84,9 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                     raise APIError(400, "invalid_translation_query")
                 return 200, plans.list_publications(c, user)
             if path == ROOT + "/plans/fields":
-                q = _query(query or {}, ("publication_ref",))
+                q = _query(query or {}, ("publication_ref", "draft_id"))
+                if set(q) == {"draft_id"}:
+                    return 200, plans.inspect_draft(c, user, q["draft_id"])
                 if set(q) != {"publication_ref"}:
                     raise APIError(400, "invalid_translation_query")
                 return 200, plans.inspect(c, user, q["publication_ref"])
