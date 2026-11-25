@@ -1803,7 +1803,8 @@ function renderWeekWidget(row,date,calendar){
   const b=document.createElement("button");b.type="button";b.className="day-week-widget-day"+(key===date?" selected":"")+(matchDates.has(key)?" match":"");
   b.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+(matchDates.has(key)?playerText(" · jogo"," · match"):""));
   b.setAttribute("aria-pressed",String(key===date));
-  if(matchDates.has(key)&&key!==date)b.append(mealIcon("football"));
+  // Match day keeps the ball, also when it is the selected day (MD at a glance).
+  if(matchDates.has(key))b.append(mealIcon("football"));
   else b.textContent=dt.toLocaleDateString(playerDateLocale(),{weekday:"narrow"}).toLocaleUpperCase(playerDateLocale());
   b.onclick=()=>{day=dt;weeklySelection=null;overview().catch(error);};
   days.append(b);
@@ -1916,6 +1917,22 @@ async function openWeightDetail(date,editToday,host=$("overview")){
  };
  await render();
 }
+// Haptic tick for wheels (like the iPhone alarm picker). Android: vibrate. iOS Safari (18+) has no
+// vibrate API but plays the system haptic when a native switch toggles, so a hidden one is toggled.
+let playerHapticSwitch=null;
+function playerHaptic(){
+ try{
+  if(typeof navigator.vibrate==="function"){navigator.vibrate(8);return;}
+  if(!playerHapticSwitch){
+   const label=document.createElement("label");label.setAttribute("aria-hidden","true");
+   label.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+   const input=document.createElement("input");input.type="checkbox";input.setAttribute("switch","");input.tabIndex=-1;
+   const stop=event=>event.stopPropagation();label.addEventListener("click",stop);input.addEventListener("click",stop);
+   label.append(input);document.body.append(label);playerHapticSwitch=label;
+  }
+  playerHapticSwitch.click();
+ }catch{}
+}
 async function renderWeightCard(root,date,calendar=null){
  const row=document.createElement("div");row.className="day-widgets";
  const {card,head:header}=dayWidget("daily-weight-card day-weight-widget",playerText("Peso","Weight"));
@@ -1932,8 +1949,11 @@ async function renderWeightCard(root,date,calendar=null){
  // Future dates are visible in the calendar but cannot have a weight entry yet.
  // Do not issue a request that the API deliberately rejects for future dates.
  if(date>iso(new Date())){
-  action.remove(); // Future dates display the weight card without any action.
+  action.remove(); // Future dates have no entry action; the card still opens the weight screen (up to today).
   value.textContent="—";value.classList.add("empty");foot.textContent=playerText("Regista no próprio dia","Record it on the day");
+  const openToday=()=>openWeightDetail(iso(new Date()),null);
+  card.setAttribute("role","button");card.setAttribute("tabindex","0");card.addEventListener("click",openToday);
+  card.addEventListener("keydown",event=>{if(event.target===card&&(event.key==="Enter"||event.key===" ")){event.preventDefault();openToday();}});
   return;
  }
  // Render the + immediately; only enable interaction once the weight data is confirmed.
@@ -1995,7 +2015,7 @@ async function renderWeightCard(root,date,calendar=null){
     viewport.scrollTo({top:index*44,behavior:smooth?"smooth":"instant"});
    }
    let ticking=false;
-   viewport.addEventListener("scroll",()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{ticking=false;const next=Math.max(0,Math.min(values.length-1,Math.round(viewport.scrollTop/44)));if(next!==index){index=next;entries.forEach((el,k)=>{el.classList.toggle("selected",k===index);el.setAttribute("aria-selected",String(k===index));});viewport.setAttribute("aria-valuetext",String(values[index])+" "+caption);}});},{passive:true});
+   viewport.addEventListener("scroll",()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{ticking=false;const next=Math.max(0,Math.min(values.length-1,Math.round(viewport.scrollTop/44)));if(next!==index){index=next;playerHaptic();entries.forEach((el,k)=>{el.classList.toggle("selected",k===index);el.setAttribute("aria-selected",String(k===index));});viewport.setAttribute("aria-valuetext",String(values[index])+" "+caption);}});},{passive:true});
    viewport.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();choose(index+(e.key==="ArrowDown"?1:-1),true);}});
    requestAnimationFrame(()=>{choose(index);});
    return {get value(){return values[index];}};
@@ -2026,7 +2046,7 @@ async function renderWeightCard(root,date,calendar=null){
    }catch(err){errorText.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;save.disabled=false;}
   };
  }
- // Close the entry form again with the same control; an existing weight opens the weight screen instead.
+ // The card opens the weight screen (with or without a weight); only the + / ✕ control opens or closes the entry form.
  const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");
  const closeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
  action.setAttribute("aria-controls",panel.id);
@@ -2038,9 +2058,9 @@ async function renderWeightCard(root,date,calendar=null){
   action.setAttribute("aria-expanded",String(open));
   if(open)editor();
  };
- card.addEventListener("click",event=>{if(event.target.closest("button"))return;if(!action.disabled)action.click();});
+ card.addEventListener("click",event=>{if(event.target.closest("button"))return;if(!action.disabled)openWeightDetail(date,()=>toggleEditor(true));});
  card.setAttribute("role","button");card.setAttribute("tabindex","0");
- card.addEventListener("keydown",event=>{if(event.target!==card)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();if(!action.disabled)action.click();}});
+ card.addEventListener("keydown",event=>{if(event.target!==card)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();if(!action.disabled)openWeightDetail(date,()=>toggleEditor(true));}});
  action.onclick=event=>{
   event?.stopPropagation(); // the icon is swapped during the click, so the card must not re-handle it
   if(existing&&panel.hidden){openWeightDetail(date,()=>toggleEditor(true));return;}
