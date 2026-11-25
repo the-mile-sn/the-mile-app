@@ -22,7 +22,7 @@ function setup(select){
  trigger.setAttribute('aria-label',select.getAttribute('aria-label')||select.labels?.[0]?.textContent?.trim()||'Selecionar opção');
  const close=()=>{panel.hidden=true;trigger.setAttribute('aria-expanded','false');shell.classList.remove('tm-select-open')};
  const render=()=>{
-  label.textContent=select.selectedOptions[0]?.textContent?.trim()||'Selecionar';
+  label.textContent=select.options[select.selectedIndex]?.textContent?.trim()||'Selecionar';
   if(legacy){const existing=legacy.querySelector(':scope > .tm-select-value');if(existing)existing.textContent=label.textContent;}
   trigger.disabled=select.disabled;
   if(panel.hidden)return;
