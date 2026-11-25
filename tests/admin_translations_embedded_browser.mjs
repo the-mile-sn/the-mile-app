@@ -28,7 +28,7 @@ try{
     const editorDraft={id:"editor-draft-test",athlete_id:"athlete-test",
       player_id:"player-test",player_name:"Atleta fictício",name:"Atleta fictício - Plano azul",
       plan_type:"Plano azul",publication:{state:"published",pending_changes:false,published_at:100},
-      meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[]}]}]};
+      meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[],order:[]}]}]};
     const publicRef="a".repeat(64);
     const privateRef="d".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;

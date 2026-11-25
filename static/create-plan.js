@@ -639,7 +639,7 @@ const previewComparable=meals=>{
 window.tmTogglePlanPreviewLanguage=async()=>{
  if($("plan-preview").hidden)return;
  if(previewEnglish){resetPreviewLanguage();renderPlanPreview(true);return;}
- if(publicationState.state!=="published"||publicationState.pending_changes||planIsDirty()){
+ if(publicationState.state!=="published"||publicationState.pending_changes){
   alert("A tradução está disponível apenas na versão publicada, sem alterações por publicar.");return;
  }
  const id=String(plan.id),token=++previewLanguageToken;
