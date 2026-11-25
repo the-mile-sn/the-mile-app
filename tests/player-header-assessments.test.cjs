@@ -30,8 +30,9 @@ test('profile notifications are a noninteractive placeholder without network cal
  assert.doesNotMatch(html,/id="profile-notifications-toggle"/);
 });
 
-test('Original assessment CSS and module are preserved, no duplicated partial rules',()=>{
- assert.match(css,/#plans #plans-assessments details\.assessment-measure-card > summary/);
+test('Progresso keeps the assessment module and chart CSS, no duplicated partial rules',()=>{
+ assert.match(css,/#plans \.assessment-trend\{/);
+ assert.doesNotMatch(css,/assessment-measure-card/);
  assert.equal(css.split("{").length,css.split("}").length);
  assert.match(html,/<div id="plans-assessments">/);
  assert.ok(js.includes('$("plans-assessments").hidden=section!=="assessments"'));
@@ -47,13 +48,13 @@ test('Planos left the tab bar (25/11): each plan opens from the Início widget, 
  assert.match(js,/back\.onclick=closePlanPage;/);
  assert.match(js,/if\(ret\)requestAnimationFrame\(\(\)=>window\.scrollTo\(\{top:ret\.scrollY\}\)\);/);
 });
-test('assessment notes preserve the timestamp below metrics and the formula inside body fat details',()=>{
- assert.match(html,/id="assessment-measurements"><\/div><div class="assessment-most-recent" id="assessment-most-recent"/);
- assert.match(js,/stamp\.textContent=playerText\("Última avaliação · ","Latest assessment · "\)\+assessmentDate/);
+test('Progresso shows the latest assessment date in the heading and the formula inside the body fat page',()=>{
+ assert.match(html,/<header class="progress-heading"><p id="progress-kicker" class="progress-kicker"><\/p><h2 class="progress-title">Progresso<\/h2><\/header>/);
+ assert.doesNotMatch(html,/id="assessment-most-recent"/);
+ assert.match(js,/kicker\.textContent=playerText\("Última avaliação · ","Latest assessment · "\)\+progressLongDate/);
  assert.match(js,/key==="body_fat"/);
-  assert.match(js,/playerBodyFatFormulaNote\(source\?\.formula_note\)/);
- assert.match(js,/details\.append\(note\)/);
- assert.doesNotMatch(js,/note\.textContent="Gordura corporal: "\+recent\.formula_note;target\.append\(note\)/);
+ assert.match(js,/playerBodyFatFormulaNote\(source\?\.formula_note\)/);
+ assert.match(js,/card\.append\(note\)/);
 });
 
 test("profile tab shows the existing private photo and header has only the brand",()=>{
@@ -81,14 +82,14 @@ test('8-skinfold graph colours reflect sex and goalkeeper cutoffs',()=>{
  assert.equal(fn(85,'GR','F').color,'#E17878');
  assert.equal(fn(null,'','F'),null);
  assert.equal(fn(60,'',null).code,'red');
- assert.match(js,/buildAssessmentTrend\(readings,unit,[^\n]*key==="sum_8"\)/);
+ assert.match(js,/buildAssessmentTrend\(progressReadings\(key\),unit,progressAxisStep\(group,unit\),key==="sum_8"\)/);
  assert.match(js,/dot\.style\.stroke=category\.color/);
  assert.match(js,/label\.style\.fill=category\.color/);
 });
 
 test("Assessments, Menus, Profile and bottom navigation share approved typography tokens",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/#plans #plans-assessments \.assessment-metric-name/);
+ assert.match(css,/#plans \.progress-tile-label\{/);
  assert.match(css,/#menus \.day-menu \.menu-entry-heading strong/);
  assert.match(css,/#profile \.profile-action\{[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
  assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);

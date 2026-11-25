@@ -28,10 +28,10 @@ test('password form retains real backend validation and clears secrets on naviga
  assert.match(js,/\$\("profile-password-form"\)\.reset\(\)/);
  assert.match(js,/if\(t!=="profile"\)resetProfileSubpage\(\)/);
 });
-test('original assessment navigation and CSS continue unchanged',()=>{
+test('original assessment navigation and chart CSS continue unchanged',()=>{
  assert.match(html,/id="assessment-measurements"/);
  assert.match(js,/openPlansSection\("assessments"\)/);
- assert.match(css,/#plans #plans-assessments details\.assessment-measure-card > summary/);
+ assert.match(css,/#plans \.assessment-chart-line\{/);
  assert.equal(css.split('{').length,css.split('}').length);
 });
 

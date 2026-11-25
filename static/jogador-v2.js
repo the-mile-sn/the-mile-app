@@ -34,7 +34,8 @@ const playerTextBindings=[
   ["#profile-password-form .profile-password-save","Guardar nova palavra-passe","Save new password"],
   ["#plans-assessments [data-assessment-tab='resumo']","Resumo","Summary"],
   ["#plans-assessments [data-assessment-tab='pregas']","Pregas","Skinfolds"],
-  ["#plans-assessments [data-assessment-tab='perimetros']","Perímetros","Circumferences"]
+  ["#plans-assessments [data-assessment-tab='perimetros']","Perímetros","Circumferences"],
+  ["#plans-assessments > .progress-heading .progress-title","Progresso","Progress"]
 ];
 function playerText(pt,en){return playerUiLanguage==="en"?en:pt;}
 function playerMacroLabel(key){
@@ -204,6 +205,8 @@ function enableWeekSwipe(element,onShift){
 let pendingDailySwipeDirection=0,dailySwipeEntryAnimation=null;
 // True while the Peso em jejum screen covers Início: day swipes are ignored there.
 let weightDetailOpen=false;
+// Progresso metric page (see renderPlayerAssessments) and the scroll to restore on ‹.
+let progressPage=null,progressReturnY=0;
 function shiftOverviewDay(offset){
  if(offset!==1&&offset!==-1)return;
  const next=new Date(day);
@@ -301,8 +304,8 @@ function revokePlayerView(){
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
  weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];
- tab="overview";document.body.classList.add("overview-active");overviewMode="day";day=new Date();menuWeek=new Date();
- for(const id of ["day-details","week-strip","weekly-view","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
+ tab="overview";document.body.classList.add("overview-active");document.body.classList.remove("progress-active");closeProgressPage(false);overviewMode="day";day=new Date();menuWeek=new Date();
+ for(const id of ["day-details","week-strip","weekly-view","plan-detail","menu-days","assessment-measurements","progress-kicker","post-match-form-area"]){
   const el=$(id);if(el)el.replaceChildren();
  }
  document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
@@ -793,13 +796,15 @@ async function show(t){
  if(t!=="overview")pendingDailySwipeDirection=0;
  $("tabs").classList.remove("tabs-compact");mileScrollAccum=0;mileLastScrollY=Math.max(0,window.scrollY||0);
  if(t!=="profile")resetProfileSubpage();
+ // The tab bar always opens a tab fresh: close an open metric page or the Peso em jejum screen.
+ closeProgressPage(false);if(weightDetailOpen)closeWeightDetail();
  if(t!=="overview"){++overviewRequestId;setOverviewLoading(false);}
  if(t!=="menus"){++menuRenderToken;$("menu-loading").hidden=true;}
  const tabOrder=["overview","plans","assessments","menus","profile"];
  const oldIndex=tabOrder.indexOf(tab),newIndex=tabOrder.indexOf(t);
  const direction=oldIndex<newIndex?1:-1;
  const animateTransition=oldIndex!==newIndex&&oldIndex>=0;
- tab=t;document.body.classList.toggle("profile-active",t==="profile");document.body.classList.toggle("overview-active",t==="overview");
+ tab=t;document.body.classList.toggle("profile-active",t==="profile");document.body.classList.toggle("overview-active",t==="overview");document.body.classList.toggle("progress-active",t==="assessments");
  for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);
  window.themileRecipes?.syncHeaderBack?.();
  for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));
@@ -1813,23 +1818,27 @@ function renderWeekWidget(row,date,calendar){
 let weightDetailRange="week";
 function closeWeightDetail(){
  const view=$("weight-detail");if(view){view.hidden=true;view.replaceChildren();}
- $("overview")?.classList.remove("weight-detail-open");weightDetailOpen=false;
+ $("overview")?.classList.remove("weight-detail-open");$("plans-assessments")?.classList.remove("weight-detail-open");weightDetailOpen=false;
 }
-async function openWeightDetail(date,editToday){
+// Opened from Início (host #overview, ‹ Início) or from Progresso (host #plans-assessments, ‹ Progresso).
+async function openWeightDetail(date,editToday,host=$("overview")){
  let view=$("weight-detail");
- if(!view){view=document.createElement("section");view.id="weight-detail";view.className="weight-detail";$("overview").append(view);}
- $("overview").classList.add("weight-detail-open");weightDetailOpen=true;view.hidden=false;window.scrollTo({top:0});
+ if(!view){view=document.createElement("section");view.id="weight-detail";view.className="weight-detail";}
+ if(view.parentNode!==host)host.append(view);
+ const fromProgress=host.id==="plans-assessments";
+ host.classList.add("weight-detail-open");weightDetailOpen=true;view.hidden=false;window.scrollTo({top:0});
  const locale=playerDateLocale(),format=x=>Number(x).toLocaleString(locale,{minimumFractionDigits:1,maximumFractionDigits:1});
  const female=String(me?.sex||"").toUpperCase()==="F";
  const render=async()=>{
   const days=weightDetailRange==="week"?7:30;
   view.replaceChildren();
   const bar=document.createElement("div");bar.className="weight-detail-bar";
-  const back=document.createElement("button");back.type="button";back.className="weight-detail-back";back.textContent=playerText("Início","Home");
-  back.onclick=()=>{closeWeightDetail();window.scrollTo({top:0});};
+  const back=document.createElement("button");back.type="button";back.className="weight-detail-back";
+  back.textContent=fromProgress?playerText("Progresso","Progress"):playerText("Início","Home");
+  back.onclick=fromProgress?()=>{closeWeightDetail();const y=progressReturnY;requestAnimationFrame(()=>window.scrollTo({top:y}));}:()=>{closeWeightDetail();window.scrollTo({top:0});};
   const title=document.createElement("strong");title.textContent=playerText("Peso em jejum","Fasting weight");
   const edit=document.createElement("button");edit.type="button";edit.className="weight-detail-edit";edit.textContent=playerText("Editar","Edit");
-  edit.onclick=()=>{closeWeightDetail();editToday();};
+  if(editToday)edit.onclick=()=>{closeWeightDetail();editToday();};else edit.hidden=true;
   bar.append(back,title,edit);view.append(bar);
   const switcher=document.createElement("div");switcher.className="weight-detail-range";switcher.setAttribute("role","group");
   for(const [key,label] of [["week",playerText("Semana","Week")],["month",playerText("Mês","Month")]]){
@@ -3425,47 +3434,203 @@ function playerBodyFatFormulaNote(value){
  if(/^(?:excel|csv)\s*[.!]?$/.test(normalized))return "";
  return note;
 }
+// Progresso (25/11): dashboard of square widgets; each metric opens its own page beside it,
+// like Peso em jejum. The trend chart (cut points, colours, labels) is buildAssessmentTrend, unchanged.
+const PROGRESS_MUSCLE_KEYS=["muscle_index","arm_muscle","thigh_muscle","calf_muscle"];
+const PROGRESS_REPORT_AVERAGE={sum_8:"avg_skinfolds",weight:"avg_weight",body_fat:"avg_body_fat"};
+function progressLongDate(isoDate){
+ const d=new Date(isoDate+"T12:00:00"),locale=playerDateLocale();
+ return d.getDate()+" "+d.toLocaleDateString(locale,{month:"long"})+" "+d.getFullYear();
+}
+function progressReadings(key){return assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));}
+function progressDelta(current,prior){
+ const delta=Math.round((current-prior)*1000)/1000;
+ return (delta>0?"+":delta<0?"−":"±")+assessNumber(Math.abs(delta));
+}
+function progressAxisStep(group,unit){return group==="pregas"&&unit==="mm"?2:group==="resumo"&&unit==="mm"?5:undefined;}
+// Small neutral trend line: a summary only; colours stay in the full chart.
+function progressSpark(values){
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),W=140,H=34;
+ svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("preserveAspectRatio","none");svg.setAttribute("aria-hidden","true");svg.setAttribute("class","progress-spark");
+ if(values.length<2)return svg;
+ const lo=Math.min(...values),hi=Math.max(...values),span=hi-lo||1;
+ const pts=values.map((v,i)=>[i*W/(values.length-1),H-4-(v-lo)/span*(H-8)]);
+ const line=document.createElementNS(ns,"polyline");line.setAttribute("points",pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" "));line.setAttribute("class","progress-spark-line");
+ svg.append(line);return svg;
+}
+function progressChevron(){
+ const span=document.createElement("span");span.className="progress-tile-chevron";span.setAttribute("aria-hidden","true");
+ span.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+ return span;
+}
+function progressTile({label,unit,values,foot,wide,onOpen}){
+ const tile=document.createElement("button");tile.type="button";tile.className="progress-tile"+(wide?" wide":"");
+ const head=document.createElement("span");head.className="progress-tile-head";
+ const name=document.createElement("span");name.className="progress-tile-label";name.textContent=label;head.append(name,progressChevron());
+ const body=document.createElement("span");body.className="progress-tile-body";
+ const value=document.createElement("strong");value.className="progress-tile-value";
+ value.textContent=values.length?assessNumber(values[values.length-1]):"—";
+ if(unit&&values.length){const u=document.createElement("span");u.textContent=" "+unit;value.append(u);}
+ const small=document.createElement("small");small.className="progress-tile-foot";small.textContent=foot;
+ body.append(value,progressSpark(values),small);tile.append(head,body);
+ if(onOpen)tile.onclick=onOpen;else tile.disabled=true;
+ return tile;
+}
+function progressMetricTile(key,label,unit,wide){
+ const readings=progressReadings(key),values=readings.map(r=>r.value);
+ const foot=values.length>1?progressDelta(values[values.length-1],values[values.length-2])+(unit?" "+unit:"")+playerText(" vs. anterior"," vs. previous")
+  :values.length?playerText("Primeira medição","First reading"):playerText("Sem dados","No data");
+ return progressTile({label:playerAssessmentLabel(key,label),unit,values,foot,wide,onOpen:values.length?()=>openProgressPage({key,label,unit}):null});
+}
+// Peso em jejum replaces the assessment body weight on Resumo: daily entries, compared with the previous entry.
+function progressFastingTile(){
+ const today=iso(new Date());
+ const tile=progressTile({label:playerText("Peso em jejum","Fasting weight"),unit:"kg",values:[],foot:playerText("A carregar…","Loading…"),onOpen:()=>{
+  progressReturnY=window.scrollY;openWeightDetail(today,null,$("plans-assessments")).catch(error);
+ }});
+ tile.classList.add("progress-fasting");
+ api("/api/v2/player/weight-history?end="+today+"&days=7&local_date="+today).then(data=>{
+  if(!tile.isConnected)return;
+  const entries=data.entries||[],values=entries.map(x=>Number(x.weight_kg));
+  const fresh=progressTile({label:playerText("Peso em jejum","Fasting weight"),unit:"kg",values,foot:"",onOpen:tile.onclick});
+  let foot=playerText("Sem registos","No entries");
+  if(entries.length>1){
+   const last=entries[entries.length-1],prior=entries[entries.length-2];
+   const gap=Math.round((new Date(last.weigh_date+"T12:00:00")-new Date(prior.weigh_date+"T12:00:00"))/86400000);
+   foot=progressDelta(values[values.length-1],values[values.length-2])+" kg "+(gap===1?playerText("vs. dia anterior","vs. previous day"):playerText("vs. registo anterior","vs. previous entry"));
+  }else if(entries.length)foot=entries[0].weigh_date===today?playerText("Registo de hoje","Today's entry"):progressLongDate(entries[0].weigh_date);
+  fresh.querySelector(".progress-tile-foot").textContent=foot;fresh.classList.add("progress-fasting");
+  tile.replaceWith(fresh);
+ }).catch(()=>{if(tile.isConnected)tile.querySelector(".progress-tile-foot").textContent=playerText("Peso indisponível","Weight unavailable");});
+ return tile;
+}
+function progressMuscleTile(fields){
+ const present=fields.filter(([key])=>progressReadings(key).length);
+ if(!present.length)return null;
+ const tile=document.createElement("button");tile.type="button";tile.className="progress-tile wide progress-muscle";
+ const head=document.createElement("span");head.className="progress-tile-head";
+ const name=document.createElement("span");name.className="progress-tile-label";name.textContent=playerText("Massa muscular","Muscle mass");head.append(name,progressChevron());
+ tile.append(head);
+ const index=present.find(([key])=>key==="muscle_index");
+ if(index){
+  const values=progressReadings("muscle_index").map(r=>r.value);
+  const row=document.createElement("span");row.className="progress-muscle-index";
+  const text=document.createElement("span");text.className="progress-muscle-index-text";
+  const label=document.createElement("small");label.className="progress-muscle-label";label.textContent=playerText("Índice","Index");
+  const value=document.createElement("strong");value.className="progress-tile-value";value.textContent=assessNumber(values[values.length-1]);
+  const foot=document.createElement("small");foot.className="progress-tile-foot";
+  foot.textContent=values.length>1?progressDelta(values[values.length-1],values[values.length-2])+playerText(" vs. anterior"," vs. previous"):playerText("Primeira medição","First reading");
+  text.append(label,value,foot);row.append(text,progressSpark(values));tile.append(row);
+ }
+ const parts=present.filter(([key])=>key!=="muscle_index");
+ if(parts.length){
+  if(index){const rule=document.createElement("span");rule.className="progress-muscle-rule";tile.append(rule);}
+  const cols=document.createElement("span");cols.className="progress-muscle-parts";
+  const short={arm_muscle:playerText("Braço","Arm"),thigh_muscle:playerText("Coxa","Thigh"),calf_muscle:playerText("Gémeo","Calf")};
+  for(const [key,label] of parts){
+   const values=progressReadings(key).map(r=>r.value);
+   const col=document.createElement("span");col.className="progress-muscle-part";
+   const l=document.createElement("small");l.className="progress-muscle-label";l.textContent=short[key]||playerAssessmentLabel(key,label);
+   const v=document.createElement("strong");v.textContent=assessNumber(values[values.length-1]);
+   const d=document.createElement("small");d.className="progress-tile-foot";d.textContent=values.length>1?progressDelta(values[values.length-1],values[values.length-2]):"";
+   col.append(l,v,d);cols.append(col);
+  }
+  tile.append(cols);
+ }
+ tile.onclick=()=>openProgressPage({muscle:true,fields:present});
+ return tile;
+}
 function renderPlayerAssessments(){
  for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
- const target=$("assessment-measurements"),stamp=$("assessment-most-recent");target.replaceChildren();stamp.replaceChildren();
+ const target=$("assessment-measurements"),kicker=$("progress-kicker");target.replaceChildren();kicker.textContent="";
  if(!assessmentRecords.length){
   const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem avaliações publicadas.","No assessments published yet.");target.append(empty);return;
  }
  const recent=assessmentRecords[assessmentRecords.length-1];
- stamp.textContent=playerText("Última avaliação · ","Latest assessment · ")+assessmentDate(recent.assessed_on);
- for(const [key,label,unit] of assessmentFields[assessmentGroup]||[]){
-  const readings=assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));
-  const current=readings.length?readings[readings.length-1]:null,prior=readings.length>1?readings[readings.length-2]:null;
-  const details=document.createElement("details");details.className="assessment-measure-card";
-  const summary=document.createElement("summary");
-  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?
-  playerAssessmentLabel(key,label)+" ("+unit+")":playerAssessmentLabel(key,label);
-  const right=document.createElement("span");right.className="assessment-metric-right";
-  const number=document.createElement("strong");number.textContent=current?assessNumber(current.value):"—";right.append(number);
-  const change=document.createElement("small");change.className="assessment-change";
-  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta));}
-  else change.textContent=current?playerText("Primeira medição","First reading"):playerText("Sem dados","No data");
-  right.append(change);
-  const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
-  summary.append(left,right,arrow);
-  details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined,key==="sum_8"));
-  if(assessmentGroup==="resumo"&&key==="body_fat"){
-   const source=assessmentRecords.slice().reverse().find(record=>Number.isFinite(record.measurements?.body_fat));
-   const formula=playerBodyFatFormulaNote(source?.formula_note);
-   if(formula){
-    const note=document.createElement("p");note.className="assessment-formula";
-    note.textContent=playerText("Gordura corporal: ","Body fat: ")+formula;details.append(note);
-   }
-  }
-  target.append(details);
- }
+ kicker.textContent=playerText("Última avaliação · ","Latest assessment · ")+progressLongDate(recent.assessed_on);
+ const fields=assessmentFields[assessmentGroup]||[];
+ const grid=document.createElement("div");grid.className="progress-grid";
  if(assessmentGroup==="resumo"){
-  const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
-  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent=playerText("Médias do relatório","Report averages");averages.append(head);
-   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=playerAssessmentLabel(key,label);v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
-
+  const muscles=fields.filter(([key])=>PROGRESS_MUSCLE_KEYS.includes(key));
+  let fastingPlaced=false;
+  for(const [key,label,unit] of fields){
+   if(PROGRESS_MUSCLE_KEYS.includes(key))continue;
+   if(key==="weight"){grid.append(progressFastingTile());fastingPlaced=true;continue;}
+   grid.append(progressMetricTile(key,label,unit,key==="sum_8"));
+  }
+  if(!fastingPlaced)grid.insertBefore(progressFastingTile(),grid.children[1]||null);
+  const muscle=progressMuscleTile(muscles);if(muscle)grid.append(muscle);
+ }else{
+  for(const [key,label,unit] of fields)grid.append(progressMetricTile(key,label,unit,false));
  }
- if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem medições publicadas nesta categoria.","No measurements published in this category.");target.append(empty);}
+ if(grid.children.length)target.append(grid);
+ else{const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem medições publicadas nesta categoria.","No measurements published in this category.");target.append(empty);}
+}
+// Metric page: back, value, the existing chart, the report average and the list of assessments.
+function progressChartCard(key,unit,group){
+ const card=document.createElement("div");card.className="progress-chart-card";
+ card.append(buildAssessmentTrend(progressReadings(key),unit,progressAxisStep(group,unit),key==="sum_8"));
+ if(key==="body_fat"){
+  const source=assessmentRecords.slice().reverse().find(record=>Number.isFinite(record.measurements?.body_fat));
+  const formula=playerBodyFatFormulaNote(source?.formula_note);
+  if(formula){const note=document.createElement("p");note.className="assessment-formula";note.textContent=playerText("Gordura corporal: ","Body fat: ")+formula;card.append(note);}
+ }
+ return card;
+}
+function openProgressPage(page){
+ if(!progressPage)progressReturnY=window.scrollY;
+ progressPage={...page,group:assessmentGroup};
+ const host=$("plans-assessments"),view=$("progress-page");host.classList.add("progress-page-open");view.hidden=false;view.replaceChildren();
+ const back=document.createElement("button");back.type="button";back.className="progress-back";back.setAttribute("aria-label",playerText("Voltar ao Progresso","Back to Progress"));
+ const arrow=document.createElement("span");arrow.setAttribute("aria-hidden","true");arrow.textContent="‹";back.append(arrow);back.onclick=closeProgressPage;
+ view.append(back);
+ const recent=assessmentRecords[assessmentRecords.length-1];
+ if(page.muscle){
+  const head=document.createElement("header");head.className="progress-page-head";
+  const k=document.createElement("p");k.className="progress-kicker";k.textContent=progressLongDate(recent.assessed_on);
+  const h=document.createElement("h2");h.className="progress-title";h.textContent=playerText("Massa muscular","Muscle mass");head.append(k,h);view.append(head);
+  for(const [key,label,unit] of page.fields){
+   const values=progressReadings(key).map(r=>r.value);
+   const row=document.createElement("div");row.className="progress-section-head";
+   const n=document.createElement("h3");n.textContent=playerAssessmentLabel(key,label);
+   const v=document.createElement("strong");v.textContent=assessNumber(values[values.length-1]);
+   if(values.length>1){const d=document.createElement("small");d.textContent=" "+progressDelta(values[values.length-1],values[values.length-2]);v.append(d);}
+   row.append(n,v);view.append(row,progressChartCard(key,unit,progressPage.group));
+  }
+ }else{
+  const {key,label,unit}=page,readings=progressReadings(key),current=readings[readings.length-1],prior=readings[readings.length-2];
+  const head=document.createElement("header");head.className="progress-page-head";
+  const k=document.createElement("p");k.className="progress-kicker";k.textContent=playerAssessmentLabel(key,label);
+  const value=document.createElement("strong");value.className="progress-page-value";value.textContent=assessNumber(current.value);
+  if(unit){const u=document.createElement("span");u.textContent=" "+unit;value.append(u);}
+  const sub=document.createElement("p");sub.className="progress-page-sub";
+  sub.textContent=(prior?progressDelta(current.value,prior.value)+(unit?" "+unit:"")+playerText(" vs. avaliação anterior · "," vs. previous assessment · "):"")+progressLongDate(current.date);
+  head.append(k,value,sub);view.append(head,progressChartCard(key,unit,progressPage.group));
+  const averageKey=PROGRESS_REPORT_AVERAGE[key],average=averageKey!==undefined?recent.averages?.[averageKey]:undefined;
+  if(average!==undefined&&average!==null&&Number.isFinite(Number(average))){
+   const row=document.createElement("div");row.className="progress-average";
+   const l=document.createElement("span");l.textContent=playerText("Média do relatório","Report average");
+   const v=document.createElement("strong");v.textContent=assessNumber(average)+(unit?" "+unit:"");row.append(l,v);view.append(row);
+  }
+  const heading=document.createElement("h3");heading.className="progress-list-heading";heading.textContent=playerText("Avaliações","Assessments");
+  const list=document.createElement("div");list.className="progress-list";
+  const rows=readings.slice().reverse(),locale=playerDateLocale();
+  rows.forEach((r,i)=>{
+   const row=document.createElement("div");row.className="progress-list-row";
+   const when=document.createElement("span");const d=new Date(r.date+"T12:00:00");when.textContent=d.getDate()+" "+d.toLocaleDateString(locale,{month:"short"}).replace(".","")+" "+d.getFullYear();
+   const diff=document.createElement("small");diff.textContent=rows[i+1]?progressDelta(r.value,rows[i+1].value):"";
+   const v=document.createElement("strong");v.textContent=assessNumber(r.value)+(unit?" "+unit:"");
+   row.append(when,diff,v);list.append(row);
+  });
+  view.append(heading,list);
+ }
+ window.scrollTo({top:0});back.focus({preventScroll:true});
+}
+function closeProgressPage(restore=true){
+ if(!progressPage)return;
+ progressPage=null;
+ const view=$("progress-page");view.hidden=true;view.replaceChildren();$("plans-assessments").classList.remove("progress-page-open");
+ if(restore){const y=progressReturnY;requestAnimationFrame(()=>window.scrollTo({top:y}));}
 }
 for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
 
