@@ -60,3 +60,7 @@ test('a finger on a chart still scrolls the page vertically (horizontal chart sc
  assert.match(css,/#plans \.assessment-trend-horizontal-scroll>svg\{[^}]*touch-action:pan-x pan-y;/s);
  assert.doesNotMatch(css,/touch-action:pan-x;/);
 });
+test('with 4 tabs the bottom bar is centred at 298 px (tabs keep their former width)',()=>{
+ assert.match(css,/#tabs\{position:fixed;z-index:30;[^}]*left:max\(12px,calc\(50% - 149px\)\);right:max\(12px,calc\(50% - 149px\)\);/);
+ assert.match(css,/#player-panel #tabs\.tabs-compact\{\n left:max\(24px,calc\(50% - 137px\)\)!important;right:max\(24px,calc\(50% - 137px\)\)!important;/);
+});
