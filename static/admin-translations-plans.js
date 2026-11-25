@@ -44,7 +44,8 @@
     target.dataset.error=message?"1":"0";
   };
   const hide=()=>{
-    generation++;active=null;activeFields=[];loading=false;
+    generation++;publicationSequence++;active=null;activeFields=[];loading=false;
+    const dialog=$("i18n-plan-review-dialog");if(dialog?.open)dialog.close();
     host.replaceChildren();
   };
   const renderList=(statusFilter,search)=>{
@@ -185,23 +186,21 @@
     return row;
   };
   const openPublication=async(public_ref)=>{
-    const seq=generation,request=++publicationSequence,detail=$("i18n-plan-detail");
-    if(!detail)return;
+    const seq=generation,request=++publicationSequence,detail=$("i18n-plan-detail"),dialog=$("i18n-plan-review-dialog");
+    if(!detail||!dialog)return;
+    $("i18n-plan-review-title").textContent=labelPlan(publications.find(p=>p.publication_ref===public_ref)||{});
+    $("i18n-plan-review-status").textContent="";
     detail.replaceChildren(create("p","i18n-results-count","A consultar versão publicada…"));
+    if(!dialog.open)dialog.showModal();
+    dialog.scrollTop=0;
     try{
       const result=await send("/api/v2/admin/i18n/plans/fields?"+
         new URLSearchParams({publication_ref:public_ref}));
       if(seq!==generation||request!==publicationSequence||host.hidden)return;
       active=public_ref;activeFields=result.fields||[];
       detail.replaceChildren();
-      const header=create("div","i18n-plan-detail-head");
-      header.append(create("strong","",labelPlan(result.publication)),
-                    create("small","",statusText(result.publication)));
-      const back=create("button","i18n-quiet","Fechar revisão");
-      back.type="button";
-      back.addEventListener("click",()=>{if(canLeave(detail)){publicationSequence++;active=null;detail.replaceChildren();}});
-      header.append(back);
-      detail.append(header);
+      $("i18n-plan-review-title").textContent=labelPlan(result.publication);
+      $("i18n-plan-review-status").textContent=statusText(result.publication);
       // Historical approvals are never applied automatically across publications.
       // Present only unambiguous, hash-matched candidates for explicit review.
       let recovery=null;
@@ -256,7 +255,9 @@
           understood.checked=false;update();
         });
         apply.onclick=async()=>{
-          if(apply.disabled)return;
+          if(apply.disabled||activeWrites)return;
+          if(hasChanges(detail)){error(feedback,"Guarda primeiro os textos alterados antes de recuperar traduções.");return;}
+          activeWrites++;
           apply.disabled=true;selectSafe.disabled=true;
           error(feedback,"");
           try{
@@ -277,7 +278,7 @@
           }catch(e){
             error(feedback,"A recuperação foi interrompida: "+e.message);
             selectSafe.disabled=false;update();
-          }
+          }finally{activeWrites--;}
         };
         panel.append(selectSafe,acknowledgement,apply,feedback);
         detail.append(panel);
@@ -303,7 +304,7 @@
         }
         group.append(renderField(field,public_ref));
       }
-      detail.scrollIntoView({behavior:"smooth",block:"start"});
+      dialog.scrollTop=0;
     }catch(e){
       if(seq===generation&&request===publicationSequence)detail.replaceChildren(
         create("p","i18n-feedback","Não foi possível consultar o plano: "+e.message));
@@ -521,6 +522,8 @@
   const load=async({csrfToken,status="all",query=""}={})=>{
     csrf=csrfToken||csrf;
     const seq=++generation;
+    publicationSequence++;
+    const previousDialog=$("i18n-plan-review-dialog");if(previousDialog?.open)previousDialog.close();
     host.replaceChildren();
     const section=(title,open=false)=>{
       const el=create("details","i18n-plan-manager-section");
@@ -534,12 +537,24 @@
     const privateSection=section("Textos personalizados");
     const auditSection=section("Detalhes técnicos");
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
+    const dialog=create("dialog","tm-plan-translation-dialog i18n-manager-plan-dialog");dialog.id="i18n-plan-review-dialog";
+    dialog.setAttribute("aria-labelledby","i18n-plan-review-title");
+    const header=create("div","i18n-plan-detail-head");
+    const heading=create("div","i18n-manager-plan-heading");
+    const title=create("strong","","Plano publicado");title.id="i18n-plan-review-title";
+    const statusLabel=create("small","");statusLabel.id="i18n-plan-review-status";
+    heading.append(title,statusLabel);
+    const close=create("button","i18n-quiet","Fechar");close.type="button";
     const detail=create("div","i18n-plan-detail");detail.id="i18n-plan-detail";
+    const closeReview=()=>{if(canLeave(detail)){publicationSequence++;active=null;activeFields=[];dialog.close();detail.replaceChildren();}};
+    close.onclick=closeReview;
+    dialog.addEventListener("cancel",event=>{event.preventDefault();closeReview();});
+    header.append(heading,close);dialog.append(header,detail);
     const auditPanel=create("div","i18n-plan-audit");
     const privatePanel=create("section","i18n-plan-private-queue");
     const commonPanel=create("section","i18n-plan-common");
-    planSection.append(list,detail);commonSection.append(commonPanel);privateSection.append(privatePanel);auditSection.append(auditPanel);
-    host.append(planSection,commonSection,privateSection,auditSection);
+    planSection.append(list);commonSection.append(commonPanel);privateSection.append(privatePanel);auditSection.append(auditPanel);
+    host.append(planSection,commonSection,privateSection,auditSection,dialog);
     const renderPrivateQueue=audit=>{
       privatePanel.replaceChildren();
       const counts=audit?.coverage_by_kind||{};
