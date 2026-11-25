@@ -3864,12 +3864,12 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #plans .assessment-trend-horizontal-scroll{
  width:100%;overflow-x:auto;overflow-y:hidden;
  overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
- touch-action:pan-x;scrollbar-width:none;
+ touch-action:pan-x pan-y;scrollbar-width:none; /* pan-y: a finger on a chart still scrolls the page (25/11) */
 }
 #plans .assessment-trend-horizontal-scroll::-webkit-scrollbar{display:none}
 #plans .assessment-trend-horizontal-scroll>svg{
  width:auto;max-width:none;height:176px;max-height:none;
- display:block;overflow:visible;touch-action:pan-x;user-select:none;
+ display:block;overflow:visible;touch-action:pan-x pan-y;user-select:none;
 }
 
 /* Universal plan and expanded-weekly-detail titles use the shared title token;
