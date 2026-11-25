@@ -76,6 +76,7 @@ function setup(select){
  trigger.addEventListener('keydown',e=>{if(['ArrowDown','Enter',' '].includes(e.key)){e.preventDefault();open()}});
  shell.addEventListener('keydown',e=>{if(e.key==='Escape'){close();trigger.focus()}});
  select.addEventListener('change',render);
+ select.addEventListener('tm-refresh-select',render);
  const observer=new MutationObserver(()=>{if(!select.isConnected){observer.disconnect();instances.delete(select);return}render()});
  observer.observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','selected','label','value']});
  render();

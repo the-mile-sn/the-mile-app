@@ -156,7 +156,7 @@ function renderPersistence(){
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 
 }
-const refreshSelectDisplays=()=>queryAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
+const refreshSelectDisplays=()=>queryAll(".tm-two-line-select select, .tm-select-shell select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+(i===0?"kcal":"g")+'</small></span>').join("")+'</div>';
 function draw(){
@@ -790,12 +790,13 @@ async function activatePlanModule(){
   const [data,roster]=await Promise.all([request("/api/v2/food-library"),request("/api/v2/athletes")]);
   foods=data.foods||[];foodById=new Map(foods.map(food=>[food.id,food]));
   players=(roster.athletes||[]).map(a=>({id:String(a.user_id||a.id),user_id:a.user_id||"",athlete_id:String(a.id),name:a.name}));
-  const selected=$("plan-player").value;
+  const selected=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";
   $("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");
   if(selected&&players.some(p=>p.id===selected))$("plan-player").value=selected;
+   refreshSelectDisplays();
   await loadDrafts();
   if(!planModuleInitialized){addMeal("Pequeno almoço");showEntry("entry");status("Biblioteca carregada: "+foods.length+" alimentos.");planModuleInitialized=true;}
-  else if(!$("plan-editor").hidden&&!planIsDirty())draw();
+  else if(!$("plan-editor").hidden){if(!planIsDirty())draw();else syncPlanSelectors();}
  })().finally(()=>{planModuleActivation=null});
  return planModuleActivation;
 }
