@@ -24,6 +24,11 @@ try{
     const page=await browser.newPage({viewport:{width,height},acceptDownloads:true});
     let authenticated=false;
     const requests=[];
+    const clinicalWrites=[];
+    const editorDraft={id:"editor-draft-test",athlete_id:"athlete-test",
+      player_id:"player-test",player_name:"Atleta fictício",name:"Atleta fictício - Plano azul",
+      plan_type:"Plano azul",publication:{state:"published",pending_changes:false,published_at:100},
+      meals:[{name:"Pequeno almoço",options:[{title:"Opção 1",foods:[],notes:[]}]}]};
     const publicRef="a".repeat(64);
     const privateRef="d".repeat(64);
     let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
@@ -63,6 +68,19 @@ try{
         await route.fulfill(fmt(authenticated?
           {user:{id:"admin",name:"Admin",role:"admin",email:"admin@example.invalid"},
            csrf:"test-csrf"}:{error:"unauthorized"},authenticated?200:401));
+      }else if(path==="/api/v2/athletes"){
+        await route.fulfill(fmt({athletes:[{id:"athlete-test",user_id:"player-test",name:"Atleta fictício"}]}));
+      }else if(path==="/api/v2/food-library"){
+        await route.fulfill(fmt({foods:[]}));
+      }else if(path.startsWith("/api/v2/food-plan-drafts")){
+        if(route.request().method()!=="GET"){
+          clinicalWrites.push(path);
+          await route.fulfill(fmt({error:"unexpected_write"},409));
+        }else if(path==="/api/v2/food-plan-drafts"){
+          await route.fulfill(fmt({drafts:[editorDraft]}));
+        }else if(path==="/api/v2/food-plan-drafts/editor-draft-test"){
+          await route.fulfill(fmt({draft:editorDraft}));
+        }else await route.fulfill(fmt({error:"not_found"},404));
       }else if(path==="/api/v2/admin/i18n/overview"){
         await route.fulfill(fmt(stats));
       }else if(path==="/api/v2/admin/i18n/plans"){
@@ -425,14 +443,18 @@ try{
     assert.ok(gap.aligned<=4,name+" plan icons are not vertically centred");
     assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
     assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
-    // Exercise the real editor shortcut and modal with an isolated draft identity.
-    // The actual draft-to-publication mapping is independently tested by WSGI.
-    await page.evaluate(()=>{
-      document.getElementById("plan-entry").hidden=true;
-      document.getElementById("plan-editor").hidden=false;
-      window.tmCurrentPlanTranslationDraft=()=> "editor-draft-test";
-      document.getElementById("plan-save-feedback").dataset.reviewProbe="unchanged";
-    });
+    // Exercise the actual editor with a published fixture and an unsaved title.
+    await page.locator("#tm-admin-nav-create-plan").click();
+    const edit=page.locator("[data-edit-id='editor-draft-test']:visible").first();
+    await edit.waitFor();
+    await edit.click();
+    const planEditor=page.locator("#tm-plan-page #plan-editor");
+    await planEditor.waitFor({state:"visible"});
+    await planEditor.locator("[data-toggle='0']").click();
+    const clinicalTitle=planEditor.locator("[data-option-title]");
+    await clinicalTitle.fill("Título clínico por guardar");
+    assert.equal(await page.locator("#plan-state-chip").getAttribute("data-state"),"dirty");
+    assert.equal(await page.evaluate(()=>window.tmCurrentPlanTranslationDraft()),"editor-draft-test");
     const editorButton=page.locator("#tm-plan-editor-translation");
     await editorButton.waitFor({state:"visible"});
     const savesBefore=planSaveRequests;
@@ -447,7 +469,9 @@ try{
     await dialog.getByRole("button",{name:"Fechar",exact:true}).click();
     await dialog.waitFor({state:"detached"});
     assert.equal(await page.locator("#plan-editor").isVisible(),true);
-    assert.equal(await page.locator("#plan-save-feedback").getAttribute("data-review-probe"),"unchanged");
+    assert.equal(await clinicalTitle.inputValue(),"Título clínico por guardar");
+    assert.equal(await page.locator("#plan-state-chip").getAttribute("data-state"),"dirty");
+    assert.deepEqual(clinicalWrites,[],"Review must not write or publish a clinical draft");
     assert.equal(planSaveRequests,savesBefore,"Opening and closing must not save translations");
     await page.close();
     process.stdout.write("Embedded admin translation navigation "+name+" passed\n");
