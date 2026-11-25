@@ -50,3 +50,8 @@ test('widgets use the spacing of the Início Peso widget: content from the top, 
  assert.match(css,/#plans \.progress-tile-head\{[^}]*min-height:20px;margin-bottom:-2px\}/);
  assert.match(css,/#overview #day-details \.day-widget-head\{[^}]*margin-bottom:-2px!important\}/);
 });
+test('Progresso charts sit on one surface, the same as Peso em jejum (no inner panel)',()=>{
+ assert.match(css,/:is\(#overview,#plans-assessments\) \.weight-detail-chart,#plans \.progress-chart-card\{padding:14px 14px 6px;border-radius:13px;background:#25262b\}/);
+ assert.match(css,/#plans \.progress-chart-card>\.assessment-trend\{margin:0;padding:0;border-radius:0;background:transparent\}/);
+ assert.doesNotMatch(css,/#plans \.progress-chart-card\{background:#242429/);
+});
