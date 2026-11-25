@@ -449,6 +449,7 @@ try{
     assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
     assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
     // Toggle the same published preview, preserving expansion and clinical writes.
+    await page.locator("#tm-admin-nav-create-plan").click();
     await page.locator("[data-plan-open-id='editor-draft-test']:visible").first().click({position:{x:10,y:10}});
     const preview=page.locator("#plan-preview");
     await preview.waitFor({state:"visible"});
@@ -456,15 +457,16 @@ try{
     const toggle=preview.locator("#tm-plan-preview-language");
     await toggle.click();
     await preview.getByText("Breakfast",{exact:true}).waitFor();
+    assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Option 1");
     assert.equal(await toggle.getAttribute("aria-pressed"),"true");
     assert.equal(await preview.locator(".plan-preview-meal").first().getAttribute("open"),"");
     await toggle.click();
     await preview.getByText("Pequeno almoço",{exact:true}).waitFor();
+    assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Opção 1");
     assert.equal(await toggle.getAttribute("aria-pressed"),"false");
     await preview.locator("#preview-back").click();
     assert.deepEqual(clinicalWrites,[]);
     // Exercise the actual editor with a published fixture and an unsaved title.
-    await page.locator("#tm-admin-nav-create-plan").click();
     const edit=page.locator("[data-edit-id='editor-draft-test']:visible").first();
     await edit.waitFor();
     await edit.click();
