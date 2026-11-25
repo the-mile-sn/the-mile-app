@@ -628,7 +628,7 @@ const syncPreviewLanguage=()=>{
  button.setAttribute("aria-pressed",String(!!previewEnglish));
  button.title=previewEnglish?"Ver plano em português":"Ver plano em inglês";
  button.setAttribute("aria-label",button.title);
- button.querySelector("span").textContent=previewEnglish?"EN":"PT";
+ button.querySelector("span").textContent=previewEnglish?"PT":"EN";
 };
 const resetPreviewLanguage=()=>{previewLanguageToken++;previewEnglish=null;syncPreviewLanguage();};
 const previewComparable=meals=>{
