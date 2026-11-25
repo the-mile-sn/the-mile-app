@@ -218,7 +218,7 @@ test("Planos programmatic selection stays synchronized with the shared dropdown"
   await editor.waitFor({state:"visible"});
   for(const [id,value,label] of [["plan-player","user-1","Atleta de teste"],["plan-type","Plano amarelo","Plano amarelo"]]){
    assert.equal(await editor.locator("#"+id).inputValue(),value);
-   assert.equal((await editor.locator(".tm-select-shell").filter({has:editor.locator("#"+id)}).locator(".tm-select-trigger .tm-select-value").textContent()).trim(),label);
+   assert.equal((await editor.locator(".tm-select-shell").filter({has:page.locator("#"+id)}).locator(".tm-select-trigger .tm-select-value").textContent()).trim(),label);
   }
   await editor.locator('[data-toggle="0"]').click();
   await editor.locator("[data-option-title]").fill("Alteração por guardar");
