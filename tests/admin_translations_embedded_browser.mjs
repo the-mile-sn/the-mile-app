@@ -464,7 +464,10 @@ try{
     await preview.getByText("Pequeno almoço",{exact:true}).waitFor();
     assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Opção 1");
     assert.equal(await toggle.getAttribute("aria-pressed"),"false");
-    await preview.locator("#preview-back").click();
+    // The existing desktop header replaces the lower back button; mobile keeps its own.
+    await page.locator('#tm-dashboard-return-button:visible, #plan-preview #preview-back:visible').first().click();
+    await page.locator("#plan-entry").waitFor({state:"visible"});
+    assert.equal(await preview.isVisible(),false);
     assert.deepEqual(clinicalWrites,[]);
     // Exercise the actual editor with a published fixture and an unsaved title.
     const edit=page.locator("[data-edit-id='editor-draft-test']:visible").first();
