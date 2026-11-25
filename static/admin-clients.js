@@ -115,6 +115,7 @@
         if(details)openChefDialog(details);
       }else if(type==="consulta"){
         consultations.scrollIntoView({behavior:"smooth",block:"nearest"});
+        window.tmOpenConsultCreate?.();
       }
     });
   }
