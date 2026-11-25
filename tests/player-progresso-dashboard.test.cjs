@@ -55,3 +55,8 @@ test('Progresso charts sit on one surface, the same as Peso em jejum (no inner p
  assert.match(css,/#plans \.progress-chart-card>\.assessment-trend\{margin:0;padding:0;border-radius:0;background:transparent\}/);
  assert.doesNotMatch(css,/#plans \.progress-chart-card\{background:#242429/);
 });
+test('a finger on a chart still scrolls the page vertically (horizontal chart scroll kept)',()=>{
+ assert.match(css,/#plans \.assessment-trend-horizontal-scroll\{[^}]*touch-action:pan-x pan-y;/s);
+ assert.match(css,/#plans \.assessment-trend-horizontal-scroll>svg\{[^}]*touch-action:pan-x pan-y;/s);
+ assert.doesNotMatch(css,/touch-action:pan-x;/);
+});
