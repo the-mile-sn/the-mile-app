@@ -455,15 +455,18 @@ try{
     await preview.waitFor({state:"visible"});
     await preview.locator(".plan-preview-meal > summary").click();
     const toggle=preview.locator("#tm-plan-preview-language");
+    assert.equal(await toggle.locator("span").textContent(),"EN");
     await toggle.click();
     await preview.getByText("Breakfast",{exact:true}).waitFor();
     assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Option 1");
     assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+    assert.equal(await toggle.locator("span").textContent(),"PT");
     assert.equal(await preview.locator(".plan-preview-meal").first().getAttribute("open"),"");
     await toggle.click();
     await preview.getByText("Pequeno almoço",{exact:true}).waitFor();
     assert.equal(await preview.locator(".plan-preview-option-heading strong").first().textContent(),"Opção 1");
     assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+    assert.equal(await toggle.locator("span").textContent(),"EN");
     // The existing desktop header replaces the lower back button; mobile keeps its own.
     await page.locator('#tm-dashboard-return-button:visible, #plan-preview #preview-back:visible').first().click();
     await page.locator("#plan-entry").waitFor({state:"visible"});

@@ -62,7 +62,7 @@
         button.setAttribute("aria-pressed","false");
         const glyph=nav?.querySelector(".tm-admin-nav-icon svg");
         if(glyph){const copy=glyph.cloneNode(true);copy.setAttribute("aria-hidden","true");button.append(copy);}
-        const label=document.createElement("span");label.textContent="PT";button.append(label);
+        const label=document.createElement("span");label.textContent="EN";button.append(label);
         button.addEventListener("click",async()=>{
           button.disabled=true;
           try{await window.tmTogglePlanPreviewLanguage();}
