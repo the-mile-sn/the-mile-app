@@ -25,7 +25,7 @@ test('Peso em jejum widget reads the daily history and opens the existing screen
 });
 test('Peso em jejum returns to where it was opened: Progresso or Início',()=>{
  assert.match(js,/async function openWeightDetail\(date,editToday,host=\$\("overview"\)\)/);
- assert.match(js,/back\.textContent=fromProgress\?playerText\("Progresso","Progress"\):playerText\("Início","Home"\)/);
+ assert.match(js,/back\.setAttribute\("aria-label",fromProgress\?playerText\("Voltar ao Progresso","Back to Progress"\):playerText\("Voltar ao Início","Back to Home"\)\)/);
  assert.match(js,/if\(editToday\)edit\.onclick=.*else edit\.hidden=true;/);
  assert.match(css,/#plans #plans-assessments\.weight-detail-open > :not\(#weight-detail\)\{display:none!important\}/);
  assert.match(css,/:is\(#overview,#plans-assessments\) \.weight-detail-bar\{/);
@@ -63,4 +63,9 @@ test('a finger on a chart still scrolls the page vertically (horizontal chart sc
 test('with 4 tabs the bottom bar is centred at 298 px (tabs keep their former width)',()=>{
  assert.match(css,/#tabs\{position:fixed;z-index:30;[^}]*left:max\(12px,calc\(50% - 149px\)\);right:max\(12px,calc\(50% - 149px\)\);/);
  assert.match(css,/#player-panel #tabs\.tabs-compact\{\n left:max\(24px,calc\(50% - 137px\)\)!important;right:max\(24px,calc\(50% - 137px\)\)!important;/);
+});
+test('Peso em jejum uses the same circular ‹ as the other pages and labels each weekly marker',()=>{
+ assert.match(css,/#plans \.plan-page-back,#plans \.progress-back,:is\(#overview,#plans-assessments\) \.weight-detail-bar \.weight-detail-back\{display:flex/);
+ assert.doesNotMatch(css,/\.weight-detail-back::before/);
+ assert.match(js,/if\(days===7\)el\("text",\{x:cx,y:Math\.max\(9,cy-\(last\?11:9\)\),"text-anchor":"middle",class:last\?"weight-detail-value last":"weight-detail-value"\}\)\.textContent=format\(x\.weight_kg\);/);
 });
