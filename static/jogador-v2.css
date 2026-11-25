@@ -5544,29 +5544,29 @@ body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #plans #plans-assessments .assessment-tabs{margin:0 0 14px}
 #plans .progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #plans .progress-tile{
- appearance:none;display:flex;flex-direction:column;justify-content:space-between;gap:10px;aspect-ratio:1/1;min-width:0;min-height:0;box-sizing:border-box;
+ appearance:none;display:flex;flex-direction:column;justify-content:flex-start;gap:6px;min-width:0;min-height:0;box-sizing:border-box;
  margin:0;padding:12px 12px 12px 14px;border:0;border-radius:13px;background:rgba(255,255,255,.045);color:#f1f1f4;box-shadow:none;text-align:left;font:inherit;cursor:pointer;
 }
-#plans .progress-tile.wide{grid-column:1/-1;aspect-ratio:auto;min-height:150px}
+#plans .progress-tile.wide{grid-column:1/-1}
 #plans .progress-tile:disabled{cursor:default;opacity:1}
 #plans .progress-tile:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-#plans .progress-tile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
-#plans .progress-tile-label{font-size:14px;line-height:1.25;color:#aaaab4}
-#plans .progress-tile-chevron{flex:none;width:16px;height:16px;margin-top:1px;color:#aaaab4}
+#plans .progress-tile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-height:20px;margin-bottom:-2px}
+#plans .progress-tile-label{font-size:15px;line-height:20px;color:#aaaab4}
+#plans .progress-tile-chevron{flex:none;width:16px;height:16px;margin-top:2px;color:#aaaab4}
 #plans .progress-tile-chevron svg{display:block;width:100%;height:100%}
 #plans .progress-tile:disabled .progress-tile-chevron{visibility:hidden}
 #plans .progress-tile-body{display:flex;flex-direction:column;gap:6px;min-width:0}
-#plans .progress-tile-value{font-size:26px;font-weight:720;line-height:1;white-space:nowrap;color:#f4f4f7}
+#plans .progress-tile-value{font-size:26px;font-weight:720;line-height:1.05;white-space:nowrap;color:#f4f4f7}
 #plans .progress-tile.wide .progress-tile-value{font-size:30px}
-#plans .progress-tile-value span{font-size:14px;font-weight:500;color:#aaaab4}
+#plans .progress-tile-value span{font-size:15px;font-weight:500;color:#aaaab4}
 #plans .progress-tile-foot{font-size:12px;line-height:1.25;color:#aaaab4}
-#plans .progress-spark{display:block;width:100%;height:34px;overflow:visible}
+#plans .progress-spark{display:block;width:100%;height:30px;overflow:visible}
 #plans .progress-spark-line{fill:none;stroke:#f1f1f4;stroke-opacity:.5;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-#plans .progress-muscle{aspect-ratio:auto;justify-content:flex-start;gap:14px;padding-bottom:15px}
+#plans .progress-muscle{gap:6px}
 #plans .progress-muscle-index{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:16px}
-#plans .progress-muscle-index-text,#plans .progress-muscle-part{display:flex;flex-direction:column;gap:5px;min-width:0}
+#plans .progress-muscle-index-text,#plans .progress-muscle-part{display:flex;flex-direction:column;gap:4px;min-width:0}
 #plans .progress-muscle-label{font-size:13px;color:#aaaab4}
-#plans .progress-muscle-rule{display:block;height:1px;background:rgba(255,255,255,.08)}
+#plans .progress-muscle-rule{display:block;height:1px;margin:6px 0;background:rgba(255,255,255,.08)}
 #plans .progress-muscle-parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 #plans .progress-muscle-part strong{font-size:22px;font-weight:700;line-height:1;color:#f4f4f7}
 #plans #plans-assessments.progress-page-open > :not(#progress-page){display:none!important}
