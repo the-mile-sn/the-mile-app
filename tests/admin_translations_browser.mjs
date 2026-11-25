@@ -127,8 +127,9 @@ try {
       name + " has horizontal overflow: " + scrollWidth + " > " + width);
     await page.locator("#i18n-results .i18n-result-english").first().waitFor();
     assert.equal(await page.locator("#i18n-results .i18n-result-translation").first().innerText(),snap.english);
+    assert.equal(await page.locator("#i18n-results .i18n-result-arrow").count(),0);
     await page.getByRole("button",{name:"Editar tradução de "+snap.source,exact:true}).click();
-    await page.locator("#i18n-results #i18n-review:not([hidden])").waitFor();
+    await page.locator("#i18n-review-dialog[open] #i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(
       () => document.querySelector("#i18n-source-text")?.textContent === "Frango com arroz",
     );
@@ -149,6 +150,8 @@ try {
     await page.locator("#i18n-approve").click();
     await page.getByText("Tradução aprovada.", { exact: true }).waitFor();
     assert.deepEqual(snap.writes, ["propose", "approve"]);
+    assert.equal(await page.locator("#i18n-history-panel summary svg path").getAttribute("d"),"m6 9 6 6 6-6");
+    assert.equal(await page.locator("#i18n-review-dialog").evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
     assert.equal(snap.proposed.text,"Grilled chicken and rice");
     assert.equal(await page.locator("#i18n-results .i18n-status-pill").first().innerText(), "Aprovada");
     await page.screenshot({
@@ -207,13 +210,14 @@ try {
       "Vários estados", kind);
     assert.equal(await page.locator(".i18n-record-field").count(),2);
     assert.match(await page.locator(".i18n-record-fields").innerText(),/Reviewed/);
-    await page.locator("#i18n-results .i18n-result").first().click();
+    await page.locator("#i18n-results .i18n-inline-edit").first().click();
     await page.locator("#i18n-fields option").nth(1).waitFor({ state: "attached" });
     assert.equal(await page.locator("#i18n-fields option").count(), 2, kind);
     assert.equal(await page.locator("#i18n-field-picker").isVisible(),true,
       "Keep field switching when a record has multiple translatable fields.");
+    await page.locator("#i18n-close").click();
     await page.getByRole("button",{name:"Rever Texto adicional de "+original,exact:true}).click();
-    await page.locator("#i18n-results #i18n-review:not([hidden])").waitFor();
+    await page.locator("#i18n-review-dialog[open] #i18n-review:not([hidden])").waitFor();
     await page.waitForFunction(text =>
       document.querySelector("#i18n-source-text")?.textContent === text, secondary);
     assert.equal(await page.locator("#i18n-source-text").innerText(), secondary);

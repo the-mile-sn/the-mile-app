@@ -85,7 +85,7 @@
        heading.append(arrow);
      }
      const count=Number(group.field_count||0),approved=Number(group.statuses?.approved||0);
-     const percent=count?Math.round(100*approved/count):0;
+     const percent=count?(approved===count?100:Math.min(99,Math.round(100*approved/count))):0;
      const remaining=Math.max(0,count-approved);
      button.append(heading,create("span","",group.record_count===null?"Sem registos":group.record_count+" registos"));
      const progress=create("progress","i18n-library-progress");
@@ -152,8 +152,8 @@
    const label=bulkKind==="recipe"?"textos de receitas":
      bulkKind==="supplement"?"textos de suplementos":
      bulkKind==="dish"?"traduções":"propostas";
-   $("i18n-bulk-summary").textContent=bulkRows.length+" "+label+
-     " por rever · "+count+" selecionadas";
+   $("i18n-bulk-summary").textContent=bulkRows.length?bulkRows.length+" "+label+
+     " por rever · "+count+" selecionadas":"Sem traduções por rever.";
  };
  const resetBulk=()=>{
    bulkSeq++;
@@ -161,6 +161,7 @@
    bulkRows=[];bulkSelected.clear();bulkKind=null;
    $("i18n-bulk-select-100").disabled=true;
    $("i18n-bulk-review").hidden=true;
+   $("i18n-bulk-review").dataset.empty="0";
    $("i18n-bulk-items").replaceChildren();
    $("i18n-bulk-select-all").checked=false;
    $("i18n-bulk-reviewed").checked=false;
@@ -203,6 +204,7 @@
      }
      const list=$("i18n-bulk-items");
      list.replaceChildren();
+     $("i18n-bulk-review").dataset.empty=bulkRows.length?"0":"1";
      const recipeGroups=new Map();
      for(let i=0;i<bulkRows.length;i++){
        const entry=bulkRows[i];
@@ -347,32 +349,25 @@
      const result=await send("/api/v2/admin/i18n/catalog?"+params);
      if(currentRequest!==catalogRequestSeq)return;
      const list=$("i18n-results");
-     const inlineRecord=$("i18n-review").closest(".i18n-inventory-record");
-     if(inlineRecord)reviewHome.append($("i18n-review"));
      list.replaceChildren();
      $("i18n-results-count").textContent=result.total+" registos encontrados";
      if(!result.items.length){
        list.append(create("p","i18n-results-count","Não existem conteúdos para estes filtros."));
      }
      for(const entry of result.items){
-       const b=create("button","i18n-result");b.type="button";
+       const b=create("div","i18n-result");
        const main=create("span","i18n-result-portuguese");
        main.append(create("small","","PT"),create("strong","",entry.source_text));
        if(entry.category)main.append(create("small","",entry.category));
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
          (fieldStates.size>1 ? "mixed" : entry.state);
-       const arrow=create("span","i18n-result-arrow");
-       arrow.setAttribute("aria-hidden","true");
-       // Reuse the same chevron shape already used by the Admin navigation.
-       arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
        const primary=(entry.fields||[]).find(field=>field.field_path===entry.field_path)||entry;
        const english=create("span","i18n-result-english");
        english.append(create("small","","EN"),create("span","i18n-result-translation",
          primary.translation_text||primary.legacy_candidate||entry.translation_text||entry.legacy_candidate||"Por traduzir"));
-       b.append(main,english,badge(displayedState),arrow);
+       b.append(main,english,badge(displayedState));
        const wrapper=create("div","i18n-inventory-record");
-       b.addEventListener("click",()=>openReview(entry,wrapper));
        wrapper.append(b);
        const fields=entry.fields?.length?entry.fields:[entry];
        if(fields.length===1){
@@ -382,8 +377,8 @@
        {
          const edit=create("button","i18n-secondary i18n-inline-edit",fields.length===1?"Editar":"Rever "+fields.length+" textos");
          edit.type="button";edit.setAttribute("aria-label","Editar tradução de "+entry.source_text);
-         edit.addEventListener("click",()=>openReview(entry,wrapper));
-         wrapper.append(edit);
+         edit.addEventListener("click",()=>openReview(entry));
+         b.append(edit);
        }
        if(fields.length>1){
          const context=create("div","i18n-record-fields");
@@ -396,7 +391,7 @@
            pt.append(create("small","",field.field_label||field.field_path),create("span","",field.source_text));
            en.append(create("small","","EN"),create("span","",field.translation_text||field.legacy_candidate||"Por traduzir"));
            pair.append(pt,en);fieldButton.append(pair,badge(field.state));
-           fieldButton.addEventListener("click",()=>openReview(entry,wrapper,field.field_path));
+           fieldButton.addEventListener("click",()=>openReview(entry,field.field_path));
            const fieldRow=create("div","i18n-record-field-row");
            const check=inventoryCheck(entry,field);
            if(check)fieldRow.append(check);
@@ -405,8 +400,6 @@
          wrapper.append(context);
        }
        wrapper.dataset.entityId=entry.entity_id;
-       if(inlineRecord&&state.selected?.entity_kind===entry.entity_kind&&state.selected?.entity_id===entry.entity_id)
-         wrapper.append($("i18n-review"));
        list.append(wrapper);
      }
      const pages=Math.max(1,Math.ceil(result.total/state.pageSize));
@@ -422,13 +415,17 @@
    stats(summary);
  };
  const closeReview=()=>{
+   const previous=state.selected;
    state.selected=null;state.row=null;state.edited=false;state.legacy="";
    $("i18n-fields").replaceChildren();
    $("i18n-review").hidden=true;
-   reviewHome.append($("i18n-review"));
+   if(reviewDialog.open){
+     reviewDialog.close();
+     if(previous){const record=[...$("i18n-results").querySelectorAll(".i18n-inventory-record")].find(el=>el.dataset.entityId===previous.entity_id);record?.querySelector(".i18n-inline-edit")?.focus({preventScroll:true});}
+   }
    $("i18n-history-panel").open=false;
  };
- const reviewHome=$("i18n-review").parentElement;
+ const reviewDialog=$("i18n-review-dialog");
  const leaveReview=()=>{
    if(state.busy||bulkBusy)return false;
    if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return false;
@@ -437,11 +434,9 @@
    clearTimeout(init.searchTimer);
    return true;
  };
- const openReview=async(entry,inlineHost=null,fieldPath=null)=>{
+ const openReview=async(entry,fieldPath=null)=>{
    if(state.busy)return;
    if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
-   if(inlineHost)inlineHost.append($("i18n-review"));
-   else reviewHome.append($("i18n-review"));
    const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
    const primary=fields.find(f=>f.field_path===fieldPath)||fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
    const chooseField=(field)=>{
@@ -478,7 +473,7 @@
    };
    $("i18n-review").hidden=false;
    chooseField(primary);
-   $("i18n-review").scrollIntoView({behavior:"smooth",block:"start"});
+   if(!reviewDialog.open)reviewDialog.showModal();
  };
  const refreshDetail=async()=>{
    if(!state.selected)return;
@@ -624,11 +619,13 @@
      }
      updateBulkActions();
    });
-   $("i18n-close").addEventListener("click",()=>{
+   const requestClose=()=>{
      if(state.busy)return;
      if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
      closeReview();
-   });
+   };
+   $("i18n-close").addEventListener("click",requestClose);
+   reviewDialog.addEventListener("cancel",event=>{event.preventDefault();requestClose();});
    $("i18n-library-link").addEventListener("click",event=>{
      if(!leaveReview()){event.preventDefault();return;}
      if(!embedded)return;
