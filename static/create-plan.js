@@ -156,7 +156,7 @@ function renderPersistence(){
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 
 }
-const refreshSelectDisplays=()=>queryAll(".tm-two-line-select select, .tm-select-shell select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
+const refreshSelectDisplays=()=>queryAll("select").forEach(el=>{el.dispatchEvent(new Event("tm-refresh-select"));window.tmRefreshAdminSelect?.(el);});
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+(i===0?"kcal":"g")+'</small></span>').join("")+'</div>';
 function draw(){
@@ -434,7 +434,7 @@ $("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$(
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",athlete_id:"",player_name:"",plan_type:"",meals:[]};savedSignature=null;publicationState={state:"draft",pending_changes:false,published_at:null};lastSavedAt=null;persistenceError="";active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});const data=await r.json().catch(()=>null);if(!r.ok)throw Error(data?.error||data?.code||"HTTP "+r.status);return data||{}}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=(data.drafts||[]).filter(d=>draftOwner(d));$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+draftIndex.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value);if($("library-plan-rows"))populatePlanLibrary()}
-const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";if(nativeRoot)document.dispatchEvent(new CustomEvent("tm:plan-view-changed",{detail:{mode}}));};
+const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";if(mode==="editor")refreshSelectDisplays();if(nativeRoot)document.dispatchEvent(new CustomEvent("tm:plan-view-changed",{detail:{mode}}));};
 const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/\s+/g," ");
 const nameSearchRank=(name,q)=>{
   if(!q)return 0;
