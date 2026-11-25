@@ -5413,7 +5413,6 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 :is(#overview,#plans-assessments) .weight-detail-bar strong{font-size:16px;font-weight:600}
 :is(#overview,#plans-assessments) .weight-detail-bar button{appearance:none;border:0;background:transparent;box-shadow:none;padding:8px 2px;color:#f1f1f4;font-size:16px;min-height:0}
 :is(#overview,#plans-assessments) .weight-detail-back{justify-self:start}
-:is(#overview,#plans-assessments) .weight-detail-back::before{content:"‹";font-size:26px;line-height:16px;margin-right:4px;vertical-align:-3px}
 :is(#overview,#plans-assessments) .weight-detail-edit{justify-self:end}
 :is(#overview,#plans-assessments) .weight-detail-range{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:999px;background:#202024}
 :is(#overview,#plans-assessments) .weight-detail-range button{appearance:none;border:0;box-shadow:none;min-height:32px;padding:4px 8px;border-radius:999px;background:transparent;color:#f2f2f5;font-size:13px;font-weight:500}
@@ -5424,9 +5423,11 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 :is(#overview,#plans-assessments) .weight-detail-summary strong span{font-size:17px;font-weight:500;color:#aaaab4}
 :is(#overview,#plans-assessments) .weight-detail-period{font-size:13px;color:#aaaab4}
 :is(#overview,#plans-assessments) .weight-detail-chart,#plans .progress-chart-card{padding:14px 14px 6px;border-radius:13px;background:#25262b}
-:is(#overview,#plans-assessments) .weight-detail-chart svg{display:block;width:100%;height:auto}
+:is(#overview,#plans-assessments) .weight-detail-chart svg{display:block;width:100%;height:auto;overflow:visible}
 :is(#overview,#plans-assessments) .weight-detail-grid{stroke:rgba(255,255,255,.08);stroke-width:1}
 :is(#overview,#plans-assessments) .weight-detail-tick{font-size:11px;fill:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-value{font-size:11px;font-weight:600;fill:#d9d9de;paint-order:stroke;stroke:#25262b;stroke-width:3px;stroke-linejoin:round}
+:is(#overview,#plans-assessments) .weight-detail-value.last{font-size:12px;font-weight:700;fill:#f1f1f4}
 :is(#overview,#plans-assessments) .weight-detail-line{fill:none;stroke:rgba(241,241,244,.6);stroke-width:2;stroke-linejoin:round}
 :is(#overview,#plans-assessments) .weight-detail-dot{fill:#0d0d10;stroke:#f1f1f4;stroke-width:2}
 :is(#overview,#plans-assessments) .weight-detail-dot.last{fill:#f1f1f4}
@@ -5521,9 +5522,9 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 .plan-badge.neutral{--plan-bg:#2b2c33;--plan-ink:#d9d9e0}
 /* Plan page (over Início): back, badge + name, daily totals, then the plan exactly as before. */
 #plans .plan-page-head{display:flex;flex-direction:column;gap:14px;margin:0 0 16px}
-#plans .plan-page-back,#plans .progress-back{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0 0 3px!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important}
-#plans .plan-page-back span,#plans .progress-back span{font-size:30px;font-weight:400;line-height:1}
-#plans .plan-page-back:focus-visible,#plans .progress-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+#plans .plan-page-back,#plans .progress-back,:is(#overview,#plans-assessments) .weight-detail-bar .weight-detail-back{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0 0 3px!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important}
+#plans .plan-page-back span,#plans .progress-back span,:is(#overview,#plans-assessments) .weight-detail-back span{font-size:30px;font-weight:400;line-height:1}
+#plans .plan-page-back:focus-visible,#plans .progress-back:focus-visible,:is(#overview,#plans-assessments) .weight-detail-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 #plans .plan-page-title{display:flex;align-items:center;gap:16px;padding:0 4px}
 #plans .plan-page-title .plan-badge{width:64px;height:64px}
 #plans .plan-page-title span{font-size:14px;color:#aaaab4}

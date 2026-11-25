@@ -1835,8 +1835,10 @@ async function openWeightDetail(date,editToday,host=$("overview")){
   const days=weightDetailRange==="week"?7:30;
   view.replaceChildren();
   const bar=document.createElement("div");bar.className="weight-detail-bar";
+  // Same circular ‹ as the other pages (plan, Progresso metric).
   const back=document.createElement("button");back.type="button";back.className="weight-detail-back";
-  back.textContent=fromProgress?playerText("Progresso","Progress"):playerText("Início","Home");
+  back.setAttribute("aria-label",fromProgress?playerText("Voltar ao Progresso","Back to Progress"):playerText("Voltar ao Início","Back to Home"));
+  const backArrow=document.createElement("span");backArrow.setAttribute("aria-hidden","true");backArrow.textContent="‹";back.append(backArrow);
   back.onclick=fromProgress?()=>{closeWeightDetail();const y=progressReturnY;requestAnimationFrame(()=>window.scrollTo({top:y}));}:()=>{closeWeightDetail();window.scrollTo({top:0});};
   const title=document.createElement("strong");title.textContent=playerText("Peso em jejum","Fasting weight");
   const edit=document.createElement("button");edit.type="button";edit.className="weight-detail-edit";edit.textContent=playerText("Editar","Edit");
@@ -1880,6 +1882,8 @@ async function openWeightDetail(date,editToday,host=$("overview")){
    entries.forEach((x,i)=>{
     const last=i===entries.length-1,cx=X(x.weigh_date),cy=Y(Number(x.weight_kg));
     el("circle",{cx,cy,r:last?4.5:3,class:last?"weight-detail-dot last":"weight-detail-dot"});
+    // Week: the weight above each marker (the month has too many points for labels).
+    if(days===7)el("text",{x:cx,y:Math.max(9,cy-(last?11:9)),"text-anchor":"middle",class:last?"weight-detail-value last":"weight-detail-value"}).textContent=format(x.weight_kg);
     const flagged=female&&(x.menstruating===1||x.menstruating===true);
     if(flagged)el("circle",{cx,cy:cy+10,r:2.5,fill:"#d6a7bc","aria-hidden":"true"});
     const label=new Date(x.weigh_date+"T12:00:00").toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"})+" · "+format(x.weight_kg)+" kg"+(flagged?playerText(" · Menstruação"," · Menstruation"):"");

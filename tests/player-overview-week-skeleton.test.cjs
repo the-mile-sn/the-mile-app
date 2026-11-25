@@ -12,7 +12,7 @@ test("overview has separate day and week skeleton hosts",()=>{
  assert.match(html,/<div id="overview-week-skeleton" class="overview-skeleton-week"><\/div>/);
  assert.match(html,/id="overview-loading"[^>]*role="status"[^>]*aria-live="polite"/);
  assert.doesNotMatch(html,/overview-skeleton-week-label/);
- assert.match(html,/jogador-v2\.css\?v=289-tabbar-width/);
+ assert.match(html,/jogador-v2\.css\?v=290-weight-back-labels/);
  assert.match(html,/week-skeleton-v1/);
 });
 
