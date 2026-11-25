@@ -722,6 +722,14 @@
     }
   };
   // Reuse the existing field renderer and version-bound translation endpoints.
+  const reviewIcon=(kind)=>{
+    const ns="http://www.w3.org/2000/svg";
+    const svg=document.createElementNS(ns,"svg");
+    for(const [k,v] of Object.entries({viewBox:"0 0 24 24",width:"18",height:"18",fill:"none",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true"}))svg.setAttribute(k,v);
+    const path=document.createElementNS(ns,"path");
+    path.setAttribute("d",kind==="check"?"M5 12l4 4L19 6":"m6 9 6 6 6-6");
+    svg.append(path);return svg;
+  };
   const openDraft=async(draftId)=>{
     if(document.getElementById("tm-plan-translation-dialog"))return;
     const dialog=create("dialog","tm-admin-translations-page tm-plan-translation-dialog");
@@ -767,7 +775,9 @@
         save.disabled=busy||!selected().length||selected().length>100;
         for(const e of entries){
           const modified=e.input.value.trim()!==(e.field.translated_text||"").trim();
-          e.state.textContent=modified?"Por guardar":e.selected?"Por aprovar":e.field.status==="approved"?"✓":states[e.field.status];
+          const approved=!modified&&!e.selected&&e.field.status==="approved";
+          e.state.replaceChildren(approved?reviewIcon("check"):document.createTextNode(modified?"Por guardar":e.selected?"Por aprovar":states[e.field.status]||""));
+          e.state.setAttribute("aria-label",approved?"Aprovada":e.state.textContent);
           e.state.dataset.status=modified||e.selected?"pending":e.field.status;
           e.input.disabled=busy;
           if(e.pick){e.pick.disabled=busy;e.pick.hidden=modified||e.field.status==="approved"||!e.input.value.trim();}
@@ -779,7 +789,9 @@
           groupName=field.group;
           group=create("details","tm-plan-review-group");
           group.open=!entries.length;
-          group.append(create("summary","",groupName||"Textos do plano"));
+          const groupHeader=create("summary","");
+          groupHeader.append(create("span","",groupName||"Textos do plano"),reviewIcon("chevron"));
+          group.append(groupHeader);
           body.append(group);
         }
         const row=create("article","i18n-plan-field tm-plan-review-row");
