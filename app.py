@@ -931,6 +931,7 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/plans/history',
                 '/api/v2/admin/i18n/plans/propose',
                 '/api/v2/admin/i18n/plans/approve',
+                '/api/v2/admin/i18n/plans/save-approved',
                 '/api/v2/admin/i18n/plans/common',
                 '/api/v2/admin/i18n/plans/common/approve',
                 '/api/v2/admin/i18n/plans/common/import',

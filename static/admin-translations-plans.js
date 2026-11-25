@@ -728,7 +728,7 @@
     dialog.id="tm-plan-translation-dialog";
     dialog.setAttribute("aria-labelledby","tm-plan-translation-title");
     const heading=create("div","i18n-plan-detail-head");
-    const title=create("strong","","Traduções");
+    const title=create("strong","","Plano publicado");
     title.id="tm-plan-translation-title";
     const close=create("button","i18n-quiet","Fechar");
     close.type="button";close.onclick=()=>dialog.close();
@@ -748,19 +748,96 @@
       if(!dialog.open||!dialog.isConnected)return;
       const ref=result.publication?.publication_ref;
       if(!/^[a-f0-9]{64}$/.test(ref||""))throw Error("versão indisponível");
-      body.replaceChildren(create("strong","",labelPlan(result.publication)),
-        create("p","i18n-plan-policy","A rever apenas a versão publicada. A tradução não altera a prescrição nem publica o plano."));
+      title.textContent=labelPlan(result.publication);
+      body.replaceChildren();
+      const entries=[];
+      const summary=create("div","tm-plan-review-summary");
+      const count=create("small","");
+      summary.append(create("span","","Português / English"),count);
+      body.append(summary);
+      const footer=create("div","tm-plan-review-footer");
+      const feedback=create("small","i18n-feedback");
+      const save=create("button","i18n-primary","Guardar e aprovar");
+      save.type="button";
+      footer.append(feedback,save);
+      let busy=false;
+      const selected=()=>entries.filter(e=>e.input.value.trim()&&(e.input.value.trim()!==(e.field.translated_text||"").trim()||e.selected));
+      const refresh=()=>{
+        count.textContent=entries.filter(e=>e.field.status==="approved").length+" de "+entries.length+" aprovadas";
+        save.disabled=busy||!selected().length||selected().length>100;
+        for(const e of entries){
+          const modified=e.input.value.trim()!==(e.field.translated_text||"").trim();
+          e.state.textContent=modified?"Por guardar":e.selected?"Por aprovar":e.field.status==="approved"?"✓":states[e.field.status];
+          e.state.dataset.status=modified||e.selected?"pending":e.field.status;
+          e.input.disabled=busy;
+          if(e.pick){e.pick.disabled=busy;e.pick.hidden=modified||e.field.status==="approved"||!e.input.value.trim();}
+        }
+      };
       let groupName=null,group=null;
       for(const field of result.fields||[]){
         if(field.group!==groupName||!group){
           groupName=field.group;
-          group=create("section","i18n-plan-option");
-          group.append(create("h3","",groupName||"Textos do plano"));
+          group=create("details","tm-plan-review-group");
+          group.open=!entries.length;
+          group.append(create("summary","",groupName||"Textos do plano"));
           body.append(group);
         }
-        group.append(renderField(field,ref));
+        const row=create("article","i18n-plan-field tm-plan-review-row");
+        const top=create("div","i18n-plan-field-head");
+        const state=create("small","i18n-plan-field-state");
+        top.append(create("strong","",field.field_label),state);
+        const cols=create("div","i18n-plan-compare");
+        const pt=create("div","i18n-plan-pt");
+        pt.append(create("p","",field.source_text));
+        const input=create("textarea","");
+        input.rows=field.source_text.length>120?3:1;
+        input.maxLength=10000;
+        input.value=field.translated_text||"";
+        input.setAttribute("aria-label","English · "+field.field_label);
+        const en=create("div","i18n-plan-en");
+        en.append(input);
+        cols.append(pt,en);
+        row.append(top,cols);
+        const entry={field,input,state,selected:false,pick:null};
+        const pick=create("button","i18n-quiet","Selecionar para aprovação");
+        pick.type="button";entry.pick=pick;
+        pick.onclick=()=>{entry.selected=!entry.selected;pick.textContent=entry.selected?"Retirar seleção":"Selecionar para aprovação";refresh();};
+        row.append(pick);
+        if(field.suggestion&&field.status==="missing"){
+          const use=create("button","i18n-quiet","Usar sugestão");
+          use.type="button";use.onclick=()=>{input.value=field.suggestion.text;refresh();};
+          row.append(use);
+        }
+        input.addEventListener("input",()=>{entry.selected=false;pick.textContent="Selecionar para aprovação";refresh();});
+        entries.push(entry);group.append(row);
       }
-      if(!group)body.append(create("p","i18n-plan-policy","Não existem textos específicos para tradução neste plano."));
+      body.append(footer);
+      const canClose=()=>!busy&&(!selected().length||confirm("Descartar alterações de tradução por guardar?"));
+      close.onclick=()=>{if(canClose())dialog.close();};
+      dialog.addEventListener("cancel",event=>{if(!canClose())event.preventDefault();});
+      save.onclick=async()=>{
+        if(busy||!selected().length)return;
+        const pending=selected();
+        if(pending.length>100)return;
+        busy=true;refresh();close.disabled=true;feedback.textContent="";
+        try{
+          await send("/api/v2/admin/i18n/plans/save-approved","POST",{publication_ref:ref,rows:pending.map(e=>({
+            field_path:e.field.field_path,expected_source_hash:e.field.source_hash,
+            expected_candidate_hash:e.field.candidate_hash,expected_status:e.field.status,
+            translated_text:e.input.value.trim()
+          }))});
+          const fresh=await send("/api/v2/admin/i18n/plans/fields?"+new URLSearchParams({publication_ref:ref}));
+          for(const e of pending){
+            const next=fresh.fields.find(f=>f.field_path===e.field.field_path);
+            if(!next)throw Error("Campo indisponível");
+            Object.assign(e.field,next);e.input.value=next.translated_text||"";e.selected=false;
+          }
+          feedback.textContent="Traduções guardadas e aprovadas.";
+        }catch(e){feedback.textContent="Não foi possível concluir: "+e.message;}
+        finally{busy=false;close.disabled=false;refresh();}
+      };
+      refresh();
+      if(!entries.length)body.insertBefore(create("p","i18n-plan-policy","Não existem textos específicos para tradução neste plano."),footer);
     }catch(e){
       if(dialog.open&&dialog.isConnected)body.replaceChildren(
         create("p","i18n-feedback",e.message==="plan_publication_not_found"?

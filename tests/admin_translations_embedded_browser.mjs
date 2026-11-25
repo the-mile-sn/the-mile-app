@@ -463,7 +463,8 @@ try{
     await dialog.locator(".i18n-plan-field").waitFor();
     assert.match(await dialog.innerText(),/Atleta fictício/);
     assert.equal(await dialog.locator("textarea").inputValue(),"Option 1");
-    assert.equal(await dialog.locator(".i18n-primary").isDisabled(),true);
+    assert.equal(await dialog.getByRole("button",{name:"Guardar e aprovar",exact:true}).isDisabled(),true);
+    assert.equal(await dialog.getByText("Revisei esta tradução").count(),0);
     assert.equal(await dialog.locator("input[type=file]").count(),0);
     assert.equal(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
     await dialog.getByRole("button",{name:"Fechar",exact:true}).click();

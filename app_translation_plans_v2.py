@@ -513,6 +513,82 @@ def approve(c, actor, body):
 
 
 
+def save_approved(c, actor, body):
+    """Explicitly reviewed fields only; conditional writes and atomic audit."""
+    actor_id = admin._admin(c, actor)
+    if (not isinstance(body, dict) or set(body) != {"publication_ref", "rows"}
+            or not isinstance(body["publication_ref"], str)
+            or not _REF.fullmatch(body["publication_ref"])
+            or not isinstance(body["rows"], list) or not 1 <= len(body["rows"]) <= 100):
+        raise PlanTranslationError(400, "invalid_plan_translation_payload")
+    ref = body["publication_ref"]
+    seen = set()
+    try:
+        for entry in body["rows"]:
+            if (not isinstance(entry, dict) or set(entry) != {
+                    "field_path", "expected_source_hash", "expected_candidate_hash",
+                    "expected_status", "translated_text"}):
+                raise PlanTranslationError(400, "invalid_plan_translation_payload")
+            path = entry["field_path"]
+            if not isinstance(path, str) or not _PATH.fullmatch(path) or path in seen:
+                raise PlanTranslationError(400, "invalid_plan_translation_field")
+            seen.add(path)
+            field = _source(c, ref, path)
+            source = field["source_text"]
+            digest = _hash(source)
+            text = entry["translated_text"]
+            if entry["expected_source_hash"] != digest:
+                raise PlanTranslationError(409, "plan_translation_source_changed")
+            if not isinstance(text, str) or not 1 <= len(text.strip()) <= 10000:
+                raise PlanTranslationError(400, "invalid_translation_text")
+            text = text.strip()
+            if _numbers(source) != _numbers(text) or _units(source) != _units(text):
+                raise PlanTranslationError(400, "plan_translation_numbers_or_units_changed")
+            previous = _existing(c, ref).get(path)
+            if (entry["expected_candidate_hash"] != (_hash(previous["translated_text"]) if previous else None)
+                    or entry["expected_status"] != _status(field, previous)):
+                raise PlanTranslationError(409, "translation_changed_during_review")
+            key = ("plan", "pub:" + ref, path, "en")
+            now = int(time.time())
+            if previous is None:
+                changed = c.execute("""INSERT INTO v2_content_translations
+                    (entity_kind,entity_id,field_path,language,source_hash,translated_text,
+                     status,updated_at,updated_by,approved_at,approved_by)
+                    VALUES (?,?,?,?,?,?,'pending',?,?,NULL,NULL)
+                    ON CONFLICT (entity_kind,entity_id,field_path,language) DO NOTHING
+                    RETURNING entity_id""", (*key,digest,text,now,actor_id)).fetchone()
+                if changed is None:
+                    raise PlanTranslationError(409, "translation_changed_during_review")
+                store._history(c,key,digest,text,"submitted",actor_id,now)
+            elif previous["source_hash"] != digest or previous["translated_text"] != text:
+                changed = c.execute("""UPDATE v2_content_translations
+                    SET source_hash=?,translated_text=?,status='pending',updated_at=?,
+                        updated_by=?,approved_at=NULL,approved_by=NULL
+                    WHERE entity_kind=? AND entity_id=? AND field_path=? AND language=?
+                    AND source_hash=? AND translated_text=? AND status=?""",
+                    (digest,text,now,actor_id,*key,previous["source_hash"],
+                     previous["translated_text"],previous["status"]))
+                if changed.rowcount != 1:
+                    raise PlanTranslationError(409, "translation_changed_during_review")
+                store._history(c,key,digest,text,"submitted",actor_id,now)
+            else:
+                # Lock the exact reviewed candidate through the approval transaction.
+                changed = c.execute("""UPDATE v2_content_translations SET status=status
+                    WHERE entity_kind=? AND entity_id=? AND field_path=? AND language=?
+                    AND source_hash=? AND translated_text=? AND status=?""",
+                    (*key,digest,text,previous["status"]))
+                if changed.rowcount != 1:
+                    raise PlanTranslationError(409, "translation_changed_during_review")
+            store.approve(c,entity_kind="plan",entity_id=key[1],field_path=path,
+                          source_text=source,reviewer_id=actor_id,
+                          expected_candidate_hash=_hash(text))
+        _load(c, ref)
+    except Exception:
+        c.rollback()
+        raise
+    return {"status":"approved","approved":len(seen)}
+
+
 # Generic food display overrides can be shortlisted for admin-reviewed CSV.
 # Personal alternatives and supplement prescriptions stay private.
 _COMMON_KINDS = {"option_title", "display_quantity", "individual_note",
