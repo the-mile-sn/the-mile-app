@@ -205,6 +205,8 @@ function enableWeekSwipe(element,onShift){
 let pendingDailySwipeDirection=0,dailySwipeEntryAnimation=null;
 // True while the Peso em jejum screen covers Início: day swipes are ignored there.
 let weightDetailOpen=false;
+// Left-edge zone reserved for the swipe back gesture (see initEdgeSwipeBack).
+const PLAYER_EDGE_BACK_ZONE=28;
 // Progresso metric page (see renderPlayerAssessments) and the scroll to restore on ‹.
 let progressPage=null,progressReturnY=0;
 function shiftOverviewDay(offset){
@@ -238,7 +240,7 @@ function enableOverviewDaySwipe(element){
   for(let node=target;node&&node!==element;node=node.parentElement){
    if(node.scrollWidth>node.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
   }
-  const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
+  const t=event.touches[0];if(t.clientX<PLAYER_EDGE_BACK_ZONE||t.clientX>innerWidth-22)return; // the left edge belongs to the back swipe
   content=overviewMode==='day'?$('day-details'):$('weekly-view');if(!content||content.hidden||weightDetailOpen)return;
   start={x:t.clientX,y:t.clientY,at:performance.now(),width:content.getBoundingClientRect().width};
  },{passive:true});
@@ -3634,6 +3636,59 @@ function closeProgressPage(restore=true){
 }
 for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
 
+
+/* Swipe back (25/11): on every page with a ‹ back button, a swipe from the left edge to the right
+   does the same as the button. The page follows the finger; the button's own handler does the navigation. */
+const PLAYER_BACK_SELECTORS=["#progress-page:not([hidden]) .progress-back","#weight-detail:not([hidden]) .weight-detail-back",
+ ".plan-page-head .plan-page-back","#overview-back:not([hidden])","#recipe-header-back:not([hidden])",".profile-page-back"];
+function visibleBackButton(){
+ for(const selector of PLAYER_BACK_SELECTORS){
+  for(const button of document.querySelectorAll(selector)){
+   if(!button.disabled&&button.getClientRects().length&&!button.closest("[hidden]"))return button;
+  }
+ }
+ return null;
+}
+(function initEdgeSwipeBack(){
+ let start=null,active=false,page=null,button=null;
+ const reset=()=>{start=null;active=false;page=null;button=null;};
+ const settle=(target,done)=>{
+  if(!page){done?.();return;}
+  const el=page;el.style.transition="transform 200ms cubic-bezier(.2,.8,.2,1)";el.style.transform="translate3d("+target+"px,0,0)";
+  setTimeout(()=>{el.style.transition="";el.style.transform="";done?.();},205);
+ };
+ document.addEventListener("touchstart",event=>{
+  reset();
+  if(event.touches.length!==1)return;
+  const t=event.touches[0];if(t.clientX>PLAYER_EDGE_BACK_ZONE)return;
+  if(event.target?.closest?.("input,select,textarea,[contenteditable],[role=\"slider\"],.consumption-editor"))return;
+  button=visibleBackButton();if(!button)return;
+  page=document.querySelector("#player-panel > section:not([hidden])");
+  start={x:t.clientX,y:t.clientY,at:performance.now()};
+ },{passive:true,capture:true});
+ document.addEventListener("touchmove",event=>{
+  if(!start||event.touches.length!==1)return;
+  const t=event.touches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
+  if(!active){
+   if(Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)){reset();return;}
+   if(dx<10||dx<Math.abs(dy)*1.2)return;
+   active=true;
+  }
+  if(event.cancelable)event.preventDefault();
+  if(page){page.style.transition="none";page.style.transform="translate3d("+Math.max(0,dx)+"px,0,0)";}
+ },{passive:false,capture:true});
+ document.addEventListener("touchend",event=>{
+  if(!start||!active){reset();return;}
+  const dx=event.changedTouches[0].clientX-start.x,speed=dx/Math.max(1,performance.now()-start.at);
+  const target=button;
+  event.stopPropagation();
+  if(dx>innerWidth*.28||(dx>40&&speed>.45)){
+   settle(innerWidth,()=>{target.click();});
+  }else settle(0);
+  start=null;active=false;
+ },{capture:true});
+ document.addEventListener("touchcancel",()=>{if(active)settle(0);reset();},{passive:true,capture:true});
+})();
 
 /* Shared App Store-style sliding selection indicator. */
 (function initSlidingSegmentedControls(){
