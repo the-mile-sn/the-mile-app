@@ -205,6 +205,11 @@ try{
         }
         await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
           group_id:payload.group_id}));
+      }else if(path==="/api/v2/admin/i18n/plans/preview"){
+        assert.equal(url.searchParams.get("draft_id"),editorDraft.id);
+        const meals=JSON.parse(JSON.stringify(editorDraft.meals));
+        meals[0].options[0].title="Option 1";
+        await route.fulfill(fmt({draft_id:editorDraft.id,publication_ref:publicRef,plan_type:editorDraft.plan_type,source_meals:editorDraft.meals,meals,food_names:{}}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
         const draft=url.searchParams.get("draft_id");
         if(draft)assert.equal(draft,"editor-draft-test");
@@ -443,6 +448,21 @@ try{
     assert.ok(gap.aligned<=4,name+" plan icons are not vertically centred");
     assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
     assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
+    // Toggle the same published preview, preserving expansion and clinical writes.
+    await page.locator("[data-plan-open-id='editor-draft-test']:visible").first().click({position:{x:10,y:10}});
+    const preview=page.locator("#plan-preview");
+    await preview.waitFor({state:"visible"});
+    await preview.locator(".plan-preview-meal > summary").click();
+    const toggle=preview.locator("#tm-plan-preview-language");
+    await toggle.click();
+    await preview.getByText("Breakfast",{exact:true}).waitFor();
+    assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+    assert.equal(await preview.locator(".plan-preview-meal").first().getAttribute("open"),"");
+    await toggle.click();
+    await preview.getByText("Pequeno almoço",{exact:true}).waitFor();
+    assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+    await preview.locator("#preview-back").click();
+    assert.deepEqual(clinicalWrites,[]);
     // Exercise the actual editor with a published fixture and an unsaved title.
     await page.locator("#tm-admin-nav-create-plan").click();
     const edit=page.locator("[data-edit-id='editor-draft-test']:visible").first();

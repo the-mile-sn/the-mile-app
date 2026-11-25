@@ -410,6 +410,38 @@ def list_publications(c, actor):
             "scope":"published_versions_only", "csv_export":False}
 
 
+def preview_draft(c, actor, draft_id):
+    """Private read-only preview of exactly the current published draft."""
+    admin._admin(c, actor)
+    if not isinstance(draft_id, str) or not draft_id or len(draft_id) > 256:
+        raise PlanTranslationError(400, "invalid_plan_draft")
+    row = c.execute("""SELECT p.draft_id,p.plan_type,p.snapshot_json,p.published_at,
+        p.state,d.content AS draft_content
+        FROM v2_food_plan_editor_publications p
+        JOIN v2_food_plan_drafts d ON d.id=p.draft_id
+        WHERE p.draft_id=? AND p.state='published'""", (draft_id,)).fetchone()
+    if row is None:
+        raise PlanTranslationError(404, "plan_publication_not_found")
+    from food_plan_publications_v2 import _canonical
+    import app_content_i18n_v2 as reader
+    if _canonical(row["draft_content"]) != _canonical(row["snapshot_json"]):
+        raise PlanTranslationError(409, "plan_publication_changed")
+    snapshot = json.loads(row["snapshot_json"])
+    kind = row["plan_type"]
+    ids = {str(f.get("id")) for m in snapshot.get("meals", [])
+           for o in m.get("options", []) for f in o.get("foods", [])
+           if f.get("kind") != "supplement" and f.get("id")}
+    library = {k: {"display_name": v} for k,v in _name_map(c).items() if k in ids}
+    entries = {kind: {"content": snapshot, "draft_id": draft_id,
+                      "snapshot_json": row["snapshot_json"]}}
+    localised, english_library = reader.localise_published_plans(
+        c, entries, library, language="en", admin_preview=True)
+    return {"draft_id": draft_id, "publication_ref": _ref(draft_id,row["snapshot_json"]),
+            "plan_type": kind, "source_meals": snapshot["meals"],
+            "meals": localised[kind]["content"]["meals"],
+            "food_names": {k:v["display_name"] for k,v in english_library.items()}}
+
+
 def inspect_draft(c, actor, draft_id):
     """Resolve the current immutable publication of this exact editor draft."""
     admin._admin(c, actor)
