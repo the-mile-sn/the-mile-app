@@ -17,7 +17,7 @@ test("Day skeleton reflects the current nutritional strip, not legacy large bloc
  assert.match(css,/#overview \.overview-day-skeleton-nutrition\{[^}]*grid-template-columns:minmax\(0,1\.05fr\) minmax\(0,2\.95fr\)/s);
  assert.match(css,/#overview \.overview-day-skeleton-card\{[^}]*height:61px;[^}]*border-radius:13px/s);
  assert.match(css,/#overview \.overview-day-skeleton-icon\{[^}]*width:37px;height:37px;border-radius:11px/s);
- assert.match(html,/jogador-v2\.css\?v=287-progresso-chart-scroll/);
+ assert.match(html,/jogador-v2\.css\?v=288-edge-swipe-back/);
  assert.match(html,/day-skeleton-v1/);
 });
 
