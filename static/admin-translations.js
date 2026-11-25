@@ -14,7 +14,7 @@
  };
  const displayKind={
    food:"Alimentos",dish:"Pratos",recipe:"Receitas",
-   recipe_category:"Categorias",supplement:"Suplementação",plan:"Planos"
+   recipe_category:"Categorias de receitas",supplement:"Suplementação",plan:"Planos"
  };
  const embedded=!!document.getElementById("tm-admin-translations-page");
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
@@ -54,11 +54,10 @@
  const stats=(summary)=>{
    const container=$("i18n-stats");container.replaceChildren();
    for(const [key,label] of [
-     ["missing","Por traduzir"],["legacy_review","Inglês existente"],
-     ["pending","Por rever"],["approved","Aprovadas"],["outdated","Desatualizadas"]
+     ["missing","Por traduzir"],["pending","Por rever"],["approved","Aprovadas"],["outdated","Desatualizadas"]
    ]){
      const card=create("div","i18n-stat");
-     card.append(create("strong","",summary.statuses[key]||0),
+     card.append(create("strong","",(summary.statuses[key]||0)+(key==="pending"?(summary.statuses.legacy_review||0):0)),
                  create("span","",label));
      container.append(card);
    }
@@ -71,16 +70,28 @@
        button.dataset.kind=group.kind;
        button.setAttribute("aria-pressed",String(group.kind===state.kind));
        button.addEventListener("click",()=>{
+         if(state.kind===group.kind||!leaveReview())return;
          state.kind=group.kind;state.status="all";state.query="";state.page=1;
          resetStatusPicker();$("i18n-search").value="";
-         closeReview();resetBulk();loadCatalog();
-         (state.kind==="plan"?$("i18n-plan-stage"):$("i18n-work-panel")).scrollIntoView({behavior:"smooth",block:"start"});
+         resetBulk();loadCatalog();
        });
      }
-     button.append(create("strong","",group.label));
-     button.append(create("span","",group.record_count===null?
-       "Sem registos":group.record_count+" registos"+
-         ""));
+     const heading=create("span","i18n-library-heading");
+     heading.append(create("strong","",displayKind[group.kind]||group.label));
+     if(group.integrated||group.kind==="plan"){
+       const arrow=create("span","i18n-result-arrow");
+       arrow.setAttribute("aria-hidden","true");
+       arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+       heading.append(arrow);
+     }
+     const count=Number(group.field_count||0),approved=Number(group.statuses?.approved||0);
+     const percent=count?Math.round(100*approved/count):0;
+     const remaining=Math.max(0,count-approved);
+     button.append(heading,create("span","",group.record_count===null?"Sem registos":group.record_count+" registos"));
+     const progress=create("progress","i18n-library-progress");
+     progress.max=Math.max(1,count);progress.value=approved;
+     progress.setAttribute("aria-label","Textos aprovados: "+approved+" de "+count);
+     button.append(progress,create("span","i18n-library-coverage",count?percent+"% aprovados · "+remaining+" por resolver":"Sem textos para traduzir"));
      lib.append(button);
    }
    $("i18n-library-panel").hidden=false;
@@ -91,20 +102,9 @@
    // as the source of truth; the handler below avoids redundant API calls.
    $("i18n-status").dispatchEvent(new Event("change",{bubbles:true}));
  };
- const buildTabs=()=>{
-   const tabs=$("i18n-tabs");tabs.replaceChildren();
+ const syncLibrarySelection=()=>{
    for(const card of $("i18n-libraries").querySelectorAll("button.i18n-library")){
      card.setAttribute("aria-pressed",String(card.dataset.kind===state.kind));
-   }
-   for(const [key,label] of Object.entries(displayKind)){
-     const b=create("button","",label);b.type="button";
-     b.setAttribute("aria-pressed",String(state.kind===key));
-     b.addEventListener("click",()=>{
-       if(state.kind===key)return;
-       state.kind=key;state.page=1;state.status="all";state.query="";
-       resetStatusPicker();$("i18n-search").value="";
-       closeReview();resetBulk();loadCatalog();
-     });tabs.append(b);
    }
    $("i18n-library-link").dataset.libraryKind=state.kind;
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
@@ -317,7 +317,7 @@
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
    inventorySelected.clear();syncInventorySelection();
-   buildTabs();
+   syncLibrarySelection();
    const isPlan=state.kind==="plan";
    $("i18n-bulk-tools").hidden=!["food","dish","recipe","supplement"].includes(state.kind);
    if(!["food","dish","recipe","supplement"].includes(state.kind)||
@@ -328,7 +328,7 @@
    $("i18n-prev").parentElement.hidden=isPlan;
    $("i18n-work-panel").hidden=false;
    $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
-   $("i18n-work-title").textContent=isPlan?"Planos":"Revisão manual";
+   $("i18n-work-title").textContent=displayKind[state.kind];
    if(isPlan){
      closeReview();
      msg("");
@@ -429,6 +429,14 @@
    $("i18n-history-panel").open=false;
  };
  const reviewHome=$("i18n-review").parentElement;
+ const leaveReview=()=>{
+   if(state.busy||bulkBusy)return false;
+   if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return false;
+   if(state.kind==="plan"&&window.tmI18nPlans?.canLeave&&!window.tmI18nPlans.canLeave())return false;
+   closeReview();
+   clearTimeout(init.searchTimer);
+   return true;
+ };
  const openReview=async(entry,inlineHost=null,fieldPath=null)=>{
    if(state.busy)return;
    if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
@@ -549,11 +557,13 @@
  let opening=null;
  const activate=async(kind)=>{
    if(Object.prototype.hasOwnProperty.call(displayKind,kind)&&kind!==state.kind){
+     if(!leaveReview())return;
      state.kind=kind;state.status="all";state.query="";state.page=1;
      resetStatusPicker();$("i18n-search").value="";
      closeReview();resetBulk();
    }
    if(opening)return opening;
+   if(state.edited||state.busy||bulkBusy)return;
    opening=(async()=>{
      const session=await send("/api/me");
      if(session?.user?.role!=="admin")throw Error("acesso_restrito");
@@ -619,7 +629,8 @@
      if(state.edited&&!window.confirm("Existem alterações por guardar. Pretendes descartá-las?"))return;
      closeReview();
    });
-   $("i18n-library-link").addEventListener("click",()=>{
+   $("i18n-library-link").addEventListener("click",event=>{
+     if(!leaveReview()){event.preventDefault();return;}
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;
      if(library==="food")window.tmOpenAdminFoodLibrary?.("foods");
@@ -630,15 +641,17 @@
    });
    $("i18n-status").addEventListener("change",event=>{
      if(state.status===event.target.value)return;
+     if(!leaveReview()){event.target.value=state.status;event.target.dispatchEvent(new Event("change",{bubbles:true}));return;}
      state.status=event.target.value;state.page=1;loadCatalog();
    });
    $("i18n-search").addEventListener("input",event=>{
+     if(!leaveReview()){event.target.value=state.query;return;}
      state.query=event.target.value;state.page=1;
      clearTimeout(init.searchTimer);
      init.searchTimer=setTimeout(loadCatalog,220);
    });
-   $("i18n-prev").addEventListener("click",()=>{state.page--;loadCatalog();});
-   $("i18n-next").addEventListener("click",()=>{state.page++;loadCatalog();});
+   $("i18n-prev").addEventListener("click",()=>{if(leaveReview()){state.page--;loadCatalog();}});
+   $("i18n-next").addEventListener("click",()=>{if(leaveReview()){state.page++;loadCatalog();}});
    $("i18n-target-text").addEventListener("input",()=>{
      state.edited=true;$("i18n-approve").disabled=true;
    });

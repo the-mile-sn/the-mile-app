@@ -273,7 +273,8 @@ try{
     await page.locator("#i18n-library-panel:not([hidden])").waitFor({timeout:15000});
     await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
-    assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
+    assert.equal(await page.locator("#i18n-work-title").textContent(),"Alimentos");
+    assert.equal(await page.locator("#i18n-libraries progress").count(),6);
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-auto-title").count(),0);
     assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro").count(),0);
@@ -311,13 +312,14 @@ try{
     assert.equal(await page.locator("#tm-dashboard").getAttribute("hidden"),"");
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3),
       name+" has horizontal overflow");
-    const plansCard=page.locator("#i18n-libraries button").filter({hasText:"Planos alimentares publicados"});
+    const plansCard=page.locator("#i18n-libraries button").filter({hasText:"Planos"});
     await plansCard.click();
     await page.locator("#i18n-plan-stage:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("data-plan-mode"),"1");
-    assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
+    assert.equal(await page.locator("#i18n-tabs").count(),0);
+    assert.equal(await page.locator("#i18n-libraries button[aria-pressed=true]").count(),1);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
     const coverage=page.locator(".i18n-plan-audit");

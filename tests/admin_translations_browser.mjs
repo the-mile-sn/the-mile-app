@@ -117,7 +117,7 @@ try {
       waitUntil: "domcontentloaded",
     });
     await page.locator("#i18n-work-panel:not([hidden])").waitFor();
-    assert.equal(await page.locator("#i18n-stats .i18n-stat").count(), 5);
+    assert.equal(await page.locator("#i18n-stats .i18n-stat").count(), 4);
     assert.equal(await page.locator("#i18n-libraries .i18n-library").count(), 6);
     assert.match(await page.locator("#i18n-results-count").innerText(), /1 registos/);
     const scrollWidth = await page.evaluate(
