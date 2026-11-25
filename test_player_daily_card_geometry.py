@@ -162,8 +162,8 @@ class DailyCardGeometryTests(unittest.TestCase):
 
     def test_universal_card_title_weight_400_preserves_other_roles(self):
         self.assertEqual(CSS.count("--mile-type-card-title:400"), 1)
-        for selector in ("#plans #plans-assessments .assessment-metric-name",
-                         "#overview .daily-supplements > summary > strong"):
+        # The Progresso metric cards became widgets on 25/11; the card-title role remains on Início.
+        for selector in ("#overview .daily-supplements > summary > strong",):
             self.assertTrue(any("font-weight:var(--mile-type-card-title)!important" in body
                                 for body in declarations(selector)), selector)
         self.assertIn("#weekly-view .weekly-meal-name{font-weight:var(--mile-type-medium)!important}", CSS)

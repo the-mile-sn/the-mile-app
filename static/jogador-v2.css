@@ -1940,16 +1940,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #plans .assessment-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-radius:999px;background:#212126;padding:4px;margin:4px 0 16px}
 #plans .assessment-tabs button{background:transparent!important;color:#b8b8bf!important;border:0!important;border-radius:999px!important;font-size:13px!important;font-weight:450!important;padding:11px 4px!important;min-width:0!important}
 #plans .assessment-tabs button[aria-pressed="true"]{background:#53545c!important;color:#fff!important}
-#plans .assessment-most-recent{color:#a8a8b1;font-size:13px;padding:0 5px;margin:0 0 15px}
-#plans .assessment-measure-card{background:#242429;border-radius:13px;margin:5px 0;overflow:hidden;border:0}
-#plans .assessment-measure-card>summary{display:flex;align-items:center;gap:10px;padding:14px 13px 14px 16px;min-height:64px;list-style:none;cursor:pointer}
-#plans .assessment-measure-card>summary::-webkit-details-marker{display:none}
-#plans .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:var(--mile-type-card-title);line-height:1.3}
-#plans .assessment-metric-right{flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;max-width:48%;align-items:flex-end}
-#plans .assessment-metric-right strong{font-size:15px;font-weight:550;color:#f5f5f6;white-space:nowrap}
-#plans .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
-#plans .assessment-expander{font-size:21px;font-weight:400;color:#bbbcc5;transition:transform .18s;line-height:20px;margin-left:3px}
-#plans details[open]>summary .assessment-expander{transform:rotate(180deg)}
 #plans .assessment-trend{margin:8px 17px 12px;background:#1b1b20;border-radius:14px;padding:10px 8px 9px}
 #plans .assessment-trend>p:first-child{margin:0 0 9px;font-size:13px;font-weight:550}
 #plans .assessment-trend svg{width:100%;height:135px;display:block;overflow:visible}
@@ -1962,10 +1952,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #plans .assessment-history-points{border-top:1px solid #34343b;padding-top:9px}
 #plans .assessment-history-points>div{display:flex;justify-content:space-between;gap:10px;color:#aeb0b8;font-size:12px;margin:7px 0}
 #plans .assessment-history-points strong{color:#eeeef1;font-weight:500}
-#plans .assessment-averages{background:#242429;border-radius:15px;padding:16px;margin:14px 0}
-#plans .assessment-averages h3{font-size:14px;margin:0 0 12px}
-#plans .assessment-averages>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #38383f;font-size:13px}
-#plans .assessment-averages strong{font-weight:500}
 #plans .assessment-empty-state{background:#25252b;color:#b7b7c0;border-radius:15px;padding:25px 17px;font-size:14px;text-align:center}
 #plans .assessment-formula{color:#92929d;font-size:12px;padding:0 7px}
 
@@ -2028,32 +2014,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 
 
-/* Avaliações — universal unit-card geometry.
-   Preserve the existing metric values, change labels, histories and charts. */
-#plans #plans-assessments details.assessment-measure-card{
- margin:5px 0!important;padding:0!important;min-height:0!important;
- border-radius:13px!important;overflow:hidden!important;
-}
-#plans #plans-assessments details.assessment-measure-card[open]{
- border-radius:18px!important;
-}
-#plans #plans-assessments details.assessment-measure-card > summary{
- height:61px!important;min-height:61px!important;max-height:61px!important;
- padding:12px 17px!important;box-sizing:border-box!important;
- gap:8px!important;line-height:1.15!important;
-}
-#plans #plans-assessments details.assessment-measure-card[open] > summary{
- height:55px!important;min-height:55px!important;max-height:55px!important;
- padding:12px 17px 3px!important;
-}
-#plans #plans-assessments .assessment-metric-right{gap:6px!important}
-#plans #plans-assessments .assessment-metric-name{
- font-size:16px!important;font-weight:var(--mile-type-card-title)!important;
-}
-#plans #plans-assessments .assessment-metric-right strong{
- font-size:16px!important;font-weight:600!important;
-}
-#plans #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important;}
 
 
 /* Kcal arrow centered against the closed card summary (fixed on expansion). */
@@ -2321,9 +2281,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #plans .assessment-chart-focus:empty{min-height:0;margin:0}
 
 /* Assessment: clearer value hierarchy and identical centered expand chevrons. */
-#plans .assessment-metric-right{gap:8px}
-#plans .assessment-measure-card>summary{align-items:center}
-#plans .assessment-expander,
 #plans .assessment-history-card>summary::after{
  content:"";
  display:block;
@@ -2341,7 +2298,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
  font-size:0;
  line-height:0;
 }
-#plans .assessment-measure-card[open]>summary .assessment-expander,
 #plans .assessment-history-card[open]>summary::after{
  transform:rotate(225deg);
  margin-top:5px;
@@ -2349,10 +2305,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 }
 #plans .assessment-history-card>summary{min-height:23px;align-items:center}
 
-/* Assessment header: compact comparison beneath the prominent current value. */
-#plans .assessment-metric-right{gap:9px;justify-content:center}
-#plans .assessment-metric-right strong{font-weight:600;line-height:1.15}
-#plans .assessment-change{line-height:1.15}
 
 
 /* Unified outline-only disclosure chevrons (the same language as Assessments). */
@@ -3363,13 +3315,7 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* Assessments: footer timestamp and formula note only in expanded body-fat card.
    Existing metric cards, charts and navigation remain unchanged. */
-#plans #plans-assessments .assessment-most-recent{
- margin:16px 0 8px;
- padding:0 7px;
- color:#a8a8b1;
- font-size:13px;
-}
-#plans #plans-assessments .assessment-measure-card>.assessment-formula{
+#plans #plans-assessments .progress-chart-card>.assessment-formula{
  margin:0 16px 16px;
  padding:8px 0 0;
  border-top:1px solid rgba(255,255,255,.09);
@@ -3801,17 +3747,10 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* Shared type hierarchy: Assessments, Menus, Profile and bottom navigation.
    Restrict changes to weights: preserve sizing, chart geometry and interaction. */
-#plans #plans-assessments .assessment-metric-name{font-weight:var(--mile-type-card-title)!important}
 #plans .assessment-tabs button,
 #plans .assessment-history-card>summary{font-weight:var(--mile-type-medium)!important}
-#plans #plans-assessments .assessment-metric-right>strong,
-#plans .assessment-trend>p:first-child,
-#plans .assessment-chart-value,
-#plans .assessment-chart-value.is-selected{font-weight:var(--mile-type-semibold)!important}
-#plans .assessment-change,
-#plans .assessment-chart-tick,
-#plans .assessment-chart-labels,
-#plans .assessment-history-points{font-weight:var(--mile-type-regular)!important}
+#plans .assessment-trend>p:first-child,#plans .assessment-chart-value,#plans .assessment-chart-value.is-selected{font-weight:var(--mile-type-semibold)!important}
+#plans .assessment-chart-tick,#plans .assessment-chart-labels,#plans .assessment-history-points{font-weight:var(--mile-type-regular)!important}
 #menus .date-nav strong{font-weight:var(--mile-type-medium)!important}
 #menus .menu-day-heading h3{font-weight:var(--mile-type-semibold)!important}
 #menus .menu-day-heading .menu-day-subtitle{font-weight:var(--mile-type-medium)!important}
@@ -5397,16 +5336,16 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
    Day navigation stays: swipe, the "Hoje" button, the Semana day headers and the Semana widget. */
 body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!important}
 #overview #week-strip,#overview #week-strip[hidden]{display:none!important}
-#overview .overview-heading{
+#overview .overview-heading,#plans .progress-heading{
  position:relative!important;display:flex!important;align-items:flex-end!important;justify-content:space-between!important;
  gap:12px!important;padding:14px 2px 14px!important;margin:0!important;
 }
 #overview .overview-heading-text{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important}
-#overview .overview-kicker{
+#overview .overview-kicker,#plans .progress-kicker{
  margin:0!important;font-size:14px!important;font-weight:500!important;letter-spacing:0!important;
  text-transform:none!important;color:#aaaab4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
 }
-#overview .overview-title{margin:0!important;font-size:32px!important;font-weight:720!important;line-height:1.1!important;color:#f4f4f7!important}
+#overview .overview-title,#plans .progress-title{margin:0!important;font-size:32px!important;font-weight:720!important;line-height:1.1!important;color:#f4f4f7!important}
 #overview .overview-heading-actions{display:flex!important;align-items:center!important;gap:6px!important;flex:none!important;margin-bottom:3px!important}
 #overview .overview-heading-actions button{
  appearance:none!important;display:inline-flex!important;align-items:center!important;gap:4px!important;
@@ -5466,40 +5405,40 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #overview #day-details > .day-weight-editor[hidden]{display:none!important}
 
 /* ===== Peso em jejum (Semana / Mês) ===== */
-#overview.weight-detail-open > :not(#weight-detail){display:none!important}
-#overview .weight-detail[hidden]{display:none!important}
-#overview .weight-detail{display:flex;flex-direction:column;padding:6px 0 24px}
-#overview .weight-detail-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:44px;margin-bottom:6px}
-#overview .weight-detail-bar strong{font-size:16px;font-weight:600}
-#overview .weight-detail-bar button{appearance:none;border:0;background:transparent;box-shadow:none;padding:8px 2px;color:#f1f1f4;font-size:16px;min-height:0}
-#overview .weight-detail-back{justify-self:start}
-#overview .weight-detail-back::before{content:"‹";font-size:26px;line-height:16px;margin-right:4px;vertical-align:-3px}
-#overview .weight-detail-edit{justify-self:end}
-#overview .weight-detail-range{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:999px;background:#202024}
-#overview .weight-detail-range button{appearance:none;border:0;box-shadow:none;min-height:32px;padding:4px 8px;border-radius:999px;background:transparent;color:#f2f2f5;font-size:13px;font-weight:500}
-#overview .weight-detail-range button[aria-pressed="true"]{background:#55555b;color:#fff}
-#overview .weight-detail-summary{display:flex;flex-direction:column;gap:2px;padding:18px 2px 10px}
-#overview .weight-detail-summary small{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#aaaab4}
-#overview .weight-detail-summary strong{font-size:34px;font-weight:720;line-height:1.1}
-#overview .weight-detail-summary strong span{font-size:17px;font-weight:500;color:#aaaab4}
-#overview .weight-detail-period{font-size:13px;color:#aaaab4}
-#overview .weight-detail-chart{padding:14px 14px 6px;border-radius:13px;background:#25262b}
-#overview .weight-detail-chart svg{display:block;width:100%;height:auto}
-#overview .weight-detail-grid{stroke:rgba(255,255,255,.08);stroke-width:1}
-#overview .weight-detail-tick{font-size:11px;fill:#aaaab4}
-#overview .weight-detail-line{fill:none;stroke:rgba(241,241,244,.6);stroke-width:2;stroke-linejoin:round}
-#overview .weight-detail-dot{fill:#0d0d10;stroke:#f1f1f4;stroke-width:2}
-#overview .weight-detail-dot.last{fill:#f1f1f4}
-#overview .weight-detail-point{min-height:18px;margin:4px 0 0;font-size:13px;color:#d6d6dc}
-#overview .weight-detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;padding:13px 17px;border-radius:13px;background:#25262b}
-#overview .weight-detail-stats small{display:block;font-size:12px;color:#aaaab4}
-#overview .weight-detail-stats strong{font-size:17px;font-weight:650}
-#overview .weight-detail-heading{margin:22px 2px 8px;font-size:17px;font-weight:650}
-#overview .weight-detail-list{border-radius:13px;overflow:hidden;background:#25262b}
-#overview .weight-detail-row{display:grid;grid-template-columns:1fr auto 84px;align-items:center;gap:8px;min-height:48px;padding:0 17px;border-top:1px solid rgba(255,255,255,.08)}
-#overview .weight-detail-row:first-child{border-top:0}
-#overview .weight-detail-row small{font-size:13px;color:#aaaab4;text-align:right}
-#overview .weight-detail-row strong{font-size:16px;font-weight:600;text-align:right}
+#overview.weight-detail-open > :not(#weight-detail),#plans #plans-assessments.weight-detail-open > :not(#weight-detail){display:none!important}
+:is(#overview,#plans-assessments) .weight-detail[hidden]{display:none!important}
+:is(#overview,#plans-assessments) .weight-detail{display:flex;flex-direction:column;padding:6px 0 24px}
+:is(#overview,#plans-assessments) .weight-detail-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:44px;margin-bottom:6px}
+:is(#overview,#plans-assessments) .weight-detail-bar strong{font-size:16px;font-weight:600}
+:is(#overview,#plans-assessments) .weight-detail-bar button{appearance:none;border:0;background:transparent;box-shadow:none;padding:8px 2px;color:#f1f1f4;font-size:16px;min-height:0}
+:is(#overview,#plans-assessments) .weight-detail-back{justify-self:start}
+:is(#overview,#plans-assessments) .weight-detail-back::before{content:"‹";font-size:26px;line-height:16px;margin-right:4px;vertical-align:-3px}
+:is(#overview,#plans-assessments) .weight-detail-edit{justify-self:end}
+:is(#overview,#plans-assessments) .weight-detail-range{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:999px;background:#202024}
+:is(#overview,#plans-assessments) .weight-detail-range button{appearance:none;border:0;box-shadow:none;min-height:32px;padding:4px 8px;border-radius:999px;background:transparent;color:#f2f2f5;font-size:13px;font-weight:500}
+:is(#overview,#plans-assessments) .weight-detail-range button[aria-pressed="true"]{background:#55555b;color:#fff}
+:is(#overview,#plans-assessments) .weight-detail-summary{display:flex;flex-direction:column;gap:2px;padding:18px 2px 10px}
+:is(#overview,#plans-assessments) .weight-detail-summary small{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-summary strong{font-size:34px;font-weight:720;line-height:1.1}
+:is(#overview,#plans-assessments) .weight-detail-summary strong span{font-size:17px;font-weight:500;color:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-period{font-size:13px;color:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-chart{padding:14px 14px 6px;border-radius:13px;background:#25262b}
+:is(#overview,#plans-assessments) .weight-detail-chart svg{display:block;width:100%;height:auto}
+:is(#overview,#plans-assessments) .weight-detail-grid{stroke:rgba(255,255,255,.08);stroke-width:1}
+:is(#overview,#plans-assessments) .weight-detail-tick{font-size:11px;fill:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-line{fill:none;stroke:rgba(241,241,244,.6);stroke-width:2;stroke-linejoin:round}
+:is(#overview,#plans-assessments) .weight-detail-dot{fill:#0d0d10;stroke:#f1f1f4;stroke-width:2}
+:is(#overview,#plans-assessments) .weight-detail-dot.last{fill:#f1f1f4}
+:is(#overview,#plans-assessments) .weight-detail-point{min-height:18px;margin:4px 0 0;font-size:13px;color:#d6d6dc}
+:is(#overview,#plans-assessments) .weight-detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;padding:13px 17px;border-radius:13px;background:#25262b}
+:is(#overview,#plans-assessments) .weight-detail-stats small{display:block;font-size:12px;color:#aaaab4}
+:is(#overview,#plans-assessments) .weight-detail-stats strong{font-size:17px;font-weight:650}
+:is(#overview,#plans-assessments) .weight-detail-heading{margin:22px 2px 8px;font-size:17px;font-weight:650}
+:is(#overview,#plans-assessments) .weight-detail-list{border-radius:13px;overflow:hidden;background:#25262b}
+:is(#overview,#plans-assessments) .weight-detail-row{display:grid;grid-template-columns:1fr auto 84px;align-items:center;gap:8px;min-height:48px;padding:0 17px;border-top:1px solid rgba(255,255,255,.08)}
+:is(#overview,#plans-assessments) .weight-detail-row:first-child{border-top:0}
+:is(#overview,#plans-assessments) .weight-detail-row small{font-size:13px;color:#aaaab4;text-align:right}
+:is(#overview,#plans-assessments) .weight-detail-row strong{font-size:16px;font-weight:600;text-align:right}
 #overview #day-details .day-widget-value.empty{color:#6c6c76!important}
 
 /* ===== Registado = só o ícone (24/11) — à direita, junto à seta, na cor da refeição ===== */
@@ -5581,9 +5520,9 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 .plan-badge.neutral{--plan-bg:#2b2c33;--plan-ink:#d9d9e0}
 /* Plan page (over Início): back, badge + name, daily totals, then the plan exactly as before. */
 #plans .plan-page-head{display:flex;flex-direction:column;gap:14px;margin:0 0 16px}
-#plans .plan-page-back{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0 0 3px!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important}
-#plans .plan-page-back span{font-size:30px;font-weight:400;line-height:1}
-#plans .plan-page-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+#plans .plan-page-back,#plans .progress-back{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0 0 3px!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;color:#ededf0!important;box-shadow:none!important}
+#plans .plan-page-back span,#plans .progress-back span{font-size:30px;font-weight:400;line-height:1}
+#plans .plan-page-back:focus-visible,#plans .progress-back:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 #plans .plan-page-title{display:flex;align-items:center;gap:16px;padding:0 4px}
 #plans .plan-page-title .plan-badge{width:64px;height:64px}
 #plans .plan-page-title span{font-size:14px;color:#aaaab4}
@@ -5596,3 +5535,59 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #plans .plan-page-title .plan-badge svg rect.off,#overview .plans-widget .plan-badge svg rect.off{fill:var(--plan-ink)!important;fill-opacity:.22!important;opacity:1!important}
 .plan-badge>.mile-icon{width:42%!important;height:42%!important;flex:none!important}
 .plan-badge>.mile-icon svg{width:100%!important;height:100%!important}
+
+/* ===== Progresso — dashboard de widgets (2026-11-25) =====
+   Replaces the expanding metric cards. Each widget opens its page beside it (‹ back), like Peso em jejum.
+   The trend chart itself (.assessment-trend: cut points, colours, labels) keeps its existing styles. */
+body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!important}
+#plans .progress-heading{flex-direction:column!important;align-items:flex-start!important;gap:2px!important}
+#plans #plans-assessments .assessment-tabs{margin:0 0 14px}
+#plans .progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#plans .progress-tile{
+ appearance:none;display:flex;flex-direction:column;justify-content:space-between;gap:10px;aspect-ratio:1/1;min-width:0;min-height:0;box-sizing:border-box;
+ margin:0;padding:12px 12px 12px 14px;border:0;border-radius:13px;background:rgba(255,255,255,.045);color:#f1f1f4;box-shadow:none;text-align:left;font:inherit;cursor:pointer;
+}
+#plans .progress-tile.wide{grid-column:1/-1;aspect-ratio:auto;min-height:150px}
+#plans .progress-tile:disabled{cursor:default;opacity:1}
+#plans .progress-tile:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+#plans .progress-tile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+#plans .progress-tile-label{font-size:14px;line-height:1.25;color:#aaaab4}
+#plans .progress-tile-chevron{flex:none;width:16px;height:16px;margin-top:1px;color:#aaaab4}
+#plans .progress-tile-chevron svg{display:block;width:100%;height:100%}
+#plans .progress-tile:disabled .progress-tile-chevron{visibility:hidden}
+#plans .progress-tile-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+#plans .progress-tile-value{font-size:26px;font-weight:720;line-height:1;white-space:nowrap;color:#f4f4f7}
+#plans .progress-tile.wide .progress-tile-value{font-size:30px}
+#plans .progress-tile-value span{font-size:14px;font-weight:500;color:#aaaab4}
+#plans .progress-tile-foot{font-size:12px;line-height:1.25;color:#aaaab4}
+#plans .progress-spark{display:block;width:100%;height:34px;overflow:visible}
+#plans .progress-spark-line{fill:none;stroke:#f1f1f4;stroke-opacity:.5;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#plans .progress-muscle{aspect-ratio:auto;justify-content:flex-start;gap:14px;padding-bottom:15px}
+#plans .progress-muscle-index{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:16px}
+#plans .progress-muscle-index-text,#plans .progress-muscle-part{display:flex;flex-direction:column;gap:5px;min-width:0}
+#plans .progress-muscle-label{font-size:13px;color:#aaaab4}
+#plans .progress-muscle-rule{display:block;height:1px;background:rgba(255,255,255,.08)}
+#plans .progress-muscle-parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#plans .progress-muscle-part strong{font-size:22px;font-weight:700;line-height:1;color:#f4f4f7}
+#plans #plans-assessments.progress-page-open > :not(#progress-page){display:none!important}
+#plans .progress-page[hidden]{display:none!important}
+#plans .progress-page{display:flex;flex-direction:column;align-items:stretch;padding:6px 0 24px;text-align:left}
+#plans .progress-page-head{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:16px 2px 12px}
+#plans .progress-page-value{font-size:40px;font-weight:720;line-height:1.1;color:#f4f4f7}
+#plans .progress-page-value span{font-size:18px;font-weight:500;color:#aaaab4}
+#plans .progress-page-sub{margin:0;font-size:14px;color:#aaaab4}
+#plans .progress-chart-card{background:#242429;border-radius:18px;overflow:hidden;padding:4px 0 1px}
+#plans .progress-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:22px 4px 10px}
+#plans .progress-section-head h3{margin:0;font-size:17px;font-weight:650}
+#plans .progress-section-head strong{font-size:17px;font-weight:650;white-space:nowrap}
+#plans .progress-section-head small{font-size:13px;font-weight:400;color:#aaaab4}
+#plans .progress-average{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:14px 16px;border-radius:13px;background:rgba(255,255,255,.045);font-size:15px}
+#plans .progress-average span{color:#aaaab4}
+#plans .progress-average strong{font-weight:600}
+#plans .progress-list-heading{margin:0;padding:22px 4px 8px;font-size:17px;font-weight:650}
+#plans .progress-list{border-radius:13px;overflow:hidden;background:rgba(255,255,255,.045)}
+#plans .progress-list-row{display:grid;grid-template-columns:minmax(0,1fr) auto 92px;align-items:center;gap:8px;min-height:48px;padding:0 16px}
+#plans .progress-list-row+.progress-list-row{border-top:1px solid rgba(255,255,255,.08)}
+#plans .progress-list-row span{font-size:16px}
+#plans .progress-list-row small{font-size:13px;color:#aaaab4}
+#plans .progress-list-row strong{font-size:16px;font-weight:600;text-align:right;white-space:nowrap}
