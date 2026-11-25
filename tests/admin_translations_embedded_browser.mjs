@@ -274,6 +274,12 @@ try{
     await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Alimentos");
+    assert.equal(await page.locator("#i18n-results .i18n-result-arrow").count(),0);
+    await page.locator("#i18n-results .i18n-inline-edit").first().click();
+    await page.locator("#i18n-review-dialog[open]").waitFor();
+    assert.equal(await page.locator("#i18n-review-dialog").evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
+    await page.locator("#i18n-close").click();
+    await page.locator("#i18n-review-dialog").waitFor({state:"hidden"});
     assert.equal(await page.locator("#i18n-libraries progress").count(),6);
     assert.equal(await page.locator("#i18n-import-panel").count(),0);
     assert.equal(await page.locator("#i18n-auto-title").count(),0);

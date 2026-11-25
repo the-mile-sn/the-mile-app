@@ -334,9 +334,9 @@ function ensurePlanningOnlyView(){
   });
   translationsAssetLoad=(async()=>{
    const css=document.createElement("link");css.rel="stylesheet";
-   css.href="/admin-translations-embedded.css?v=29";
+   css.href="/admin-translations-embedded.css?v=30";
    await load(css);
-   for(const src of ["/admin-translations.js?v=19","/admin-translations-plans.js?v=17"]){
+   for(const src of ["/admin-translations.js?v=20","/admin-translations-plans.js?v=17"]){
     const script=document.createElement("script");script.src=src;script.async=false;
     await load(script);
    }

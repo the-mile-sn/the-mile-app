@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Traduções · The Mile Backoffice</title>
 <link rel="stylesheet" href="/admin-surface-palette.css?v=205">
-<link rel="stylesheet" href="/admin-translations.css?v=19">
-<script defer src="/admin-translations.js?v=19"></script>
+<link rel="stylesheet" href="/admin-translations.css?v=20">
+<script defer src="/admin-translations.js?v=20"></script>
 <script defer src="/admin-translations-plans.js?v=17"></script>
 </head>
 <body>
@@ -60,7 +60,7 @@
           <label class="i18n-bulk-select-all"><input type="checkbox" id="i18n-bulk-select-all"> <span id="i18n-bulk-all-label">Selecionar todas as propostas pendentes</span></label>
         </div>
         <label class="i18n-bulk-filter">Pesquisar nesta revisão
-          <input type="search" id="i18n-bulk-filter" placeholder="Pesquisar português ou inglês…" autocomplete="off">
+          <input type="search" id="i18n-bulk-filter" placeholder="Pesquisar PT ou EN…" autocomplete="off">
         </label>
       </div>
       <div id="i18n-bulk-items" class="i18n-bulk-items" role="group" aria-label="Propostas PT e EN para aprovação"></div>
@@ -82,6 +82,7 @@
     </div>
   </section>
   
+  <dialog id="i18n-review-dialog" class="i18n-review-dialog" aria-labelledby="i18n-review-title">
   <section class="i18n-review" id="i18n-review" aria-labelledby="i18n-review-title" hidden>
     <div class="i18n-review-heading">
       <h2 id="i18n-review-title">Rever tradução</h2>
@@ -106,13 +107,14 @@
     <p id="i18n-review-feedback" role="status" aria-live="polite"></p>
     <div class="i18n-actions">
       <button type="button" id="i18n-propose" class="i18n-primary">Guardar proposta</button>
-      <button type="button" id="i18n-approve" class="i18n-secondary" disabled>Aprovar tradução revista</button>
+      <button type="button" id="i18n-approve" class="i18n-primary" disabled>Aprovar tradução revista</button>
     </div>
     <details id="i18n-history-panel">
-      <summary>Histórico de revisão</summary>
+      <summary><span>Histórico de revisão</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
       <div id="i18n-history"></div>
     </details>
   </section>
+  </dialog>
 </main>
 </body>
 </html>
