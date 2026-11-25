@@ -10,7 +10,10 @@
   };
   const host=$("i18n-plan-stage");
   if(!host)return;
-  let csrf="",generation=0,loading=false;
+  let csrf="",generation=0,publicationSequence=0,loading=false,activeWrites=0;
+  const hasChanges=(scope=host)=>!!scope?.querySelector('textarea[data-tm-dirty="1"]');
+  const canLeave=(scope=host)=>!activeWrites&&(!hasChanges(scope)||confirm("Existem traduções por guardar. Pretendes descartá-las?"));
+  const trackEditor=(editor,initial)=>{editor.dataset.tmDirty=String(Number(editor.value.trim()!==String(initial||"").trim()));};
   let publications=[],active=null,activeFields=[];
   const states={missing:"Por traduzir",pending:"Por rever",
                 approved:"Aprovada",outdated:"Desatualizada"};
@@ -20,17 +23,20 @@
       headers["Content-Type"]="application/json";
       headers["X-CSRF-Token"]=csrf;
     }
+    if(method!=="GET")activeWrites++;
+    try{
     const r=await fetch(path,{method,credentials:"same-origin",headers,
        ...(data===undefined?{}:{body:JSON.stringify(data)})});
     let body={};
     try{body=await r.json();}catch(_){}
     if(!r.ok)throw Error(body.error||"http_"+r.status);
     return body;
+    }finally{if(method!=="GET")activeWrites--;}
   };
   const statusText=item=>{
     const x=item.statuses||{};
     return (x.approved||0)+" aprovados · "+(x.pending||0)+" por rever · "+
-      (x.missing||0)+" por traduzir";
+      (x.missing||0)+" por traduzir · "+(x.outdated||0)+" desatualizados";
   };
   const labelPlan=item=>[item.plan_type||"Plano",item.player_label].filter(Boolean).join(" · ");
   const error=(target,message)=>{
@@ -61,7 +67,7 @@
                     create("small","",statusText(item)));
       if(item.state==="transitional")button.append(create("small","",
         "Versão de transição · revisão necessária"));
-      button.addEventListener("click",()=>openPublication(item.publication_ref));
+      button.addEventListener("click",()=>{if(canLeave($("i18n-plan-detail")))openPublication(item.publication_ref);});
       list.append(button);
     }
   };
@@ -136,6 +142,7 @@
         "Texto personalizado: revisão privada obrigatória."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
+      trackEditor(editor,item.translated_text);
       save.disabled=!editor.value.trim()||!modified||busy;
       approve.disabled=item.status!=="pending"||modified||!checked.checked||busy;
     };
@@ -178,13 +185,13 @@
     return row;
   };
   const openPublication=async(public_ref)=>{
-    const seq=++generation,detail=$("i18n-plan-detail");
+    const seq=generation,request=++publicationSequence,detail=$("i18n-plan-detail");
     if(!detail)return;
     detail.replaceChildren(create("p","i18n-results-count","A consultar versão publicada…"));
     try{
       const result=await send("/api/v2/admin/i18n/plans/fields?"+
         new URLSearchParams({publication_ref:public_ref}));
-      if(seq!==generation||host.hidden)return;
+      if(seq!==generation||request!==publicationSequence||host.hidden)return;
       active=public_ref;activeFields=result.fields||[];
       detail.replaceChildren();
       const header=create("div","i18n-plan-detail-head");
@@ -192,11 +199,9 @@
                     create("small","",statusText(result.publication)));
       const back=create("button","i18n-quiet","Fechar revisão");
       back.type="button";
-      back.addEventListener("click",()=>{active=null;detail.replaceChildren();});
+      back.addEventListener("click",()=>{if(canLeave(detail)){publicationSequence++;active=null;detail.replaceChildren();}});
       header.append(back);
-      detail.append(header,create("p","i18n-plan-policy",
-        "Traduções por versão publicada. "+
-        "Aprovações só após revisão e confirmação. Quantidades e cálculos não são alterados."));
+      detail.append(header);
       // Historical approvals are never applied automatically across publications.
       // Present only unambiguous, hash-matched candidates for explicit review.
       let recovery=null;
@@ -206,7 +211,7 @@
             new URLSearchParams({publication_ref:public_ref}));
         }catch(_){recovery=null;}
       }
-      if(seq!==generation||host.hidden)return;
+      if(seq!==generation||request!==publicationSequence||host.hidden)return;
       if(recovery&&recovery.candidates?.length){
         const panel=create("section","i18n-plan-option");
         panel.append(create("h3","","Recuperar traduções já aprovadas"),
@@ -300,7 +305,7 @@
       }
       detail.scrollIntoView({behavior:"smooth",block:"start"});
     }catch(e){
-      if(seq===generation)detail.replaceChildren(
+      if(seq===generation&&request===publicationSequence)detail.replaceChildren(
         create("p","i18n-feedback","Não foi possível consultar o plano: "+e.message));
     }
   };
@@ -437,7 +442,8 @@
       approve.type="button";
       const feedback=create("p","i18n-feedback");
       let busy=false;
-      const update=()=>{approve.disabled=busy||!check.checked||!editor.value.trim();};
+      const initial=editor.value;
+      const update=()=>{trackEditor(editor,initial);approve.disabled=busy||!check.checked||!editor.value.trim();};
       editor.addEventListener("input",()=>{check.checked=false;update();});
       check.addEventListener("change",update);
       approve.addEventListener("click",async()=>{
@@ -500,7 +506,7 @@
             (item.missing_count>100?" · em grupos de 100":"")+
             (item.imported_status?" · Tradução "+(
               item.imported_status==="approved"?"revisto":"guardada por rever"):"")));
-        row.addEventListener("click",()=>openGroup(item));
+        row.addEventListener("click",()=>{if(canLeave(detail))openGroup(item);});
         list.append(row);
       }
     };
@@ -516,18 +522,24 @@
     csrf=csrfToken||csrf;
     const seq=++generation;
     host.replaceChildren();
-    const head=create("div","i18n-plan-detail-head");
-    head.append(create("strong","","Planos publicados · revisão por versão"));
-    const intro=create("p","i18n-plan-policy",
-      "As traduções aprovadas dos alimentos serão reutilizadas na integração com as apps. "+
-      "Aqui revês apenas textos específicos dos planos publicados. "+
-      "O nome do jogador é apresentado apenas na sessão privada do administrador.");
+    const section=(title,open=false)=>{
+      const el=create("details","i18n-plan-manager-section");
+      el.open=open;
+      const header=create("summary","");
+      header.append(create("span","",title),reviewIcon("chevron"));
+      el.append(header);return el;
+    };
+    const planSection=section("Traduções dos planos",true);
+    const commonSection=section("Textos comuns");
+    const privateSection=section("Textos personalizados");
+    const auditSection=section("Detalhes técnicos");
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
     const detail=create("div","i18n-plan-detail");detail.id="i18n-plan-detail";
     const auditPanel=create("div","i18n-plan-audit");
     const privatePanel=create("section","i18n-plan-private-queue");
     const commonPanel=create("section","i18n-plan-common");
-    host.append(head,intro,auditPanel,privatePanel,commonPanel,list,detail);
+    planSection.append(list,detail);commonSection.append(commonPanel);privateSection.append(privatePanel);auditSection.append(auditPanel);
+    host.append(planSection,commonSection,privateSection,auditSection);
     const renderPrivateQueue=audit=>{
       privatePanel.replaceChildren();
       const counts=audit?.coverage_by_kind||{};
@@ -536,22 +548,18 @@
         Number(counts[kind]?.missing||0)+Number(counts[kind]?.pending||0)+
         Number(counts[kind]?.outdated||0),0);
       const head=create("div","i18n-plan-detail-head");
-      head.append(create("strong","","Revisão privada · últimos textos"));
+      head.append(create("strong","","Alternativas e suplementos"));
       const open=create("button","i18n-secondary",
-        count?"Abrir revisão privada · "+count+" textos":"Revisão privada concluída");
+        count?"Rever "+count+" textos":"Revisão concluída");
       open.type="button";open.disabled=!count;
       head.append(open);
-      const message=create("p","i18n-plan-policy",
-        count?"Alternativas alimentares e textos de suplementos ainda pendentes. "+
-          "As traduções são revistas dentro da sessão do administrador, sem CSV. "+
-          "Guarda cada proposta e aprova-a individualmente após confirmação.":
-          "Não existem alternativas ou suplementos pendentes nesta auditoria.");
+      const message=create("p","i18n-plan-policy",count?"Revisão individual dos textos personalizados.":"Sem textos personalizados pendentes.");
       const statusMessage=create("p","i18n-feedback");
       statusMessage.setAttribute("role","status");
       const rows=create("div","i18n-plan-private-list");
       privatePanel.append(head,message,statusMessage,rows);
       open.addEventListener("click",async()=>{
-        if(open.disabled)return;
+        if(open.disabled||!canLeave(rows))return;
         open.disabled=true;
         rows.replaceChildren();
         statusMessage.textContent="A consultar apenas os planos com campos pendentes…";
@@ -627,7 +635,7 @@
         reload.type="button";
         const feedback=create("small","i18n-plan-coverage-feedback");
         reload.addEventListener("click",async()=>{
-          if(reload.disabled)return;
+          if(reload.disabled||!canLeave(privatePanel))return;
           reload.disabled=true;feedback.textContent="A atualizar…";
           try{
             const fresh=await send("/api/v2/admin/i18n/plans");
@@ -857,5 +865,5 @@
           "Não foi possível consultar a versão publicada: "+e.message));
     }
   };
-  window.tmI18nPlans={load,hide,openDraft};
+  window.tmI18nPlans={load,hide,openDraft,canLeave,hasChanges};
 })();

@@ -323,6 +323,9 @@ try{
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
     const coverage=page.locator(".i18n-plan-audit");
+    const diagnostic=page.locator(".i18n-plan-manager-section").filter({has:coverage});
+    assert.equal(await diagnostic.getAttribute("open"),null);
+    await diagnostic.locator(":scope > summary").click();
     await coverage.locator(".i18n-plan-coverage-table").waitFor();
     assert.equal(await coverage.locator(".i18n-plan-coverage-stat").count(),4);
     assert.match(await coverage.locator(".i18n-plan-coverage-intro").first().innerText(),
@@ -339,6 +342,7 @@ try{
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),2);
+    await page.locator(".i18n-plan-manager-section").filter({has:page.locator(".i18n-plan-common")}).locator(":scope > summary").click();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
     assert.equal(await page.locator(".i18n-plan-common-detail textarea").inputValue(),
@@ -374,9 +378,10 @@ try{
     }
     assert.equal(importRequests,0);
     const privateQueue=page.locator(".i18n-plan-private-queue");
+    await page.locator(".i18n-plan-manager-section").filter({has:privateQueue}).locator(":scope > summary").click();
     await privateQueue.locator("button").waitFor();
     assert.match(await privateQueue.locator("button").innerText(),
-      /Abrir revisão privada · 2 textos/);
+      /Rever 2 textos/);
     assert.equal(await privateQueue.locator(".i18n-plan-field").count(),0,
       "Private texts should load only after the administrator opens the queue");
     const proposalsBefore=planSaveRequests;

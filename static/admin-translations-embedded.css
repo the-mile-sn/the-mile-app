@@ -717,3 +717,10 @@ dialog.tm-plan-translation-dialog::backdrop{background:rgba(0,0,0,.55)}
 .tm-admin-translations-page .i18n-library-progress::-webkit-progress-bar{background:var(--tm-ui-divider);border-radius:999px}
 .tm-admin-translations-page .i18n-library-progress::-webkit-progress-value{background:var(--i18n-positive);border-radius:999px}
 .tm-admin-translations-page .i18n-library-progress::-moz-progress-bar{background:var(--i18n-positive);border-radius:999px}
+
+.i18n-plan-manager-section{min-width:0;border:0;border-radius:12px;background:var(--tm-ui-card);padding:12px;margin:0 0 9px}
+.i18n-plan-manager-section>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer;font-size:14px;font-weight:600;min-height:36px}
+.i18n-plan-manager-section>summary::-webkit-details-marker{display:none}
+.i18n-plan-manager-section>summary svg{width:19px;height:19px;flex:none;transition:transform .15s}
+.i18n-plan-manager-section[open]>summary{margin-bottom:10px}
+.i18n-plan-manager-section[open]>summary svg{transform:rotate(180deg)}

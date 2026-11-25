@@ -563,7 +563,7 @@
      closeReview();resetBulk();
    }
    if(opening)return opening;
-   if(state.edited||state.busy||bulkBusy)return;
+   if(state.edited||state.busy||bulkBusy||state.kind==="plan"&&window.tmI18nPlans?.hasChanges?.())return;
    opening=(async()=>{
      const session=await send("/api/me");
      if(session?.user?.role!=="admin")throw Error("acesso_restrito");
