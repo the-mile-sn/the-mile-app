@@ -4,7 +4,7 @@ const fs=require("node:fs");
 const source=fs.readFileSync("static/jogador-v2.js","utf8");
 test("future dates avoid rejected weight fetch and remove action button",()=>{
  assert.match(source,/if\(date>iso\(new Date\(\)\)\)\{/);
- assert.match(source,/action\.remove\(\); \/\/ Future dates display the weight card without any action\./);
+ assert.match(source,/action\.remove\(\); \/\/ Future dates have no entry action; the card still opens the weight screen \(up to today\)\./);
  assert.doesNotMatch(source,/Disponível no próprio dia/);
  assert.ok(source.indexOf("if(date>iso(new Date()))") < source.indexOf('cachedOverviewRead("/api/v2/player/weight?date="+date)'));
 });
