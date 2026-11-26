@@ -62,6 +62,41 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
         return self.guest.request(self.url(
             "slots", service, mode, date=self.day))
 
+    def test_same_day_is_closed_online_until_professional_has_a_booking(self):
+        import appointments_checkout_v2 as checkout
+        from datetime import timezone
+        # Pretend "today" is self.day at 08:00 in Lisbon.
+        day = datetime.fromisoformat(self.day).date()
+        now = datetime(day.year, day.month, day.day, 8, 0,
+                       tzinfo=ZoneInfo("Europe/Lisbon")).astimezone(timezone.utc)
+        with app.connect() as c:
+            self.assertEqual(storefront.public_day(
+                c, self.pid, self.follow["id"], "presencial", self.day, now=now)["slots"], [])
+            month = storefront.public_month(
+                c, self.pid, self.follow["id"], "presencial", self.day[:7], now=now)
+            self.assertFalse(next(d for d in month["days"] if d["date"] == self.day)["available"])
+            with self.assertRaisesRegex(ValueError, "same_day_unavailable"):
+                checkout.start_hold(c, {"professional_id": self.pid,
+                    "service_id": self.follow["id"], "mode": "presencial",
+                    "date": self.day, "start": "11:00",
+                    "idempotency_key": "same-day-closed-key-0001"},
+                    "test", now=now, public=True)
+            # The day after "today" is unaffected.
+            self.assertFalse(checkout.same_day_closed(
+                c, "the-mile", self.pid, day + timedelta(days=1), now))
+        booked = self.admin.request(self.private + "/bookings", "POST", {
+            "professional_id": self.pid, "service_id": self.follow["id"],
+            "mode": "presencial", "date": self.day, "start": "09:00",
+            "customer_name": "Já marcada", "customer_email": "", "customer_phone": ""})
+        self.assertEqual(booked["status"], 201, booked)
+        with app.connect() as c:
+            starts = [x["start"] for x in storefront.public_day(
+                c, self.pid, self.follow["id"], "presencial", self.day, now=now)["slots"]]
+            self.assertIn("10:00", starts)
+            month = storefront.public_month(
+                c, self.pid, self.follow["id"], "presencial", self.day[:7], now=now)
+            self.assertTrue(next(d for d in month["days"] if d["date"] == self.day)["available"])
+
     def test_public_catalog_is_live_and_scrubs_all_private_fields(self):
         result = self.guest.request(self.public + "/catalog",
                                     origin="https://www.themile.pt")

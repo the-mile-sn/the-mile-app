@@ -863,7 +863,7 @@ def application(env, start_response):
                 raise Problem(409 if str(exc) in (
                     'checkout_hold_conflict','checkout_idempotency_mismatch',
                     'checkout_hold_closed','booking_overlap',
-                    'slot_no_longer_available') else 400,str(exc))
+                    'slot_no_longer_available','same_day_unavailable') else 400,str(exc))
             return respond(201,result)
 
         cookies = SimpleCookie()

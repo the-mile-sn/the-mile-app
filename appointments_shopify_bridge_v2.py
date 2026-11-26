@@ -278,7 +278,7 @@ def create_checkout_hold(c, query, data, now=None):
         "professional_id", "service_id", "mode", "date", "start", "idempotency_key"
     }:
         raise ShopifyBridgeError("invalid_checkout_request")
-    checkout.start_hold(c, data, "shopify-app-proxy", now=now)
+    checkout.start_hold(c, data, "shopify-app-proxy", now=now, public=True)
     saved = c.execute("""SELECT * FROM appt_checkout_holds
         WHERE org_id=? AND idempotency_key=?""",
         (ORG_ID, data["idempotency_key"])).fetchone()

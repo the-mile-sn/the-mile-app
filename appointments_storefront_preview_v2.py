@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import appointments_catalog_v2 as catalog
 import appointments_availability_v2 as availability
 import appointments_assignment_v2 as assignment
+import appointments_checkout_v2 as checkout
 import appointments_shopify_bridge_v2 as shopify_bridge
 import appointments_rules_v2 as rules
 
@@ -118,9 +119,9 @@ def public_month(c, professional_id, service_id, mode, month, now=None):
             c, ORG_ID, person["id"], service_id, mode, month, now=now,
         )
         for item in result["days"]:
-            grouped[item["date"]] = (
-                grouped.get(item["date"], False) or bool(item["available"])
-            )
+            open_day = bool(item["available"]) and not checkout.same_day_closed(
+                c, ORG_ID, person["id"], item["date"], now)
+            grouped[item["date"]] = grouped.get(item["date"], False) or open_day
     return {
         "month": month,
         "days": [{"date": date, "available": grouped[date]}
@@ -144,6 +145,8 @@ def public_day(c, professional_id, service_id, mode, day, now=None):
         raise ValueError("outside_booking_window")
     combined = {}
     for person in people:
+        if checkout.same_day_closed(c, ORG_ID, person["id"], date, now):
+            continue
         result = availability.preview(
             c, ORG_ID, person["id"], service_id, mode, day, now=now,
         )
