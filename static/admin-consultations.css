@@ -186,3 +186,30 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 @media (max-width:1100px){.tm-cq-assess-grid{grid-template-columns:minmax(0,1fr)}}
 .tm-cq-danger{color:var(--tm-state-error-fg)}
 .tm-cq-danger:hover{background:color-mix(in srgb,var(--tm-state-error-fg) 14%,var(--tm-ui-subcard))}
+
+/* Formulário pré-consulta (ficha e modo consulta) */
+.tm-cq-pill.is-pending{color:var(--tm-state-pending-fg);background:color-mix(in srgb,var(--tm-state-pending-fg) 8%,transparent);border-color:color-mix(in srgb,var(--tm-state-pending-fg) 14%,transparent)}
+.tm-cq-form-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tm-cq-form-title h3{margin:0}
+.tm-cq-form-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tm-cq-form-card .tm-cq-form-answers{display:none;margin-top:14px}
+.tm-cq-form-card.is-open .tm-cq-form-answers{display:block}
+.tm-cq-form-answers .tm-cq-card{background:var(--tm-ui-subcard)}
+.tm-cq-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:14px;align-items:start}
+.tm-cq-form-grid h3{margin:0 0 8px;font-size:15px}
+.tm-cq-form-care{margin-top:14px}
+.tm-cq-care{display:flex;flex-direction:column;gap:2px;margin:0 0 10px}
+.tm-cq-care span{font-size:12px}
+.tm-cq-kv{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:12px;padding:8px 0;border-top:1px solid var(--tm-ui-divider);font-size:14px}
+.tm-cq-kv:first-of-type{border-top:0}
+.tm-cq-kv span:last-child{white-space:pre-wrap}
+.tm-cq-freq{display:flex;flex-direction:column;gap:6px}
+.tm-cq-freq-row{display:grid;grid-template-columns:minmax(110px,1fr) auto 72px;gap:10px;align-items:center;font-size:13px}
+.tm-cq-freq-dots{display:inline-flex;gap:4px}
+.tm-cq-freq-dots i{width:16px;height:16px;border-radius:5px;background:var(--tm-ui-hover)}
+.tm-cq-freq-dots i.is-on{background:var(--tm-brand)}
+.tm-cq-meals{display:flex;flex-direction:column;gap:10px}
+.tm-cq-meal{display:grid;grid-template-columns:48px 1fr;gap:10px;font-size:14px}
+.tm-cq-meal p{margin:2px 0 0;white-space:pre-wrap}
+.tm-cq-form-care h3{margin:0 0 10px}
+.tm-cq-aside .tm-cq-care:first-of-type{margin-top:8px}
