@@ -1431,31 +1431,33 @@ function ensurePlanningOnlyView(){
     professional:b.professional_name||"",
     time:b.start||"",end:b.end||"",
     label:b.confirmed?"Confirmada":"Agendada",
-    href:bookingsLink(day)
+    href:bookingsLink(day),lane:"agenda"
    });
   }
   for(const match of activity.games||[]){
    merged.push({type:"game",title:"Jogo",person:match.name,athleteId:match.athlete_id,
-    time:match.time||"",label:""});
+    time:match.time||"",label:"",lane:"players"});
   }
   for(const event of activity.events||[]){
    const type=event.kind==="travel"?"travel":"other";
    merged.push({type,title:event.title||(type==="travel"?"Viagem":"Evento"),
     person:event.name,athleteId:event.athlete_id,
-    time:"",moment:event.session==="morning"?"Manhã":event.session==="afternoon"?"Tarde":"",label:""});
+    time:"",moment:event.session==="morning"?"Manhã":event.session==="afternoon"?"Tarde":"",label:"",lane:"players"});
   }
   for(const person of activity.birthdays||[]){
    merged.push({type:"birthday",title:"Aniversário",
-    person:person.name,athleteId:person.athlete_id,time:"",label:""});
+    person:person.name,athleteId:person.athlete_id,time:"",moment:"Dia todo",label:"",lane:"players"});
   }
   const eventKinds={meeting:"Reunião",training:"Formação",travel:"Deslocação",other:"Evento"};
   for(const event of internalEvents){
    merged.push({
     type:event.kind==="other"?"internal-other":event.kind,
     title:event.title,
-    context:[eventKinds[event.kind]||"Evento",event.participants].filter(Boolean).join(" · "),
+    context:[eventKinds[event.kind]||"Evento",(event.block_professional_names||[]).length?"agenda bloqueada":event.participants].filter(Boolean).join(" · "),
+    professional:(event.block_professional_names||[]).join(", "),
+    blocking:(event.block_professional_names||[]).length>0,
     time:event.starts_at||"",end:event.ends_at||"",
-    label:"",
+    label:"",lane:"agenda",
     href:"/admin-appointments?"+new URLSearchParams({date:day,view:"day"})+"#agenda"
    });
   }
@@ -1524,7 +1526,7 @@ function ensurePlanningOnlyView(){
  }
  function measureActivityHeight(){
   const host=$("tm-db-miniagenda-bookings");
-  if(!host||!host.offsetWidth)return;
+  if(!host||!host.offsetWidth||host.classList.contains("tm-db-timeline-host"))return;
   const items=Array.from(host.children).filter(node=>node.classList.contains("tm-db-activity-row"));
   const count=window.matchMedia("(max-width:650px)").matches?3:4;
   host.classList.remove("is-scrollable");
@@ -1544,6 +1546,121 @@ function ensurePlanningOnlyView(){
  }
  window.addEventListener("resize",scheduleActivityMeasure,{passive:true});
  document.fonts?.ready.then(scheduleActivityMeasure);
+ /* Linha do tempo do Início: Agenda (marcações e reuniões) | Jogadores.
+    Só desenha os mesmos dados; não cria nem valida marcações. */
+ let activeLane="agenda";
+ const minutesOf=value=>{const m=/^([0-9]{2}):([0-9]{2})$/.exec(value||"");return m?Number(m[1])*60+Number(m[2]):null;};
+ function lisbonMinutes(){
+  const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return Number(p.hour)*60+Number(p.minute);
+ }
+ function placeColumns(items){
+  // Side-by-side columns only for items that really overlap in time.
+  const ends=[];
+  for(const it of items){
+   let col=ends.findIndex(end=>end<=it.start);
+   if(col<0){col=ends.length;ends.push(it.end);}else ends[col]=it.end;
+   it.col=col;
+  }
+  for(const it of items)it.cols=Math.max(1,...items.filter(o=>o.start<it.end&&it.start<o.end).map(o=>o.col+1));
+ }
+ function timeline(holder){
+  const timed=[],allDay=[];
+  for(const item of rows){
+   const start=minutesOf(item.time);
+   if(start===null){allDay.push(item);continue;}
+   let end=minutesOf(item.end);
+   if(end===null||end<=start)end=start+60;
+   timed.push({item,start,end});
+  }
+  const lanes={agenda:timed.filter(x=>x.item.lane==="agenda"),players:timed.filter(x=>x.item.lane!=="agenda")};
+  const counts={agenda:rows.filter(x=>x.lane==="agenda").length,players:rows.filter(x=>x.lane!=="agenda").length};
+  // Mostra o dia útil, sem horas vazias de sobra: desde o primeiro item (ou da
+  // hora atual, se ainda não houver nada) até ao último, com pelo menos 4 horas.
+  const isToday=day===today(),nowMin=lisbonMinutes();
+  let first=timed.length?Math.min(...timed.map(x=>x.start)):9*60;
+  let last=timed.length?Math.max(...timed.map(x=>x.end)):17*60;
+  if(isToday){first=Math.min(first,nowMin-30);last=Math.max(last,nowMin+30);}
+  first=Math.max(6*60,Math.floor(first/60)*60);
+  last=Math.min(24*60,Math.max(Math.ceil(last/60)*60,first+4*60));
+  holder.classList.add("tm-db-timeline-host");
+  holder.dataset.activeLane=activeLane;
+  holder.style.setProperty("--tl-first",String(first));
+  holder.style.setProperty("--tl-span",String(last-first));
+  const tabs=document.querySelector("#tm-db-miniagenda .tm-db-lane-tabs");
+  if(tabs){
+   tabs.hidden=false;
+   for(const tab of tabs.querySelectorAll("[data-lane]")){
+    tab.setAttribute("aria-selected",String(tab.dataset.lane===activeLane));
+    tab.querySelector("span").textContent=String(counts[tab.dataset.lane]);
+   }
+  }
+  const head=el("div","tm-db-tl-head");
+  head.append(el("span","tm-db-tl-gutter"));
+  for(const [key,label,hint] of [["agenda","Agenda","marcações e reuniões"],["players","Jogadores","jogos, aniversários, viagens"]]){
+   const h=el("div","tm-db-tl-lane-head");h.dataset.lane=key;
+   h.append(el("strong","",label),el("span","tm-db-tl-count",counts[key]),el("small","",hint));
+   head.append(h);
+  }
+  holder.append(head);
+  if(allDay.length){
+   const strip=el("div","tm-db-tl-allday");
+   strip.append(el("span","tm-db-tl-gutter","Dia todo"));
+   for(const key of ["agenda","players"]){
+    const cell=el("div","tm-db-tl-allday-lane");cell.dataset.lane=key;
+    for(const item of allDay.filter(x=>(x.lane==="agenda")===(key==="agenda")))cell.append(row(item));
+    strip.append(cell);
+   }
+   holder.append(strip);
+  }
+  const grid=el("div","tm-db-tl-grid");
+  const gutter=el("div","tm-db-tl-gutter tm-db-tl-hours");
+  for(let m=first;m<last;m+=60){
+   const label=el("span","tm-db-tl-hour",String(m/60).padStart(2,"0")+":00");
+   label.style.setProperty("--tl-at",String(m-first));
+   gutter.append(label);
+  }
+  grid.append(gutter);
+  for(const key of ["agenda","players"]){
+   const lane=el("div","tm-db-tl-lane");lane.dataset.lane=key;
+   const items=lanes[key].sort((a,b)=>a.start-b.start||a.end-b.end);
+   placeColumns(items);
+   for(const x of items){
+    const slot=el("div","tm-db-tl-item");
+    slot.style.setProperty("--tl-at",String(x.start-first));
+    slot.style.setProperty("--tl-len",String(x.end-x.start));
+    slot.style.setProperty("--tl-col",String(x.col));
+    slot.style.setProperty("--tl-cols",String(x.cols));
+    if(x.end-x.start<60)slot.classList.add("is-short");
+    if(x.cols>1)slot.classList.add("is-narrow");
+    const card=row(x.item);
+    if(x.item.blocking)card.classList.add("is-blocking");
+    slot.append(card);lane.append(slot);
+   }
+   if(!items.length&&!(key==="players"?allDay.length:0)){
+    lane.append(el("p","tm-db-tl-empty",key==="agenda"?"Sem marcações neste dia.":"Sem jogos ou acontecimentos neste dia."));
+   }
+   grid.append(lane);
+  }
+  if(day===today()){
+   const now=lisbonMinutes();
+   if(now>=first&&now<=last){
+    const line=el("div","tm-db-tl-now");
+    line.style.setProperty("--tl-at",String(now-first));
+    line.append(el("span","tm-db-tl-now-label",String(Math.floor(now/60)).padStart(2,"0")+":"+String(now%60).padStart(2,"0")));
+    grid.append(line);
+   }
+  }
+  holder.append(grid);
+ }
+ document.querySelectorAll("#tm-db-miniagenda .tm-db-lane-tabs [data-lane]").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+   activeLane=tab.dataset.lane;
+   const host=$("tm-db-miniagenda-bookings");
+   if(host)host.dataset.activeLane=activeLane;
+   tab.parentElement.querySelectorAll("[data-lane]").forEach(x=>x.setAttribute("aria-selected",String(x===tab)));
+  });
+ });
  function paint(){
   const headerParts=Object.fromEntries(titleFmt.formatToParts(toDate(day)).map(part=>[part.type,part.value]));
   $("tm-db-miniagenda-selected-date").textContent=day===today()?"Hoje":headerParts.day+" "+headerParts.month+" "+headerParts.year;
@@ -1561,6 +1678,7 @@ function ensurePlanningOnlyView(){
   holder.replaceChildren();
   holder.scrollTop=0;
   holder.setAttribute("aria-busy",String(loading));
+  holder.classList.remove("tm-db-timeline-host");
   if(loading){
    holder.append(el("p","tm-db-activity-message","A consultar acontecimentos…"));
    return;
@@ -1569,11 +1687,7 @@ function ensurePlanningOnlyView(){
    holder.append(el("p","tm-db-activity-message",
     "Não foi possível consultar "+failures.join(" e ")+"."));
   }
-  if(!rows.length&&!failures.length){
-   holder.append(el("p","tm-db-activity-message","Sem marcações ou acontecimentos neste dia."));
-  }else{
-   for(const item of rows)holder.append(row(item));
-  }
+  timeline(holder);
   if(activityObserver){
    for(const item of holder.children){
     if(item.classList.contains("tm-db-activity-row"))activityObserver.observe(item);
@@ -1688,3 +1802,25 @@ function ensurePlanningOnlyView(){
    The previous global wrapper obscured meal colours, overlaid event controls
    and changed table filter heights in both admin themes. The Planos editor
    has its own independent presentation and is not affected here. */
+
+/* Início: data e saudação com o primeiro nome da conta. */
+(()=>{
+ const title=document.getElementById("tm-db-greeting-title");
+ const dateLine=document.getElementById("tm-db-greeting-date");
+ if(!title||!dateLine)return;
+ function paint(name){
+  const now=new Date();
+  const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",hour:"2-digit",hourCycle:"h23"}).formatToParts(now).map(x=>[x.type,x.value]));
+  const hour=Number(parts.hour);
+  const hello=hour<5?"Boa noite":hour<13?"Bom dia":hour<20?"Boa tarde":"Boa noite";
+  title.textContent=name?hello+", "+name:hello;
+  const text=new Intl.DateTimeFormat("pt-PT",{timeZone:"Europe/Lisbon",weekday:"long",day:"numeric",month:"long"}).format(now);
+  dateLine.textContent=text.charAt(0).toUpperCase()+text.slice(1);
+ }
+ paint("");
+ fetch("/api/me",{credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}})
+  .then(res=>res.ok?res.json():null)
+  .then(data=>{const full=String(data?.user?.name||"").trim();paint(full.split(/\s+/)[0]||"");})
+  .catch(()=>{});
+ setInterval(()=>paint((title.textContent.split(", ")[1])||""),5*60*1000);
+})();

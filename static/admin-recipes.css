@@ -422,10 +422,10 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row 
   box-sizing:border-box;width:100%;min-height:51px;height:51px;
   padding:0 16px;border-radius:12px;
   background:var(--lib-panel-2,#22252b);border:1px solid var(--lib-border,#343840);
-  color:var(--lib-fg,#f2f3f5);font:inherit;font-size:14px;
+  color:var(--lib-fg,#f5f5f7);font:inherit;font-size:14px;
   box-shadow:none;outline-offset:2px;
 }
-.dish-catalog-filters #dish-search::placeholder{color:var(--lib-muted,#a2a7b0);opacity:1}
+.dish-catalog-filters #dish-search::placeholder{color:var(--lib-muted,#939397);opacity:1}
 
 /* Small pagination controls, matching the existing backoffice surfaces. */
 #tm-recipe-library-page .tm-library-pagination,

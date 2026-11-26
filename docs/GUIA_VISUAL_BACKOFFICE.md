@@ -334,3 +334,11 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 - O layout dos timings reutiliza a família de cards da área Registos e os tokens existentes. Não modificar o card universal da app nem a prescrição.
 
 - **Intra-jogo — timing adicionado pelo jogador (20/11):** registo independente sinalizado por `prescription.origin='player_added'`; no detalhe do momento apresentar etiqueta neutra **«Adicionado pelo jogador»**, alimentos/gramagens da biblioteca, kcal calculadas e estado **Consumido** quando foram ingeridos. O estado técnico `partial` continua guardado para contabilização; não o interpretar como incumprimento de um alimento prescrito quando o timing inteiro foi acrescentado. Os momentos planeados permanecem inalterados; o resumo do dia agrega os consumos uma vez. Compatível apenas de leitura, sem editar prescrição ou criar dados no backoffice.
+
+## 10. Paleta The Mile e novo Início — 26/11/2026
+
+- **Superfícies passam à paleta da marca** (tokens em `admin-surface-palette.css`): escuro fundo `#141416`, card `#1E1E20`, subcard `#27272A`, campo `#333333`, hover `#3A3A3D`, texto `#F5F5F7`/`#939397`; claro fundo `#F5F5F7`, card `#FFFFFF`, subcard `#EDEDEF`, campo `#E2E2E5`, hover `#D9D9DC`, texto `#1E1E20`/`#636366`. Divisórias em cinzento neutro (sem azul).
+- **Azul da marca** como destaque e ação principal: `--tm-brand` `#6E8DB0` (escuro) / `#3F526F` (claro); `--tm-action-main-*` usa-o. Não é estado: estados mantêm verde/âmbar/vermelho (secção 2.1).
+- **Três camadas no máximo**: fundo → card → item. Listas simples usam divisórias, não cards dentro de cards.
+- **Início**: data + «Bom dia/Boa tarde/Boa noite, Nome»; blocos assentam diretamente no fundo; «Hoje» é uma linha do tempo vertical com duas colunas, **Agenda** (marcações e reuniões, com agenda bloqueada às riscas) e **Jogadores** (jogos, aniversários, viagens), linha da hora atual e itens do dia todo no topo; no telemóvel um seletor Agenda | Jogadores. Microciclo semanal com a mesma leitura (classificação + pontos de cor das refeições), hoje em azul suave.
+- As cores fixas antigas iguais aos tokens anteriores foram substituídas pelos novos valores nos CSS do Admin; outras cores funcionais (planos, categorias, MD/Off, estados) ficam iguais.

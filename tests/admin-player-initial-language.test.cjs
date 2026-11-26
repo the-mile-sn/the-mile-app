@@ -40,5 +40,5 @@ test("Profile language control retains approved depth, keyboard focus and mobile
  assert.match(css,/\.tm-player-language-default-choice:focus-visible/);
  assert.match(css,/@media\(max-width:620px\)/);
  assert.match(html,/admin-dashboard\.js\?v=\d+/);
- assert.match(html,/admin-surface-palette\.css\?v=206/);
+ assert.match(html,/admin-surface-palette\.css\?v=207/);
 });
