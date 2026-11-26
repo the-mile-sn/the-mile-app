@@ -3671,7 +3671,8 @@ const PROGRESS_BODY_FIGURES={
   back:"M61 74 Q56 90 63 99 M33 116 L40 118",spine:"M80 98 L80 142",
   frontWear:"M50 155 Q80 151 110 155 L109.5 192 L84 196 L80 184 L76 196 L50.5 192 Z",
   backWear:"M50 155 Q80 151 110 155 L109.5 192 Q96 198 80 194 Q64 198 50.5 192 Z",straps:"",
-  sites:{biceps:[39,100],abdominal_skin:[91,145],suprailiac:[55,138],supraspinal:[63,151],thigh_skin:[65,215],calf_skin:[72,268],triceps:[311,100],back:[284,108]}
+  sites:{biceps:[39,100],abdominal_skin:[91,145],suprailiac:[55,138],supraspinal:[63,151],thigh_skin:[65,215],calf_skin:[72,268],triceps:[311,100],back:[284,108]},
+  tapes:{arm_right_relaxed:[29,48,102],chest:[49,111,92],waist:[53,107,125],abdominal_perimeter:[51,109,146],thigh_right:[52,79,205],thigh_left:[81,108,205],calf_right:[53,75,268],calf_left:[85,107,268]}
  },
  F:{
   half:"M80 12 C72 12 67 19 67 30 C67 40 70 46 73 50 L71 56 C66 60 56 62 48 64 C43 66 41 70 40 76 C39 84 38 90 37 97 C36 108 35.5 118 35.3 126 C34.5 140 34 154 33.5 166 C32 174 32 182 34 188 C36 192 41 192 42 189 C43 184 43 176 42 170 C43 165 45 162 46 159 C48 146 49 134 50 124 C51 108 52 94 53.6 84 L55 82 C56 98 57 112 56 122 C55 134 50 146 48 158 C47 172 49 186 51 199 C53 214 56 226 57 236 C56 246 55 256 56.6 265 C57.5 280 61 292 62.8 302 C61 310 56 318 56 322 C57 326 68 327 72 324 C73 316 72 308 72.7 302 C74 290 77 276 76.7 265 C76.5 254 75 244 75.6 236 C76 216 78 192 80 174",
@@ -3680,10 +3681,15 @@ const PROGRESS_BODY_FIGURES={
   back:"M63 238 Q67 235 72 238",spine:"M80 108 L80 150",
   frontWear:"M56 84 Q80 80 104 84 L104.5 104 Q92 109 80 103 Q68 109 55.5 104 Z M49 158 Q80 155 111 158 L111 174 Q96 178 84 188 L76 188 Q64 178 49 174 Z",
   backWear:"M56 92 L104 92 L104 104 L56 104 Z M49 158 Q80 155 111 158 L111 180 Q96 188 80 186 Q64 188 49 180 Z",straps:"M64 66 L64 92 M96 66 L96 92",
-  sites:{biceps:[44.5,100],abdominal_skin:[91,145],suprailiac:[53,136],supraspinal:[61,150],thigh_skin:[64,210],calf_skin:[72,265],triceps:[305.5,100],back:[284,114]}
+  sites:{biceps:[44.5,100],abdominal_skin:[91,145],suprailiac:[53,136],supraspinal:[61,150],thigh_skin:[64,210],calf_skin:[72,265],triceps:[305.5,100],back:[284,114]},
+  tapes:{arm_right_relaxed:[37,53.6,102],chest:[54,106,92],waist:[56,104,122],abdominal_perimeter:[50,110,146],thigh_right:[51,79,200],thigh_left:[81,109,200],calf_right:[56.6,76.7,265],calf_left:[83.3,103.4,265]}
  }
 };
 const PROGRESS_SKINFOLD_SITES=PROGRESS_BODY_FIGURES.M.sites;
+// Perímetros (26/11, aprovado no canvas): front view only, each circumference as a white tape line with its value in cm.
+const PROGRESS_PERIMETER_TAPES=PROGRESS_BODY_FIGURES.M.tapes;
+const PROGRESS_PERIMETER_LEFT_LABELS=["arm_right_relaxed","thigh_right","calf_right"],PROGRESS_PERIMETER_TRUNK=["chest","waist","abdominal_perimeter"];
+function progressMapSites(group){return group==="perimetros"?PROGRESS_PERIMETER_TAPES:PROGRESS_SKINFOLD_SITES;}
 function progressBodyFigure(){return PROGRESS_BODY_FIGURES[String(me?.sex||"").trim().toUpperCase()==="F"?"F":"M"];}
 function progressBodyShape(figure,offset,back){
  const mirror=inner=>inner+'<g transform="matrix(-1 0 0 1 160 0)">'+inner+'</g>';
@@ -3695,8 +3701,42 @@ function progressBodyShape(figure,offset,back){
   +(back&&figure.straps?'<path class="progress-body-straps" d="'+figure.straps+'"/>':"")
   +'</g>';
 }
-function progressSkinfoldEntries(){
- return (assessmentFields.pregas||[]).filter(([key])=>PROGRESS_SKINFOLD_SITES[key]&&progressReadings(key).length).map(([key,label,unit])=>({key,label,unit}));
+function progressSkinfoldEntries(group="pregas"){
+ const sites=progressMapSites(group);
+ return (assessmentFields[group]||[]).filter(([key])=>sites[key]&&progressReadings(key).length).map(([key,label,unit])=>({key,label,unit}));
+}
+function progressTapePath(x1,x2,y){return "M"+x1+" "+y+" Q"+((x1+x2)/2)+" "+(y+3.5)+" "+x2+" "+y;}
+function progressPerimeterMap({selected=null,mini=false,onPick=null}={}){
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),figure=progressBodyFigure();
+ svg.setAttribute("viewBox",mini?"0 0 160 332":"0 0 360 335");svg.setAttribute("class",mini?"progress-body-map progress-perimeter-map mini":"progress-body-map progress-perimeter-map");
+ svg.setAttribute("role","img");svg.setAttribute("aria-label",playerText("Localização dos perímetros","Circumference sites"));
+ const shift=mini?0:100,group=document.createElementNS(ns,"g");group.setAttribute("transform","translate("+shift+",0)");
+ group.innerHTML=progressBodyShape(figure,0,false);svg.append(group);
+ for(const entry of progressSkinfoldEntries("perimetros")){
+  const [x1,x2,y]=figure.tapes[entry.key],values=progressReadings(entry.key).map(r=>r.value),on=entry.key===selected;
+  if(mini&&!on)continue;
+  const g=document.createElementNS(ns,"g");g.setAttribute("class","progress-tape"+(on?" selected":""));
+  const line=document.createElementNS(ns,"path");line.setAttribute("d",progressTapePath(x1,x2,y));line.setAttribute("class","progress-tape-line");g.append(line);
+  group.append(g);
+  if(mini)continue;
+  const left=PROGRESS_PERIMETER_LEFT_LABELS.includes(entry.key),trunk=PROGRESS_PERIMETER_TRUNK.includes(entry.key);
+  const tx=left?(entry.key==="arm_right_relaxed"?shift+x1-6:shift+Math.min(x1,52)-8):(trunk?shift+138:shift+x2+8);
+  if(trunk){const lead=document.createElementNS(ns,"path");lead.setAttribute("d","M"+(shift+x2+2)+" "+y+" L"+(tx-4)+" "+y);lead.setAttribute("class","progress-tape-lead");svg.append(lead);}
+  const label=document.createElementNS(ns,"text");label.setAttribute("x",tx);label.setAttribute("y",y+4);label.setAttribute("text-anchor",left?"end":"start");
+  label.setAttribute("class","progress-tape-value");label.textContent=assessNumber(values[values.length-1]);svg.append(label);
+  if(onPick){
+   const name=playerAssessmentLabel(entry.key,entry.label)+" "+assessNumber(values[values.length-1])+" "+entry.unit;
+   const hit=document.createElementNS(ns,"rect");
+   {
+    hit.setAttribute("x",shift+x1-4);hit.setAttribute("y",y-8);hit.setAttribute("width",x2-x1+8);hit.setAttribute("height",16);hit.setAttribute("class","progress-body-hit");
+    hit.setAttribute("role","button");hit.setAttribute("tabindex","0");hit.setAttribute("aria-label",name);
+    hit.addEventListener("click",()=>onPick(entry));hit.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();onPick(entry);}});
+    svg.append(hit);
+   }
+   label.classList.add("progress-tape-pick");label.addEventListener("click",()=>onPick(entry));
+  }
+ }
+ return svg;
 }
 function progressBodyMap({selected=null,mini=false,onPick=null}={}){
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),figure=progressBodyFigure();
@@ -3720,11 +3760,12 @@ function progressBodyMap({selected=null,mini=false,onPick=null}={}){
  }
  return svg;
 }
-function progressSkinfoldScreen(target){
+function progressSkinfoldScreen(target,group="pregas"){
  const open=entry=>openProgressPage(entry);
- const mapCard=document.createElement("div");mapCard.className="progress-body-card";mapCard.append(progressBodyMap({onPick:open}));
+ const mapCard=document.createElement("div");mapCard.className="progress-body-card";
+ mapCard.append(group==="perimetros"?progressPerimeterMap({onPick:open}):progressBodyMap({onPick:open}));
  const table=document.createElement("div");table.className="progress-list progress-skinfold-table";
- for(const entry of progressSkinfoldEntries()){
+ for(const entry of progressSkinfoldEntries(group)){
   const values=progressReadings(entry.key).map(r=>r.value);
   const row=document.createElement("button");row.type="button";row.className="progress-list-row progress-skinfold-row";
   const name=document.createElement("span");name.textContent=playerAssessmentLabel(entry.key,entry.label);
@@ -3737,8 +3778,8 @@ function progressSkinfoldScreen(target){
  return table.children.length>0;
 }
 // Skinfold page extras: ‹ previous · next › with dots, and a horizontal swipe (not from the left edge, not on the chart).
-function progressSkinfoldPager(view,key){
- const entries=progressSkinfoldEntries(),i=entries.findIndex(e=>e.key===key);
+function progressSkinfoldPager(view,key,group="pregas"){
+ const entries=progressSkinfoldEntries(group),i=entries.findIndex(e=>e.key===key);
  if(i<0||entries.length<2)return;
  const go=step=>{const next=entries[(i+step+entries.length)%entries.length];openProgressPage(next);};
  const dots=document.createElement("div");dots.className="progress-pager-dots";dots.setAttribute("aria-hidden","true");
@@ -3783,6 +3824,8 @@ function renderPlayerAssessments(){
   const muscle=progressMuscleTile(muscles);if(muscle)grid.append(muscle);
  }else if(assessmentGroup==="pregas"){
   if(progressSkinfoldScreen(target))return;
+ }else if(assessmentGroup==="perimetros"){
+  if(progressSkinfoldScreen(target,"perimetros"))return;
  }else{
   for(const [key,label,unit] of fields)grid.append(progressMetricTile(key,label,unit,false));
  }
@@ -3829,9 +3872,10 @@ function openProgressPage(page){
   const sub=document.createElement("p");sub.className="progress-page-sub";
   sub.textContent=(prior?progressDelta(current.value,prior.value)+(unit?" "+unit:"")+playerText(" vs. avaliação anterior · "," vs. previous assessment · "):"")+progressLongDate(current.date);
   head.append(k,value,sub);
-  if(progressPage.group==="pregas"&&PROGRESS_SKINFOLD_SITES[key]){
+  const mapped=progressMapSites(progressPage.group)[key]&&(progressPage.group==="pregas"||progressPage.group==="perimetros");
+  if(mapped){
    const top=document.createElement("div");top.className="progress-page-top";
-   top.append(head,progressBodyMap({selected:key,mini:true}));view.append(top,progressChartCard(key,unit,progressPage.group));
+   top.append(head,progressPage.group==="perimetros"?progressPerimeterMap({selected:key,mini:true}):progressBodyMap({selected:key,mini:true}));view.append(top,progressChartCard(key,unit,progressPage.group));
   }else view.append(head,progressChartCard(key,unit,progressPage.group));
   const averageKey=PROGRESS_REPORT_AVERAGE[key],average=averageKey!==undefined?recent.averages?.[averageKey]:undefined;
   if(average!==undefined&&average!==null&&Number.isFinite(Number(average))){
@@ -3850,7 +3894,7 @@ function openProgressPage(page){
    row.append(when,diff,v);list.append(row);
   });
   view.append(heading,list);
-  if(progressPage.group==="pregas")progressSkinfoldPager(view,key);
+  if(mapped)progressSkinfoldPager(view,key,progressPage.group);
  }
  window.scrollTo({top:0});back.focus({preventScroll:true});
 }

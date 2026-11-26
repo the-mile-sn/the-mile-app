@@ -5615,6 +5615,13 @@ body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 #plans .progress-page-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 #plans .progress-page-top .progress-page-head{flex:1;min-width:0}
 #plans .progress-body-map.mini{flex:none;width:112px}
+/* Perímetros (26/11): white tape lines across the front figure, value in cm beside each one. */
+#plans .progress-tape-line{fill:none;stroke:#f1f1f4;stroke-opacity:.8;stroke-width:1.8;stroke-linecap:round}
+#plans .progress-tape.selected .progress-tape-line{stroke-opacity:1;stroke-width:3.2}
+#plans .progress-tape-lead{fill:none;stroke:#48484a;stroke-width:1;stroke-dasharray:2 2}
+#plans .progress-tape-value{font-size:12px;font-weight:600;fill:#f1f1f4}
+#plans .progress-tape-pick{cursor:pointer}
+#plans .progress-perimeter-map.mini{width:58px}
 #plans .progress-pager-dots{display:flex;justify-content:center;gap:6px;margin:20px 0 4px}
 #plans .progress-pager-dots span{width:6px;height:6px;border-radius:50%;background:#45464c}
 #plans .progress-pager-dots span.on{background:#f1f1f4}
