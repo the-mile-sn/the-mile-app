@@ -15,7 +15,9 @@ from appointments_catalog_v2 import ORG_ID
 
 STATUSES = ("pending", "confirmed", "archived")
 SEXES = ("", "F", "M")
-ETHNIC = ("none", "african")
+ETHNIC = ("none", "african", "asian")
+# Valores que a coluna antiga ``ethnic_adjustment`` aceita (CHECK original).
+LEGACY_ETHNIC = ("none", "african")
 BOOKING_KINDS = ("manual", "shopify")
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,24}$")
 
@@ -78,6 +80,28 @@ def initialize(c):
     CREATE INDEX IF NOT EXISTS consult_client_audit_by_client
         ON consult_client_audit(org_id,client_id,created_at);
     """)
+    _add_ethnicity(c)
+
+
+def _columns(c, table):
+    if hasattr(c, "conn"):
+        rows = c.execute("SELECT column_name FROM information_schema.columns "
+                         "WHERE table_schema=current_schema() AND table_name=?", (table,)).fetchall()
+        return {row["column_name"] for row in rows}
+    return {row["name"] for row in c.execute("PRAGMA table_info(" + table + ")").fetchall()}
+
+
+def _add_ethnicity(c):
+    """Coluna nova ``ethnicity`` (none/african/asian) para a equação de Lee.
+
+    A coluna antiga ``ethnic_adjustment`` tem um CHECK que só aceita none/african e
+    não é alterada: continua a ser escrita (asiática fica 'none' nela) e a nova coluna
+    passa a ser a fonte. Aditivo e repetível; copia os valores existentes uma vez.
+    """
+    if "ethnicity" in _columns(c, "consult_clients"):
+        return
+    c.execute("ALTER TABLE consult_clients ADD COLUMN ethnicity TEXT NOT NULL DEFAULT 'none'")
+    c.execute("UPDATE consult_clients SET ethnicity=ethnic_adjustment WHERE ethnic_adjustment<>'none'")
 
 
 # ---------- validação ----------
@@ -186,6 +210,10 @@ def _clean(c, payload, org_id, partial=False):
     return out
 
 
+def _legacy_ethnic(value):
+    return value if value in LEGACY_ETHNIC else "none"
+
+
 def _audit(c, org_id, client_id, actor, action, detail=None, now=None):
     c.execute("""INSERT INTO consult_client_audit
         (id,org_id,client_id,actor,action,detail,created_at) VALUES(?,?,?,?,?,?,?)""",
@@ -207,8 +235,9 @@ def _public(row, extra=None):
     data = {k: row[k] for k in (
         "id", "name", "email", "phone", "birth_date", "sex", "height_cm", "status",
         "active_professional_id", "guardian_name", "guardian_email", "guardian_phone",
-        "guardian_relation", "arm_point_cm", "thigh_point_cm", "ethnic_adjustment",
+        "guardian_relation", "arm_point_cm", "thigh_point_cm",
         "notes", "merged_into", "version", "created_at", "updated_at")}
+    data["ethnic_adjustment"] = row["ethnicity"] or "none"
     if extra:
         data.update(extra)
     return data
@@ -223,13 +252,14 @@ def create(c, payload, actor, org_id=ORG_ID, now=None, status="confirmed"):
     c.execute("""INSERT INTO consult_clients
         (id,org_id,name,email,phone,birth_date,sex,height_cm,status,active_professional_id,
          guardian_name,guardian_email,guardian_phone,guardian_relation,arm_point_cm,
-         thigh_point_cm,ethnic_adjustment,notes,created_by,updated_by,created_at,updated_at)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+         thigh_point_cm,ethnic_adjustment,ethnicity,notes,created_by,updated_by,created_at,updated_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (identifier, org_id, data["name"], data["email"], data["phone"],
                data["birth_date"], data["sex"], data["height_cm"], status,
                data["active_professional_id"], data["guardian_name"], data["guardian_email"],
                data["guardian_phone"], data["guardian_relation"], data["arm_point_cm"],
-               data["thigh_point_cm"], data["ethnic_adjustment"], data["notes"],
+               data["thigh_point_cm"], _legacy_ethnic(data["ethnic_adjustment"]),
+               data["ethnic_adjustment"], data["notes"],
                actor, actor, now, now))
     _audit(c, org_id, identifier, actor, "created", {"status": status}, now)
     return identifier
@@ -246,13 +276,19 @@ def update(c, client_id, payload, actor, org_id=ORG_ID, now=None):
     data = _clean(c, payload, org_id, partial=True)
     if not data:
         return row["version"]
-    changed = {k: v for k, v in data.items() if row[k] != v}
+    current = dict(row)
+    current["ethnic_adjustment"] = row["ethnicity"] or "none"
+    changed = {k: v for k, v in data.items() if current[k] != v}
     if not changed:
         return row["version"]
-    assignments = ",".join(f"{k}=?" for k in changed)
+    columns = dict(changed)
+    if "ethnic_adjustment" in columns:
+        columns["ethnicity"] = columns["ethnic_adjustment"]
+        columns["ethnic_adjustment"] = _legacy_ethnic(columns["ethnic_adjustment"])
+    assignments = ",".join(f"{k}=?" for k in columns)
     c.execute(f"""UPDATE consult_clients SET {assignments},version=version+1,
         updated_by=?,updated_at=? WHERE org_id=? AND id=? AND version=?""",
-              (*changed.values(), actor, now, org_id, client_id, version))
+              (*columns.values(), actor, now, org_id, client_id, version))
     # Regista os campos alterados; o ajuste da equação fica com valor (só equipa clínica).
     detail = {"fields": sorted(changed)}
     if "ethnic_adjustment" in changed:

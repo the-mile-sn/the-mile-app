@@ -1558,6 +1558,8 @@ def application(env, start_response):
                         return respond(200, consult_sessions_v2.start(c, parts[1], parts[2], user['id']))
                     if len(parts) == 2 and parts[0] == 'sessions' and method == 'PUT':
                         return respond(200, {'version': consult_sessions_v2.save(c, parts[1], read_json(env), user['id'])})
+                    if len(parts) == 2 and parts[0] == 'sessions' and method == 'DELETE':
+                        return respond(200, consult_sessions_v2.discard(c, parts[1]))
                     if len(parts) == 3 and parts[0] == 'sessions' and parts[2] == 'assessment' and method == 'PUT':
                         return respond(200, {'assessment': consult_sessions_v2.save_assessment(c, parts[1], read_json(env), user['id'])})
                     if len(parts) == 3 and parts[0] == 'sessions' and parts[2] == 'close' and method == 'POST':

@@ -35,6 +35,10 @@ class BodyCompTests(unittest.TestCase):
         self.assertAlmostEqual(r["muscle_kg"], 39.6, places=1)
         african = bc.compute(MALE, "M", 18, "african")
         self.assertAlmostEqual(african["muscle_kg"] - r["muscle_kg"], 1.1, places=1)
+        asian = bc.compute(MALE, "M", 18, "asian")
+        self.assertAlmostEqual(asian["muscle_kg"] - r["muscle_kg"], -2.0, places=1)
+        # Evans só ajusta para afrodescendentes; asiática não mexe na gordura.
+        self.assertEqual(asian["fat_pct"], r["fat_pct"])
         self.assertEqual(r["equation"], "peterson")
         self.assertEqual(r["fat_pct"], 17.1)
 

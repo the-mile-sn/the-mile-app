@@ -132,10 +132,11 @@ def corrected_girth(girth, skinfold_mm):
 
 def lee_muscle_mass(height_m, sex, age, ethnic, arm, thigh, calf):
     """Lee et al., 2000: MM (kg) = Alt(m)·(0,00744·CAG² + 0,00088·CTG² + 0,00441·CCG²)
-    + 2,4·sexo − 0,048·idade + etnia + 7,8 (sexo: homem 1, mulher 0; etnia afrodescendente +1,1)."""
+    + 2,4·sexo − 0,048·idade + etnia + 7,8 (sexo: homem 1, mulher 0; etnia: afrodescendente +1,1,
+    asiática −2,0, caucasiana/outra 0)."""
     if not (height_m and age and arm and thigh and calf and sex in ("M", "F")):
         return None
-    race = 1.1 if ethnic == "african" else 0.0
+    race = {"african": 1.1, "asian": -2.0}.get(ethnic, 0.0)
     value = (height_m * (0.00744 * arm * arm + 0.00088 * thigh * thigh + 0.00441 * calf * calf)
              + 2.4 * (1 if sex == "M" else 0) - 0.048 * age + race + 7.8)
     return value if value > 0 else None

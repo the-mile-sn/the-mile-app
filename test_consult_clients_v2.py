@@ -93,6 +93,12 @@ class ConsultClientsTests(unittest.TestCase):
         self.assertEqual(after["height_cm"], 178.5)
         self.assertEqual(after["ethnic_adjustment"], "african")
         self.assertIn("updated", [e["action"] for e in after["events"]])
+        asian = self.req("/" + cid, "PUT", {"version": after["version"], "ethnic_adjustment": "asian"})
+        self.assertEqual(asian["status"], 200, asian)
+        after = self.req("/" + cid)["body"]
+        self.assertEqual(after["ethnic_adjustment"], "asian")
+        bad_ethnic = self.req("/" + cid, "PUT", {"version": after["version"], "ethnic_adjustment": "x"})
+        self.assertEqual(bad_ethnic["status"], 400)
         unknown = self.req("/" + cid, "PUT", {"version": after["version"], "active_professional_id": "x"})
         self.assertEqual(unknown["status"], 400)
 
