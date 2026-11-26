@@ -5708,3 +5708,11 @@ body.consumption-sheet-open #tabs{visibility:hidden!important}
 #overview .consumption-editor .consumption-color-name{font-size:17px;font-weight:600;line-height:1.25}
 #overview .consumption-editor .consumption-color-sub{font-size:13px;opacity:.72}
 #overview .consumption-editor .consumption-color-chevron{flex:none;display:flex;opacity:.6}
+
+/* ===== Qual foi a opção consumida? — retroceder, fechar e setas (26/11) ===== */
+#overview .consumption-color-header.has-back{justify-content:flex-start;gap:4px}
+#overview .consumption-color-header.has-back>p{flex:1;min-width:0}
+#overview .consumption-color-back{flex:none;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 0 0 -10px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}
+#overview .consumption-editor .consumption-alternative-option{display:flex!important;align-items:center!important;gap:12px!important;text-align:left!important}
+#overview .consumption-editor .consumption-alternative-option .consumption-alternative-name{flex:1;min-width:0}
+#overview .consumption-editor .consumption-alternative-option .consumption-color-chevron{flex:none;display:flex;opacity:.6}
