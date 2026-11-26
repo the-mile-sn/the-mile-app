@@ -2420,16 +2420,21 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
   const header=document.createElement('div');header.className='consumption-color-header';
   const title=document.createElement('p');title.textContent=playerText('Qual foi a opção consumida?','Which option did you consume?');
   const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar','Close'));close.onclick=()=>panel.remove();
-  header.append(title,close);panel.append(header);
+  // Back sits in the top-left corner (returns to the colours), × stays top-right.
+  const back=document.createElement('button');back.type='button';back.className='consumption-color-back';back.setAttribute('aria-label',playerText('Voltar às cores','Back to colours'));
+  back.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+  back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);
+  header.classList.add('has-back');header.append(back,title,close);panel.append(header);
   const options=data.options||[];
   if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem opções publicadas nesta cor.','No options published for this colour.');panel.append(hint);}
   options.forEach((option,index)=>{
    const button=document.createElement('button');button.type='button';button.className='consumption-alternative-option';
-   button.textContent=option.title||playerText('Opção ','Option ')+(index+1);
+   const name=document.createElement('span');name.className='consumption-alternative-name';name.textContent=option.title||playerText('Opção ','Option ')+(index+1);
+   const chevron=document.createElement('span');chevron.className='consumption-color-chevron';chevron.setAttribute('aria-hidden','true');chevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+   button.append(name,chevron);
    button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,index,color);
    panel.append(button);
   });
-  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar às cores','Back to colours');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);panel.append(back);
  }catch(e){if(panel.isConnected)status.textContent=playerText('Não foi possível carregar as opções.','Could not load options.');error(e);}
 }
 
