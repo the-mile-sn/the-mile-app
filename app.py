@@ -33,6 +33,7 @@ import appointments_launch_readiness_v2
 import appointments_shopify_smoke_v2
 import appointments_shopify_paid_booking_smoke_v2
 import appointments_storefront_preview_v2
+import consult_clients_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -314,6 +315,8 @@ def initialize():
         appointments_checkout_v2.initialize(c)
         appointments_rules_v2.initialize(c)
         appointments_shopify_bridge_v2.initialize(c)
+        if SITE_ROLE != 'player':
+            consult_clients_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -734,7 +737,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-chat-v2.js', '/admin-chat-v2.css', '/admin-translations-shortcuts.js', '/admin-translations-shortcuts.css', '/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-chat-v2.js', '/admin-chat-v2.css', '/admin-translations-shortcuts.js', '/admin-translations-shortcuts.css', '/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/admin-consult-clients.js', '/admin-consult-clients.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -748,6 +751,7 @@ def application(env, start_response):
                     or path.startswith('/api/players')
                     or path.startswith('/api/admins')
                     or path.startswith('/api/v2/admin/appointments/')
+                    or path.startswith('/api/v2/admin/consult-clients')
                     or path.startswith('/api/v2/admin/work/')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
@@ -771,7 +775,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css', '/admin-work.js': 'admin-work.js', '/admin-work.css': 'admin-work.css',
-            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-translations-shortcuts.js': 'admin-translations-shortcuts.js', '/admin-translations-shortcuts.css': 'admin-translations-shortcuts.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-translations-shortcuts.js': 'admin-translations-shortcuts.js', '/admin-translations-shortcuts.css': 'admin-translations-shortcuts.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/admin-consult-clients.js': 'admin-consult-clients.js', '/admin-consult-clients.css': 'admin-consult-clients.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -1519,6 +1523,42 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(409 if str(exc) in ('booking_overlap','checkout_hold_conflict','stale_booking') else 400, str(exc))
                 return respond(200, {'id': identifier})
+            # Clientes de consulta (fase 1): perfil central, só gestão (admin).
+            if path == '/api/v2/admin/consult-clients' or path.startswith('/api/v2/admin/consult-clients/'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                parts = path[len('/api/v2/admin/consult-clients'):].strip('/').split('/') if path != '/api/v2/admin/consult-clients' else []
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    if not parts and method == 'GET':
+                        consult_clients_v2.sync(c)
+                        return respond(200, consult_clients_v2.list_clients(
+                            c, (query.get('q') or [''])[0], (query.get('status') or ['active'])[0]))
+                    if not parts and method == 'POST':
+                        return respond(201, {'id': consult_clients_v2.create(c, read_json(env), user['id'])})
+                    if parts == ['unassigned'] and method == 'GET':
+                        consult_clients_v2.sync(c)
+                        return respond(200, consult_clients_v2.unassigned(c))
+                    if parts == ['link'] and method == 'POST':
+                        body = read_json(env)
+                        consult_clients_v2.link_booking(c, body.get('kind'), body.get('booking_id'), body.get('client_id'), user['id'])
+                        return respond(200, {'ok': True})
+                    if len(parts) == 1 and method == 'GET':
+                        return respond(200, consult_clients_v2.get_client(c, parts[0]))
+                    if len(parts) == 1 and method == 'PUT':
+                        return respond(200, {'version': consult_clients_v2.update(c, parts[0], read_json(env), user['id'])})
+                    if len(parts) == 2 and parts[1] in ('confirm', 'archive') and method == 'POST':
+                        body = read_json(env)
+                        status = 'confirmed' if parts[1] == 'confirm' else 'archived'
+                        return respond(200, {'version': consult_clients_v2.set_status(c, parts[0], status, body.get('version'), user['id'])})
+                    if len(parts) == 2 and parts[1] == 'merge' and method == 'POST':
+                        body = read_json(env)
+                        return respond(200, {'moved': consult_clients_v2.merge(c, parts[0], body.get('target_id'), user['id'])})
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) in ('stale_client', 'client_archived') else 400, str(exc))
+                raise Problem(404, 'not_found')
             if path.startswith('/api/v2/admin/appointments/'):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
