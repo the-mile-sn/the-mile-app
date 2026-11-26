@@ -275,47 +275,43 @@ FIELDS = {f["id"]: f for s in STEPS for f in s["fields"]}
 SECTIONS = STEPS  # secções do Google Forms (usadas para agrupar no backoffice)
 
 # Ecrãs curtos para quem preenche: as mesmas perguntas, reorganizadas em passos pequenos.
-# (secção, título do ecrã, frase de apoio, perguntas)
+# (secção, perguntas); o título de cada ecrã é o nome da secção.
 LAYOUT = [
-    ("Sobre ti", "Vamos começar", "Primeiro, para quem é a consulta.",
-     ["for_whom", "attendee_name", "relation", "birth_date"]),
-    ("Sobre ti", "Um pouco sobre ti", "Ajuda-nos a perceber o teu dia a dia.",
-     ["occupation", "city", "lives_with", "heard_from", "nif"]),
-    ("Saúde", "O teu corpo", "Valores aproximados chegam. Na consulta medimos tudo.",
-     ["sex", "height_cm", "weight_kg", "weighs_daily"]),
-    ("Saúde", "A tua saúde", "Deixa em branco o que não se aplica.",
-     ["conditions", "medication", "allergies", "intolerances", "smoking"]),
-    ("Saúde", "Sono", "", ["sleep_hours", "sleep_quality"]),
-    ("Saúde", "Objetivos", "O que queres alcançar connosco.", ["goals", "previous_nutrition"]),
-    ("Saúde feminina", "Ciclo menstrual", "", ["cycle", "amenorrhea_since", "last_period", "heavy_flow"]),
-    ("Saúde feminina", "Ciclo e treino", "", ["cycle_performance", "cycle_symptoms", "pms", "pill", "pill_which"]),
-    ("Treino", "Atividade física", "", ["activity", "sports", "sport_level"]),
-    ("Treino", "A tua semana de treino", "", ["weekly_routine", "devices", "recovery"]),
-    ("Alimentação", "Como comes", "", ["diet_pattern", "favorite_foods", "disliked_foods"]),
-    ("Alimentação", "Compras e cozinha", "", ["shopping", "supermarkets", "cooking", "weighs_food"]),
-    ("Alimentação", "Bebidas", "", ["water", "urine_color", "coffee", "alcohol", "meal_drinks"]),
-    ("Alimentação", "Com que frequência comes…", "Um toque por alimento: quantos dias por semana, numa semana normal. Se for todos os dias, dizes-nos quantas vezes.", ["frequency"]),
-    ("Diário alimentar", "Um dia típico", "Conta-nos o que comes num dia normal.", ["meals"]),
-    ("Diário alimentar", "Porções", "", ["protein_portion", "carb_portion"]),
-    ("Mudanças", "Mudanças na tua alimentação", "Já estás quase!", ["alternatives", "motivation"]),
-    ("Suplementação", "Suplementação", "", ["supplements", "supplements_detail", "athlete"]),
-    ("Dia de jogo", "Antes do jogo", "", ["day_before_change", "day_before_what", "game_day_change", "game_day_what"]),
-    ("Dia de jogo", "No jogo", "", ["before_game", "during_game"]),
-    ("Notas", "Último passo", "Obrigada pelo tempo que dedicaste a isto.", ["notes", "consent"]),
+    ("Sobre ti", ["for_whom", "attendee_name", "relation", "birth_date"]),
+    ("Sobre ti", ["occupation", "city", "lives_with", "heard_from", "nif"]),
+    ("Saúde", ["sex", "height_cm", "weight_kg", "weighs_daily"]),
+    ("Saúde", ["conditions", "medication", "allergies", "intolerances", "smoking"]),
+    ("Saúde", ["sleep_hours", "sleep_quality"]),
+    ("Saúde", ["goals", "previous_nutrition"]),
+    ("Saúde feminina", ["cycle", "amenorrhea_since", "last_period", "heavy_flow"]),
+    ("Saúde feminina", ["cycle_performance", "cycle_symptoms", "pms", "pill", "pill_which"]),
+    ("Treino", ["activity", "sports", "sport_level"]),
+    ("Treino", ["weekly_routine", "devices", "recovery"]),
+    ("Alimentação", ["diet_pattern", "favorite_foods", "disliked_foods"]),
+    ("Alimentação", ["shopping", "supermarkets", "cooking", "weighs_food"]),
+    ("Alimentação", ["water", "urine_color", "coffee", "alcohol", "meal_drinks"]),
+    ("Alimentação", ["frequency"]),
+    ("Diário alimentar", ["meals"]),
+    ("Diário alimentar", ["protein_portion", "carb_portion"]),
+    ("Mudanças", ["alternatives", "motivation"]),
+    ("Suplementação", ["supplements", "supplements_detail", "athlete"]),
+    ("Dia de jogo", ["day_before_change", "day_before_what", "game_day_change", "game_day_what"]),
+    ("Dia de jogo", ["before_game", "during_game"]),
+    ("Notas", ["notes", "consent"]),
 ]
 _SECTION_WHEN = {"Saúde feminina": {"sex": "F"}, "Dia de jogo": {"athlete": "yes"}}
 
 
 def _screens():
     out, used = [], []
-    for i, (group, title, intro, ids) in enumerate(LAYOUT):
+    for i, (group, ids) in enumerate(LAYOUT):
         fields = []
         for fid in ids:
             fields.append(FIELDS[fid])
             if fid + "_other" in FIELDS:
                 fields.append(FIELDS[fid + "_other"])
         used += [f["id"] for f in fields]
-        step = {"id": "s%d" % i, "group": group, "title": title, "intro": intro, "fields": fields}
+        step = {"id": "s%d" % i, "group": group, "title": group, "fields": fields}
         if group in _SECTION_WHEN:
             step["when"] = _SECTION_WHEN[group]
         out.append(step)

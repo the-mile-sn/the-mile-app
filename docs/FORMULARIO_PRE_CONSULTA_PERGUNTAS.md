@@ -1,13 +1,12 @@
 # Formulário pré-consulta — todas as perguntas
 
-Gerado a partir de `consult_forms_v2.py` (a mesma definição que a página e o backoffice usam). Tem todas as perguntas do «Formulário The Mile» (Google Forms), organizadas em ecrãs curtos, pela ordem em que o cliente as vê.
+Gerado a partir de `consult_forms_v2.py` (a mesma definição que a página e o backoffice usam). Tem todas as perguntas do «Formulário The Mile» (Google Forms), organizadas em ecrãs curtos (o título de cada ecrã é o nome da secção), pela ordem em que o cliente as vê.
 
 Legenda: **\*** obrigatória · *(várias)* pode escolher várias · *mostra-se se…* pergunta condicional.
 
 ## Sobre ti
 
-### Ecrã 1: Vamos começar
-_Primeiro, para quem é a consulta._
+### Ecrã 1
 
 - Para quem é esta consulta? **\***
   - Opções: Para mim · Para outra pessoa
@@ -18,8 +17,7 @@ _Primeiro, para quem é a consulta._
 - Data de nascimento **\***
   - Data
 
-### Ecrã 2: Um pouco sobre ti
-_Ajuda-nos a perceber o teu dia a dia._
+### Ecrã 2
 
 - Profissão
   - Texto
@@ -34,8 +32,7 @@ _Ajuda-nos a perceber o teu dia a dia._
 
 ## Saúde
 
-### Ecrã 3: O teu corpo
-_Valores aproximados chegam. Na consulta medimos tudo._
+### Ecrã 3
 
 - Sexo **\***
   - Opções: Feminino · Masculino
@@ -46,8 +43,7 @@ _Valores aproximados chegam. Na consulta medimos tudo._
 - Tens o hábito de te pesar diariamente? **\***
   - Opções: Sim · Não
 
-### Ecrã 4: A tua saúde
-_Deixa em branco o que não se aplica._
+### Ecrã 4
 
 - Patologias (hipertensão, diabetes, colesterol, outras)
   - Texto
@@ -60,15 +56,14 @@ _Deixa em branco o que não se aplica._
 - Fumas? **\***
   - Opções: Não · Sim (1–10 cigarros/semana) · Sim (11–20 cigarros/semana) · Sim (> 20 cigarros/semana)
 
-### Ecrã 5: Sono
+### Ecrã 5
 
 - Quantas horas dormes, em média, por dia? **\***
   - Opções: 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - Como é a qualidade do teu sono? **\***
   - Opções: 1 · 2 · 3 · 4 · 5  (Muito má → Excelente)
 
-### Ecrã 6: Objetivos
-_O que queres alcançar connosco._
+### Ecrã 6
 
 - Qual(ais) o(s) teu(s) objetivo(s)? **\*** *(várias)*
   - Opções: Emagrecimento · Aumento de massa muscular · Maximização do rendimento desportivo · Otimização de saúde · Recuperação de lesão · Outra (com campo «Outra:» para escrever)
@@ -78,7 +73,7 @@ _O que queres alcançar connosco._
 ## Saúde feminina
 *Secção mostrada só se «Sexo» = Feminino.*
 
-### Ecrã 7: Ciclo menstrual
+### Ecrã 7
 
 - Ciclo menstrual **\***
   - Opções: Amenorreia (sem menstruação) · Regular (28–32 dias) · Irregular · Não sei
@@ -90,7 +85,7 @@ _O que queres alcançar connosco._
 - Tens fluxo intenso com frequência?
   - Opções: Sim · Não · Não tenho a certeza
 
-### Ecrã 8: Ciclo e treino
+### Ecrã 8
 
 - Se és atleta ou treinas, sentes alguma mudança na tua performance durante o teu período menstrual?
   - Opções: Sim · Não · Não tenho a certeza
@@ -106,7 +101,7 @@ _O que queres alcançar connosco._
 
 ## Treino
 
-### Ecrã 9: Atividade física
+### Ecrã 9
 
 - Praticas algum tipo de atividade física ou desporto? **\***
   - _Exemplo: futebol, musculação, corrida._
@@ -116,7 +111,7 @@ _O que queres alcançar connosco._
 - De forma recreativa ou profissional? — *mostra-se se pratica atividade física (não «Nunca»)*
   - Opções: Recreativa · Semiprofissional · Profissional
 
-### Ecrã 10: A tua semana de treino
+### Ecrã 10
 
 - Descreve-nos a tua rotina de treinos e de jogos, caso se aplique, numa semana típica. — *mostra-se se pratica atividade física (não «Nunca»)*
   - Texto longo
@@ -128,7 +123,7 @@ _O que queres alcançar connosco._
 
 ## Alimentação
 
-### Ecrã 11: Como comes
+### Ecrã 11
 
 - Padrão alimentar **\***
   - Opções: Omnívoro (come carne e peixe) · Pescetariano (não come carne, mas come peixe) · Ovolactovegetariano (não come carne nem peixe, mas laticínios sim) · Vegetariano · Vegan
@@ -137,7 +132,7 @@ _O que queres alcançar connosco._
 - Alimentos de que não gostas
   - Texto
 
-### Ecrã 12: Compras e cozinha
+### Ecrã 12
 
 - Quem vai às compras? **\***
   - Opções: Eu · A/o companheira/o · Outros familiares · Outra (com campo «Outra:» para escrever)
@@ -148,7 +143,7 @@ _O que queres alcançar connosco._
 - Pesas a comida? **\***
   - Opções: Nunca · Às vezes · Frequentemente · Quase todos os dias · Todos os dias
 
-### Ecrã 13: Bebidas
+### Ecrã 13
 
 - Que quantidade de água costumas beber por dia? **\***
   - _Além da que bebes durante os treinos, se for o caso._
@@ -163,8 +158,7 @@ _O que queres alcançar connosco._
 - O que bebes ao almoço e ao jantar? **\*** *(várias)*
   - Opções: Água · Água com gás · Chá · Refrigerante · Refrigerante zero · Sumos de fruta · Vinho / cerveja · Nada · Outra (com campo «Outra:» para escrever)
 
-### Ecrã 14: Com que frequência comes…
-_Um toque por alimento: quantos dias por semana, numa semana normal. Se for todos os dias, dizes-nos quantas vezes._
+### Ecrã 14
 
 - Com que frequência incluis… **\***
   - _Por semana ou por dia. Escolhe a opção mais próxima de uma semana normal._
@@ -184,14 +178,13 @@ _Um toque por alimento: quantos dias por semana, numa semana normal. Se for todo
 
 ## Diário alimentar
 
-### Ecrã 15: Um dia típico
-_Conta-nos o que comes num dia normal._
+### Ecrã 15
 
 - Descreve um dia alimentar típico
   - _Indica a hora e o que comes. Ex.: 8h00, pão com queijo magro e leite com café. Se não fazes alguma das refeições, deixa em branco._
   - Hora + texto para: Pequeno-almoço · Lanche da manhã · Almoço · Lanche da tarde · Jantar · Ceia · Outra refeição importante (ex.: pós-treino)
 
-### Ecrã 16: Porções
+### Ecrã 16
 
 - Qual é a porção de proteína que comes nas refeições principais? **\***
   - _Exemplo: carne, peixe, alternativas vegetais._
@@ -202,8 +195,7 @@ _Conta-nos o que comes num dia normal._
 
 ## Mudanças
 
-### Ecrã 17: Mudanças na tua alimentação
-_Já estás quase!_
+### Ecrã 17
 
 - Seleciona as opções que gostas ou que estarias disposto/a a experimentar. *(várias)*
   - Opções: Ovos mexidos com pão e fruta · Tosta mista com iogurte e fruta · Pão com queijo fresco e compota/doce · Tosta de abacate e ovo · Tosta de salmão fumado e queijo creme · Bowl de iogurte · Papas de aveia · Overnight oats · Panquecas com whey na massa · Panquecas com topping de iogurte · Bolo de caneca · Batido proteico · Smoothie bowl · Leite proteico com cereais · Iogurte proteico com bolachas de arroz e fruta · Outra (com campo «Outra:» para escrever)
@@ -212,7 +204,7 @@ _Já estás quase!_
 
 ## Suplementação
 
-### Ecrã 18: Suplementação
+### Ecrã 18
 
 - Que suplementos fazes? **\*** *(várias)*
   - Opções: Não faço · Creatina · Beta-alanina · Ómega-3 · Tart Cherry · Multivitamínico · Vitamina D · Vitamina B12 · Proteína whey · Outra (com campo «Outra:» para escrever)
@@ -224,7 +216,7 @@ _Já estás quase!_
 ## Dia de jogo
 *Secção mostrada só se «És atleta ou tens jogos ou competições?» = Sim.*
 
-### Ecrã 19: Antes do jogo
+### Ecrã 19
 
 - No dia anterior ao jogo/competição costumas alterar algo na tua alimentação?
   - Opções: Sim · Não
@@ -235,7 +227,7 @@ _Já estás quase!_
 - O quê? — *mostra-se se «No dia de jogo/competição costumas alterar algo na tua alimentação?» = Sim*
   - Texto
 
-### Ecrã 20: No jogo
+### Ecrã 20
 
 - Comes ou bebes alguma coisa antes do jogo/competição? **\*** *(várias)*
   - _Exemplo: no balneário ou no aquecimento._
@@ -246,8 +238,7 @@ _Já estás quase!_
 
 ## Notas
 
-### Ecrã 21: Último passo
-_Obrigada pelo tempo que dedicaste a isto._
+### Ecrã 21
 
 - Adiciona alguma nota, comentário ou dúvida que consideres relevante.
   - Texto longo

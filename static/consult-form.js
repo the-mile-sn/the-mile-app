@@ -307,7 +307,7 @@
     var bar = el("span", "tmf-freq-bar"); var fill = el("i"); bar.append(fill);
     fill.style.setProperty("width", Math.round(done / f.rows.length * 100) + "%");
     head.append(el("span", "tmf-freq-count", "Dias por semana · " + done + " de " + f.rows.length + " alimentos"), bar);
-    wrap.append(head);
+    wrap.append(el("div", "tmf-hint", "Pensa numa semana normal. Se for todos os dias, perguntamos quantas vezes."), head);
     f.rows.forEach(function (r) {
       var key = r[0], opts = r[3], value = g[key];
       var row = el("div", "tmf-freq-row");
@@ -407,10 +407,7 @@
   var ICON_CHECK = ["M5 12.5l4.5 4.5L19 7.5"];
   var LONG_DAY = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
-  function setMode(kind) {
-    document.body.classList.toggle("is-dark-screen", kind === "welcome");
-    document.getElementById("tmf-top-progress").hidden = kind !== "step";
-  }
+  function setMode(kind) { document.body.dataset.screen = kind; }
   function toast(text, badge) {
     var t = document.getElementById("tmf-toast");
     t.replaceChildren();
@@ -443,7 +440,7 @@
   function renderWelcome() {
     setMode("welcome");
     app.replaceChildren();
-    var hero = el("section", "tmf-welcome tmf-enter");
+    var hero = el("section", "tmf-hero tmf-welcome tmf-enter");
     var b = data.booking;
     if (b) hero.append(el("span", "tmf-pill", b.service + " · " + niceDate(b.date, b.start)));
     var h = el("h1", "", "Olá" + firstName() + ",");
@@ -456,7 +453,7 @@
       var li = el("li"); var ic = el("span", "tmf-fact-icon"); ic.append(x[0]);
       li.append(ic, el("span", "", x[1])); facts.append(li);
     });
-    var go = el("button", "tmf-btn tmf-btn-light", "Começar");
+    var go = el("button", "tmf-btn tmf-btn-primary", "Começar");
     go.type = "button";
     go.addEventListener("click", function () { current = 0; renderStep(); window.scrollTo(0, 0); });
     var foot = el("div", "tmf-welcome-foot");
@@ -471,7 +468,7 @@
   function renderDone() {
     setMode("done");
     app.replaceChildren();
-    var hero = el("section", "tmf-done tmf-enter");
+    var hero = el("section", "tmf-hero tmf-done tmf-enter");
     var mark = el("div", "tmf-done-mark"); mark.append(icon(ICON_CHECK));
     hero.append(mark);
     hero.append(el("h1", "", "Obrigada" + (data.first_name ? ", " + data.first_name : "") + ". Está tudo pronto."));
@@ -539,8 +536,12 @@
     var scrollY = window.scrollY;
     setMode("step");
     app.replaceChildren();
-    document.getElementById("tmf-top-step").textContent = "Passo " + (pos + 1) + " de " + list.length + " · " + step.group;
-    document.getElementById("tmf-top-fill").style.setProperty("width", Math.max(3, Math.round((pos + 1) / list.length * 100)) + "%");
+    var progress = el("div", "tmf-progress");
+    var ptext = el("div", "tmf-progress-text");
+    ptext.append(el("span", "", "Passo " + (pos + 1) + " de " + list.length), el("span", "", step.group));
+    var track = el("div", "tmf-progress-track"); var fill = el("span"); track.append(fill);
+    fill.style.setProperty("width", Math.max(3, Math.round((pos + 1) / list.length * 100)) + "%");
+    progress.append(ptext, track);
 
     var layout = el("div", "tmf-layout");
     var nav = el("nav", "tmf-steps");
@@ -558,8 +559,7 @@
     var main = el("main", "tmf-main");
     var card = el("section", "tmf-card" + (scrollTarget ? "" : " tmf-enter"));
     var head = el("div");
-    head.append(el("div", "tmf-kicker", "Passo " + (pos + 1) + " de " + list.length + " · " + step.group), el("h1", "", step.title));
-    if (step.intro) head.append(el("p", "tmf-intro", step.intro));
+    head.append(el("h1", "", step.group));
     card.append(head);
     if (mode === "review") card.append(el("div", "tmf-banner", "Já enviaste este formulário. As alterações que fizeres ficam guardadas e a equipa vê a versão mais recente."));
     var pair = null;
@@ -586,7 +586,7 @@
     var saved = el("div", "tmf-save", "Guardado automaticamente");
     saved.id = "tmf-save"; saved.setAttribute("aria-live", "polite");
     card.append(bar2, saved);
-    main.append(card);
+    main.append(progress, card);
     layout.append(nav, main);
     app.append(layout);
 
