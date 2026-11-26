@@ -426,3 +426,19 @@ dialog.i18n-review-dialog #i18n-history-panel[open]>summary svg{transform:rotate
 .i18n-plan-manager-section :is(.i18n-plan-option,.i18n-plan-private-publication,.i18n-plan-common-detail) :is(.i18n-plan-pt,.i18n-plan-en){background:var(--tm-ui-search)}
 @media(max-width:620px){.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){#i18n-results .i18n-record-toggle svg{transition:none}}
+
+/* Central Planos review uses the existing native Planos dialog geometry. */
+dialog.i18n-manager-plan-dialog{position:fixed;inset:0;margin:auto;width:min(900px,calc(100% - 32px));max-width:calc(100% - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:20px;border:0;border-radius:18px;background:var(--tm-ui-card);color:var(--tm-ui-text);box-shadow:none}
+dialog.i18n-manager-plan-dialog::backdrop{background:rgba(0,0,0,.55)}
+.i18n-manager-plan-dialog>.i18n-plan-detail-head{position:sticky;top:-20px;z-index:1;background:var(--tm-ui-card);padding:12px 0;align-items:flex-start;flex-wrap:nowrap}
+.i18n-manager-plan-heading{min-width:0;flex:1}
+.i18n-manager-plan-heading small{display:block;margin:4px 0 0}
+.i18n-manager-plan-heading small:empty{display:none}
+.i18n-manager-plan-dialog .i18n-plan-detail{margin-top:0}
+.i18n-manager-plan-dialog .i18n-plan-option{background:var(--tm-ui-subcard)}
+.i18n-manager-plan-dialog .i18n-plan-field{background:transparent;padding:10px 0}
+.i18n-manager-plan-dialog :is(.i18n-plan-pt,.i18n-plan-en,.i18n-plan-unique-row){background:var(--tm-ui-search)}
+.i18n-manager-plan-dialog .i18n-plan-en textarea{background:transparent}
+.i18n-manager-plan-dialog .i18n-primary:not(:disabled){background:#346c4d;color:#fff}
+.i18n-manager-plan-dialog .i18n-primary:not(:disabled):hover{filter:brightness(1.1)}
+@media(max-width:830px){dialog.i18n-manager-plan-dialog{padding:14px;width:calc(100% - 24px);max-width:calc(100% - 24px)}.i18n-manager-plan-dialog>.i18n-plan-detail-head{top:-14px}}

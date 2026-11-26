@@ -405,7 +405,10 @@ try{
     assert.equal(await privateQueue.locator("a[download]").count(),0);
     assert.equal(await privateQueue.locator('input[type="file"]').count(),0);
     await page.locator("#i18n-plan-items .i18n-plan-item").first().click();
-    await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
+    const managerDialog=page.locator("#i18n-plan-review-dialog");
+    await managerDialog.locator(".i18n-plan-field").first().waitFor();
+    assert.equal(await managerDialog.evaluate(el=>el.matches(":modal")),true);
+    assert.equal(await managerDialog.evaluate(el=>el.scrollWidth<=el.clientWidth+3),true);
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
     const recovery=page.locator("#i18n-plan-detail .i18n-plan-option").first();
     assert.match(await recovery.innerText(),/Recuperar traduções já aprovadas/);
@@ -419,6 +422,10 @@ try{
     await page.locator("#i18n-plan-detail .i18n-plan-suggestion button").click();
     assert.equal(planSaveRequests,0,"A suggestion must never submit or approve automatically");
     assert.equal(await page.locator("#i18n-plan-detail textarea").inputValue(),"Option 1");
+    page.once("dialog",d=>d.dismiss());
+    await managerDialog.getByRole("button",{name:"Fechar",exact:true}).click();
+    assert.equal(await managerDialog.evaluate(el=>el.open),true);
+    assert.equal(await managerDialog.locator("textarea").inputValue(),"Option 1");
     await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-secondary").click();
     await page.getByText("Proposta guardada. Falta aprovação.").waitFor();
     assert.equal(planPending,true);
@@ -426,6 +433,8 @@ try{
     await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-primary").click();
     await page.getByText("Tradução aprovada.").waitFor();
     assert.equal(planApproved,true);
+    await managerDialog.getByRole("button",{name:"Fechar",exact:true}).click();
+    await managerDialog.waitFor({state:"hidden"});
     assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-stage-grid").count(),0);
     assert.equal(await page.locator("#i18n-library-link").textContent(),"Abrir Planos");
     assert.equal(requests.filter(p=>p.includes("/api/v2/admin/i18n/import/")).length,0);
