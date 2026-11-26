@@ -373,3 +373,17 @@ def close(c, session_id, version, actor, org_id=ORG_ID, now=None):
     if changed.rowcount != 1:
         raise ValueError("stale_session")
     return version + 1
+
+
+def discard(c, session_id, org_id=ORG_ID):
+    """Descarta uma consulta ainda aberta (ex.: aberta só para consultar):
+    apaga o registo e a avaliação desta consulta; a marcação fica como estava."""
+    row = c.execute("SELECT status FROM consult_sessions WHERE org_id=? AND id=?",
+                    (org_id, session_id)).fetchone()
+    if not row:
+        raise LookupError("session_not_found")
+    if row["status"] == "closed":
+        raise ValueError("session_closed")
+    c.execute("DELETE FROM consult_assessments WHERE org_id=? AND session_id=?", (org_id, session_id))
+    c.execute("DELETE FROM consult_sessions WHERE org_id=? AND id=? AND status='open'", (org_id, session_id))
+    return {"ok": True}

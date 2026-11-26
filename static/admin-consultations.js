@@ -192,8 +192,25 @@
    if (e.code === "stale_session") { const s = await api(`${API}/bookings/${focus.booking.kind}/${focus.booking.booking_id}`); focus = {...s, step: focus.step}; renderFocus(); }
   } finally { saving = false; if (focus && focus.pending) flush(); }
  }
- function closeFocus() {
-  if (dirty && !confirm("Há alterações por guardar. Sair mesmo assim?")) return;
+ function isEmptySession() {
+  const s = focus && focus.session;
+  if (!s || s.status !== "open" || focus.assessment) return false;
+  return !(s.note_text || s.internal_note || s.plan_changes || (s.objectives || []).length ||
+   Object.keys(s.indicators || {}).length || s.next_weeks || s.next_action);
+ }
+ async function discardFocus(ask) {
+  if (ask && !confirm("Descartar esta consulta? Apaga o que foi escrito nesta consulta (nota, avaliação e fecho) e a marcação volta ao estado normal.")) return;
+  clearTimeout(saveTimer);
+  try { await api(`${API}/sessions/${focus.session.id}`, {method: "DELETE"}); if (ask) feedback("Consulta descartada."); }
+  catch (e) { feedback(e.message, true); return; }
+  dirty = false; closeFocus(true);
+ }
+ async function closeFocus(skipChecks) {
+  if (!skipChecks) {
+   if (dirty && !confirm("Há alterações por guardar. Sair mesmo assim?")) return;
+   // Abriu só para ver e não escreveu nada: volta ao estado normal sozinha.
+   if (!dirty && isEmptySession()) { await discardFocus(false); return; }
+  }
   clearTimeout(saveTimer); focus = null; dirty = false;
   $("tm-cq-focus").hidden = true; document.querySelector(".tm-cq-layout").hidden = false;
   loadWorkspace().then(() => openClient && selectClient(openClient)).catch(() => {});
@@ -203,13 +220,19 @@
   document.querySelector(".tm-cq-layout").hidden = true;
   const b = focus.booking, s = focus.session, closed = s.status === "closed";
   const bar = el("header", "tm-cq-focus-bar");
-  const exit = el("button", "tm-cq-ghost", "← Sair"); exit.type = "button"; exit.addEventListener("click", closeFocus);
+  const exit = el("button", "tm-cq-ghost", "← Sair"); exit.type = "button"; exit.addEventListener("click", () => closeFocus(false));
   const who = el("div", "tm-cq-focus-who");
   who.append(el("span", "tm-cq-avatar", initials(b.client_name)));
   const t = el("div"); t.append(el("strong", "", b.client_name + " · " + (b.first_visit ? "primeira consulta" : "seguimento")),
    el("small", "tm-cq-muted", (b.date === (data && data.date) ? "Hoje " : dayLabel(b.date) + " ") + b.start + " · " + (b.mode === "online" ? "online" : "presencial") + " · " + b.professional_name));
   who.append(t);
   bar.append(exit, who, el("span", "tm-cq-focus-saved tm-cq-muted", closed ? "Fechada" : "Guardado"));
+  if (!closed) {
+   const drop = el("button", "tm-cq-ghost tm-cq-danger", "Descartar"); drop.type = "button";
+   drop.title = "Apaga o que foi escrito nesta consulta e volta ao estado normal";
+   drop.addEventListener("click", () => discardFocus(true));
+   bar.append(drop);
+  }
   host.append(bar);
 
   const steps = [["note", "Nota", "Indicadores e notas"], ["assessment", "Avaliação", "Medições e cálculos"], ["close", "Fecho", "Plano, objetivos, próxima"]];
@@ -371,7 +394,7 @@
     try {
      const r = await api(`${API}/sessions/${s.id}/close`, {method: "POST", body: JSON.stringify({version: s.version})});
      s.version = r.version; s.status = "closed"; dirty = false; feedback("Consulta fechada.");
-     closeFocus();
+     closeFocus(true);
     } catch (e) { feedback(e.message, true); }
    });
    actions.append(b);

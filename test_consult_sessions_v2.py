@@ -109,6 +109,20 @@ class ConsultSessionsTests(unittest.TestCase):
         closed = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "version": again["body"]["assessment"]["version"]})
         self.assertEqual(closed["status"], 409)
 
+    def test_open_session_can_be_discarded(self):
+        self.req()
+        started = self.req(f"/bookings/manual/{self.booking}/start", "POST", {})["body"]["session"]
+        self.req(f"/sessions/{started['id']}/assessment", "PUT", {"measures": {"weight_kg": 70}})
+        gone = self.req(f"/sessions/{started['id']}", "DELETE")
+        self.assertEqual(gone["status"], 200, gone)
+        ws = self.req()["body"]
+        self.assertIsNone(ws["upcoming"][0]["session_id"])
+        self.assertEqual(self.req(f"/sessions/{started['id']}", "DELETE")["status"], 404)
+        again = self.req(f"/bookings/manual/{self.booking}/start", "POST", {})["body"]["session"]
+        self.assertIsNone(self.req(f"/bookings/manual/{self.booking}")["body"]["assessment"])
+        self.req(f"/sessions/{again['id']}/close", "POST", {"version": again["version"]})
+        self.assertEqual(self.req(f"/sessions/{again['id']}", "DELETE")["status"], 409)
+
     def test_unknown_booking_and_access(self):
         self.req()  # liga a marcação ao perfil
         self.assertEqual(self.req("/bookings/manual/" + "0" * 32 + "/start", "POST", {})["status"], 404)
