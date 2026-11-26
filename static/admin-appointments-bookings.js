@@ -152,6 +152,12 @@
     const cancel=make("button","tm-appt-booking-cancel","Cancelar");
     cancel.type="button";cancel.addEventListener("click",()=>cancelBooking(item,cancel));
     actions.append(edit,cancel);right.append(actions);
+   }else if(item.status==="scheduled"&&isShopify){
+    const actions=make("div","tm-appt-booking-actions");
+    const edit=make("button","","Reagendar");
+    edit.type="button";edit.addEventListener("click",()=>openForm(item));
+    edit.title="Para cancelar, cancela ou reembolsa a encomenda na Shopify: o horário é libertado automaticamente.";
+    actions.append(edit);right.append(actions);
    }
   }
   if(forAgenda)card.append(description,right);
@@ -253,7 +259,10 @@
    service_id:$("tm-appt-booking-service").value,
    mode:$("tm-appt-booking-mode").value
   };
-  if(state.editing?.id)data.exclude_booking_id=state.editing.id;
+  if(state.editing?.id){
+   if(state.editing.source==="shopify")data.exclude_hold_id=state.editing.id;
+   else data.exclude_booking_id=state.editing.id;
+  }
   return data;
  }
  function clearTime(message="Seleciona um dia com vagas no calendário."){
@@ -399,7 +408,18 @@
   state.editing=openItem||null;
   const form=$("tm-appt-booking-form");
   form.reset();
-  $("tm-appt-booking-title").textContent=openItem?"Reagendar / editar marcação":"Nova marcação";
+  const paid=openItem?.source==="shopify";
+  $("tm-appt-booking-title").textContent=paid?"Reagendar marcação paga":(openItem?"Reagendar / editar marcação":"Nova marcação");
+  const hint=$("tm-appt-booking-hint");
+  if(hint){
+   hint.dataset.manual??=hint.textContent;
+   hint.textContent=paid?"Paga no site (encomenda "+openItem.shopify_order_id+"). Podes mudar o dia, a hora ou a nutricionista; o serviço e o formato ficam como foram pagos. Para cancelar, cancela ou reembolsa a encomenda na Shopify.":hint.dataset.manual;
+  }
+  // Paga no site: serviço, formato e cliente ficam como na encomenda.
+  for(const id of ["tm-appt-booking-service","tm-appt-booking-mode","tm-appt-booking-name",
+                   "tm-appt-booking-email","tm-appt-booking-phone"]){
+   const field=$(id);if(field)field.disabled=paid;
+  }
   $("tm-appt-booking-error").textContent="";
   const people=state.catalog.professionals.filter(p=>p.active||p.id===openItem?.professional_id);
   populate($("tm-appt-booking-professional"),people.map(p=>[p.id,p.name]),"Selecionar profissional",openItem?.professional_id);
@@ -537,9 +557,11 @@
   };
   try{
    const result=await api("/checkout/register-paid-webhook","POST",{});
-   feedback.textContent=result.status==="already_registered"?
+   const extra=(result.additional||[]).map(x=>x.topic).join(" e ");
+   feedback.textContent=(result.status==="already_registered"?
      "Webhook orders/paid já registado nesta aplicação.":
-     "Webhook orders/paid registado com sucesso na aplicação The Mile Booking.";
+     "Webhook orders/paid registado com sucesso na aplicação The Mile Booking.")+
+     (extra?" Cancelamentos e reembolsos ("+extra+") também ativos.":"");
   }catch(error){
    feedback.textContent=message[error.message]||error.message||
      "Não foi possível registar o webhook.";
@@ -662,10 +684,17 @@
     customer_phone:$("tm-appt-booking-phone").value.trim()
    };
    if(state.editing)data.version=state.editing.version;
-   await api("/bookings"+(state.editing?"/"+encodeURIComponent(state.editing.id):""),
-     state.editing?"PUT":"POST",data);
+   const paid=state.editing?.source==="shopify";
+   if(paid){
+    await api("/bookings/paid/"+encodeURIComponent(state.editing.id),"PUT",
+      {professional_id:data.professional_id,date:data.date,start:data.start,version:data.version});
+   }else{
+    await api("/bookings"+(state.editing?"/"+encodeURIComponent(state.editing.id):""),
+      state.editing?"PUT":"POST",data);
+   }
    $("tm-appt-booking-dialog").close();
-   feedback(state.editing?"Marcação interna atualizada.":"Marcação interna criada.");
+   feedback(paid?"Marcação paga reagendada. Avisa o cliente da nova data.":
+     (state.editing?"Marcação interna atualizada.":"Marcação interna criada."));
    document.dispatchEvent(new CustomEvent("tm:appointments-bookings-updated"));
    await refreshBookings();
   }catch(error){

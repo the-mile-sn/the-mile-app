@@ -796,7 +796,12 @@ def application(env, start_response):
         # The Mile's FUTURE custom Shopify app — not the ChatGPT connector.
         # Disabled by default; no checkout orders can be confirmed unless the
         # app's own secret, domain and explicit feature flag are configured.
-        if path == '/api/v2/shopify/webhooks/orders-paid' and method == 'POST':
+        shopify_webhook_topics = {
+            '/api/v2/shopify/webhooks/orders-paid': 'orders/paid',
+            '/api/v2/shopify/webhooks/orders-cancelled': 'orders/cancelled',
+            '/api/v2/shopify/webhooks/refunds-create': 'refunds/create',
+        }
+        if path in shopify_webhook_topics and method == 'POST':
             if SITE_ROLE == 'player' or not appointments_shopify_bridge_v2.webhook_enabled():
                 raise Problem(404, 'not_found')
             try:
@@ -816,8 +821,9 @@ def application(env, start_response):
             }
             try:
                 with connect() as shop_c:
-                    result=appointments_shopify_bridge_v2.paid_webhook(
-                        shop_c, raw, webhook_headers)
+                    result=appointments_shopify_bridge_v2.handle_webhook(
+                        shop_c, raw, webhook_headers,
+                        shopify_webhook_topics[path])
             except appointments_shopify_bridge_v2.ShopifyBridgeError as exc:
                 raise Problem(403 if str(exc) in (
                     'invalid_webhook_signature','invalid_webhook_shop',
@@ -1301,7 +1307,8 @@ def application(env, start_response):
                         (query.get('service_id') or [''])[0],
                         (query.get('mode') or [''])[0],
                         (query.get('month') or [''])[0],
-                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0])
+                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0],
+                        exclude_hold_id=(query.get('exclude_hold_id') or [''])[0])
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
@@ -1318,7 +1325,8 @@ def application(env, start_response):
                         (query.get('service_id') or [''])[0],
                         (query.get('mode') or [''])[0],
                         (query.get('date') or [''])[0],
-                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0])
+                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0],
+                        exclude_hold_id=(query.get('exclude_hold_id') or [''])[0])
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
@@ -1483,6 +1491,21 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(409 if str(exc) == 'stale_booking' else 400, str(exc))
                 return respond(200, {'ok': True})
+            if (path.startswith('/api/v2/admin/appointments/bookings/paid/')
+                    and method == 'PUT'):
+                # Marcações pagas no site: só se muda dia, hora ou profissional.
+                # Cancelamentos fazem-se na Shopify (reembolso) e chegam por webhook.
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier = path.rsplit('/',1)[-1]
+                try:
+                    appointments_shopify_bridge_v2.reschedule_paid(
+                        c, identifier, read_json(env), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) in ('booking_overlap','checkout_hold_conflict','stale_booking','booking_cancelled') else 400, str(exc))
+                return respond(200, {'id': identifier})
             if (path.startswith('/api/v2/admin/appointments/bookings/')
                     and method == 'PUT'):
                 if not user: raise Problem(401, 'unauthorized')

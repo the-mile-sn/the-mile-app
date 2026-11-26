@@ -328,7 +328,7 @@ def _paid_shopify_booking(row):
         "payment_status": "paid",
         "shopify_order_id": row["shopify_order_id"],
         "google_event_id": None,
-        "version": 1,
+        "version": row["updated_at"],
     }
 
 

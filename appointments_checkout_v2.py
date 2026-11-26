@@ -112,15 +112,16 @@ def active_conflict(c, org_id, professional_id, start_utc, end_utc, now=None):
     """, (org_id, professional_id, epoch, end_utc, start_utc)).fetchone() is not None
 
 
-def active_by_date(c, org_id, professional_id, start_day, end_day, now=None):
+def active_by_date(c, org_id, professional_id, start_day, end_day, now=None, exclude_id=""):
     """Use a single query for a whole month; expired holds never block, confirmed bookings do."""
     epoch = _epoch(now)
     rows = c.execute("""
       SELECT day,start_minute,end_minute FROM appt_checkout_holds
       WHERE org_id=? AND professional_id=? AND day BETWEEN ? AND ?
         AND ((status='held' AND expires_at>?) OR status='confirmed')
+        AND id<>?
       ORDER BY day,start_minute
-    """, (org_id, professional_id, start_day, end_day, epoch)).fetchall()
+    """, (org_id, professional_id, start_day, end_day, epoch, exclude_id or "")).fetchall()
     grouped = {}
     for row in rows:
         grouped.setdefault(row["day"], []).append(row)
