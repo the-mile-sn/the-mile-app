@@ -3658,6 +3658,82 @@ function progressMuscleTile(fields){
  tile.onclick=()=>openProgressPage({muscle:true,fields:present});
  return tile;
 }
+// Pregas (26/11, aprovado no canvas): neutral body map (front and back) above a table of the 8 skinfolds.
+// The dot size follows the latest mm; no colours on the body. Tapping a dot or a row opens the skinfold page,
+// where a mini body marks the site and ‹ previous · next › (or a horizontal swipe) moves between skinfolds.
+const PROGRESS_SKINFOLD_SITES={back:[288,80],triceps:[303,92],biceps:[46,92],suprailiac:[52,158],supraspinal:[65,178],abdominal_skin:[90,148],thigh_skin:[64,232],calf_skin:[73,282]};
+function progressBodyShape(offset){
+ return '<g transform="translate('+offset+',0)" class="progress-body-shape"><circle cx="80" cy="24" r="15"/><rect x="73" y="36" width="14" height="12"/>'
+  +'<polyline points="56,56 42,118 38,172" class="limb arm"/><polyline points="104,56 118,118 122,172" class="limb arm"/>'
+  +'<path d="M52 50 Q80 42 108 50 L108 136 Q106 166 110 192 L50 192 Q54 166 52 136 Z"/>'
+  +'<polyline points="66,188 64,250 66,308" class="limb leg"/><polyline points="94,188 96,250 94,308" class="limb leg"/></g>';
+}
+function progressSkinfoldEntries(){
+ return (assessmentFields.pregas||[]).filter(([key])=>PROGRESS_SKINFOLD_SITES[key]&&progressReadings(key).length).map(([key,label,unit])=>({key,label,unit}));
+}
+function progressBodyMap({selected=null,mini=false,onPick=null}={}){
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+ svg.setAttribute("viewBox",mini?"0 0 360 315":"0 0 360 330");svg.setAttribute("class",mini?"progress-body-map mini":"progress-body-map");
+ svg.setAttribute("role","img");svg.setAttribute("aria-label",playerText("Localização das pregas","Skinfold sites"));
+ svg.innerHTML=progressBodyShape(0)+progressBodyShape(190)+(mini?"":'<text x="80" y="326" text-anchor="middle" class="progress-body-caption">'+playerText("Frente","Front")+'</text><text x="270" y="326" text-anchor="middle" class="progress-body-caption">'+playerText("Costas","Back")+'</text>');
+ for(const entry of progressSkinfoldEntries()){
+  const [x,y]=PROGRESS_SKINFOLD_SITES[entry.key],values=progressReadings(entry.key).map(r=>r.value),on=entry.key===selected;
+  if(mini&&!on)continue;
+  const r=mini?14:Math.max(4,Math.min(12,3+values[values.length-1]*0.6));
+  const g=document.createElementNS(ns,"g");g.setAttribute("class","progress-body-site"+(on?" selected":""));
+  if(on){const ring=document.createElementNS(ns,"circle");ring.setAttribute("cx",x);ring.setAttribute("cy",y);ring.setAttribute("r",r+5);ring.setAttribute("class","progress-body-ring");g.append(ring);}
+  const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",x);dot.setAttribute("cy",y);dot.setAttribute("r",r);dot.setAttribute("class","progress-body-dot");g.append(dot);
+  if(onPick&&!mini){
+   const hit=document.createElementNS(ns,"circle");hit.setAttribute("cx",x);hit.setAttribute("cy",y);hit.setAttribute("r",Math.max(r,18));hit.setAttribute("class","progress-body-hit");
+   hit.setAttribute("role","button");hit.setAttribute("tabindex","0");hit.setAttribute("aria-label",playerAssessmentLabel(entry.key,entry.label)+" "+assessNumber(values[values.length-1])+" "+entry.unit);
+   hit.addEventListener("click",()=>onPick(entry));hit.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();onPick(entry);}});
+   g.append(hit);
+  }
+  svg.append(g);
+ }
+ return svg;
+}
+function progressSkinfoldScreen(target){
+ const open=entry=>openProgressPage(entry);
+ const mapCard=document.createElement("div");mapCard.className="progress-body-card";mapCard.append(progressBodyMap({onPick:open}));
+ const table=document.createElement("div");table.className="progress-list progress-skinfold-table";
+ for(const entry of progressSkinfoldEntries()){
+  const values=progressReadings(entry.key).map(r=>r.value);
+  const row=document.createElement("button");row.type="button";row.className="progress-list-row progress-skinfold-row";
+  const name=document.createElement("span");name.textContent=playerAssessmentLabel(entry.key,entry.label);
+  const diff=document.createElement("small");diff.textContent=values.length>1?progressDelta(values[values.length-1],values[values.length-2]):"";
+  const value=document.createElement("strong");value.textContent=assessNumber(values[values.length-1]);
+  const unit=document.createElement("small");unit.textContent=" "+entry.unit;value.append(unit);
+  row.append(name,diff,value,progressChevron());row.onclick=()=>open(entry);table.append(row);
+ }
+ if(table.children.length)target.append(mapCard,table);
+ return table.children.length>0;
+}
+// Skinfold page extras: ‹ previous · next › with dots, and a horizontal swipe (not from the left edge, not on the chart).
+function progressSkinfoldPager(view,key){
+ const entries=progressSkinfoldEntries(),i=entries.findIndex(e=>e.key===key);
+ if(i<0||entries.length<2)return;
+ const go=step=>{const next=entries[(i+step+entries.length)%entries.length];openProgressPage(next);};
+ const dots=document.createElement("div");dots.className="progress-pager-dots";dots.setAttribute("aria-hidden","true");
+ entries.forEach((_,j)=>{const d=document.createElement("span");if(j===i)d.className="on";dots.append(d);});
+ const nav=document.createElement("div");nav.className="progress-pager";
+ const prev=document.createElement("button");prev.type="button";prev.className="progress-pager-btn";
+ const pe=entries[(i-1+entries.length)%entries.length],ne=entries[(i+1)%entries.length];
+ prev.textContent="‹ "+playerAssessmentLabel(pe.key,pe.label);prev.onclick=()=>go(-1);
+ const next=document.createElement("button");next.type="button";next.className="progress-pager-btn";
+ next.textContent=playerAssessmentLabel(ne.key,ne.label)+" ›";next.onclick=()=>go(1);
+ nav.append(prev,next);view.append(dots,nav);
+ let start=null;
+ view.ontouchstart=event=>{
+  start=null;if(event.touches.length!==1)return;const t=event.touches[0];
+  if(t.clientX<=PLAYER_EDGE_BACK_ZONE||event.target?.closest?.(".assessment-trend-horizontal-scroll,button"))return;
+  start={x:t.clientX,y:t.clientY};
+ };
+ view.ontouchend=event=>{
+  if(!start)return;const t=event.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;start=null;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)go(dx<0?1:-1);
+ };
+}
 function renderPlayerAssessments(){
  for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
  const target=$("assessment-measurements"),kicker=$("progress-kicker");target.replaceChildren();kicker.textContent="";
@@ -3678,6 +3754,8 @@ function renderPlayerAssessments(){
   }
   if(!fastingPlaced)grid.insertBefore(progressFastingTile(),grid.children[1]||null);
   const muscle=progressMuscleTile(muscles);if(muscle)grid.append(muscle);
+ }else if(assessmentGroup==="pregas"){
+  if(progressSkinfoldScreen(target))return;
  }else{
   for(const [key,label,unit] of fields)grid.append(progressMetricTile(key,label,unit,false));
  }
@@ -3698,7 +3776,7 @@ function progressChartCard(key,unit,group){
 function openProgressPage(page){
  if(!progressPage)progressReturnY=window.scrollY;
  progressPage={...page,group:assessmentGroup};
- const host=$("plans-assessments"),view=$("progress-page");host.classList.add("progress-page-open");view.hidden=false;view.replaceChildren();
+ const host=$("plans-assessments"),view=$("progress-page");host.classList.add("progress-page-open");view.hidden=false;view.replaceChildren();view.ontouchstart=view.ontouchend=null;
  const back=document.createElement("button");back.type="button";back.className="progress-back";back.setAttribute("aria-label",playerText("Voltar ao Progresso","Back to Progress"));
  const arrow=document.createElement("span");arrow.setAttribute("aria-hidden","true");arrow.textContent="‹";back.append(arrow);back.onclick=closeProgressPage;
  view.append(back);
@@ -3723,7 +3801,11 @@ function openProgressPage(page){
   if(unit){const u=document.createElement("span");u.textContent=" "+unit;value.append(u);}
   const sub=document.createElement("p");sub.className="progress-page-sub";
   sub.textContent=(prior?progressDelta(current.value,prior.value)+(unit?" "+unit:"")+playerText(" vs. avaliação anterior · "," vs. previous assessment · "):"")+progressLongDate(current.date);
-  head.append(k,value,sub);view.append(head,progressChartCard(key,unit,progressPage.group));
+  head.append(k,value,sub);
+  if(progressPage.group==="pregas"&&PROGRESS_SKINFOLD_SITES[key]){
+   const top=document.createElement("div");top.className="progress-page-top";
+   top.append(head,progressBodyMap({selected:key,mini:true}));view.append(top,progressChartCard(key,unit,progressPage.group));
+  }else view.append(head,progressChartCard(key,unit,progressPage.group));
   const averageKey=PROGRESS_REPORT_AVERAGE[key],average=averageKey!==undefined?recent.averages?.[averageKey]:undefined;
   if(average!==undefined&&average!==null&&Number.isFinite(Number(average))){
    const row=document.createElement("div");row.className="progress-average";
@@ -3741,6 +3823,7 @@ function openProgressPage(page){
    row.append(when,diff,v);list.append(row);
   });
   view.append(heading,list);
+  if(progressPage.group==="pregas")progressSkinfoldPager(view,key);
  }
  window.scrollTo({top:0});back.focus({preventScroll:true});
 }
