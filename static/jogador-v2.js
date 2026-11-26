@@ -1880,6 +1880,7 @@ async function openWeightDetail(date,editToday,host=$("overview")){
    for(const k of ticks){const dt=new Date(start);dt.setDate(start.getDate()+k);const t=el("text",{x:X(iso(dt)),y:H-8,"text-anchor":"middle",class:"weight-detail-tick"});t.textContent=days===7?dt.toLocaleDateString(locale,{weekday:"narrow"}).toLocaleUpperCase(locale):String(dt.getDate());}
    el("polyline",{points:entries.map(x=>X(x.weigh_date).toFixed(1)+","+Y(Number(x.weight_kg)).toFixed(1)).join(" "),class:"weight-detail-line"});
    const detail=document.createElement("p");detail.className="weight-detail-point";detail.setAttribute("aria-live","polite");
+   const points=[];
    entries.forEach((x,i)=>{
     const last=i===entries.length-1,cx=X(x.weigh_date),cy=Y(Number(x.weight_kg));
     el("circle",{cx,cy,r:last?4.5:3,class:last?"weight-detail-dot last":"weight-detail-dot"});
@@ -1890,7 +1891,12 @@ async function openWeightDetail(date,editToday,host=$("overview")){
     const label=new Date(x.weigh_date+"T12:00:00").toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"})+" · "+format(x.weight_kg)+" kg"+(flagged?playerText(" · Menstruação"," · Menstruation"):"");
     const touch=el("circle",{cx,cy,r:12,fill:"transparent",tabindex:0,role:"button","aria-label":label});
     const show=()=>{detail.textContent=label;};touch.addEventListener("click",show);touch.addEventListener("focus",show);
+    points.push({cx,cy,label});
    });
+   // Mês (26/11): slide a finger along the chart to run through the entries — a guide line and ring follow the
+   // nearest entry, its date and weight show below the chart, with a light haptic tick per entry. Vertical page
+   // scroll still works (touch-action: pan-y); lifting the finger keeps the last entry shown.
+   if(days===30)weightDetailScrub(svg,points,detail,{top,bottom});
    chartCard.append(svg,detail);
    const stats=document.createElement("div");stats.className="weight-detail-stats";
    const change=values[values.length-1]-values[0];
@@ -1916,6 +1922,32 @@ async function openWeightDetail(date,editToday,host=$("overview")){
   }
  };
  await render();
+}
+function weightDetailScrub(svg,points,detail,{top,bottom}){
+ if(!points.length)return;
+ const ns="http://www.w3.org/2000/svg";
+ const guide=document.createElementNS(ns,"line");guide.setAttribute("y1",top);guide.setAttribute("y2",bottom);guide.setAttribute("class","weight-detail-scrub-line");
+ const ring=document.createElementNS(ns,"circle");ring.setAttribute("r","6.5");ring.setAttribute("class","weight-detail-scrub-ring");
+ guide.style.visibility=ring.style.visibility="hidden";
+ svg.insertBefore(guide,svg.querySelector(".weight-detail-line"));svg.append(ring);
+ svg.classList.add("weight-detail-scrubbable");
+ let current=-1,active=null;
+ const pick=clientX=>{
+  const matrix=svg.getScreenCTM();if(!matrix)return;
+  const x=(clientX-matrix.e)/matrix.a;
+  let best=0;for(let i=1;i<points.length;i++)if(Math.abs(points[i].cx-x)<Math.abs(points[best].cx-x))best=i;
+  if(best===current)return;
+  if(current>=0)playerHaptic();
+  current=best;const p=points[best];
+  guide.setAttribute("x1",p.cx);guide.setAttribute("x2",p.cx);ring.setAttribute("cx",p.cx);ring.setAttribute("cy",p.cy);
+  guide.style.visibility=ring.style.visibility="visible";detail.textContent=p.label;
+ };
+ svg.addEventListener("pointerdown",event=>{active=event.pointerId;current=-1;pick(event.clientX);});
+ svg.addEventListener("pointermove",event=>{if(active===event.pointerId)pick(event.clientX);});
+ const end=event=>{if(active===event.pointerId)active=null;};
+ svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);
+ // Horizontal finger moves stay on the chart (no Início day swipe, no edge back) while scrubbing.
+ svg.addEventListener("touchmove",event=>{if(active!==null)event.stopPropagation();},{passive:true});
 }
 // Haptic tick for wheels (like the iPhone alarm picker). Android: vibrate. iOS Safari (18+) has no
 // vibrate API but plays the system haptic when a native switch toggles, so a hidden one is toggled.
