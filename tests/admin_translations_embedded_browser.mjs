@@ -219,6 +219,15 @@ try{
           publication:ref===publicRef?planPublication:privatePublication,
           fields:ref===publicRef?[makePlanField()]:privateFields,
           policy:"manual_private_review_no_csv_no_external_api"}));
+      }else if(path==="/api/v2/admin/i18n/plans/save-approved"){
+        const payload=route.request().postDataJSON();
+        assert.equal(payload.publication_ref,publicRef);
+        assert.equal(payload.rows.length,1);
+        assert.equal(payload.rows[0].translated_text,"Option 1");
+        assert.equal(payload.rows[0].expected_status,"missing");
+        assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
+        planPending=true;planApproved=true;planSaveRequests++;
+        await route.fulfill(fmt({approved:1}));
       }else if(path==="/api/v2/admin/i18n/plans/propose"){
         const payload=route.request().postDataJSON();
         assert.equal(payload.publication_ref,publicRef);
@@ -415,23 +424,27 @@ try{
     assert.match(await recovery.innerText(),/Option 1/);
     assert.equal(await recovery.locator("button.i18n-primary").isDisabled(),true,
       "Historical approvals require explicit review");
-    assert.equal(await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-primary").isDisabled(),true);
+    const savePlan=managerDialog.getByRole("button",{name:"Guardar e aprovar",exact:true});
+    assert.equal(await savePlan.isDisabled(),true);
+    assert.equal(await managerDialog.locator(".i18n-plan-field-actions").count(),0);
+    assert.equal(await managerDialog.locator(".tm-plan-review-group").count(),1);
+    assert.equal(await managerDialog.locator(".tm-plan-review-group").evaluate(el=>el.open),true);
     assert.match(await page.locator("#i18n-plan-audit").count().then(String),/^0$/);
     assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-audit-stat").count(),6);
     assert.match(await page.locator("#i18n-plan-stage .i18n-plan-audit").innerText(),/Alternativas personalizadas/);
-    await page.locator("#i18n-plan-detail .i18n-plan-suggestion button").click();
+    await managerDialog.getByRole("button",{name:"Usar sugestão",exact:true}).click();
     assert.equal(planSaveRequests,0,"A suggestion must never submit or approve automatically");
     assert.equal(await page.locator("#i18n-plan-detail textarea").inputValue(),"Option 1");
     page.once("dialog",d=>d.dismiss());
     await managerDialog.getByRole("button",{name:"Fechar",exact:true}).click();
     assert.equal(await managerDialog.evaluate(el=>el.open),true);
     assert.equal(await managerDialog.locator("textarea").inputValue(),"Option 1");
-    await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-secondary").click();
-    await page.getByText("Proposta guardada. Falta aprovação.").waitFor();
+    await savePlan.click();
+    await managerDialog.getByText("Traduções guardadas e aprovadas.").waitFor();
+    assert.equal(planSaveRequests,1);
     assert.equal(planPending,true);
-    await page.locator("#i18n-plan-detail .i18n-plan-field-actions input").check();
-    await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-primary").click();
-    await page.getByText("Tradução aprovada.").waitFor();
+    assert.equal(await managerDialog.locator('[data-status="approved"] svg path').first().getAttribute("d"),"M5 12l4 4L19 6");
+    assert.equal(await savePlan.isDisabled(),true);
     assert.equal(planApproved,true);
     await managerDialog.getByRole("button",{name:"Fechar",exact:true}).click();
     await managerDialog.waitFor({state:"hidden"});
