@@ -12905,7 +12905,7 @@ html[data-admin-theme] #tm-players-page .tm-player-language-default-body .tm-pla
    com as superfícies da paleta. MD verde, Off rosa e Geral tracejado mantêm-se. */
 html[data-admin-theme] #tm-dashboard .tm-db-table :is(th,td.tm-db-name-cell){background:var(--tm-ui-subcard)!important}
 html[data-admin-theme] #tm-dashboard .tm-db-table th.tm-db-today{background:var(--tm-brand-soft)!important;box-shadow:inset 0 2px 0 var(--tm-brand)!important}
-html[data-admin-theme] #tm-dashboard button.tm-db-cell,
+html[data-admin-theme] #tm-dashboard button.tm-db-cell:not(.tm-db-match):not(.tm-db-off),
 html[data-admin-theme] #tm-dashboard button.tm-db-cell.tm-db-general,
 html[data-admin-theme] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general{background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important}
 html[data-admin-theme] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell:not(.tm-db-match):not(.tm-db-off){background:var(--tm-brand-soft)!important}
@@ -12913,3 +12913,28 @@ html[data-admin-theme] #tm-dashboard button.tm-db-cell:not(.tm-db-match):not(.tm
 html[data-admin-theme] #tm-dashboard button.tm-db-cell.tm-db-general-pending{border-color:color-mix(in srgb,var(--tm-state-pending-fg) 55%,transparent)!important}
 html[data-admin-theme] #tm-dashboard .tm-db-pending-hint{color:var(--tm-state-pending-fg)!important}
 html[data-admin-theme] #tm-dashboard .tm-db-none-dot{background:color-mix(in srgb,var(--tm-ui-muted) 45%,transparent)!important}
+
+/* Microciclo no telemóvel: seletor de dia + uma linha por jogador. */
+#tm-dashboard .tm-db-mobile-week{display:none}
+@media (max-width:650px){
+ #tm-dashboard .tm-db-grid-scroll{display:none!important}
+ #tm-dashboard .tm-db-mobile-week{display:block}
+ #tm-dashboard .tm-db-week-heading{flex-wrap:wrap}
+ #tm-dashboard .tm-db-mw-days{display:flex;gap:2px;margin:0 0 10px}
+ #tm-dashboard .tm-db-mw-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:46px;padding:6px 0;border:0;border-radius:11px;background:transparent;color:var(--tm-ui-text);font:600 12px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif}
+ #tm-dashboard .tm-db-mw-day small{color:var(--tm-ui-muted);font-size:11px;font-weight:400}
+ #tm-dashboard .tm-db-mw-day.is-today small{color:var(--tm-brand)}
+ #tm-dashboard .tm-db-mw-day[aria-selected="true"]{background:var(--tm-ui-subcard)}
+ #tm-dashboard .tm-db-mw-tools{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+ #tm-dashboard .tm-db-mw-search{flex:1;min-width:0;height:38px;padding:0 12px;border:0;border-radius:11px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);font:400 16px/1 "Inter Tight","SF Pro Text",Arial,sans-serif}
+ #tm-dashboard .tm-db-mw-icons{display:flex;gap:6px;width:142px;justify-content:space-between;padding:0 10px;box-sizing:border-box;color:var(--tm-ui-muted)}
+ #tm-dashboard .tm-db-mw-icons svg{width:15px;height:15px}
+ #tm-dashboard .tm-db-mw-list{display:flex;flex-direction:column}
+ #tm-dashboard .tm-db-mw-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--tm-ui-divider)}
+ #tm-dashboard .tm-db-mw-who{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:var(--tm-ui-text);text-align:left;font:600 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif}
+ #tm-dashboard .tm-db-mw-who .tm-db-avatar{width:34px;height:34px;flex:0 0 34px}
+ #tm-dashboard .tm-db-mw-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #tm-dashboard button.tm-db-cell.tm-db-mw-cell{width:142px!important;flex:0 0 142px;min-height:58px!important;height:auto!important;margin:0!important;padding:8px 10px!important;gap:6px}
+ #tm-dashboard .tm-db-mw-label{display:flex;align-items:baseline;gap:6px}
+ #tm-dashboard .tm-db-mw-cell .tm-db-dots{gap:4px}
+}
