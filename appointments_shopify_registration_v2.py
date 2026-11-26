@@ -135,12 +135,73 @@ def _find_subscription(token):
     raise ShopifyRegistrationError("shopify_registration_too_many_webhooks")
 
 
+EXTRA_SUBSCRIPTIONS = (
+    ("ORDERS_CANCELLED", "orders/cancelled",
+     "https://admin.themile.pt/api/v2/shopify/webhooks/orders-cancelled"),
+    ("REFUNDS_CREATE", "refunds/create",
+     "https://admin.themile.pt/api/v2/shopify/webhooks/refunds-create"),
+)
+
+
+def _ensure_subscription(token, enum, uri):
+    """Idempotent: same checks as orders/paid, for one extra topic."""
+    query = """query MileWebhook($after: String, $topics: [WebhookSubscriptionTopic!]) {
+      webhookSubscriptions(first: 50, after: $after, topics: $topics) {
+        nodes { id topic uri }
+        pageInfo { hasNextPage endCursor }
+      }
+    }"""
+    cursor = None
+    for _ in range(8):
+        data = _graphql(token, query, {"after": cursor, "topics": [enum]})
+        connection = data.get("webhookSubscriptions") or {}
+        for item in connection.get("nodes") or []:
+            if item.get("topic") == enum and item.get("uri") == uri:
+                return "already_registered"
+        page = connection.get("pageInfo") or {}
+        if not page.get("hasNextPage"):
+            break
+        cursor = page.get("endCursor")
+        if not isinstance(cursor, str) or not cursor:
+            raise ShopifyRegistrationError("shopify_registration_too_many_webhooks")
+    else:
+        raise ShopifyRegistrationError("shopify_registration_too_many_webhooks")
+    mutation = """mutation RegisterMileWebhook($topic: WebhookSubscriptionTopic!, $url: String!) {
+      webhookSubscriptionCreate(
+        topic: $topic,
+        webhookSubscription: {uri: $url, format: JSON}
+      ) {
+        webhookSubscription { id topic uri }
+        userErrors { field message }
+      }
+    }"""
+    data = _graphql(token, mutation, {"topic": enum, "url": uri})
+    result = data.get("webhookSubscriptionCreate") or {}
+    if result.get("userErrors"):
+        raise ShopifyRegistrationError("shopify_registration_rejected")
+    item = result.get("webhookSubscription") or {}
+    if item.get("topic") != enum or item.get("uri") != uri:
+        raise ShopifyRegistrationError("shopify_registration_failed")
+    return "registered"
+
+
 def register_paid_webhook():
+    """orders/paid plus the cancellation/refund topics that free paid slots."""
+    token = _token()
+    result = _register_orders_paid(token)
+    result["additional"] = [
+        {"topic": label, "destination": uri,
+         "status": _ensure_subscription(token, enum, uri)}
+        for enum, label, uri in EXTRA_SUBSCRIPTIONS
+    ]
+    return result
+
+
+def _register_orders_paid(token):
     """Call only from an authenticated + CSRF-protected The Mile admin action.
 
     Idempotent: no second webhook is created if destination already exists.
     """
-    token = _token()
     existing = _find_subscription(token)
     if existing:
         return {"status": "already_registered", "topic": "orders/paid",

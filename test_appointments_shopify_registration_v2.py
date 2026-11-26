@@ -43,23 +43,27 @@ class ShopifyWebhookRegistrationTests(unittest.TestCase):
             self.assertEqual(headers["X-Shopify-Access-Token"],
                              "fake-token-value-not-real")
             query = body["query"]
+            urls = {"ORDERS_PAID": registration.CALLBACK_URL}
+            urls.update({enum: uri for enum, _label, uri
+                         in registration.EXTRA_SUBSCRIPTIONS})
             if "webhookSubscriptions(" in query:
+                topics = (body["variables"] or {}).get("topics") or ["ORDERS_PAID"]
                 return {"data": {"webhookSubscriptions": {
                     "nodes": [{
                         "id": "gid://shopify/WebhookSubscription/1",
-                        "topic": "ORDERS_PAID",
-                        "uri": registration.CALLBACK_URL,
+                        "topic": topics[0],
+                        "uri": urls[topics[0]],
                     }] if present else [],
                     "pageInfo": {"hasNextPage": False, "endCursor": None}
                 }}}
             if "webhookSubscriptionCreate(" in query:
-                self.assertEqual(body["variables"]["url"],
-                                 registration.CALLBACK_URL)
+                topic = body["variables"].get("topic", "ORDERS_PAID")
+                self.assertEqual(body["variables"]["url"], urls[topic])
                 return {"data": {"webhookSubscriptionCreate": {
                     "webhookSubscription": {
                         "id": "gid://shopify/WebhookSubscription/2",
-                        "topic": "ORDERS_PAID",
-                        "uri": registration.CALLBACK_URL
+                        "topic": topic,
+                        "uri": urls[topic]
                     },
                     "userErrors": []
                 }}}
@@ -85,12 +89,18 @@ class ShopifyWebhookRegistrationTests(unittest.TestCase):
         self.assertEqual(r["status"], 200, r)
         self.assertEqual(r["body"]["status"], "registered")
         self.assertEqual(r["body"]["destination"], registration.CALLBACK_URL)
-        self.assertEqual(len(fake.call_args_list), 3)
+        self.assertEqual(len(fake.call_args_list), 7)
+        self.assertEqual([x["status"] for x in r["body"]["additional"]],
+                         ["registered", "registered"])
+        self.assertEqual([x["topic"] for x in r["body"]["additional"]],
+                         ["orders/cancelled", "refunds/create"])
         with self._mock(present=True) as repeated:
             r = self.admin.request(PATH+"/register-paid-webhook","POST",{})
         self.assertEqual(r["status"], 200, r)
         self.assertEqual(r["body"]["status"], "already_registered")
-        self.assertEqual(len(repeated.call_args_list), 2)
+        self.assertEqual(len(repeated.call_args_list), 4)
+        self.assertEqual([x["status"] for x in r["body"]["additional"]],
+                         ["already_registered", "already_registered"])
 
     def test_default_off_client_id_and_secret_gates(self):
         for env in (

@@ -93,7 +93,10 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             signature=base64.b64encode(b"x"*32).decode()
         env={
             "REQUEST_METHOD":"POST",
-            "PATH_INFO":"/api/v2/shopify/webhooks/orders-paid",
+            "PATH_INFO":{"orders/paid":"/api/v2/shopify/webhooks/orders-paid",
+                         "orders/cancelled":"/api/v2/shopify/webhooks/orders-cancelled",
+                         "refunds/create":"/api/v2/shopify/webhooks/refunds-create"
+                         }.get(topic,"/api/v2/shopify/webhooks/orders-paid"),
             "QUERY_STRING":"","wsgi.input":io.BytesIO(body),
             "CONTENT_LENGTH":str(len(body)),
             "HTTP_X_SHOPIFY_HMAC_SHA256":signature,
@@ -261,6 +264,125 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             "&to="+self.day+"&status=cancelled")
         self.assertEqual(cancelled["body"]["bookings"],[])
 
+
+    def confirmed(self, identifier=9001234567001):
+        cart=self.start()
+        order=self.order(cart,identifier)
+        self.assertEqual(self.webhook(order)["body"]["result"],"confirmed")
+        return cart,order
+
+    def hold(self, hold_id):
+        with app.connect() as c:
+            return c.execute("SELECT * FROM appt_checkout_holds WHERE id=?",
+                             (hold_id,)).fetchone()
+
+    def test_shopify_cancellation_frees_paid_slot_idempotently(self):
+        cart,order=self.confirmed()
+        result=self.webhook({"id":order["id"],"cancel_reason":"customer"},
+                            delivery="cancel-delivery-0001",topic="orders/cancelled")
+        self.assertEqual(result["status"],200,result)
+        self.assertEqual(result["body"]["result"],"released")
+        self.assertEqual(self.hold(cart["hold_id"])["status"],"released")
+        again=self.webhook({"id":order["id"]},delivery="cancel-delivery-0002",
+                           topic="orders/cancelled")
+        self.assertEqual(again["body"]["result"],"already_released")
+        listing=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
+        self.assertEqual(listing["body"]["bookings"],[])
+        # The slot is bookable again.
+        with app.connect() as c:
+            other=bridge.create_checkout_hold(c,self.signed_proxy(),
+                                              self.payload("after-cancel-key-0001"))
+        self.assertNotEqual(other["hold_id"],cart["hold_id"])
+        with app.connect() as c:
+            change=c.execute("SELECT * FROM appt_shopify_booking_changes").fetchall()
+        self.assertEqual([(x["action"],x["reason"]) for x in change],
+                         [("released","shopify_order_cancelled")])
+
+    def test_cancellation_of_unrelated_order_and_wrong_topic_change_nothing(self):
+        cart,order=self.confirmed()
+        unrelated=self.webhook({"id":9001234567999},delivery="cancel-delivery-0003",
+                               topic="orders/cancelled")
+        self.assertEqual(unrelated["body"]["result"],"ignored")
+        # A cancellation body sent as orders/paid never frees the slot.
+        wrong=self.webhook({"id":order["id"]},delivery="cancel-delivery-0004",
+                           topic="orders/paid")
+        self.assertEqual(wrong["body"]["result"],"ignored")
+        # Header topic must match the endpoint's topic.
+        with app.connect() as c, self.assertRaises(bridge.ShopifyBridgeError):
+            bridge.handle_webhook(c,b"{}",{"X-Shopify-Topic":"orders/paid",
+                "X-Shopify-Shop-Domain":SHOP},"orders/cancelled")
+        tampered=self.webhook({"id":order["id"]},delivery="cancel-delivery-0005",
+                              topic="orders/cancelled",tamper=True)
+        self.assertEqual(tampered["status"],403)
+        self.assertEqual(self.hold(cart["hold_id"])["status"],"confirmed")
+
+    def test_refund_of_booking_line_frees_slot_but_other_refunds_do_not(self):
+        cart,order=self.confirmed()
+        other=self.webhook({"order_id":order["id"],"refund_line_items":[
+            {"line_item":{"variant_id":123,"properties":[]}}]},
+            delivery="refund-delivery-0001",topic="refunds/create")
+        self.assertEqual(other["body"]["result"],"ignored")
+        amount_only=self.webhook({"order_id":order["id"],"refund_line_items":[]},
+            delivery="refund-delivery-0002",topic="refunds/create")
+        self.assertEqual(amount_only["body"]["result"],"ignored")
+        self.assertEqual(self.hold(cart["hold_id"])["status"],"confirmed")
+        booking=self.webhook({"order_id":order["id"],"refund_line_items":[
+            {"line_item":order["line_items"][0]}]},
+            delivery="refund-delivery-0003",topic="refunds/create")
+        self.assertEqual(booking["body"]["result"],"released")
+        self.assertEqual(self.hold(cart["hold_id"])["status"],"released")
+
+    def test_admin_reschedules_paid_booking_and_slot_moves(self):
+        cart,order=self.confirmed()
+        listing=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
+        item=listing["body"]["bookings"][0]
+        path="/api/v2/admin/appointments/bookings/paid/"+cart["hold_id"]
+        # The calendar can show its own current slot as free while moving it.
+        base=("/api/v2/admin/appointments/slots-preview?professional_id="+self.pid+
+              "&service_id="+self.service["id"]+"&mode=presencial&date="+self.day)
+        starts=lambda q:[x["start"] for x in self.admin.request(base+q)["body"]["slots"]]
+        self.assertNotIn("09:00",starts(""))
+        self.assertIn("09:00",starts("&exclude_hold_id="+cart["hold_id"]))
+        self.assertEqual(self.admin.request(base+"&exclude_hold_id="+"0"*32)["status"],404)
+        # Overlapping its own current slot is allowed (it is being moved).
+        moved=self.admin.request(path,"PUT",{"professional_id":self.pid,
+            "date":self.day,"start":"10:00","version":item["version"]})
+        self.assertEqual(moved["status"],200,moved)
+        row=self.hold(cart["hold_id"])
+        self.assertEqual((row["status"],row["start_minute"]),("confirmed",600))
+        stale=self.admin.request(path,"PUT",{"professional_id":self.pid,
+            "date":self.day,"start":"11:00","version":item["version"]})
+        self.assertEqual(stale["status"],409,stale)
+        outside=self.admin.request(path,"PUT",{"professional_id":self.pid,
+            "date":self.day,"start":"12:30","version":row["updated_at"]})
+        self.assertEqual(outside["status"],400,outside)
+        self.assertEqual(self.hold(cart["hold_id"])["status"],"confirmed")
+        # The old 09:00 start is free again for a new checkout.
+        with app.connect() as c:
+            fresh=bridge.create_checkout_hold(c,self.signed_proxy(),
+                                              dict(self.payload("after-move-key-0001"),start="11:30"))
+        self.assertTrue(fresh["hold_id"])
+        listing=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
+        paid=[b for b in listing["body"]["bookings"] if b["source"]=="shopify"]
+        self.assertEqual((paid[0]["start"],paid[0]["shopify_order_id"]),
+                         ("10:00",str(order["id"])))
+        self.assertEqual(fixtures.Client().request(path,"PUT",{})["status"],401)
+        with app.connect() as c:
+            change=c.execute("SELECT * FROM appt_shopify_booking_changes").fetchone()
+        self.assertEqual((change["action"],change["previous_start_minute"],
+                          change["current_start_minute"]),("rescheduled",540,600))
+
+    def test_phone_falls_back_to_billing_address(self):
+        cart=self.start()
+        order=self.order(cart)
+        order["billing_address"]={"phone":"+351 912 345 678"}
+        self.assertEqual(self.webhook(order)["body"]["result"],"confirmed")
+        with app.connect() as c:
+            row=c.execute("SELECT customer_phone FROM appt_shopify_confirmations").fetchone()
+        self.assertEqual(row["customer_phone"],"+351 912 345 678")
 
     def test_invalid_hmac_wrong_shop_or_topic_never_changes_booking(self):
         cart=self.start()

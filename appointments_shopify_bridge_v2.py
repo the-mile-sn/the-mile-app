@@ -105,6 +105,24 @@ def initialize(c):
       UNIQUE(org_id,shopify_order_id),
       FOREIGN KEY(hold_id) REFERENCES appt_checkout_holds(id)
     );
+    CREATE TABLE IF NOT EXISTS appt_shopify_booking_changes (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      hold_id TEXT NOT NULL,
+      shopify_order_id TEXT NOT NULL DEFAULT '',
+      action TEXT NOT NULL CHECK(action IN ('rescheduled','released')),
+      reason TEXT NOT NULL,
+      actor_id TEXT,
+      previous_professional_id TEXT,
+      previous_day TEXT,
+      previous_start_minute INTEGER,
+      current_professional_id TEXT,
+      current_day TEXT,
+      current_start_minute INTEGER,
+      created_at BIGINT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS appt_shopify_booking_changes_hold
+      ON appt_shopify_booking_changes(org_id,hold_id,created_at);
     """)
 
 
@@ -151,7 +169,10 @@ def verify_proxy_signature(query_string, now=None):
     return True
 
 
-def verify_webhook(body, headers):
+WEBHOOK_TOPICS = ("orders/paid", "orders/cancelled", "refunds/create")
+
+
+def verify_webhook(body, headers, topic="orders/paid"):
     """Verify raw payload HMAC; never JSON-serialize it before validating."""
     if not webhook_enabled():
         raise ShopifyBridgeError("shopify_webhooks_disabled")
@@ -159,7 +180,7 @@ def verify_webhook(body, headers):
         raise ShopifyBridgeError("invalid_webhook_body")
     if headers.get("X-Shopify-Shop-Domain", "").strip().lower() != _shop():
         raise ShopifyBridgeError("invalid_webhook_shop")
-    if headers.get("X-Shopify-Topic") != "orders/paid":
+    if topic not in WEBHOOK_TOPICS or headers.get("X-Shopify-Topic") != topic:
         raise ShopifyBridgeError("unsupported_webhook_topic")
     signature = headers.get("X-Shopify-Hmac-Sha256", "")
     try:
@@ -313,8 +334,16 @@ def _customer(order):
     if not name:
         name = str(order.get("name") or "").strip()[:140]
     email = str(order.get("email") or order.get("contact_email") or "").strip()[:254]
-    phone = str(order.get("phone") or "").strip()[:45]
-    return name or "Cliente Shopify", email, phone
+    phone = str(order.get("phone") or "").strip()
+    if not phone:
+        for key in ("billing_address", "shipping_address"):
+            address = order.get(key)
+            if isinstance(address, dict) and address.get("phone"):
+                phone = str(address.get("phone")).strip()
+                break
+    if not phone and isinstance(order.get("customer"), dict):
+        phone = str(order["customer"].get("phone") or "").strip()
+    return name or "Cliente Shopify", email, phone[:45]
 
 
 def process_paid_order(c, order, delivery_id, now=None):
@@ -436,6 +465,161 @@ def paid_webhook(c, body, headers, now=None):
     except (ValueError, UnicodeError):
         raise ShopifyBridgeError("invalid_webhook_json") from None
     return process_paid_order(c, data, delivery_id, now=now)
+
+
+def _record_change(c, hold, action, reason, epoch, actor=None, new=None):
+    c.execute("""INSERT INTO appt_shopify_booking_changes
+        (id,org_id,hold_id,shopify_order_id,action,reason,actor_id,
+         previous_professional_id,previous_day,previous_start_minute,
+         current_professional_id,current_day,current_start_minute,created_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+        secrets.token_hex(16), ORG_ID, hold["id"], hold["shopify_order_id"] or "",
+        action, reason, actor, hold["professional_id"], hold["day"],
+        hold["start_minute"],
+        new["professional_id"] if new else None,
+        new["day"] if new else None,
+        new["start_minute"] if new else None, epoch))
+
+
+def _release_paid_hold(c, order_id, reason, epoch, line_matches=None):
+    """Free the slot of a Shopify-paid booking. Never touches manual bookings."""
+    import appointments_bookings_v2 as bookings
+    row = c.execute("""SELECT * FROM appt_checkout_holds
+        WHERE org_id=? AND shopify_order_id=?""", (ORG_ID, order_id)).fetchone()
+    if not row:
+        return "ignored"
+    if line_matches is not None and not line_matches(row):
+        return "ignored"
+    bookings._acquire_transaction_locks(c, ORG_ID, [row["professional_id"]])
+    row = c.execute("""SELECT * FROM appt_checkout_holds
+        WHERE org_id=? AND id=?""", (ORG_ID, row["id"])).fetchone()
+    if row["status"] != "confirmed":
+        return "already_released" if row["status"] == "released" else "ignored"
+    c.execute("""UPDATE appt_checkout_holds SET status='released',updated_at=?
+        WHERE org_id=? AND id=? AND status='confirmed'""",
+        (epoch, ORG_ID, row["id"]))
+    _record_change(c, row, "released", reason, epoch)
+    return "released"
+
+
+def _delivery_result(c, delivery_id):
+    previous = c.execute("""SELECT result FROM appt_shopify_webhook_deliveries
+        WHERE org_id=? AND shop_domain=? AND delivery_id=?""",
+        (ORG_ID, _shop(), delivery_id)).fetchone()
+    return previous["result"] if previous else None
+
+
+def _store_delivery(c, delivery_id, order_id, result, epoch):
+    c.execute("""INSERT INTO appt_shopify_webhook_deliveries
+        (org_id,shop_domain,delivery_id,order_id,result,created_at)
+        VALUES(?,?,?,?,?,?)""", (ORG_ID,_shop(),delivery_id,order_id,result,epoch))
+
+
+def process_cancelled_order(c, order, delivery_id, now=None):
+    """Shopify order cancelled (usually with refund): free the booked slot."""
+    if not isinstance(order, dict):
+        raise ShopifyBridgeError("invalid_order")
+    order_id = str(order.get("id") or "")
+    if not ORDER_ID.fullmatch(order_id):
+        raise ShopifyBridgeError("invalid_order")
+    epoch = int(time.time()) if now is None else int(now)
+    previous = _delivery_result(c, delivery_id)
+    if previous:
+        return previous
+    result = _release_paid_hold(c, order_id, "shopify_order_cancelled", epoch)
+    _store_delivery(c, delivery_id, order_id, result, epoch)
+    return result
+
+
+def process_refund(c, refund, delivery_id, now=None):
+    """Refund that includes the booking line: free the slot. Refunds of other
+    products, or amount-only refunds, leave the booking untouched."""
+    if not isinstance(refund, dict):
+        raise ShopifyBridgeError("invalid_refund")
+    order_id = str(refund.get("order_id") or "")
+    if not ORDER_ID.fullmatch(order_id):
+        raise ShopifyBridgeError("invalid_refund")
+    epoch = int(time.time()) if now is None else int(now)
+    previous = _delivery_result(c, delivery_id)
+    if previous:
+        return previous
+    items = refund.get("refund_line_items")
+    items = items if isinstance(items, list) else []
+
+    def matches(hold):
+        variant = str(hold["shopify_variant_id"]).rsplit("/", 1)[-1]
+        for item in items[:250]:
+            line = item.get("line_item") if isinstance(item, dict) else None
+            if not isinstance(line, dict):
+                continue
+            if _props(line).get("_the_mile_hold") == hold["id"]:
+                return True
+            if str(line.get("variant_id") or "") == variant:
+                return True
+        return False
+
+    result = _release_paid_hold(c, order_id, "shopify_refund", epoch, matches)
+    _store_delivery(c, delivery_id, order_id, result, epoch)
+    return result
+
+
+def handle_webhook(c, body, headers, topic, now=None):
+    delivery_id = verify_webhook(body, headers, topic)
+    try:
+        data = json.loads(body)
+    except (ValueError, UnicodeError):
+        raise ShopifyBridgeError("invalid_webhook_json") from None
+    if topic == "orders/paid":
+        return process_paid_order(c, data, delivery_id, now=now)
+    if topic == "orders/cancelled":
+        return process_cancelled_order(c, data, delivery_id, now=now)
+    return process_refund(c, data, delivery_id, now=now)
+
+
+def reschedule_paid(c, hold_id, payload, actor, now=None):
+    """Move a Shopify-paid booking to another free slot (same service & format,
+    so the price paid stays valid). Reuses the manual-booking validation."""
+    import appointments_bookings_v2 as bookings
+    if not isinstance(payload, dict) or not HEX_ID.fullmatch(str(hold_id)):
+        raise ValueError("invalid_request")
+    row = c.execute("""SELECT * FROM appt_checkout_holds WHERE org_id=? AND id=?""",
+                    (ORG_ID, hold_id)).fetchone()
+    if not row or not c.execute("""SELECT 1 FROM appt_shopify_confirmations
+            WHERE org_id=? AND hold_id=?""", (ORG_ID, hold_id)).fetchone():
+        raise LookupError("booking_not_found")
+    pid = payload.get("professional_id")
+    if not isinstance(pid, str) or not pid or len(pid) > 70:
+        raise ValueError("invalid_professional")
+    bookings._acquire_transaction_locks(c, ORG_ID, [row["professional_id"], pid])
+    row = c.execute("""SELECT * FROM appt_checkout_holds WHERE org_id=? AND id=?""",
+                    (ORG_ID, hold_id)).fetchone()
+    if row["status"] != "confirmed":
+        raise ValueError("booking_cancelled")
+    if payload.get("version") != row["updated_at"]:
+        raise ValueError("stale_booking")
+    candidate = {"professional_id": pid, "service_id": row["service_id"],
+                 "mode": row["mode"], "date": payload.get("date"),
+                 "start": payload.get("start")}
+    # The booking must not conflict with itself while it is being moved.
+    c.execute("""UPDATE appt_checkout_holds SET status='released'
+        WHERE org_id=? AND id=? AND status='confirmed'""", (ORG_ID, hold_id))
+    try:
+        values = bookings._validate_candidate(c, ORG_ID, candidate, now=now)
+    except Exception:
+        c.execute("""UPDATE appt_checkout_holds SET status='confirmed'
+            WHERE org_id=? AND id=? AND status='released'""", (ORG_ID, hold_id))
+        raise
+    pid, _sid, _mode, day, start, end, start_utc, end_utc = values
+    epoch = int(time.time())
+    if epoch <= row["updated_at"]:
+        epoch = row["updated_at"] + 1
+    c.execute("""UPDATE appt_checkout_holds SET status='confirmed',
+        professional_id=?,day=?,start_minute=?,end_minute=?,start_utc=?,end_utc=?,
+        updated_at=? WHERE org_id=? AND id=?""",
+        (pid, day, start, end, start_utc, end_utc, epoch, ORG_ID, hold_id))
+    _record_change(c, row, "rescheduled", "backoffice", epoch, actor,
+                   {"professional_id": pid, "day": day, "start_minute": start})
+    return hold_id
 
 
 def payment_summary(c, now=None):

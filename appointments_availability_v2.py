@@ -230,7 +230,8 @@ def _valid_lisbon_window(day, start, end):
     return a, b
 
 
-def preview(c, org_id, professional, service, mode, day_value, now=None, exclude_booking_id=None):
+def preview(c, org_id, professional, service, mode, day_value, now=None, exclude_booking_id=None,
+            exclude_hold_id=None):
     """Internal approximation only. Never offer these slots as public bookable."""
     p = _professional(c, org_id, professional)
     day = clean_date(day_value)
@@ -269,7 +270,8 @@ def preview(c, org_id, professional, service, mode, day_value, now=None, exclude
     bookings = c.execute("""SELECT start_minute,end_minute FROM appt_bookings
         WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'
           AND id<>?""", (org_id, professional, day.isoformat(), excluded)).fetchall()
-    active_holds = checkout.active_by_date(c,org_id,professional,day.isoformat(),day.isoformat(),now)
+    held = _hold_exclusion(c, org_id, exclude_hold_id)
+    active_holds = checkout.active_by_date(c,org_id,professional,day.isoformat(),day.isoformat(),now,held)
     duration = s["duration_minutes"]
     local_start = datetime.combine(day, datetime.min.time(), LISBON)
     local_end = datetime.combine(day + timedelta(days=1), datetime.min.time(), LISBON)
@@ -296,6 +298,19 @@ def _booking_exclusion(c, org_id, booking_id):
     row = c.execute("""SELECT id FROM appt_bookings
         WHERE org_id=? AND id=? AND status='scheduled'""",
         (org_id, booking_id)).fetchone()
+    if row is None:
+        raise LookupError("booking_not_found")
+    return row["id"]
+
+
+def _hold_exclusion(c, org_id, hold_id):
+    """Only a confirmed Shopify-paid booking can be excluded (rescheduling)."""
+    if hold_id in (None, ""):
+        return ""
+    if not isinstance(hold_id, str) or not re.fullmatch(r"[0-9a-f]{32}", hold_id):
+        raise ValueError("invalid_booking_id")
+    row = c.execute("""SELECT id FROM appt_checkout_holds
+        WHERE org_id=? AND id=? AND status='confirmed'""", (org_id, hold_id)).fetchone()
     if row is None:
         raise LookupError("booking_not_found")
     return row["id"]
@@ -341,7 +356,7 @@ def _periods_by_day(c, table, org_id, professional, start_date, end_date, exclus
 
 
 def month_preview(c, org_id, professional, service, mode, month, now=None,
-                  exclude_booking_id=None):
+                  exclude_booking_id=None, exclude_hold_id=None):
     """One read-only request for every visible date in a calendar month.
 
     Considers published availability, manual blocks and internal bookings.
@@ -373,6 +388,7 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
     today = now.astimezone(LISBON).date()
     end_limit = today + timedelta(days=60)
     excluded = _booking_exclusion(c, org_id, exclude_booking_id)
+    held = _hold_exclusion(c, org_id, exclude_hold_id)
 
     if eligible and first <= end_limit and last >= today:
         start_iso, end_iso = max(first, today).isoformat(), min(last, end_limit).isoformat()
@@ -382,7 +398,7 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
                                  professional, start_iso, end_iso)
         bookings = _periods_by_day(c, "appt_bookings", org_id,
                                    professional, start_iso, end_iso, excluded)
-        active_holds = checkout.active_by_date(c,org_id,professional,start_iso,end_iso,now)
+        active_holds = checkout.active_by_date(c,org_id,professional,start_iso,end_iso,now,held)
         google_busy = google.busy_intervals(
             c, org_id, professional,
             datetime.combine(max(first, today), datetime.min.time(), LISBON),
