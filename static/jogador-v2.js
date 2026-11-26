@@ -2388,12 +2388,24 @@ async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
   const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent=playerText('Que cor consumiste?','Which colour did you consume?');const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar seleção de cor','Close colour selection'));close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
   const colors=data.alternative_colors||[];
   if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem outras cores com opções publicadas.','No other colours have published options.');panel.append(hint);}
-  for(const color of colors){
-   const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
-   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=playerUiLanguage==='en'?({green:'Green',yellow:'Yellow',orange:'Orange',blue:'Blue',red:'Red',vp:'Preparation green'})[color]||color:({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
+  // Same medal as the Início «Planos» widget: one row per colour, highest carbohydrates first.
+  const rank=c=>{const i=PLAN_ORDER.indexOf(c);return i<0?PLAN_ORDER.length:i;};
+  const list=document.createElement('div');list.className='consumption-color-list';
+  for(const color of [...colors].sort((a,b)=>rank(a)-rank(b))){
+   const label=playerUiLanguage==='en'?({green:'Green',yellow:'Yellow',orange:'Orange',blue:'Blue',red:'Red',vp:'Preparation green'})[color]||color:({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
+   const carbs=PLAN_CARB_LEVEL[color]||0;
+   const button=document.createElement('button');button.type='button';
+   button.className='consumption-color-option consumption-color-row consumption-color-'+color;
+   const text=document.createElement('span');text.className='consumption-color-text';
+   const name=document.createElement('span');name.className='consumption-color-name';name.textContent=label;text.append(name);
+   if(carbs){const sub=document.createElement('span');sub.className='consumption-color-sub';sub.textContent=playerText('Hidratos ','Carbohydrates ')+carbs+playerText(' de 4',' of 4');text.append(sub);}
+   const chevron=document.createElement('span');chevron.className='consumption-color-chevron';chevron.setAttribute('aria-hidden','true');chevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+   button.append(planBadge({tone:color,carbs}),text,chevron);
+   button.setAttribute('aria-label',label+(carbs?playerText(', hidratos ',', carbohydrates ')+carbs+playerText(' de 4',' of 4'):''));
    button.onclick=()=>openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color);
-   panel.append(button);
+   list.append(button);
   }
+  if(colors.length)panel.append(list);
  }catch(e){if(panel.isConnected){status.textContent=playerText('Não foi possível carregar as cores.','Could not load colours.');}error(e);}
 }
 
