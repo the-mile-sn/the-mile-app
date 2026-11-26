@@ -81,6 +81,9 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
                     "date": self.day, "start": "11:00",
                     "idempotency_key": "same-day-closed-key-0001"},
                     "test", now=now, public=True)
+            # Online consultations stay bookable the same day.
+            self.assertTrue(storefront.public_day(
+                c, self.pid, self.follow["id"], "online", self.day, now=now)["slots"])
             # The day after "today" is unaffected.
             self.assertFalse(checkout.same_day_closed(
                 c, "the-mile", self.pid, day + timedelta(days=1), now))

@@ -128,13 +128,16 @@ def active_by_date(c, org_id, professional_id, start_day, end_day, now=None, exc
     return grouped
 
 
-def same_day_closed(c, org_id, professional_id, day, now=None):
+def same_day_closed(c, org_id, professional_id, day, now=None, mode=None):
     """Public booking rule: today is only bookable online when the professional
     already has a booking that day (otherwise nobody is at the clinic).
 
     Counts scheduled manual bookings and paid (confirmed) site bookings.
-    Backoffice bookings are never restricted by this rule.
+    Backoffice bookings are never restricted by this rule, and online
+    consultations are exempt (no one needs to travel to the clinic).
     """
+    if mode == "online":
+        return False
     from appointments_availability_v2 import LISBON
     current = now or datetime.now(timezone.utc)
     today = current.astimezone(LISBON).date().isoformat()
@@ -176,12 +179,13 @@ def start_hold(c, data, actor, org_id=ORG_ID, now=None, public=False):
         )
         if public:
             people = [p for p in people if not same_day_closed(
-                c, org_id, p["id"], data.get("date"), now)]
+                c, org_id, p["id"], data.get("date"), now, data.get("mode"))]
             if not people:
                 raise ValueError("same_day_unavailable")
         ids = [person["id"] for person in people]
     else:
-        if public and same_day_closed(c, org_id, requested_pid, data.get("date"), now):
+        if public and same_day_closed(c, org_id, requested_pid, data.get("date"),
+                                      now, data.get("mode")):
             raise ValueError("same_day_unavailable")
         people = []
         ids = [requested_pid]

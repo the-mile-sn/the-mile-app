@@ -120,7 +120,7 @@ def public_month(c, professional_id, service_id, mode, month, now=None):
         )
         for item in result["days"]:
             open_day = bool(item["available"]) and not checkout.same_day_closed(
-                c, ORG_ID, person["id"], item["date"], now)
+                c, ORG_ID, person["id"], item["date"], now, mode)
             grouped[item["date"]] = grouped.get(item["date"], False) or open_day
     return {
         "month": month,
@@ -145,7 +145,7 @@ def public_day(c, professional_id, service_id, mode, day, now=None):
         raise ValueError("outside_booking_window")
     combined = {}
     for person in people:
-        if checkout.same_day_closed(c, ORG_ID, person["id"], date, now):
+        if checkout.same_day_closed(c, ORG_ID, person["id"], date, now, mode):
             continue
         result = availability.preview(
             c, ORG_ID, person["id"], service_id, mode, day, now=now,
