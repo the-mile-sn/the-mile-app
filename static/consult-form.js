@@ -3,7 +3,7 @@
   "use strict";
   var token = new URLSearchParams(location.search).get("t") || "";
   var app = document.getElementById("tmf-app");
-  var saveEl = document.getElementById("tmf-save");
+  var shownToasts = {};
   var topInfo = document.getElementById("tmf-top-info");
   var data = null;          // resposta de /dados
   var answers = {};
@@ -75,6 +75,8 @@
   }
 
   function setSave(text, bad) {
+    var saveEl = document.getElementById("tmf-save");
+    if (!saveEl) return;
     saveEl.textContent = text;
     saveEl.classList.toggle("is-error", !!bad);
   }
@@ -172,6 +174,8 @@
       t.value = v || "";
       t.addEventListener("input", function () { setAnswer(f.id, t.value.trim() ? t.value : ""); });
       box.append(t);
+    } else if (f.type === "number" && (f.id === "height_cm" || f.id === "weight_kg")) {
+      box.append(wheelField(f, box));
     } else if (f.type === "number") {
       var row = el("div", "tmf-unit");
       var n = el("input", "tmf-input");
@@ -214,6 +218,81 @@
     return box;
   }
 
+
+  // Rodas para altura e peso (como na maqueta): arrastar, tocar nos números ou usar as setas.
+  var ITEM_H = 40;
+  function wheel(values, index, onPick, label, placeholder) {
+    var box = el("div", "tmf-wheel" + (placeholder ? " is-placeholder" : ""));
+    var list = el("div", "tmf-wheel-list");
+    list.tabIndex = 0;
+    list.setAttribute("role", "listbox");
+    list.setAttribute("aria-label", label);
+    values.forEach(function (v, i) {
+      var it = el("div", "tmf-wheel-item", v);
+      it.setAttribute("role", "option");
+      it.addEventListener("click", function () { go(i, true); });
+      list.append(it);
+    });
+    var current = index, timer = null, ready = false;
+    function mark() {
+      Array.prototype.forEach.call(list.children, function (c, i) {
+        c.classList.toggle("is-on", i === current);
+        c.setAttribute("aria-selected", String(i === current));
+      });
+    }
+    function go(i, smooth) {
+      current = Math.max(0, Math.min(values.length - 1, i));
+      list.scrollTo({top: current * ITEM_H, behavior: smooth ? "smooth" : "auto"});
+      mark(); box.classList.remove("is-placeholder"); onPick(current);
+    }
+    list.addEventListener("scroll", function () {
+      if (!ready) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var i = Math.round(list.scrollTop / ITEM_H);
+        if (i !== current || box.classList.contains("is-placeholder")) { current = i; mark(); box.classList.remove("is-placeholder"); onPick(i); }
+      }, 120);
+    });
+    list.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowUp") { e.preventDefault(); go(current - 1, true); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); go(current + 1, true); }
+    });
+    box.append(list);
+    mark();
+    requestAnimationFrame(function () { list.scrollTop = current * ITEM_H; setTimeout(function () { ready = true; }, 200); });
+    return box;
+  }
+  function wheelField(f, fieldBox) {
+    var row = el("div", "tmf-wheels");
+    var v = answers[f.id];
+    function done(value) {
+      setAnswer(f.id, value);
+      fieldBox.classList.add("is-answered");
+    }
+    if (f.id === "height_cm") {
+      var hs = [];
+      for (var h = f.min; h <= f.max; h++) hs.push((h / 100).toFixed(2).replace(".", ","));
+      var hi = v ? Math.round(v) - f.min : 165 - f.min;
+      var w1 = el("div", "tmf-wheel-wrap");
+      w1.append(wheel(hs, hi, function (i) { done(f.min + i); }, "Altura em metros", v == null), el("span", "tmf-wheel-unit", "m"));
+      row.append(w1);
+    } else {
+      var ints = [], decs = [];
+      for (var k = f.min; k <= f.max; k++) ints.push(String(k));
+      for (var d = 0; d <= 9; d++) decs.push(String(d));
+      var cur = v != null ? Number(v) : 65;
+      var ii = Math.floor(cur) - f.min, di = Math.round((cur - Math.floor(cur)) * 10);
+      var w2 = el("div", "tmf-wheel-wrap");
+      function pick() { done(Math.round((f.min + ii + di / 10) * 10) / 10); }
+      w2.append(wheel(ints, ii, function (i) { ii = i; pick(); }, "Peso, quilos", v == null),
+        el("span", "tmf-wheel-comma", ","),
+        wheel(decs, di, function (i) { di = i; pick(); }, "Peso, décimas", v == null),
+        el("span", "tmf-wheel-unit", "kg"));
+      row.append(w2);
+    }
+    return row;
+  }
+
   // Frequência: uma linha por alimento com os dias por semana; «Todos» pede quantas vezes por dia.
   function weeklyOf(value) {
     if (!value) return "";
@@ -236,6 +315,7 @@
       if (value) row.classList.add("is-done");
       if (errors[f.id] === "required" && !value) row.classList.add("is-missing");
       var name = el("div", "tmf-freq-name", r[1]);
+      name.append(el("span", "tmf-freq-n", (f.rows.indexOf(r) + 1) + " de " + f.rows.length));
       if (r[2]) name.append(el("small", "", r[2]));
       var week = weeklyOf(value) || (dailyPending[key] ? "all" : "");
       var perDay = opts.filter(function (x) { return WEEKLY.every(function (w) { return w[0] !== x[0]; }); });
@@ -313,6 +393,47 @@
     return wrap;
   }
 
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function icon(paths) {
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "18"); svg.setAttribute("height", "18");
+    svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round"); svg.setAttribute("aria-hidden", "true");
+    paths.forEach(function (d) { var p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", d); svg.append(p); });
+    return svg;
+  }
+  var ICON_SAVE = ["M3 12a9 9 0 1 0 3-6.7", "M3 4v5h5"];
+  var ICON_LOCK = ["M6 11h12v9H6z", "M8.5 11V8a3.5 3.5 0 0 1 7 0v3"];
+  var ICON_CHECK = ["M5 12.5l4.5 4.5L19 7.5"];
+  var LONG_DAY = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+
+  function setMode(kind) {
+    document.body.classList.toggle("is-dark-screen", kind === "welcome");
+    document.getElementById("tmf-top-progress").hidden = kind !== "step";
+  }
+  function toast(text, badge) {
+    var t = document.getElementById("tmf-toast");
+    t.replaceChildren();
+    if (badge) t.append(el("b", "", badge));
+    t.append(el("span", "", text));
+    t.hidden = false;
+    t.classList.remove("is-out");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { t.classList.add("is-out"); setTimeout(function () { t.hidden = true; }, 300); }, 4500);
+  }
+  function icsFile(b) {
+    var start = b.date.replace(/-/g, "") + "T" + b.start.replace(":", "") + "00";
+    var lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//The Mile//Consulta//PT", "BEGIN:VEVENT",
+      "UID:" + token.slice(0, 12) + "@themile.pt",
+      "DTSTART;TZID=Europe/Lisbon:" + start,
+      "DURATION:PT90M",
+      "SUMMARY:" + b.service + " · The Mile",
+      "LOCATION:" + (b.mode === "online" ? "Online" : ADDRESS.replace(/,/g, "\\,")),
+      "DESCRIPTION:Com " + b.professional,
+      "END:VEVENT", "END:VCALENDAR"];
+    return new Blob([lines.join("\r\n")], {type: "text/calendar"});
+  }
+
   // ---------- ecrãs ----------
   function bookingTop() {
     var b = data.booking;
@@ -320,55 +441,82 @@
   }
 
   function renderWelcome() {
+    setMode("welcome");
     app.replaceChildren();
-    var hero = el("section", "tmf-hero tmf-enter");
+    var hero = el("section", "tmf-welcome tmf-enter");
+    var b = data.booking;
+    if (b) hero.append(el("span", "tmf-pill", b.service + " · " + niceDate(b.date, b.start)));
     var h = el("h1", "", "Olá" + firstName() + ",");
-    h.append(el("span", "", "vamos preparar a tua consulta."));
-    var who = data.booking && data.booking.professional ? "A " + data.booking.professional.split(" ")[0] : "A tua nutricionista";
+    h.append(el("br"), document.createTextNode("vamos preparar a tua consulta."));
+    var who = b && b.professional ? "A " + b.professional.split(" ")[0] : "A tua nutricionista";
     var facts = el("ul", "tmf-facts");
-    [["15'", "Cerca de 15 minutos, em passos curtos"],
-     ["✓", "Guarda sozinho. Podes parar e voltar a este link"],
-     ["✓", "Só a equipa de nutrição vê as respostas"]].forEach(function (x) {
-      var li = el("li"); li.append(el("b", "", x[0]), el("span", "", x[1])); facts.append(li);
+    [[el("b", "", "15'"), "Cerca de 15 minutos, em passos curtos"],
+     [icon(ICON_SAVE), "Guarda sozinho. Podes parar e voltar a este link"],
+     [icon(ICON_LOCK), "Só a equipa de nutrição vê as respostas"]].forEach(function (x) {
+      var li = el("li"); var ic = el("span", "tmf-fact-icon"); ic.append(x[0]);
+      li.append(ic, el("span", "", x[1])); facts.append(li);
     });
-    var go = el("button", "tmf-btn tmf-btn-primary", "Começar");
+    var go = el("button", "tmf-btn tmf-btn-light", "Começar");
     go.type = "button";
     go.addEventListener("click", function () { current = 0; renderStep(); window.scrollTo(0, 0); });
+    var foot = el("div", "tmf-welcome-foot");
+    foot.append(go, el("p", "", "Não há respostas certas ou erradas. Responde como é hoje, não como gostavas que fosse."));
     hero.append(h,
-      el("p", "", "Antes da consulta, queremos conhecer-te um pouco melhor. " + who + " vai ler as tuas respostas para que o tempo em consulta seja dedicado ao que é importante para ti."),
-      facts, go,
-      el("p", "tmf-small", "Não há respostas certas ou erradas. Responde como é hoje, não como gostavas que fosse."));
+      el("p", "tmf-welcome-lead", "Antes da consulta, queremos conhecer-te um pouco melhor. " + who + " vai ler as tuas respostas para que o tempo em consulta seja dedicado ao que é importante para ti."),
+      facts, foot);
     app.append(hero);
     go.focus();
   }
 
   function renderDone() {
+    setMode("done");
     app.replaceChildren();
-    var hero = el("section", "tmf-hero tmf-enter");
-    hero.append(el("div", "tmf-done-mark", "✓"));
+    var hero = el("section", "tmf-done tmf-enter");
+    var mark = el("div", "tmf-done-mark"); mark.append(icon(ICON_CHECK));
+    hero.append(mark);
     hero.append(el("h1", "", "Obrigada" + (data.first_name ? ", " + data.first_name : "") + ". Está tudo pronto."));
     var b = data.booking;
-    hero.append(el("p", "", "As tuas respostas ficaram guardadas." + (b ? " Até " + niceDate(b.date) + "." : "")));
+    var until = "";
+    if (b) { var d = new Date(b.date + "T12:00:00"); until = " Até " + LONG_DAY[d.getDay()] + ", dia " + d.getDate() + "."; }
+    hero.append(el("p", "tmf-done-lead", "As tuas respostas ficaram guardadas." + until));
     if (b) {
-      var dl = el("dl", "tmf-booking");
+      var box = el("div", "tmf-booking");
+      box.append(el("strong", "", "A tua consulta"));
+      var dl = el("dl");
       [["Quando", niceDate(b.date, b.start)],
        ["Onde", b.mode === "online" ? "Online (recebes o link por email)" : ADDRESS],
        ["Com", b.professional]].forEach(function (x) { dl.append(el("dt", "", x[0]), el("dd", "", x[1])); });
-      hero.append(dl);
+      box.append(dl);
+      hero.append(box);
     }
-    var tips = el("ul", "tmf-tips");
+    var tips = el("ol", "tmf-tips");
     var list = ["Traz análises recentes e outros documentos que consideres importantes."];
     if (!b || b.mode !== "online") list.unshift("Aconselhamos roupa confortável para a avaliação antropométrica completa (ex.: calções e/ou top desportivo). Se preferires, podes trocar de roupa nas nossas instalações.");
-    list.forEach(function (t, i) { var li = el("li"); li.append(el("b", "", String(i + 1)), el("span", "", t)); tips.append(li); });
-    hero.append(el("div", "tmf-label", "Para o dia"), tips);
+    list.forEach(function (t) { tips.append(el("li", "", t)); });
+    hero.append(el("div", "tmf-done-title", "Para o dia"), tips);
+    var actions = el("div", "tmf-done-actions");
+    if (b) {
+      var cal = el("a", "tmf-btn tmf-btn-primary", "Adicionar ao calendário");
+      cal.href = URL.createObjectURL(icsFile(b)); cal.download = "consulta-the-mile.ics";
+      actions.append(cal);
+    }
     var review = el("button", "tmf-btn tmf-btn-ghost", "Rever as minhas respostas");
     review.type = "button";
     review.addEventListener("click", function () { mode = "review"; current = data.steps.indexOf(screens()[0]); renderStep(); window.scrollTo(0, 0); });
-    hero.append(review);
+    actions.append(review);
+    hero.append(actions);
     app.append(hero);
-    setSave("");
   }
 
+  function milestone(pos, total) {
+    if (mode === "review") return;
+    var left = total - pos - 1;
+    var mins = Math.max(1, Math.round(left * SECONDS_PER_SCREEN / 60));
+    var pct = pos / total;
+    var name = firstName() ? "," + firstName() : "";
+    if (pct >= 0.5 && !shownToasts.half) { shownToasts.half = true; toast("Já vais a meio" + name + ". Faltam cerca de " + mins + " minutos.", "½"); }
+    else if (pct >= 0.8 && !shownToasts.end) { shownToasts.end = true; toast("Falta pouco" + name + ". Mais " + left + (left === 1 ? " passo." : " passos."), "¾"); }
+  }
   function cheer(pos, total) {
     var left = total - pos - 1;
     var mins = Math.max(1, Math.round(left * SECONDS_PER_SCREEN / 60));
@@ -389,14 +537,10 @@
     var gs = groups(), gpos = gs.indexOf(step.group);
     var keepFocus = document.activeElement && document.activeElement.id;
     var scrollY = window.scrollY;
+    setMode("step");
     app.replaceChildren();
-
-    var progress = el("div", "tmf-progress");
-    var track = el("div", "tmf-progress-track"); var fill = el("span"); track.append(fill);
-    fill.style.setProperty("width", Math.max(3, Math.round(pos / list.length * 100)) + "%");
-    var ptext = el("div", "tmf-progress-text");
-    ptext.append(el("span", "", "Passo " + (pos + 1) + " de " + list.length), el("span", "", mode === "review" ? "" : cheer(pos, list.length)));
-    progress.append(track, ptext);
+    document.getElementById("tmf-top-step").textContent = "Passo " + (pos + 1) + " de " + list.length + " · " + step.group;
+    document.getElementById("tmf-top-fill").style.setProperty("width", Math.max(3, Math.round((pos + 1) / list.length * 100)) + "%");
 
     var layout = el("div", "tmf-layout");
     var nav = el("nav", "tmf-steps");
@@ -414,11 +558,21 @@
     var main = el("main", "tmf-main");
     var card = el("section", "tmf-card" + (scrollTarget ? "" : " tmf-enter"));
     var head = el("div");
-    head.append(el("div", "tmf-kicker", step.group), el("h1", "", step.title));
+    head.append(el("div", "tmf-kicker", "Passo " + (pos + 1) + " de " + list.length + " · " + step.group), el("h1", "", step.title));
     if (step.intro) head.append(el("p", "tmf-intro", step.intro));
     card.append(head);
     if (mode === "review") card.append(el("div", "tmf-banner", "Já enviaste este formulário. As alterações que fizeres ficam guardadas e a equipa vê a versão mais recente."));
-    step.fields.filter(visible).forEach(function (f) { card.append(fieldNode(f)); });
+    var pair = null;
+    step.fields.filter(visible).forEach(function (f) {
+      var node = fieldNode(f);
+      if (f.id === "height_cm" || f.id === "weight_kg") {
+        if (!pair) {
+          pair = el("div", "tmf-pair"); card.append(pair);
+          card.append(el("div", "tmf-hint tmf-pair-hint", "Arrasta ou toca nos números de cima e de baixo. O peso tem quilos e décimas em rodas separadas."));
+        }
+        pair.append(node);
+      } else card.append(node);
+    });
     var bar2 = el("div", "tmf-nav");
     var back = el("button", "tmf-btn tmf-btn-ghost", "Anterior");
     back.type = "button"; back.disabled = pos === 0;
@@ -429,8 +583,10 @@
     next.id = "tmf-next";
     next.addEventListener("click", function () { advance(step, last, next); });
     bar2.append(back, next);
-    card.append(bar2);
-    main.append(progress, card);
+    var saved = el("div", "tmf-save", "Guardado automaticamente");
+    saved.id = "tmf-save"; saved.setAttribute("aria-live", "polite");
+    card.append(bar2, saved);
+    main.append(card);
     layout.append(nav, main);
     app.append(layout);
 
@@ -470,6 +626,8 @@
     saveNow();
     window.scrollTo(0, 0);
     renderStep();
+    var list = screens();
+    milestone(list.indexOf(data.steps[current]), list.length);
   }
 
   function validate(step) {

@@ -5,15 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Formulário pré-consulta · The Mile</title>
-<link rel="stylesheet" href="formulario.css?v=3">
-<script src="formulario.js?v=3" defer></script>
+<link rel="stylesheet" href="formulario.css?v=4">
+<script src="formulario.js?v=4" defer></script>
 </head>
 <body class="tmf">
 <header class="tmf-top">
-  <span class="tmf-brand">The Mile</span>
-  <span class="tmf-top-info" id="tmf-top-info"></span>
-  <span class="tmf-save" id="tmf-save" aria-live="polite"></span>
+  <div class="tmf-top-row">
+    <span class="tmf-brand">The Mile</span>
+    <span class="tmf-top-info" id="tmf-top-info"></span>
+  </div>
+  <div class="tmf-top-progress" id="tmf-top-progress" hidden>
+    <div class="tmf-top-step" id="tmf-top-step"></div>
+    <div class="tmf-top-track"><span id="tmf-top-fill"></span></div>
+  </div>
 </header>
+<div class="tmf-toast" id="tmf-toast" role="status" aria-live="polite" hidden></div>
 <div class="tmf-wrap" id="tmf-app">
   <p class="tmf-loading">A carregar…</p>
 </div>
