@@ -11,6 +11,7 @@ from datetime import date, timedelta
 
 from appointments_catalog_v2 import ORG_ID
 import consult_clients_v2 as clients
+import consult_body_comp_v2 as body
 
 INDICATORS = ("adherence", "energy", "sleep", "digestion", "hunger", "hydration")
 NEXT_ACTIONS = ("", "link", "book")
@@ -44,7 +45,88 @@ def initialize(c):
     );
     CREATE INDEX IF NOT EXISTS consult_sessions_by_client
         ON consult_sessions(org_id, client_id, created_at);
+
+    -- Avaliação de composição corporal registada numa consulta (uma por consulta).
+    CREATE TABLE IF NOT EXISTS consult_assessments (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        client_id TEXT NOT NULL,
+        session_id TEXT NOT NULL UNIQUE,
+        assessed_on TEXT NOT NULL,
+        measures_json TEXT NOT NULL DEFAULT '{}',
+        equation TEXT NOT NULL DEFAULT 'peterson',
+        results_json TEXT NOT NULL DEFAULT '{}',
+        version INTEGER NOT NULL DEFAULT 1 CHECK(version > 0),
+        created_by TEXT,
+        updated_by TEXT,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS consult_assessments_by_client
+        ON consult_assessments(org_id, client_id, assessed_on);
     """)
+
+
+def _basics(c, client_id, org_id):
+    row = c.execute("""SELECT sex,birth_date,height_cm,ethnic_adjustment FROM consult_clients
+        WHERE org_id=? AND id=?""", (org_id, client_id)).fetchone()
+    return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnic_adjustment": "none"}
+
+
+def _assessment_public(row):
+    if not row:
+        return None
+    data = dict(row)
+    data["measures"] = json.loads(data.pop("measures_json") or "{}")
+    data["results"] = json.loads(data.pop("results_json") or "{}")
+    return data
+
+
+def _equation_list(sex):
+    return [{"key": k, "label": v[0]} for k, v in body.EQUATIONS.items() if not sex or sex in v[1]]
+
+
+def save_assessment(c, session_id, payload, actor, org_id=ORG_ID, now=None):
+    """Grava as medições da avaliação desta consulta e recalcula os resultados no servidor."""
+    if not isinstance(payload, dict):
+        raise ValueError("invalid_request")
+    now = now or int(time.time())
+    row = c.execute("SELECT * FROM consult_sessions WHERE org_id=? AND id=?",
+                    (org_id, session_id)).fetchone()
+    if not row:
+        raise LookupError("session_not_found")
+    if row["status"] == "closed":
+        raise ValueError("session_closed")
+    measures = body.clean_measures(payload.get("measures") or {})
+    equation = payload.get("equation") or body.DEFAULT_EQUATION
+    if equation not in body.EQUATIONS:
+        raise ValueError("invalid_equation")
+    b = _linked_booking(c, row["booking_kind"], row["booking_id"], org_id)
+    basics = _basics(c, row["client_id"], org_id)
+    if "height_cm" not in measures and basics.get("height_cm"):
+        measures["height_cm"] = float(basics["height_cm"])
+    results = body.compute(measures, basics.get("sex"), body.age_on(basics.get("birth_date"), b["day"]),
+                           basics.get("ethnic_adjustment") or "none", equation)
+    existing = c.execute("SELECT * FROM consult_assessments WHERE org_id=? AND session_id=?",
+                         (org_id, session_id)).fetchone()
+    if existing:
+        if type(payload.get("version")) is not int or payload["version"] != existing["version"]:
+            raise ValueError("stale_assessment")
+        changed = c.execute("""UPDATE consult_assessments SET measures_json=?,equation=?,results_json=?,
+            updated_by=?,updated_at=?,version=version+1 WHERE org_id=? AND id=? AND version=?""",
+                            (json.dumps(measures, sort_keys=True), equation, json.dumps(results, sort_keys=True),
+                             actor, now, org_id, existing["id"], existing["version"]))
+        if changed.rowcount != 1:
+            raise ValueError("stale_assessment")
+    else:
+        c.execute("""INSERT INTO consult_assessments
+            (id,org_id,client_id,session_id,assessed_on,measures_json,equation,results_json,
+             created_by,updated_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                  (uuid.uuid4().hex, org_id, row["client_id"], session_id, b["day"],
+                   json.dumps(measures, sort_keys=True), equation, json.dumps(results, sort_keys=True),
+                   actor, actor, now, now))
+    return _assessment_public(c.execute("SELECT * FROM consult_assessments WHERE org_id=? AND session_id=?",
+                                        (org_id, session_id)).fetchone())
 
 
 def _hhmm(minutes):
@@ -150,7 +232,12 @@ def client_view(c, client_id, today=None, org_id=ORG_ID):
             history.append({**i, "note_text": p["note_text"], "objectives": p["objectives"],
                             "plan_changes": p["plan_changes"], "indicators": p["indicators"],
                             "closed_at": p["closed_at"]})
-    return {"profile": profile, "next": upcoming[0] if upcoming else None,
+    series = [_assessment_public(r) for r in c.execute("""SELECT * FROM consult_assessments
+        WHERE org_id=? AND client_id=? ORDER BY assessed_on,updated_at""", (org_id, client_id)).fetchall()]
+    trend = [{"date": a["assessed_on"], "weight_kg": a["measures"].get("weight_kg"),
+              "fat_pct": a["results"].get("fat_pct"), "muscle_kg": a["results"].get("muscle_kg")}
+             for a in series]
+    return {"profile": profile, "assessments": trend, "next": upcoming[0] if upcoming else None,
             "upcoming": upcoming, "history": history,
             "total": len(items), "closed": len(history)}
 
@@ -194,8 +281,18 @@ def session(c, kind, booking_id, org_id=ORG_ID):
     client = c.execute("SELECT name,notes FROM consult_clients WHERE org_id=? AND id=?",
                        (org_id, b["client_id"])).fetchone()
     names = {b["client_id"]: client["name"] if client else ""}
+    basics = _basics(c, b["client_id"], org_id)
+    assessment = c.execute("SELECT * FROM consult_assessments WHERE org_id=? AND session_id=?",
+                           (org_id, row["id"])).fetchone() if row else None
+    prev_assessment = c.execute("""SELECT * FROM consult_assessments WHERE org_id=? AND client_id=?
+        AND session_id<>? ORDER BY assessed_on DESC,updated_at DESC LIMIT 1""",
+                                (org_id, b["client_id"], row["id"] if row else "")).fetchone()
     return {"booking": _item(b, names, row), "session": _public(row), "previous": _public(previous),
-            "profile_notes": client["notes"] if client else ""}
+            "profile_notes": client["notes"] if client else "",
+            "client": {**basics, "age": body.age_on(basics.get("birth_date"), b["day"])},
+            "assessment": _assessment_public(assessment),
+            "previous_assessment": _assessment_public(prev_assessment),
+            "equations": _equation_list(basics.get("sex"))}
 
 
 def _text(value, field, limit=TEXT_LIMIT):

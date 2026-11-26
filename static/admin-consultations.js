@@ -12,7 +12,8 @@
   ["digestion","Conforto digestivo"],["hunger","Fome e saciedade"],["hydration","Hidratação"]];
  const MESSAGES = {stale_session:"Esta consulta foi alterada noutro lado. Recarreguei os dados.",
   session_closed:"Esta consulta já está fechada.", booking_not_linked:"Esta marcação ainda não está ligada a um perfil.",
-  invalid_objectives:"Confirma os objetivos.", invalid_next_weeks:"Escolhe quando é a próxima consulta."};
+  invalid_objectives:"Confirma os objetivos.", invalid_next_weeks:"Escolhe quando é a próxima consulta.",
+  stale_assessment:"A avaliação foi alterada noutro lado. Sai e volta a entrar na consulta.", invalid_measures:"Confirma as medições."};
  let csrf = "", data = null, tab = "today", query = "", openClient = null, focus = null, saveTimer = null, saving = false, dirty = false;
 
  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = String(text); return n; };
@@ -137,8 +138,13 @@
   const stats = el("div", "tm-cq-stats");
   const last = view.history[0];
   const stat = (label, value, sub) => { const s = el("section", "tm-cq-card tm-cq-stat"); s.append(el("p", "tm-cq-muted", label), el("strong", "", value)); if (sub) s.append(el("small", "tm-cq-muted", sub)); return s; };
-  stats.append(stat("Consultas", String(view.closed), view.total > view.closed ? (view.total - view.closed) + " por fazer ou fechar" : "todas fechadas"));
-  stats.append(stat("Última consulta", last ? dayLabel(last.date) : "—", last ? last.professional_name : "ainda nenhuma fechada"));
+  const series = (view.assessments || []).filter(a => a.weight_kg || a.fat_pct);
+  const lastA = series[series.length - 1], firstA = series[0];
+  const fmt = v => String(Math.round(v * 10) / 10).replace(".", ",");
+  const diff = (k, u) => lastA && firstA && lastA !== firstA && lastA[k] != null && firstA[k] != null
+   ? (lastA[k] - firstA[k] > 0 ? "+" : lastA[k] - firstA[k] < 0 ? "−" : "") + fmt(Math.abs(lastA[k] - firstA[k])) + u + " desde a 1.ª avaliação" : (lastA ? "avaliação de " + dayLabel(lastA.date) : "sem avaliações");
+  stats.append(stat("Peso", lastA && lastA.weight_kg != null ? fmt(lastA.weight_kg) + " kg" : "—", diff("weight_kg", " kg")));
+  stats.append(stat("Massa gorda", lastA && lastA.fat_pct != null ? fmt(lastA.fat_pct) + " %" : "—", diff("fat_pct", " pontos")));
   const objectives = last && last.objectives && last.objectives.length ? last.objectives.join(" · ") : "—";
   stats.append(stat("Objetivos atuais", objectives, last ? "definidos no último fecho" : ""));
   host.append(stats);
@@ -221,7 +227,7 @@
   const content = el("div", "tm-cq-focus-content");
   if (focus.step === "note") renderNote(content, closed);
   else if (focus.step === "close") renderClose(content, closed);
-  else if (focus.step === "assessment") renderSoon(content, "Avaliação", "O registo de pregas, perímetros e cálculos chega na próxima atualização.");
+  else if (focus.step === "assessment") renderAssessment(content, closed);
   else renderSoon(content, "Formulário", "As respostas do formulário pré-consulta aparecem aqui quando o novo formulário estiver ativo.");
   body.append(nav, content);
   host.append(body);
@@ -373,6 +379,167 @@
   host.append(actions);
  }
 
+
+ /* ---------- Avaliação ---------- */
+ // Bonecos iguais aos da app dos jogadores (Progresso), desenhados a partir de metade e espelhados.
+ const BODY_FIGURES={
+ M:{
+  half:"M80 8 C71 8 64.5 15 64.5 26 C64.5 36 68 43 71 46 L71 51 C64 55 52 57 44 59 C38 61 35 66 34 74 C32 84 30 92 29 100 C27 110 26 116 26 120 C25 136 23 152 22.5 164 C21 172 21 182 23 188 C25 193 30 193 32 190 C33 186 33 176 33 170 C34 164 35 160 36 156 C38 140 40 128 42 118 C44 108 46 96 48 87 L50 86 C51 104 53 120 52.6 134 C52 146 50 154 50 162 C50 180 51 196 52 208 C53 222 55 234 56 244 C55 252 53 260 53 268 C53 284 56 296 58.5 308 C57 314 52 320 53 324 C55 328 66 328 70 325 C71 318 70 312 69.6 308 C70 296 74 280 75 268 C75 258 73 250 73 242 C74 222 77 196 80 180",
+  extra:'<ellipse cx="64.5" cy="28" rx="2.6" ry="5"/><ellipse cx="95.5" cy="28" rx="2.6" ry="5"/>',hair:"",
+  front:"M63 59 Q70 56 77 59 M57 98 Q63 101 69 98 M33 116 L40 118",navel:[80,146],
+  back:"M61 74 Q56 90 63 99 M33 116 L40 118",spine:"M80 98 L80 142",
+  frontWear:"M50 155 Q80 151 110 155 L109.5 192 L84 196 L80 184 L76 196 L50.5 192 Z",
+  backWear:"M50 155 Q80 151 110 155 L109.5 192 Q96 198 80 194 Q64 198 50.5 192 Z",straps:"",
+  sites:{biceps:[39,100],abdominal_skin:[91,145],suprailiac:[55,138],supraspinal:[63,151],thigh_skin:[65,215],calf_skin:[72,268],triceps:[311,100],back:[284,108]},
+  tapes:{arm_right_relaxed:[29,48,102],chest:[49,111,92],waist:[53,107,125],abdominal_perimeter:[51,109,146],thigh_right:[52,79,205],thigh_left:[81,108,205],calf_right:[53,75,268],calf_left:[85,107,268]}
+ },
+ F:{
+  half:"M80 12 C72 12 67 19 67 30 C67 40 70 46 73 50 L71 56 C66 60 56 62 48 64 C43 66 41 70 40 76 C39 84 38 90 37 97 C36 108 35.5 118 35.3 126 C34.5 140 34 154 33.5 166 C32 174 32 182 34 188 C36 192 41 192 42 189 C43 184 43 176 42 170 C43 165 45 162 46 159 C48 146 49 134 50 124 C51 108 52 94 53.6 84 L55 82 C56 98 57 112 56 122 C55 134 50 146 48 158 C47 172 49 186 51 199 C53 214 56 226 57 236 C56 246 55 256 56.6 265 C57.5 280 61 292 62.8 302 C61 310 56 318 56 322 C57 326 68 327 72 324 C73 316 72 308 72.7 302 C74 290 77 276 76.7 265 C76.5 254 75 244 75.6 236 C76 216 78 192 80 174",
+  extra:"",hair:"M80 6 C66 6 58 15 58 30 C58 42 56 50 52 55 C57 58 64 58 70 55 L80 55 Z",
+  front:"M66 63 Q70 62 74 64 M63 236 Q67 241 72 237",navel:[80,146],
+  back:"M63 238 Q67 235 72 238",spine:"M80 108 L80 150",
+  frontWear:"M56 84 Q80 80 104 84 L104.5 104 Q92 109 80 103 Q68 109 55.5 104 Z M49 158 Q80 155 111 158 L111 174 Q96 178 84 188 L76 188 Q64 178 49 174 Z",
+  backWear:"M56 92 L104 92 L104 104 L56 104 Z M49 158 Q80 155 111 158 L111 180 Q96 188 80 186 Q64 188 49 180 Z",straps:"M64 66 L64 92 M96 66 L96 92",
+  sites:{biceps:[44.5,100],abdominal_skin:[91,145],suprailiac:[53,136],supraspinal:[61,150],thigh_skin:[64,210],calf_skin:[72,265],triceps:[305.5,100],back:[284,114]},
+  tapes:{arm_right_relaxed:[37,53.6,102],chest:[54,106,92],waist:[56,104,122],abdominal_perimeter:[50,110,146],thigh_right:[51,79,200],thigh_left:[81,109,200],calf_right:[56.6,76.7,265],calf_left:[83.3,103.4,265]}
+ }
+};
+
+ const SKIN_SITE = {subscapular:"back", triceps:"triceps", biceps:"biceps", suprailiac:"suprailiac", supraspinal:"supraspinal", abdominal:"abdominal_skin", thigh:"thigh_skin", calf:"calf_skin"};
+ const TAPE_SITE = {arm_relaxed:"arm_right_relaxed", chest:"chest", waist:"waist", abdominal_girth:"abdominal_perimeter", thigh_mid:"thigh_right", thigh_mid_left:"thigh_left", calf_girth:"calf_right", calf_girth_left:"calf_left"};
+ const FIELDS = {
+  basics: [["weight_kg","Peso","kg"],["height_cm","Altura","cm"]],
+  skinfolds: [["subscapular","Costas (subescapular)","mm"],["triceps","Tricipital","mm"],["biceps","Bicipital","mm"],["suprailiac","Suprailíaca","mm"],
+   ["supraspinal","Supraespinal","mm"],["abdominal","Abdominal","mm"],["thigh","Coxa (crural)","mm"],["calf","Gémeo (geminal)","mm"]],
+  girths: [["arm_relaxed","Braço direito relaxado","cm"],["arm_flexed","Braço direito contraído","cm"],["chest","Peitoral","cm"],["waist","Cintura","cm"],
+   ["abdominal_girth","Abdominal","cm"],["hip","Glúteo","cm"],["thigh_mid","Coxa direita (média)","cm"],["thigh_mid_left","Coxa esquerda (média)","cm"],
+   ["calf_girth","Gémeo direito","cm"],["calf_girth_left","Gémeo esquerdo","cm"]],
+ };
+ const SVGNS = "http://www.w3.org/2000/svg";
+ const num = v => v == null || v === "" ? "" : String(Math.round(v * 10) / 10).replace(".", ",");
+ function bodyShape(fig, offset, back) {
+  const mirror = inner => inner + '<g transform="matrix(-1 0 0 1 160 0)">' + inner + '</g>';
+  const [nx, ny] = fig.navel;
+  return '<g transform="translate(' + offset + ',0)">'
+   + '<g class="tm-cq-body-fill">' + mirror('<path fill-rule="evenodd" d="' + fig.half + ' Z"/>') + (fig.hair ? mirror('<path d="' + fig.hair + '"/>') : "") + fig.extra + '</g>'
+   + '<g class="tm-cq-body-detail">' + mirror('<path d="' + (back ? fig.back : fig.front) + '"/>') + (back ? '<path d="' + fig.spine + '"/>' : '<ellipse cx="' + nx + '" cy="' + ny + '" rx="1.4" ry="1.9"/>') + '</g>'
+   + '<path class="tm-cq-body-wear" d="' + (back ? fig.backWear : fig.frontWear) + '"/>'
+   + (back && fig.straps ? '<path class="tm-cq-body-straps" d="' + fig.straps + '"/>' : "") + '</g>';
+ }
+ function svgEl(tag, attrs, text) { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; }
+ function skinfoldMap(fig, m) {
+  const svg = svgEl("svg", {viewBox: "0 0 360 352", class: "tm-cq-body-map", role: "img", "aria-label": "Pregas no corpo"});
+  svg.innerHTML = bodyShape(fig, 0, false) + bodyShape(fig, 190, true);
+  for (const [key, site] of Object.entries(SKIN_SITE)) {
+   const [x, y] = fig.sites[site], v = m[key];
+   if (!v) { svg.append(svgEl("circle", {cx: x, cy: y, r: 2.5, class: "tm-cq-body-empty"})); continue; }
+   const dot = svgEl("circle", {cx: x, cy: y, r: Math.max(3.5, Math.min(9, 2.5 + v * 0.45)), class: "tm-cq-body-dot"});
+   dot.append(svgEl("title", {}, num(v) + " mm")); svg.append(dot);
+  }
+  svg.append(svgEl("text", {x: 80, y: 348, "text-anchor": "middle", class: "tm-cq-body-caption"}, "Frente"));
+  svg.append(svgEl("text", {x: 270, y: 348, "text-anchor": "middle", class: "tm-cq-body-caption"}, "Costas"));
+  return svg;
+ }
+ function perimeterMap(fig, m) {
+  const svg = svgEl("svg", {viewBox: "0 0 360 335", class: "tm-cq-body-map", role: "img", "aria-label": "Perímetros no corpo"});
+  const g = svgEl("g", {transform: "translate(100,0)"}); g.innerHTML = bodyShape(fig, 0, false); svg.append(g);
+  const left = ["arm_relaxed", "thigh_mid", "calf_girth"], trunk = ["chest", "waist", "abdominal_girth"];
+  for (const [key, site] of Object.entries(TAPE_SITE)) {
+   const v = m[key]; if (!v) continue;
+   const [x1, x2, y] = fig.tapes[site];
+   g.append(svgEl("path", {d: "M" + x1 + " " + y + " Q" + ((x1 + x2) / 2) + " " + (y + 3.5) + " " + x2 + " " + y, class: "tm-cq-tape"}));
+   const isLeft = left.includes(key), isTrunk = trunk.includes(key);
+   const tx = isLeft ? (key === "arm_relaxed" ? 100 + x1 - 6 : 100 + Math.min(x1, 52) - 8) : (isTrunk ? 238 : 100 + x2 + 8);
+   if (isTrunk) svg.append(svgEl("path", {d: "M" + (100 + x2 + 2) + " " + y + " L" + (tx - 4) + " " + y, class: "tm-cq-tape-lead"}));
+   svg.append(svgEl("text", {x: tx, y: y + 4, "text-anchor": isLeft ? "end" : "start", class: "tm-cq-tape-value"}, num(v)));
+  }
+  return svg;
+ }
+ function renderAssessment(host, closed) {
+  const a = focus.assessment, prev = focus.previous_assessment, client = focus.client || {};
+  const m = {...((a && a.measures) || {})};
+  if (!m.height_cm && client.height_cm) m.height_cm = client.height_cm;
+  let equation = (a && a.equation) || "peterson", version = a ? a.version : null, timer = null, busy = false, queued = false;
+  const before = (prev && prev.measures) || {};
+  const head = el("div", "tm-cq-section-head");
+  head.append(el("h2", "", "Avaliação"));
+  const eqWrap = el("label", "tm-cq-eq"); eqWrap.append(el("span", "tm-cq-muted", "Equação"));
+  const eqSel = el("select", "tm-cq-select"); eqSel.disabled = closed;
+  for (const e of focus.equations || []) { const o = el("option", "", e.label); o.value = e.key; eqSel.append(o); }
+  eqSel.value = equation; eqWrap.append(eqSel); head.append(eqWrap);
+  host.append(head);
+  const notice = el("p", "tm-cq-notice"); host.append(notice);
+  const grid = el("div", "tm-cq-assess-grid");
+  const reg = el("section", "tm-cq-card tm-cq-register");
+  reg.append(el("h3", "", "Registo"));
+  for (const [group, title] of [["basics", "Básicos"], ["skinfolds", "Pregas"], ["girths", "Perímetros"]]) {
+   const gh = el("div", "tm-cq-reg-head"); gh.append(el("strong", "", title), el("span", "tm-cq-muted", prev ? "última · " + dayLabel(prev.assessed_on) : "última"));
+   reg.append(gh);
+   for (const [key, label, unit] of FIELDS[group]) {
+    const row = el("label", "tm-cq-reg-row");
+    row.append(el("span", "", label));
+    const input = el("input", "tm-cq-num"); input.type = "text"; input.inputMode = "decimal"; input.disabled = closed;
+    input.value = num(m[key]); input.setAttribute("aria-label", label + " (" + unit + ")");
+    input.addEventListener("input", () => {
+     const raw = input.value.replace(",", ".").trim();
+     const v = raw === "" ? null : Number(raw);
+     input.classList.toggle("is-invalid", raw !== "" && !Number.isFinite(v));
+     if (raw === "") delete m[key]; else if (Number.isFinite(v)) m[key] = v; else return;
+     drawVisuals(); schedule();
+    });
+    row.append(input, el("span", "tm-cq-muted tm-cq-unit", unit), el("span", "tm-cq-muted tm-cq-last", num(before[key])));
+    reg.append(row);
+   }
+  }
+  const side = el("div", "tm-cq-stack");
+  const pregas = el("section", "tm-cq-card"), perim = el("section", "tm-cq-card");
+  const results = el("div", "tm-cq-results");
+  side.append(pregas, perim, results);
+  grid.append(reg, side); host.append(grid);
+  const fig = BODY_FIGURES[client.sex === "F" ? "F" : "M"];
+  function drawVisuals() {
+   const sum = FIELDS.skinfolds.every(([k]) => m[k]) ? FIELDS.skinfolds.reduce((t, [k]) => t + m[k], 0) : null;
+   const prevSum = FIELDS.skinfolds.every(([k]) => before[k]) ? FIELDS.skinfolds.reduce((t, [k]) => t + before[k], 0) : null;
+   pregas.replaceChildren(); const ph = el("div", "tm-cq-section-head"); ph.append(el("h3", "", "Pregas"), el("span", "tm-cq-muted", "como o cliente vê"));
+   const foot = el("div", "tm-cq-sum"); foot.append(el("strong", "", "Soma de 8 pregas"), el("span", "", sum ? num(sum) + " mm" : "—"));
+   if (sum && prevSum) foot.append(el("small", sum <= prevSum ? "is-good" : "is-up", (sum <= prevSum ? "−" : "+") + num(Math.abs(sum - prevSum))));
+   pregas.append(ph, skinfoldMap(fig, m), foot);
+   perim.replaceChildren(); const qh = el("div", "tm-cq-section-head"); qh.append(el("h3", "", "Perímetros")); perim.append(qh, perimeterMap(fig, m));
+  }
+  function drawResults(r) {
+   results.replaceChildren();
+   const missing = (r && r.missing) || [];
+   const names = {sex: "sexo", birth_date: "data de nascimento", height_cm: "altura"};
+   notice.textContent = missing.length ? "Para os cálculos faltam no perfil: " + missing.map(x => names[x] || x).join(", ") + "." : "";
+   const prevR = (prev && prev.results) || {};
+   const card = (label, value, unit, delta, sub) => {
+    const c = el("section", "tm-cq-card tm-cq-result"); c.append(el("p", "tm-cq-muted", label));
+    const v = el("strong", "", value == null ? "—" : num(value)); if (value != null && unit) v.append(el("small", "", " " + unit)); c.append(v);
+    if (delta != null && value != null) c.append(el("small", "tm-cq-delta", (delta > 0 ? "+" : delta < 0 ? "−" : "") + num(Math.abs(delta))));
+    if (sub) c.append(el("small", "tm-cq-muted", sub));
+    return c;
+   };
+   const d = (k) => r && r[k] != null && prevR[k] != null ? r[k] - prevR[k] : null;
+   results.append(
+    card("Massa gorda", r && r.fat_pct, "%", d("fat_pct"), r && r.fat_kg != null ? num(r.fat_kg) + " kg" : ""),
+    card("Massa muscular", r && r.muscle_kg, "kg", d("muscle_kg"), "Lee"),
+    card("IMC", r && r.bmi, "", d("bmi"), ""));
+  }
+  function schedule() { clearTimeout(timer); dirty = true; setSaved("Por guardar…"); timer = setTimeout(push, 700); }
+  async function push() {
+   if (busy) { queued = true; return; }
+   busy = true; setSaved("A guardar…");
+   try {
+    const r = await api(`${API}/sessions/${focus.session.id}/assessment`, {method: "PUT", body: JSON.stringify({measures: m, equation, version})});
+    version = r.assessment.version; focus.assessment = r.assessment; dirty = false; setSaved("Guardado");
+    drawResults(r.assessment.results);
+   } catch (e) { setSaved("Não guardado"); feedback(e.message, true); }
+   finally { busy = false; if (queued) { queued = false; push(); } }
+  }
+  eqSel.addEventListener("change", () => { equation = eqSel.value; schedule(); });
+  drawVisuals(); drawResults(a && a.results);
+  host.append(nextButton("Seguir para o fecho →", "close"));
+ }
  /* ---------- arranque ---------- */
  for (const b of document.querySelectorAll(".tm-cq-segment [data-tab]")) b.addEventListener("click", () => { tab = b.dataset.tab; renderList(); });
  $("tm-cq-search").addEventListener("input", e => { query = e.target.value; renderList(); });

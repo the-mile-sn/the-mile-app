@@ -75,6 +75,40 @@ class ConsultSessionsTests(unittest.TestCase):
         self.assertEqual(detail["body"]["history"][0]["note_text"], "Correu bem.")
         self.assertIsNone(detail["body"]["next"])
 
+    def test_assessment_saves_and_calculates_on_server(self):
+        ws = self.req()
+        client_id = ws["body"]["upcoming"][0]["client_id"]
+        prof = self.admin.request("/api/v2/admin/consult-clients/" + client_id)["body"]
+        self.admin.request("/api/v2/admin/consult-clients/" + client_id, "PUT",
+                           {"version": prof["version"], "sex": "F", "birth_date": "1992-05-10", "height_cm": 165})
+        sid = self.req(f"/bookings/manual/{self.booking}/start", "POST", {})["body"]["session"]["id"]
+        measures = {"weight_kg": 63, "subscapular": 12, "triceps": 16, "biceps": 6, "suprailiac": 14,
+                    "supraspinal": 9, "abdominal": 18, "thigh": 22, "calf": 11,
+                    "arm_relaxed": 27, "thigh_mid": 54, "calf_girth": 34.5}
+        self.assertEqual(self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": {"weight_kg": 2}})["status"], 400)
+        self.assertEqual(self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "equation": "nope"})["status"], 400)
+        first = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures})
+        self.assertEqual(first["status"], 200, first)
+        a = first["body"]["assessment"]
+        self.assertEqual(a["measures"]["height_cm"], 165)  # vem do perfil
+        self.assertEqual(a["results"]["equation"], "peterson")
+        self.assertIsNotNone(a["results"]["fat_pct"])
+        self.assertIsNotNone(a["results"]["muscle_kg"])
+        stale = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "version": 99})
+        self.assertEqual(stale["status"], 409)
+        again = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "equation": "durnin", "version": a["version"]})
+        self.assertEqual(again["body"]["assessment"]["results"]["equation"], "durnin")
+        view = self.req(f"/bookings/manual/{self.booking}")["body"]
+        self.assertEqual(view["assessment"]["equation"], "durnin")
+        self.assertIn("peterson", [e["key"] for e in view["equations"]])
+        self.assertNotIn("media4", [e["key"] for e in view["equations"]])  # só homens
+        trend = self.req(f"/clients/{client_id}")["body"]["assessments"]
+        self.assertEqual(trend[0]["weight_kg"], 63)
+        version = self.req(f"/bookings/manual/{self.booking}")["body"]["session"]["version"]
+        self.req(f"/sessions/{sid}/close", "POST", {"version": version})
+        closed = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "version": again["body"]["assessment"]["version"]})
+        self.assertEqual(closed["status"], 409)
+
     def test_unknown_booking_and_access(self):
         self.req()  # liga a marcação ao perfil
         self.assertEqual(self.req("/bookings/manual/" + "0" * 32 + "/start", "POST", {})["status"], 404)
