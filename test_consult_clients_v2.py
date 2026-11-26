@@ -84,20 +84,20 @@ class ConsultClientsTests(unittest.TestCase):
         self.assertEqual(bad["status"], 400)
         ok = self.req("/" + cid, "PUT", {"version": detail["version"], "height_cm": "178,5",
                                          "sex": "M", "arm_point_cm": 17.5, "thigh_point_cm": 24,
-                                         "ethnic_adjustment": "african",
+                                         "ethnicity": "african",
                                          "active_professional_id": self.pid})
         self.assertEqual(ok["status"], 200, ok)
         stale = self.req("/" + cid, "PUT", {"version": detail["version"], "phone": "1"})
         self.assertEqual(stale["status"], 409)
         after = self.req("/" + cid)["body"]
         self.assertEqual(after["height_cm"], 178.5)
-        self.assertEqual(after["ethnic_adjustment"], "african")
+        self.assertEqual(after["ethnicity"], "african")
         self.assertIn("updated", [e["action"] for e in after["events"]])
-        asian = self.req("/" + cid, "PUT", {"version": after["version"], "ethnic_adjustment": "asian"})
+        asian = self.req("/" + cid, "PUT", {"version": after["version"], "ethnicity": "asian"})
         self.assertEqual(asian["status"], 200, asian)
         after = self.req("/" + cid)["body"]
-        self.assertEqual(after["ethnic_adjustment"], "asian")
-        bad_ethnic = self.req("/" + cid, "PUT", {"version": after["version"], "ethnic_adjustment": "x"})
+        self.assertEqual(after["ethnicity"], "asian")
+        bad_ethnic = self.req("/" + cid, "PUT", {"version": after["version"], "ethnicity": "x"})
         self.assertEqual(bad_ethnic["status"], 400)
         unknown = self.req("/" + cid, "PUT", {"version": after["version"], "active_professional_id": "x"})
         self.assertEqual(unknown["status"], 400)
@@ -154,3 +154,55 @@ class ConsultClientsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EthnicityMigrationTest(unittest.TestCase):
+    """Bases antigas (antes e depois do #440) passam a ter só a coluna ``ethnicity``."""
+
+    OLD = """CREATE TABLE consult_clients (id TEXT PRIMARY KEY, org_id TEXT NOT NULL,
+        name TEXT NOT NULL, email TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '',
+        birth_date TEXT NOT NULL DEFAULT '', sex TEXT NOT NULL DEFAULT '', height_cm REAL,
+        status TEXT NOT NULL DEFAULT 'pending', active_professional_id TEXT,
+        guardian_name TEXT NOT NULL DEFAULT '', guardian_email TEXT NOT NULL DEFAULT '',
+        guardian_phone TEXT NOT NULL DEFAULT '', guardian_relation TEXT NOT NULL DEFAULT '',
+        arm_point_cm REAL, thigh_point_cm REAL,
+        ethnic_adjustment TEXT NOT NULL DEFAULT 'none' CHECK(ethnic_adjustment IN ('none','african')),
+        notes TEXT NOT NULL DEFAULT '', merged_into TEXT, version INTEGER NOT NULL DEFAULT 1,
+        created_by TEXT, updated_by TEXT, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL)"""
+
+    def _db(self, with_new_column):
+        import sqlite3
+        import consult_clients_v2 as cc
+        c = sqlite3.connect(":memory:")
+        c.row_factory = sqlite3.Row
+        c.execute("PRAGMA foreign_keys=ON")
+        c.execute(self.OLD)
+        c.execute("""CREATE TABLE consult_client_bookings (org_id TEXT, booking_kind TEXT,
+            booking_id TEXT, client_id TEXT REFERENCES consult_clients(id), linked_by TEXT,
+            linked_at BIGINT, PRIMARY KEY(org_id,booking_kind,booking_id))""")
+        if with_new_column:
+            c.execute("ALTER TABLE consult_clients ADD COLUMN ethnicity TEXT NOT NULL DEFAULT 'none'")
+        c.execute("""INSERT INTO consult_clients(id,org_id,name,ethnic_adjustment,created_at,updated_at)
+            VALUES('a','o','A','african',1,1),('b','o','B','none',1,1),('c','o','C','none',1,1)""")
+        if with_new_column:
+            c.execute("UPDATE consult_clients SET ethnicity='african' WHERE id='a'")
+            c.execute("UPDATE consult_clients SET ethnicity='asian' WHERE id='c'")
+        c.execute("INSERT INTO consult_client_bookings VALUES('o','manual','x','a','auto',1)")
+        cc.initialize(c)
+        cc.initialize(c)  # repetível
+        return c
+
+    def test_before_440(self):
+        c = self._db(False)
+        cols = [r["name"] for r in c.execute("PRAGMA table_info(consult_clients)")]
+        self.assertNotIn("ethnic_adjustment", cols)
+        self.assertEqual({r["id"]: r["ethnicity"] for r in c.execute("SELECT id,ethnicity FROM consult_clients")},
+                         {"a": "african", "b": "none", "c": "none"})
+        self.assertEqual(c.execute("SELECT COUNT(*) FROM consult_client_bookings").fetchone()[0], 1)
+
+    def test_after_440(self):
+        c = self._db(True)
+        cols = [r["name"] for r in c.execute("PRAGMA table_info(consult_clients)")]
+        self.assertNotIn("ethnic_adjustment", cols)
+        self.assertEqual({r["id"]: r["ethnicity"] for r in c.execute("SELECT id,ethnicity FROM consult_clients")},
+                         {"a": "african", "b": "none", "c": "asian"})
