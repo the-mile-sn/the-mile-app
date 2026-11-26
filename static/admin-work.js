@@ -6,7 +6,7 @@
  const page=$("tm-appointments-root"),dashboard=$("tm-dashboard");
  if(!page&&!dashboard)return;
  const API="/api/v2/admin/work";
- let me=null,admins=null,events=[],tasks=[],editingEvent=null,editingTask=null;
+ let me=null,admins=null,agendaPeople=[],events=[],tasks=[],editingEvent=null,editingTask=null,blocksTouched=false;
  let eventRequest=0,taskRequest=0,dashRequest=0;
  let taskFilter="all", taskExpiryTimer=null;
  const labels={meeting:"Reunião",training:"Formação",travel:"Deslocação",other:"Evento"};
@@ -58,8 +58,9 @@
   return data;
  }
  async function loadAdmins(){
-  const [user,response]=await Promise.all([session(),admins?Promise.resolve({admins}):api("/admins")]);
+  const [user,response]=await Promise.all([session(),admins?Promise.resolve({admins,agenda_professionals:agendaPeople}):api("/admins")]);
   admins=response.admins||[];
+  agendaPeople=response.agenda_professionals||[];
   return user;
  }
  function fillResponsible(select,chosen){
@@ -85,8 +86,22 @@
    title:$("tm-work-event-title").value,
    description:$("tm-work-event-description").value,
    participants:$("tm-work-event-participants").value,
-   responsible_id:$("tm-work-event-responsible").value
+   responsible_id:$("tm-work-event-responsible").value,
+   block_professional_ids:[...document.querySelectorAll("#tm-work-event-blocks input:checked")].map(x=>x.value)
   };
+ }
+ function fillBlocks(chosen){
+  const box=$("tm-work-event-blocks");
+  if(!box)return;
+  box.replaceChildren();
+  if(!agendaPeople.length){box.append(make("span","tm-work-block-empty","Sem profissionais de consulta ativos."));return;}
+  for(const person of agendaPeople){
+   const label=make("label","tm-work-block-option");
+   const input=document.createElement("input");input.type="checkbox";input.value=person.id;
+   input.checked=chosen.includes(person.id);
+   input.addEventListener("change",()=>{blocksTouched=true;});
+   label.append(input,make("span","",person.name));box.append(label);
+  }
  }
  function formPayloadTask(){
   return {
@@ -110,6 +125,9 @@
   $("tm-work-event-participants").value=item?.participants||"";
   $("tm-work-event-description").value=item?.description||"";
   fillResponsible($("tm-work-event-responsible"),item?.responsible_id);
+  // Reuniões bloqueiam a agenda de todos por defeito; pode desmarcar-se quem não vai.
+  blocksTouched=false;
+  fillBlocks(item?(item.block_professional_ids||[]):agendaPeople.map(x=>x.id));
   $("tm-work-event-delete").hidden=!item;
   $("tm-work-event-dialog").showModal();
   $("tm-work-event-title").focus();
@@ -141,6 +159,10 @@
    item.participants,item.responsible_name].filter(Boolean).join(" · ");
   copy.append(make("strong","tm-work-line-title",item.title),
    make("span","tm-work-line-details",subtitle));
+  if((item.block_professional_names||[]).length)
+   copy.append(make("span","tm-work-line-details tm-work-line-blocked","Agenda bloqueada: "+item.block_professional_names.join(", ")));
+  for(const c of item.agenda_conflicts||[])
+   copy.append(make("span","tm-work-line-details tm-work-line-conflict","Já marcada: "+c.customer+" às "+c.start+" ("+c.professional+") — reagenda em Reservas."));
   const actions=make("div","tm-work-line-actions");
   const edit=make("button","tm-work-line-action","Editar");edit.type="button";
   edit.setAttribute("aria-label","Editar evento "+item.title);
@@ -377,6 +399,11 @@
  }
  if(!page)return;
  $("tm-work-new-event").addEventListener("click",()=>openEvent());
+ $("tm-work-event-kind").addEventListener("change",e=>{
+  if(editingEvent||blocksTouched)return;
+  const all=e.target.value==="meeting";
+  document.querySelectorAll("#tm-work-event-blocks input").forEach(x=>{x.checked=all;});
+ });
  const eventDialog=$("tm-work-event-dialog");
  eventDialog.querySelectorAll("[data-tm-work-close]").forEach(btn=>btn.addEventListener("click",()=>eventDialog.close()));
  eventDialog.addEventListener("click",e=>{if(e.target===eventDialog)eventDialog.close();});

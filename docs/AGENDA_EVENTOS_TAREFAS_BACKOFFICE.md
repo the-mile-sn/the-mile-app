@@ -27,7 +27,7 @@ Cada alteração verifica uma versão numérica, recusando edições desatualiza
 
 Só podem ser responsáveis contas de administrador ativas. Nesta fase, os administradores autorizados podem consultar e gerir os registos da equipa. Não há ainda regras de visibilidade granular por nutricionista.
 
-**Limitação funcional consciente:** os eventos internos não bloqueiam automaticamente a disponibilidade de consultas e não sincronizam o Google Calendar. Não criam encomendas nem notificações. Estes comportamentos exigem uma fase própria de validação e consentimento.
+**Bloqueio de agenda (26/11/2026):** cada evento interno tem «Bloquear a agenda de», com as profissionais de consulta ativas (nas reuniões vêm todas marcadas por defeito; pode desmarcar-se quem não vai). Para cada pessoa escolhida é criado um bloqueio em `appt_manual_blocks` (nota «Evento interno: …»), ligado ao evento em `tm_internal_event_blocks`; editar o evento atualiza os bloqueios e eliminá-lo remove-os. Como é um bloqueio normal, é respeitado no backoffice, no calendário do site e no checkout. Consultas já marcadas nesse horário não são mexidas: o evento mostra «Já marcada: …» para se reagendar em Reservas. Os eventos continuam a não sincronizar o Google Calendar nem a criar encomendas ou notificações.
 
 ## Padrões visuais
 
@@ -35,7 +35,6 @@ Os dois temas e os dois tamanhos de ecrã usam os tokens, a fonte Inter Tight e 
 
 ## Evolução prevista, ainda não implementada
 
-1. Bloqueio opcional de disponibilidade por evento interno, com validação e prevenção de sobreposições.
 2. Permissões de atribuição por nutricionista, visibilidade por equipa e histórico de edições.
 3. Lembretes de reuniões, alertas de prazo, preferências de notificações e tarefas recorrentes.
 4. Participantes estruturados, convites e sincronização bidirecional do calendário.

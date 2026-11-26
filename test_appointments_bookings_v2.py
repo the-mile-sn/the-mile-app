@@ -169,6 +169,52 @@ class ManualBookingsTests(unittest.TestCase):
         self.assertEqual(self.admin.request(self.base+path,"POST",
             {"source":"manual","confirmed":True},csrf=False)["status"],403)
 
+    def test_internal_event_blocks_chosen_agendas(self):
+        work="/api/v2/admin/work"
+        starts=lambda: [x["start"] for x in self.req("/slots-preview?professional_id="+self.pid+
+            "&service_id="+self.follow["id"]+"&mode=presencial&date="+self.day)["body"]["slots"]]
+        self.assertIn("10:00", starts())
+        people=self.admin.request(work+"/admins")["body"]["agenda_professionals"]
+        self.assertIn(self.pid, [p["id"] for p in people])
+        early=self.book(start="09:00", service=self.follow["id"])  # 09:00-09:45
+        self.assertEqual(early["status"],201,early)
+        event={"date":self.day,"start":"09:30","end":"11:00","kind":"meeting",
+               "title":"Reunião de equipa","block_professional_ids":[self.pid]}
+        bad=self.admin.request(work+"/events","POST",{**event,"block_professional_ids":["nope"]})
+        self.assertEqual(bad["status"],400,bad)
+        made=self.admin.request(work+"/events","POST",event)
+        self.assertEqual(made["status"],201,made)
+        item=made["body"]["event"]
+        self.assertEqual(item["block_professional_ids"],[self.pid])
+        self.assertEqual([c["start"] for c in item["agenda_conflicts"]],["09:00"])
+        self.assertNotIn("10:00", starts())
+        self.assertIn("11:00", starts())
+        blocked=self.book(start="10:00", service=self.follow["id"])
+        self.assertEqual(blocked["status"],400,blocked)
+        self.assertEqual(blocked["body"]["error"],"blocked_period")
+        # Moving the event moves the block; keeping the list when it is omitted.
+        moved=self.admin.request(work+"/events/"+item["id"],"PUT",{
+            **{k:v for k,v in event.items() if k!="block_professional_ids"},
+            "start":"12:00","end":"13:00","version":item["version"]})
+        self.assertEqual(moved["status"],200,moved)
+        self.assertEqual(moved["body"]["event"]["block_professional_ids"],[self.pid])
+        self.assertIn("10:00", starts())
+        self.assertNotIn("12:00", starts())
+        freed=self.admin.request(work+"/events/"+item["id"],"PUT",{
+            **event,"start":"12:00","end":"13:00","block_professional_ids":[],
+            "version":moved["body"]["event"]["version"]})
+        self.assertEqual(freed["status"],200,freed)
+        self.assertIn("12:00", starts())
+        again=self.admin.request(work+"/events/"+item["id"],"PUT",{
+            **event,"version":freed["body"]["event"]["version"]})
+        self.assertNotIn("10:00", starts())
+        gone=self.admin.request(work+"/events/"+item["id"],"DELETE",
+                                {"version":again["body"]["event"]["version"]})
+        self.assertEqual(gone["status"],200,gone)
+        self.assertIn("10:00", starts())
+        with app.connect() as c:
+            self.assertIsNone(c.execute("SELECT 1 FROM tm_internal_event_blocks").fetchone())
+
     def test_blocked_without_availability_and_nonquarter_are_rejected(self):
         self.assertEqual(self.book(start="09:05")["status"],400)
         self.assertEqual(self.book(start="12:30")["status"],400) # 90 min exceeds window

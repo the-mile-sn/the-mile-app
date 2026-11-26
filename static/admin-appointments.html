@@ -13,7 +13,7 @@
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=171">
  <link rel="stylesheet" href="/admin-appointments.css?v=16">
- <link rel="stylesheet" href="/admin-work.css?v=7">
+ <link rel="stylesheet" href="/admin-work.css?v=8">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -66,7 +66,7 @@
       <div class="tm-work-section-divider"></div>
       <div class="tm-work-list-header"><h4>Eventos internos</h4><span class="tm-work-small-note">Reuniões, formações e deslocações</span></div>
       <div id="tm-work-agenda-list" class="tm-work-agenda-list" aria-live="polite"></div>
-      <p class="tm-work-small-note">Os eventos internos não bloqueiam automaticamente as vagas das consultas.</p>
+      <p class="tm-work-small-note">Um evento interno ocupa as vagas de consulta das pessoas escolhidas em «Bloquear a agenda de».</p>
      </div>
     </div>
    </section>
@@ -324,6 +324,7 @@
        <label class="tm-work-field"><span>Início</span><input type="time" id="tm-work-event-start" required value="09:00"></label>
        <label class="tm-work-field"><span>Fim</span><input type="time" id="tm-work-event-end" required value="10:00"></label>
        <label class="tm-work-field tm-work-wide"><span>Responsável</span><select id="tm-work-event-responsible" required></select></label>
+       <div class="tm-work-field tm-work-wide tm-work-blocks" role="group" aria-labelledby="tm-work-event-blocks-label"><span id="tm-work-event-blocks-label">Bloquear a agenda de</span><div id="tm-work-event-blocks" class="tm-work-block-options"></div><small class="tm-work-block-hint">As vagas de consulta destas pessoas ficam ocupadas neste horário, também no site.</small></div>
        <label class="tm-work-field tm-work-wide"><span>Participantes (opcional)</span><input id="tm-work-event-participants" maxlength="240" placeholder="Nomes da equipa ou convidados"></label>
        <label class="tm-work-field tm-work-wide"><span>Notas (opcional)</span><textarea id="tm-work-event-description" maxlength="1000" rows="3"></textarea></label>
       </div>
@@ -339,7 +340,7 @@
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
  <script src="/admin-appointments-bookings.js?v=21" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
- <script src="/admin-work.js?v=6" defer></script>
+ <script src="/admin-work.js?v=7" defer></script>
  <script src="/admin-mobile-nav.js?v=14" defer></script>
 </body>
 </html>
