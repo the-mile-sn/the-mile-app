@@ -68,7 +68,7 @@ test("quick-create task opens local popup without navigation or mandatory times"
 test("new internal events remain without appointment confirmation pills",()=>{
  assert.match(dashboard,/data-work-quick="event"/);
  assert.match(dashboardJs,/api\/v2\/admin\/work\/events/);
- assert.match(dashboardJs,/merge\(bookings,activity,internalEvents\)/);
+ assert.match(dashboardJs,/merge\(bookings,activity,internalEvents(,clientBirthdays)?\)/);
  assert.match(dashboardJs,/const isBooking=item\.type==="appointment"\|\|item\.type==="assessment"/);
  assert.match(dashboardJs,/if\(isBooking&&item\.label\)/);
  assert.match(css,/tm-work-task-state/);
