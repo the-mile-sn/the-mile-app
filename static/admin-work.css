@@ -278,3 +278,11 @@ html[data-admin-theme] body dialog.tm-work-dialog button[hidden]{display:none!im
  #tm-dashboard .tm-db-today-tasks{padding:14px}
  #tm-dashboard .tm-db-add-menu{right:0;bottom:calc(100% + 8px)}
 }
+
+/* Bloqueio de agenda por evento interno */
+.tm-work-block-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tm-work-block-option{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);font:500 13px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;cursor:pointer}
+.tm-work-block-option input{width:16px;height:16px;margin:0;accent-color:var(--tm-state-success-fg,#8ed0ab)}
+.tm-work-block-hint,.tm-work-block-empty{display:block;margin-top:8px;color:var(--tm-ui-muted);font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif}
+.tm-work-line-blocked{color:var(--tm-ui-muted)}
+.tm-work-line-conflict{color:var(--tm-state-pending-fg,#e2c17e)}

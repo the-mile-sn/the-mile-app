@@ -17,6 +17,11 @@ class InternalWorkStorageTests(unittest.TestCase):
             ("a2", "Admin B", "admin", 1),
             ("p1", "Jogador", "player", 1),
         ])
+        import appointments_catalog_v2, appointments_availability_v2, appointments_bookings_v2
+        import appointments_checkout_v2, appointments_shopify_bridge_v2
+        for module in (appointments_catalog_v2, appointments_availability_v2, appointments_bookings_v2,
+                       appointments_checkout_v2, appointments_shopify_bridge_v2):
+            module.initialize(self.db)
         work.initialize(self.db)
         work.initialize(self.db)  # repeatable migration
 

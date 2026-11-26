@@ -37,7 +37,7 @@ test("no duplicate IDs, no altered functionality, no forced card height",()=>{
   assert.equal(matches.length,1,id+" must appear once");
  }
  assert.match(html,/admin-work\.css\?v=7/);
- assert.match(html,/admin-work\.js\?v=6/);
+ assert.match(html,/admin-work\.js\?v=7/);
  assert.doesNotMatch(css,/#tm-dashboard \.tm-db-today-tasks\{[^}]*min-height/);
 });
 

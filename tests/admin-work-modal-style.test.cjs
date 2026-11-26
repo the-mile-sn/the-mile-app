@@ -23,5 +23,5 @@ test("closing and error handling match modal standard",()=>{
  assert.match(dashboard,/aria-label="Fechar"><svg/);
  assert.match(appointments,/aria-label="Fechar"><svg/);
  assert.match(dashboard,/admin-work\.css\?v=7/);
- assert.match(appointments,/admin-work\.js\?v=6/);
+ assert.match(appointments,/admin-work\.js\?v=7/);
 });
