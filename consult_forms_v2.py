@@ -272,7 +272,58 @@ for _step in STEPS:
                                             "type": "text", "label": "Outra:", "max": 200, "other_of": _f["id"],
                                             "when": {_f["id"]: "other"}})
 FIELDS = {f["id"]: f for s in STEPS for f in s["fields"]}
-STEP_OF = {f["id"]: s for s in STEPS for f in s["fields"]}
+SECTIONS = STEPS  # secções do Google Forms (usadas para agrupar no backoffice)
+
+# Ecrãs curtos para quem preenche: as mesmas perguntas, reorganizadas em passos pequenos.
+# (secção, título do ecrã, frase de apoio, perguntas)
+LAYOUT = [
+    ("Sobre ti", "Vamos começar", "Primeiro, para quem é a consulta.",
+     ["for_whom", "attendee_name", "relation", "birth_date"]),
+    ("Sobre ti", "Um pouco sobre ti", "Ajuda-nos a perceber o teu dia a dia.",
+     ["occupation", "city", "lives_with", "heard_from", "nif"]),
+    ("Saúde", "O teu corpo", "Valores aproximados chegam. Na consulta medimos tudo.",
+     ["sex", "height_cm", "weight_kg", "weighs_daily"]),
+    ("Saúde", "A tua saúde", "Deixa em branco o que não se aplica.",
+     ["conditions", "medication", "allergies", "intolerances", "smoking"]),
+    ("Saúde", "Sono", "", ["sleep_hours", "sleep_quality"]),
+    ("Saúde", "Objetivos", "O que queres alcançar connosco.", ["goals", "previous_nutrition"]),
+    ("Saúde feminina", "Ciclo menstrual", "", ["cycle", "amenorrhea_since", "last_period", "heavy_flow"]),
+    ("Saúde feminina", "Ciclo e treino", "", ["cycle_performance", "cycle_symptoms", "pms", "pill", "pill_which"]),
+    ("Treino", "Atividade física", "", ["activity", "sports", "sport_level"]),
+    ("Treino", "A tua semana de treino", "", ["weekly_routine", "devices", "recovery"]),
+    ("Alimentação", "Como comes", "", ["diet_pattern", "favorite_foods", "disliked_foods"]),
+    ("Alimentação", "Compras e cozinha", "", ["shopping", "supermarkets", "cooking", "weighs_food"]),
+    ("Alimentação", "Bebidas", "", ["water", "urine_color", "coffee", "alcohol", "meal_drinks"]),
+    ("Alimentação", "Com que frequência comes…", "Um toque por alimento: quantos dias por semana, numa semana normal. Se for todos os dias, dizes-nos quantas vezes.", ["frequency"]),
+    ("Diário alimentar", "Um dia típico", "Conta-nos o que comes num dia normal.", ["meals"]),
+    ("Diário alimentar", "Porções", "", ["protein_portion", "carb_portion"]),
+    ("Mudanças", "Mudanças na tua alimentação", "Já estás quase!", ["alternatives", "motivation"]),
+    ("Suplementação", "Suplementação", "", ["supplements", "supplements_detail", "athlete"]),
+    ("Dia de jogo", "Antes do jogo", "", ["day_before_change", "day_before_what", "game_day_change", "game_day_what"]),
+    ("Dia de jogo", "No jogo", "", ["before_game", "during_game"]),
+    ("Notas", "Último passo", "Obrigada pelo tempo que dedicaste a isto.", ["notes", "consent"]),
+]
+_SECTION_WHEN = {"Saúde feminina": {"sex": "F"}, "Dia de jogo": {"athlete": "yes"}}
+
+
+def _screens():
+    out, used = [], []
+    for i, (group, title, intro, ids) in enumerate(LAYOUT):
+        fields = []
+        for fid in ids:
+            fields.append(FIELDS[fid])
+            if fid + "_other" in FIELDS:
+                fields.append(FIELDS[fid + "_other"])
+        used += [f["id"] for f in fields]
+        step = {"id": "s%d" % i, "group": group, "title": title, "intro": intro, "fields": fields}
+        if group in _SECTION_WHEN:
+            step["when"] = _SECTION_WHEN[group]
+        out.append(step)
+    assert sorted(used) == sorted(FIELDS), "todas as perguntas têm de estar num ecrã"
+    return out
+
+
+STEPS = _screens()
 CARE_FIELDS = ("allergies", "intolerances", "medication", "conditions")
 
 
@@ -374,9 +425,9 @@ def _with_other(f, answers, labels):
 
 
 def readable(answers):
-    """Respostas organizadas por passo, prontas a mostrar (rótulos em vez de códigos)."""
+    """Respostas organizadas por secção do Google Forms, prontas a mostrar (rótulos em vez de códigos)."""
     sections = []
-    for step in STEPS:
+    for step in SECTIONS:
         if not _visible(step, answers):
             continue
         rows = []

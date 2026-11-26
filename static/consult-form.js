@@ -7,14 +7,20 @@
   var topInfo = document.getElementById("tmf-top-info");
   var data = null;          // resposta de /dados
   var answers = {};
-  var current = 0;          // índice no STEPS completo
+  var current = 0;          // índice em data.steps (ecrãs)
   var mode = "fill";        // fill | review (depois de enviado)
   var saveTimer = null;
   var errors = {};
+  var dailyPending = {};    // alimentos com «Todos» à espera de «quantas vezes por dia»
+  var scrollTarget = null;
 
   var WEEK = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
   var MONTH = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   var ADDRESS = "Largo das Hortas 220 N, Guimarães";
+  var URINE = ["#fbf6d9", "#f7eeaa", "#f1df74", "#e9cc45", "#d9b22a", "#c4951c", "#a87a14"];
+  // Frequência: primeiro os dias por semana; «Todos» abre «quantas vezes por dia» quando há mais do que uma opção.
+  var WEEKLY = [["never", "Nunca"], ["d1_2", "1–2"], ["d3_4", "3–4"], ["d5_6", "5–6"], ["all", "Todos"]];
+  var SECONDS_PER_SCREEN = 40;
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -44,18 +50,24 @@
       return !not[k].some(function (h) { return same(answers[k], h); });
     });
   }
-  function steps() { return data.steps.filter(visible); }
-  function stepPos() { return steps().indexOf(data.steps[current]); }
-  function empty(v) {
-    return v == null || v === "" || (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0);
+  function screens() { return data.steps.filter(visible); }
+  function groups() {
+    var out = [];
+    screens().forEach(function (s) { if (out.indexOf(s.group) < 0) out.push(s.group); });
+    return out;
   }
+  function empty(v) {
+    return v == null || v === "" || (Array.isArray(v) && !v.length) ||
+      (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0);
+  }
+  function firstName() { return data.first_name ? " " + data.first_name : ""; }
   function prune() {
-    // Respostas escondidas (ex.: passo de saúde feminina) não são enviadas.
+    // Respostas escondidas (ex.: saúde feminina num homem) não são enviadas.
     var out = {};
     data.steps.forEach(function (s) {
       var sv = visible(s);
       s.fields.forEach(function (f) {
-        if (!sv || !visible(f) || empty(answers[f.id]) || errors[f.id]) return;
+        if (!sv || !visible(f) || empty(answers[f.id]) || errors[f.id] === true) return;
         out[f.id] = answers[f.id];
       });
     });
@@ -81,14 +93,14 @@
   }
 
   // ---------- campos ----------
-  function setAnswer(id, value, rerender) {
+  function setAnswer(id, value, rerender, advanceFrom) {
     if (empty(value)) delete answers[id]; else answers[id] = value;
     delete errors[id];
     scheduleSave();
+    if (advanceFrom) scrollTarget = advanceFrom;
     if (rerender) renderStep();
   }
 
-  var URINE = ["#fbf6d9", "#f7eeaa", "#f1df74", "#e9cc45", "#d9b22a", "#c4951c", "#a87a14"];
   function choiceGroup(options, value, onPick, label, opts) {
     opts = opts || {};
     var multi = !!opts.multi;
@@ -97,7 +109,7 @@
     if (label) wrap.setAttribute("aria-label", label);
     options.forEach(function (o, i) {
       var on = multi ? (value || []).indexOf(o[0]) >= 0 : value === o[0];
-      var b = el("button", "tmf-choice", o[1]);
+      var b = el("button", "tmf-choice" + (multi ? " is-multi" : ""), o[1]);
       b.type = "button";
       b.setAttribute("aria-pressed", String(on));
       if (opts.swatches && URINE[i]) {
@@ -122,24 +134,26 @@
 
   function fieldNode(f) {
     var box = el("div", "tmf-field");
+    box.dataset.field = f.id;
     if (errors[f.id]) box.classList.add("is-invalid");
+    if (!empty(answers[f.id]) && !errors[f.id]) box.classList.add("is-answered");
     var id = "tmf-" + f.id;
-    var label;
-    if (f.type !== "check") {
+    if (f.type !== "check" && f.type !== "freq") {
       var block = f.type === "choice" || f.type === "multi" || f.type === "freq" || f.type === "meals";
-      label = el(block ? "div" : "label", "tmf-label", f.label);
+      var label = el(block ? "div" : "label", "tmf-label", f.label);
       if (label.tagName === "LABEL") label.htmlFor = id;
       if (f.type === "multi") label.append(" ", el("small", "", "(podes escolher várias)"));
-      else if (!f.required && f.type !== "meals" && !f.other_of) label.append(" ", el("small", "", "(opcional)"));
+      else if (!f.required && f.type !== "meals" && f.type !== "freq" && !f.other_of) label.append(" ", el("small", "", "(opcional)"));
       if (f.other_of) box.classList.add("is-other");
       box.append(label);
     }
-    var hint = f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
+    var hint = f.type === "freq" ? "" : f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
     if (hint) box.append(el("div", "tmf-hint", hint));
     var v = answers[f.id];
     if (f.type === "choice" || f.type === "multi") {
-      box.append(choiceGroup(f.options, v, function (x) { setAnswer(f.id, x, true); }, f.label,
-        {multi: f.type === "multi", compact: f.compact, swatches: f.swatches, ends: f.ends}));
+      box.append(choiceGroup(f.options, v, function (x) {
+        setAnswer(f.id, x, true, f.type === "choice" && x ? f.id : null);
+      }, f.label, {multi: f.type === "multi", compact: f.compact, swatches: f.swatches, ends: f.ends}));
       if (f.unit) box.append(el("div", "tmf-hint", f.unit));
     } else if (f.type === "text" || f.type === "date") {
       var i = el("input", "tmf-input");
@@ -148,6 +162,7 @@
       if (f.max) i.maxLength = f.max;
       if (f.placeholder) i.placeholder = f.placeholder;
       i.value = v || "";
+      i.enterKeyHint = "next";
       i.addEventListener("input", function () { setAnswer(f.id, i.value.trim() ? i.value : ""); });
       box.append(i);
     } else if (f.type === "textarea") {
@@ -160,7 +175,7 @@
     } else if (f.type === "number") {
       var row = el("div", "tmf-unit");
       var n = el("input", "tmf-input");
-      n.id = id; n.type = "text"; n.inputMode = "decimal"; n.autocomplete = "off";
+      n.id = id; n.type = "text"; n.inputMode = "decimal"; n.autocomplete = "off"; n.enterKeyHint = "next";
       n.value = v == null ? "" : String(v).replace(".", ",");
       var err = el("div", "tmf-error");
       n.addEventListener("input", function () {
@@ -195,48 +210,105 @@
     } else if (f.type === "meals") {
       box.append(mealsNode(f));
     }
-    if (errors[f.id] === "required") box.append(el("div", "tmf-error", f.type === "freq" ? "Responde a todos os alimentos." : "Esta resposta é necessária."));
+    if (errors[f.id] === "required") box.append(el("div", "tmf-error", f.type === "freq" ? "Falta responder aos alimentos assinalados." : "Esta resposta é necessária."));
     return box;
   }
 
+  // Frequência: uma linha por alimento com os dias por semana; «Todos» pede quantas vezes por dia.
+  function weeklyOf(value) {
+    if (!value) return "";
+    if (value === "never" || value === "d1_2" || value === "d3_4" || value === "d5_6") return value;
+    return "all";
+  }
   function freqNode(f) {
     var wrap = el("div", "tmf-freq");
     var g = Object.assign({}, answers[f.id] || {});
+    var done = f.rows.filter(function (r) { return g[r[0]]; }).length;
+    var head = el("div", "tmf-freq-head");
+    var bar = el("span", "tmf-freq-bar"); var fill = el("i"); bar.append(fill);
+    fill.style.setProperty("width", Math.round(done / f.rows.length * 100) + "%");
+    head.append(el("span", "tmf-freq-count", "Dias por semana · " + done + " de " + f.rows.length + " alimentos"), bar);
+    wrap.append(head);
     f.rows.forEach(function (r) {
-      var card = el("div", "tmf-freq-card");
-      if (errors[f.id] === "required" && !g[r[0]]) card.classList.add("is-missing");
-      var title = el("b", "", r[1]);
-      if (r[2]) title.append(" ", el("small", "", r[2]));
-      card.append(title, choiceGroup(r[3], g[r[0]], function (x) {
-        var next = Object.assign({}, answers[f.id] || {});
-        if (x) next[r[0]] = x; else delete next[r[0]];
-        setAnswer(f.id, next, true);
-      }, r[1], {compact: true}));
-      wrap.append(card);
+      var key = r[0], opts = r[3], value = g[key];
+      var row = el("div", "tmf-freq-row");
+      row.dataset.row = key;
+      if (value) row.classList.add("is-done");
+      if (errors[f.id] === "required" && !value) row.classList.add("is-missing");
+      var name = el("div", "tmf-freq-name", r[1]);
+      if (r[2]) name.append(el("small", "", r[2]));
+      var week = weeklyOf(value) || (dailyPending[key] ? "all" : "");
+      var perDay = opts.filter(function (x) { return WEEKLY.every(function (w) { return w[0] !== x[0]; }); });
+      var scale = el("div", "tmf-freq-scale");
+      scale.setAttribute("role", "group"); scale.setAttribute("aria-label", r[1] + ", dias por semana");
+      WEEKLY.forEach(function (o) {
+        var b = el("button", "tmf-dot", o[1]);
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(week === o[0]));
+        b.setAttribute("aria-label", r[1] + ": " + (o[0] === "never" ? "nunca" : o[0] === "all" ? "todos os dias" : o[1] + " dias por semana"));
+        b.addEventListener("click", function () {
+          var next = Object.assign({}, answers[f.id] || {});
+          if (o[0] === "all") {
+            if (perDay.length === 1) { next[key] = perDay[0][0]; delete dailyPending[key]; setAnswer(f.id, next, true, "freq:" + key); }
+            else if (weeklyOf(next[key]) !== "all") { delete next[key]; dailyPending[key] = true; setAnswer(f.id, next, true); }
+            return;
+          }
+          delete dailyPending[key];
+          next[key] = o[0];
+          setAnswer(f.id, next, true, "freq:" + key);
+        });
+        scale.append(b);
+      });
+      row.append(name, scale);
+      if (week === "all" && perDay.length > 1) {
+        var more = el("div", "tmf-freq-more");
+        more.append(el("span", "", "Quantas vezes por dia?"));
+        var chips = el("div", "tmf-freq-chips");
+        perDay.forEach(function (x) {
+          var c = el("button", "tmf-chip", x[1].replace(/^Todos os dias \(|\)$/g, "").replace("/dia", ""));
+          c.type = "button";
+          c.setAttribute("aria-pressed", String(value === x[0]));
+          c.addEventListener("click", function () {
+            var next = Object.assign({}, answers[f.id] || {});
+            next[key] = x[0]; delete dailyPending[key];
+            setAnswer(f.id, next, true, "freq:" + key);
+          });
+          chips.append(c);
+        });
+        more.append(chips);
+        row.append(more);
+      }
+      wrap.append(row);
     });
     return wrap;
   }
+
   function mealsNode(f) {
     var wrap = el("div", "tmf-meals");
     var meals = Object.assign({}, answers[f.id] || {});
-    function update(key, part, value) {
+    function update(key, part, value, card) {
       var cur = Object.assign({time: "", text: ""}, meals[key] || {});
       cur[part] = value;
       if (!cur.time && !cur.text.trim()) delete meals[key]; else meals[key] = cur;
+      card.classList.toggle("is-done", !!meals[key]);
       setAnswer(f.id, Object.assign({}, meals));
     }
     f.rows.forEach(function (r) {
-      var row = el("div", "tmf-meal");
+      var card = el("div", "tmf-meal");
       var m = meals[r[0]] || {};
-      var time = el("input", "tmf-input");
+      if (meals[r[0]]) card.classList.add("is-done");
+      var head = el("div", "tmf-meal-head");
+      var time = el("input", "tmf-input tmf-time");
       time.type = "time"; time.value = m.time || ""; time.setAttribute("aria-label", r[1] + " – hora");
-      time.addEventListener("input", function () { update(r[0], "time", time.value); });
+      time.addEventListener("input", function () { update(r[0], "time", time.value, card); });
+      head.append(el("div", "tmf-meal-name", r[1]), time);
       var text = el("textarea", "tmf-textarea");
-      text.maxLength = 600; text.value = m.text || ""; text.placeholder = "O que costumas comer e beber";
+      text.maxLength = 600; text.value = m.text || ""; text.rows = 2;
+      text.placeholder = "O que costumas comer e beber (deixa em branco se não fazes)";
       text.setAttribute("aria-label", r[1] + " – o que comes");
-      text.addEventListener("input", function () { update(r[0], "text", text.value); });
-      row.append(el("div", "tmf-meal-name", r[1]), time, text);
-      wrap.append(row);
+      text.addEventListener("input", function () { update(r[0], "text", text.value, card); });
+      card.append(head, text);
+      wrap.append(card);
     });
     return wrap;
   }
@@ -249,8 +321,8 @@
 
   function renderWelcome() {
     app.replaceChildren();
-    var hero = el("section", "tmf-hero");
-    var h = el("h1", "", "Olá" + (data.first_name ? " " + data.first_name : "") + ",");
+    var hero = el("section", "tmf-hero tmf-enter");
+    var h = el("h1", "", "Olá" + firstName() + ",");
     h.append(el("span", "", "vamos preparar a tua consulta."));
     var who = data.booking && data.booking.professional ? "A " + data.booking.professional.split(" ")[0] : "A tua nutricionista";
     var facts = el("ul", "tmf-facts");
@@ -261,7 +333,7 @@
     });
     var go = el("button", "tmf-btn tmf-btn-primary", "Começar");
     go.type = "button";
-    go.addEventListener("click", function () { current = 0; renderStep(); });
+    go.addEventListener("click", function () { current = 0; renderStep(); window.scrollTo(0, 0); });
     hero.append(h,
       el("p", "", "Antes da consulta, queremos conhecer-te um pouco melhor. " + who + " vai ler as tuas respostas para que o tempo em consulta seja dedicado ao que é importante para ti."),
       facts, go,
@@ -272,7 +344,8 @@
 
   function renderDone() {
     app.replaceChildren();
-    var hero = el("section", "tmf-hero");
+    var hero = el("section", "tmf-hero tmf-enter");
+    hero.append(el("div", "tmf-done-mark", "✓"));
     hero.append(el("h1", "", "Obrigada" + (data.first_name ? ", " + data.first_name : "") + ". Está tudo pronto."));
     var b = data.booking;
     hero.append(el("p", "", "As tuas respostas ficaram guardadas." + (b ? " Até " + niceDate(b.date) + "." : "")));
@@ -290,39 +363,60 @@
     hero.append(el("div", "tmf-label", "Para o dia"), tips);
     var review = el("button", "tmf-btn tmf-btn-ghost", "Rever as minhas respostas");
     review.type = "button";
-    review.addEventListener("click", function () { mode = "review"; current = 0; renderStep(); });
+    review.addEventListener("click", function () { mode = "review"; current = data.steps.indexOf(screens()[0]); renderStep(); window.scrollTo(0, 0); });
     hero.append(review);
     app.append(hero);
     setSave("");
   }
 
+  function cheer(pos, total) {
+    var left = total - pos - 1;
+    var mins = Math.max(1, Math.round(left * SECONDS_PER_SCREEN / 60));
+    var pct = (pos + 1) / total;
+    var name = firstName() ? "," + firstName() : "";
+    if (pos === total - 1) return "Último passo!";
+    if (pct >= 0.75) return "Falta pouco" + name + ". Cerca de " + mins + " min.";
+    if (pct >= 0.5) return "Já vais a meio" + name + ". Faltam cerca de " + mins + " min.";
+    if (pct >= 0.25) return "Bom ritmo! Faltam cerca de " + mins + " min.";
+    return "Faltam cerca de " + mins + " min.";
+  }
+
   function renderStep() {
-    var list = steps();
+    var list = screens();
     if (list.indexOf(data.steps[current]) < 0) current = data.steps.indexOf(list[0]);
     var step = data.steps[current];
     var pos = list.indexOf(step);
+    var gs = groups(), gpos = gs.indexOf(step.group);
     var keepFocus = document.activeElement && document.activeElement.id;
     var scrollY = window.scrollY;
     app.replaceChildren();
+
+    var progress = el("div", "tmf-progress");
+    var track = el("div", "tmf-progress-track"); var fill = el("span"); track.append(fill);
+    fill.style.setProperty("width", Math.max(3, Math.round(pos / list.length * 100)) + "%");
+    var ptext = el("div", "tmf-progress-text");
+    ptext.append(el("span", "", "Passo " + (pos + 1) + " de " + list.length), el("span", "", mode === "review" ? "" : cheer(pos, list.length)));
+    progress.append(track, ptext);
+
     var layout = el("div", "tmf-layout");
     var nav = el("nav", "tmf-steps");
-    nav.setAttribute("aria-label", "Passos");
-    list.forEach(function (s, i) {
-      var done = i < pos || mode === "review";
-      var b = el("button", "tmf-step-link" + (i === pos ? " is-current" : done ? " is-done" : ""),
-        (i < pos ? "✓ " : "") + (i + 1) + " · " + s.title);
+    nav.setAttribute("aria-label", "Secções");
+    gs.forEach(function (g, i) {
+      var first = list.filter(function (s) { return s.group === g; })[0];
+      var done = i < gpos || mode === "review";
+      var b = el("button", "tmf-step-link" + (i === gpos ? " is-current" : done ? " is-done" : ""),
+        (i < gpos ? "✓ " : "") + g);
       b.type = "button";
-      if (i === pos) b.setAttribute("aria-current", "step");
-      b.addEventListener("click", function () { if (i <= pos || mode === "review") go(data.steps.indexOf(s)); });
+      if (i === gpos) b.setAttribute("aria-current", "step");
+      b.addEventListener("click", function () { if (i <= gpos || mode === "review") go(data.steps.indexOf(first)); });
       nav.append(b);
     });
     var main = el("main", "tmf-main");
-    var card = el("section", "tmf-card");
-    var prog = el("div", "tmf-progress"); var bar = el("span"); prog.append(bar);
-    bar.style.setProperty("width", Math.round((pos + 1) / list.length * 100) + "%");
+    var card = el("section", "tmf-card" + (scrollTarget ? "" : " tmf-enter"));
     var head = el("div");
-    head.append(el("div", "tmf-kicker", "Passo " + (pos + 1) + " de " + list.length), el("h1", "", step.title));
-    card.append(prog, head);
+    head.append(el("div", "tmf-kicker", step.group), el("h1", "", step.title));
+    if (step.intro) head.append(el("p", "tmf-intro", step.intro));
+    card.append(head);
     if (mode === "review") card.append(el("div", "tmf-banner", "Já enviaste este formulário. As alterações que fizeres ficam guardadas e a equipa vê a versão mais recente."));
     step.fields.filter(visible).forEach(function (f) { card.append(fieldNode(f)); });
     var bar2 = el("div", "tmf-nav");
@@ -332,26 +426,50 @@
     var last = pos === list.length - 1;
     var next = el("button", "tmf-btn tmf-btn-primary", last ? (mode === "review" ? "Guardar alterações" : "Enviar formulário") : "Seguinte");
     next.type = "button";
-    next.addEventListener("click", function () {
-      if (!validate(step)) { renderStep(); focusError(); return; }
-      if (last) submit(next); else go(data.steps.indexOf(list[pos + 1]));
-    });
+    next.id = "tmf-next";
+    next.addEventListener("click", function () { advance(step, last, next); });
     bar2.append(back, next);
     card.append(bar2);
-    main.append(card);
+    main.append(progress, card);
     layout.append(nav, main);
     app.append(layout);
-    if (keepFocus && document.getElementById(keepFocus)) {
-      document.getElementById(keepFocus).focus();
-      window.scrollTo(0, scrollY);
+
+    window.scrollTo(0, scrollY);
+    if (scrollTarget) { var t = scrollTarget; scrollTarget = null; flowTo(t); }
+    else if (keepFocus && document.getElementById(keepFocus)) document.getElementById(keepFocus).focus({preventScroll: true});
+  }
+
+  // Depois de responder, leva suavemente à pergunta (ou ao alimento) seguinte.
+  function flowTo(from) {
+    var target = null;
+    if (from.indexOf("freq:") === 0) {
+      var rows = Array.prototype.slice.call(app.querySelectorAll(".tmf-freq-row"));
+      var i = rows.findIndex(function (r) { return r.dataset.row === from.slice(5); });
+      target = rows.slice(i + 1).filter(function (r) { return !r.classList.contains("is-done"); })[0];
+    } else {
+      var fields = Array.prototype.slice.call(app.querySelectorAll(".tmf-field"));
+      var k = fields.findIndex(function (b) { return b.dataset.field === from; });
+      target = fields.slice(k + 1).filter(function (b) { return !b.classList.contains("is-answered"); })[0];
     }
+    if (!target) target = document.getElementById("tmf-next");
+    if (!target) return;
+    var rect = target.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - 40 || rect.top < 60) {
+      window.scrollTo({top: window.scrollY + rect.top - window.innerHeight * 0.3, behavior: "smooth"});
+    }
+  }
+
+  function advance(step, last, button) {
+    if (!validate(step)) { renderStep(); focusError(); return; }
+    var list = screens(), pos = list.indexOf(step);
+    if (last) submit(button); else go(data.steps.indexOf(list[pos + 1]));
   }
 
   function go(index) {
     current = index;
     saveNow();
-    renderStep();
     window.scrollTo(0, 0);
+    renderStep();
   }
 
   function validate(step) {
@@ -366,13 +484,12 @@
     return ok;
   }
   function focusError() {
-    var bad = app.querySelector(".tmf-field.is-invalid, .tmf-error");
-    if (bad) { bad.scrollIntoView({block: "center"}); var i = bad.querySelector("input,textarea,button"); if (i) i.focus(); }
+    var bad = app.querySelector(".tmf-freq-row.is-missing, .tmf-field.is-invalid");
+    if (bad) { bad.scrollIntoView({block: "center", behavior: "smooth"}); var i = bad.querySelector("input,textarea,button"); if (i) i.focus({preventScroll: true}); }
   }
 
   function submit(button) {
-    // Confirma todos os passos antes de enviar.
-    var list = steps();
+    var list = screens();
     for (var i = 0; i < list.length; i++) {
       if (!validate(list[i])) { current = data.steps.indexOf(list[i]); renderStep(); focusError(); return; }
     }
@@ -388,6 +505,14 @@
       setSave("Sem ligação. Tenta de novo.", true);
     });
   }
+
+  // Enter num campo curto passa ao passo seguinte.
+  app.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.target.tagName !== "INPUT" || e.target.type === "checkbox") return;
+    e.preventDefault();
+    var n = document.getElementById("tmf-next");
+    if (n) n.click();
+  });
 
   function fail(text) {
     app.replaceChildren();
