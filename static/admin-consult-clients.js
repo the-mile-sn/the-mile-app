@@ -196,7 +196,7 @@
     const g3 = sec("Avaliação", "Só equipa clínica · usado nos cálculos");
     g3.append(field("Ponto do braço (cm)", "arm_point_cm", c.arm_point_cm ?? "", {inputmode: "decimal", hint: "Metade da distância acrómio–olecrânio"}),
       field("Ponto da coxa (cm)", "thigh_point_cm", c.thigh_point_cm ?? "", {inputmode: "decimal", hint: "Metade da distância da coxa"}),
-      field("Etnia (para a massa muscular)", "ethnic_adjustment", c.ethnic_adjustment, {options: [["none", "Caucasiana ou outra (sem ajuste)"], ["african", "Afrodescendente (+1,1 kg)"], ["asian", "Asiática (−2,0 kg)"]], hint: "Usada só na equação de Lee da massa muscular, como no estudo. Não aparece ao cliente."}));
+      field("Etnia (para a massa muscular)", "ethnicity", c.ethnicity, {options: [["none", "Caucasiana ou outra (sem ajuste)"], ["african", "Afrodescendente (+1,1 kg)"], ["asian", "Asiática (−2,0 kg)"]], hint: "Usada só na equação de Lee da massa muscular, como no estudo. Não aparece ao cliente."}));
     const g4 = sec("Notas internas");
     g4.append(field("", "notes", c.notes, {textarea: true, wide: true}));
     const save = el("div", "tm-cc-save"); const saveBtn = el("button", "tm-cc-primary", "Guardar alterações"); saveBtn.type = "submit";

@@ -16,8 +16,6 @@ from appointments_catalog_v2 import ORG_ID
 STATUSES = ("pending", "confirmed", "archived")
 SEXES = ("", "F", "M")
 ETHNIC = ("none", "african", "asian")
-# Valores que a coluna antiga ``ethnic_adjustment`` aceita (CHECK original).
-LEGACY_ETHNIC = ("none", "african")
 BOOKING_KINDS = ("manual", "shopify")
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,24}$")
 
@@ -43,8 +41,8 @@ def initialize(c):
         guardian_relation TEXT NOT NULL DEFAULT '',
         arm_point_cm REAL,
         thigh_point_cm REAL,
-        ethnic_adjustment TEXT NOT NULL DEFAULT 'none'
-            CHECK(ethnic_adjustment IN ('none','african')),
+        ethnicity TEXT NOT NULL DEFAULT 'none'
+            CHECK(ethnicity IN ('none','african','asian')),
         notes TEXT NOT NULL DEFAULT '',
         merged_into TEXT,
         version INTEGER NOT NULL DEFAULT 1 CHECK(version > 0),
@@ -92,16 +90,27 @@ def _columns(c, table):
 
 
 def _add_ethnicity(c):
-    """Coluna nova ``ethnicity`` (none/african/asian) para a equação de Lee.
+    """Uma só coluna de etnia (``ethnicity``: none/african/asian) para a equação de Lee.
 
-    A coluna antiga ``ethnic_adjustment`` tem um CHECK que só aceita none/african e
-    não é alterada: continua a ser escrita (asiática fica 'none' nela) e a nova coluna
-    passa a ser a fonte. Aditivo e repetível; copia os valores existentes uma vez.
+    Bases antigas tinham ``ethnic_adjustment`` (só none/african). Copia os valores para
+    ``ethnicity`` e remove a coluna antiga. Repetível: não faz nada se já estiver feito.
     """
-    if "ethnicity" in _columns(c, "consult_clients"):
+    columns = _columns(c, "consult_clients")
+    if "ethnicity" not in columns:
+        c.execute("ALTER TABLE consult_clients ADD COLUMN ethnicity TEXT NOT NULL DEFAULT 'none' "
+                  "CHECK(ethnicity IN ('none','african','asian'))")
+    if "ethnic_adjustment" not in columns:
         return
-    c.execute("ALTER TABLE consult_clients ADD COLUMN ethnicity TEXT NOT NULL DEFAULT 'none'")
-    c.execute("UPDATE consult_clients SET ethnicity=ethnic_adjustment WHERE ethnic_adjustment<>'none'")
+    c.execute("UPDATE consult_clients SET ethnicity=ethnic_adjustment "
+              "WHERE ethnic_adjustment='african' AND ethnicity='none'")
+    if hasattr(c, "conn"):
+        has_check = c.execute(
+            "SELECT 1 FROM pg_constraint WHERE conrelid='consult_clients'::regclass "
+            "AND contype='c' AND position('ethnicity' in pg_get_constraintdef(oid)) > 0").fetchone()
+        if not has_check:
+            c.execute("ALTER TABLE consult_clients ADD CONSTRAINT consult_clients_ethnicity_check "
+                      "CHECK (ethnicity IN ('none','african','asian'))")
+    c.execute("ALTER TABLE consult_clients DROP COLUMN ethnic_adjustment")
 
 
 # ---------- validação ----------
@@ -166,7 +175,7 @@ def _professional(c, value, org_id):
 EDITABLE = ("name", "email", "phone", "birth_date", "sex", "height_cm",
             "active_professional_id", "guardian_name", "guardian_email",
             "guardian_phone", "guardian_relation", "arm_point_cm",
-            "thigh_point_cm", "ethnic_adjustment", "notes")
+            "thigh_point_cm", "ethnicity", "notes")
 
 
 def _clean(c, payload, org_id, partial=False):
@@ -198,20 +207,16 @@ def _clean(c, payload, org_id, partial=False):
             out[key] = _number(value, key, 50, 250)
         elif key in ("arm_point_cm", "thigh_point_cm"):
             out[key] = _number(value, key, 1, 100)
-        elif key == "ethnic_adjustment":
+        elif key == "ethnicity":
             value = value or "none"
             if value not in ETHNIC:
-                raise ValueError("invalid_ethnic_adjustment")
+                raise ValueError("invalid_ethnicity")
             out[key] = value
         elif key == "notes":
             out[key] = _text(value, "notes", 4000)
         elif key == "active_professional_id":
             out[key] = _professional(c, value, org_id)
     return out
-
-
-def _legacy_ethnic(value):
-    return value if value in LEGACY_ETHNIC else "none"
 
 
 def _audit(c, org_id, client_id, actor, action, detail=None, now=None):
@@ -235,9 +240,8 @@ def _public(row, extra=None):
     data = {k: row[k] for k in (
         "id", "name", "email", "phone", "birth_date", "sex", "height_cm", "status",
         "active_professional_id", "guardian_name", "guardian_email", "guardian_phone",
-        "guardian_relation", "arm_point_cm", "thigh_point_cm",
+        "guardian_relation", "arm_point_cm", "thigh_point_cm", "ethnicity",
         "notes", "merged_into", "version", "created_at", "updated_at")}
-    data["ethnic_adjustment"] = row["ethnicity"] or "none"
     if extra:
         data.update(extra)
     return data
@@ -252,14 +256,13 @@ def create(c, payload, actor, org_id=ORG_ID, now=None, status="confirmed"):
     c.execute("""INSERT INTO consult_clients
         (id,org_id,name,email,phone,birth_date,sex,height_cm,status,active_professional_id,
          guardian_name,guardian_email,guardian_phone,guardian_relation,arm_point_cm,
-         thigh_point_cm,ethnic_adjustment,ethnicity,notes,created_by,updated_by,created_at,updated_at)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+         thigh_point_cm,ethnicity,notes,created_by,updated_by,created_at,updated_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (identifier, org_id, data["name"], data["email"], data["phone"],
                data["birth_date"], data["sex"], data["height_cm"], status,
                data["active_professional_id"], data["guardian_name"], data["guardian_email"],
                data["guardian_phone"], data["guardian_relation"], data["arm_point_cm"],
-               data["thigh_point_cm"], _legacy_ethnic(data["ethnic_adjustment"]),
-               data["ethnic_adjustment"], data["notes"],
+               data["thigh_point_cm"], data["ethnicity"], data["notes"],
                actor, actor, now, now))
     _audit(c, org_id, identifier, actor, "created", {"status": status}, now)
     return identifier
@@ -276,23 +279,17 @@ def update(c, client_id, payload, actor, org_id=ORG_ID, now=None):
     data = _clean(c, payload, org_id, partial=True)
     if not data:
         return row["version"]
-    current = dict(row)
-    current["ethnic_adjustment"] = row["ethnicity"] or "none"
-    changed = {k: v for k, v in data.items() if current[k] != v}
+    changed = {k: v for k, v in data.items() if row[k] != v}
     if not changed:
         return row["version"]
-    columns = dict(changed)
-    if "ethnic_adjustment" in columns:
-        columns["ethnicity"] = columns["ethnic_adjustment"]
-        columns["ethnic_adjustment"] = _legacy_ethnic(columns["ethnic_adjustment"])
-    assignments = ",".join(f"{k}=?" for k in columns)
+    assignments = ",".join(f"{k}=?" for k in changed)
     c.execute(f"""UPDATE consult_clients SET {assignments},version=version+1,
         updated_by=?,updated_at=? WHERE org_id=? AND id=? AND version=?""",
-              (*columns.values(), actor, now, org_id, client_id, version))
+              (*changed.values(), actor, now, org_id, client_id, version))
     # Regista os campos alterados; o ajuste da equação fica com valor (só equipa clínica).
     detail = {"fields": sorted(changed)}
-    if "ethnic_adjustment" in changed:
-        detail["ethnic_adjustment"] = changed["ethnic_adjustment"]
+    if "ethnicity" in changed:
+        detail["ethnicity"] = changed["ethnicity"]
     _audit(c, org_id, client_id, actor, "updated", detail, now)
     return version + 1
 

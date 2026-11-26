@@ -68,9 +68,9 @@ def initialize(c):
 
 
 def _basics(c, client_id, org_id):
-    row = c.execute("""SELECT sex,birth_date,height_cm,ethnicity AS ethnic_adjustment FROM consult_clients
+    row = c.execute("""SELECT sex,birth_date,height_cm,ethnicity FROM consult_clients
         WHERE org_id=? AND id=?""", (org_id, client_id)).fetchone()
-    return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnic_adjustment": "none"}
+    return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnicity": "none"}
 
 
 def _assessment_public(row):
@@ -106,7 +106,7 @@ def save_assessment(c, session_id, payload, actor, org_id=ORG_ID, now=None):
     if "height_cm" not in measures and basics.get("height_cm"):
         measures["height_cm"] = float(basics["height_cm"])
     results = body.compute(measures, basics.get("sex"), body.age_on(basics.get("birth_date"), b["day"]),
-                           basics.get("ethnic_adjustment") or "none", equation)
+                           basics.get("ethnicity") or "none", equation)
     existing = c.execute("SELECT * FROM consult_assessments WHERE org_id=? AND session_id=?",
                          (org_id, session_id)).fetchone()
     if existing:
