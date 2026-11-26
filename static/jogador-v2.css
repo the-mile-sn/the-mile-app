@@ -5431,6 +5431,9 @@ body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!i
 :is(#overview,#plans-assessments) .weight-detail-line{fill:none;stroke:rgba(241,241,244,.6);stroke-width:2;stroke-linejoin:round}
 :is(#overview,#plans-assessments) .weight-detail-dot{fill:#0d0d10;stroke:#f1f1f4;stroke-width:2}
 :is(#overview,#plans-assessments) .weight-detail-dot.last{fill:#f1f1f4}
+:is(#overview,#plans-assessments) .weight-detail-chart svg.weight-detail-scrubbable{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+:is(#overview,#plans-assessments) .weight-detail-scrub-line{stroke:rgba(241,241,244,.45);stroke-width:1;stroke-dasharray:3 3}
+:is(#overview,#plans-assessments) .weight-detail-scrub-ring{fill:none;stroke:#f1f1f4;stroke-width:2;pointer-events:none}
 :is(#overview,#plans-assessments) .weight-detail-point{min-height:18px;margin:4px 0 0;font-size:13px;color:#d6d6dc}
 :is(#overview,#plans-assessments) .weight-detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;padding:13px 17px;border-radius:13px;background:#25262b}
 :is(#overview,#plans-assessments) .weight-detail-stats small{display:block;font-size:12px;color:#aaaab4}
