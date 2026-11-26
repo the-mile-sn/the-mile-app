@@ -5673,3 +5673,19 @@ body.consumption-sheet-open #tabs{visibility:hidden!important}
 .consumption-sheet-confirm-group button.is-destructive{color:#ff6b6b!important}
 .consumption-sheet-toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));z-index:1002;padding:10px 16px;border-radius:999px;background:rgba(44,44,48,.95);color:#f1f1f4;font-size:14px;opacity:0;transform:translate(-50%,8px);transition:opacity .22s ease,transform .22s ease;pointer-events:none}
 .consumption-sheet-toast.is-visible{opacity:1;transform:translate(-50%,0)}
+
+/* ===== Plano do dia — alinhamentos (26/11) ===== */
+/* Recorded option: the check sits right after «Opção X» (inline), not centred in the card. */
+#overview #day-details details.player-meal-option-subcard summary .plan-option-label>small:has(>.meal-registered-badge-closed){display:flex!important;align-items:center!important;gap:7px!important}
+#overview #day-details details.player-meal-option-subcard summary .plan-option-label:has(.meal-registered-badge-closed){padding-right:0!important}
+#overview #day-details details.player-meal-option-subcard summary .plan-option-label small>.meal-registered-badge-closed{
+ position:static!important;transform:none!important;display:inline-flex!important;align-items:center!important;flex:none!important;
+ margin:0!important;padding:0!important;border-radius:0!important;background:none!important;color:inherit!important;
+}
+#overview #day-details details.player-meal-option-subcard summary .plan-option-label small>.meal-registered-badge-closed .consumption-action-icon{width:16px!important;height:16px!important;flex-basis:16px!important}
+#overview #day-details details.player-meal-option-subcard[open] summary .meal-registered-badge-closed{display:none!important}
+/* Closed meal: kcal shares the title's baseline. The kcal block takes the title's
+   line box (16px / 1.3), so the smaller kcal text sits on the same baseline. */
+#overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline{display:block!important;font-size:var(--day-title-size)!important;line-height:1.3!important}
+#overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro{display:inline!important;line-height:inherit!important}
+#overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal{display:inline!important;vertical-align:baseline!important}
