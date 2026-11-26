@@ -5599,10 +5599,10 @@ body.progress-active:has(#player-panel:not([hidden])) .player-top{display:none!i
    each row (or dot) opens the skinfold page with a mini body, the unchanged chart and ‹ previous · next ›. */
 #plans .progress-body-card{margin:0 0 10px;padding:10px 6px 4px;border-radius:13px;background:rgba(255,255,255,.045)}
 #plans .progress-body-map{display:block;width:100%;height:auto;overflow:visible}
-#plans .progress-body-shape{fill:#2e2f35;stroke:none}
-#plans .progress-body-shape .limb{fill:none;stroke:#2e2f35;stroke-linecap:round;stroke-linejoin:round}
-#plans .progress-body-shape .arm{stroke-width:15}
-#plans .progress-body-shape .leg{stroke-width:22}
+#plans .progress-body-fill{fill:#2e2f35;stroke:#2e2f35;stroke-width:.6}
+#plans .progress-body-detail{fill:none;stroke:#4a4b52;stroke-width:1.1;stroke-linecap:round}
+#plans .progress-body-wear{fill:#3e3f46;stroke:none}
+#plans .progress-body-straps{fill:none;stroke:#3e3f46;stroke-width:3;stroke-linecap:round}
 #plans .progress-body-caption{font-size:12px;fill:#aaaab4}
 #plans .progress-body-dot{fill:#f1f1f4;fill-opacity:.85}
 #plans .progress-body-ring{fill:none;stroke:#f1f1f4;stroke-width:1.5}

@@ -3658,33 +3658,60 @@ function progressMuscleTile(fields){
  tile.onclick=()=>openProgressPage({muscle:true,fields:present});
  return tile;
 }
-// Pregas (26/11, aprovado no canvas): neutral body map (front and back) above a table of the 8 skinfolds.
-// The dot size follows the latest mm; no colours on the body. Tapping a dot or a row opens the skinfold page,
-// where a mini body marks the site and ‹ previous · next › (or a horizontal swipe) moves between skinfolds.
-const PROGRESS_SKINFOLD_SITES={back:[288,80],triceps:[303,92],biceps:[46,92],suprailiac:[52,158],supraspinal:[65,178],abdominal_skin:[90,148],thigh_skin:[64,232],calf_skin:[73,282]};
-function progressBodyShape(offset){
- return '<g transform="translate('+offset+',0)" class="progress-body-shape"><circle cx="80" cy="24" r="15"/><rect x="73" y="36" width="14" height="12"/>'
-  +'<polyline points="56,56 42,118 38,172" class="limb arm"/><polyline points="104,56 118,118 122,172" class="limb arm"/>'
-  +'<path d="M52 50 Q80 42 108 50 L108 136 Q106 166 110 192 L50 192 Q54 166 52 136 Z"/>'
-  +'<polyline points="66,188 64,250 66,308" class="limb leg"/><polyline points="94,188 96,250 94,308" class="limb leg"/></g>';
+// Pregas (26/11, aprovado no canvas): body map (front and back) above a table of the 8 skinfolds.
+// Body figures (26/11, canvas «v7»): flat silhouettes in the style of the approved references, one male and one
+// female (chosen by the player's sex), in underwear; subtle detail lines; no colours. The dot size follows the latest mm.
+// Tapping a dot or a row opens the skinfold page, where a mini body marks the site and ‹ previous · next › (or a
+// horizontal swipe) moves between skinfolds. Each figure is drawn from its left half, mirrored around x=80.
+const PROGRESS_BODY_FIGURES={
+ M:{
+  half:"M80 8 C71 8 64.5 15 64.5 26 C64.5 36 68 43 71 46 L71 51 C64 55 52 57 44 59 C38 61 35 66 34 74 C32 84 30 92 29 100 C27 110 26 116 26 120 C25 136 23 152 22.5 164 C21 172 21 182 23 188 C25 193 30 193 32 190 C33 186 33 176 33 170 C34 164 35 160 36 156 C38 140 40 128 42 118 C44 108 46 96 48 87 L50 86 C51 104 53 120 52.6 134 C52 146 50 154 50 162 C50 180 51 196 52 208 C53 222 55 234 56 244 C55 252 53 260 53 268 C53 284 56 296 58.5 308 C57 314 52 320 53 324 C55 328 66 328 70 325 C71 318 70 312 69.6 308 C70 296 74 280 75 268 C75 258 73 250 73 242 C74 222 77 196 80 180",
+  extra:'<ellipse cx="64.5" cy="28" rx="2.6" ry="5"/><ellipse cx="95.5" cy="28" rx="2.6" ry="5"/>',hair:"",
+  front:"M63 59 Q70 56 77 59 M57 98 Q63 101 69 98 M33 116 L40 118",navel:[80,146],
+  back:"M61 74 Q56 90 63 99 M33 116 L40 118",spine:"M80 98 L80 142",
+  frontWear:"M50 155 Q80 151 110 155 L109.5 192 L84 196 L80 184 L76 196 L50.5 192 Z",
+  backWear:"M50 155 Q80 151 110 155 L109.5 192 Q96 198 80 194 Q64 198 50.5 192 Z",straps:"",
+  sites:{biceps:[39,100],abdominal_skin:[91,145],suprailiac:[55,138],supraspinal:[63,151],thigh_skin:[65,215],calf_skin:[72,268],triceps:[311,100],back:[284,108]}
+ },
+ F:{
+  half:"M80 12 C72 12 67 19 67 30 C67 40 70 46 73 50 L71 56 C66 60 56 62 48 64 C43 66 41 70 40 76 C39 84 38 90 37 97 C36 108 35.5 118 35.3 126 C34.5 140 34 154 33.5 166 C32 174 32 182 34 188 C36 192 41 192 42 189 C43 184 43 176 42 170 C43 165 45 162 46 159 C48 146 49 134 50 124 C51 108 52 94 53.6 84 L55 82 C56 98 57 112 56 122 C55 134 50 146 48 158 C47 172 49 186 51 199 C53 214 56 226 57 236 C56 246 55 256 56.6 265 C57.5 280 61 292 62.8 302 C61 310 56 318 56 322 C57 326 68 327 72 324 C73 316 72 308 72.7 302 C74 290 77 276 76.7 265 C76.5 254 75 244 75.6 236 C76 216 78 192 80 174",
+  extra:"",hair:"M80 6 C66 6 58 15 58 30 C58 42 56 50 52 55 C57 58 64 58 70 55 L80 55 Z",
+  front:"M66 63 Q70 62 74 64 M63 236 Q67 241 72 237",navel:[80,146],
+  back:"M63 238 Q67 235 72 238",spine:"M80 108 L80 150",
+  frontWear:"M56 84 Q80 80 104 84 L104.5 104 Q92 109 80 103 Q68 109 55.5 104 Z M49 158 Q80 155 111 158 L111 174 Q96 178 84 188 L76 188 Q64 178 49 174 Z",
+  backWear:"M56 92 L104 92 L104 104 L56 104 Z M49 158 Q80 155 111 158 L111 180 Q96 188 80 186 Q64 188 49 180 Z",straps:"M64 66 L64 92 M96 66 L96 92",
+  sites:{biceps:[44.5,100],abdominal_skin:[91,145],suprailiac:[53,136],supraspinal:[61,150],thigh_skin:[64,210],calf_skin:[72,265],triceps:[305.5,100],back:[284,114]}
+ }
+};
+const PROGRESS_SKINFOLD_SITES=PROGRESS_BODY_FIGURES.M.sites;
+function progressBodyFigure(){return PROGRESS_BODY_FIGURES[String(me?.sex||"").trim().toUpperCase()==="F"?"F":"M"];}
+function progressBodyShape(figure,offset,back){
+ const mirror=inner=>inner+'<g transform="matrix(-1 0 0 1 160 0)">'+inner+'</g>';
+ const [nx,ny]=figure.navel;
+ return '<g transform="translate('+offset+',0)">'
+  +'<g class="progress-body-fill">'+mirror('<path fill-rule="evenodd" d="'+figure.half+' Z"/>')+(figure.hair?mirror('<path d="'+figure.hair+'"/>'):"")+figure.extra+'</g>'
+  +'<g class="progress-body-detail">'+mirror('<path d="'+(back?figure.back:figure.front)+'"/>')+(back?'<path d="'+figure.spine+'"/>':'<ellipse cx="'+nx+'" cy="'+ny+'" rx="1.4" ry="1.9"/>')+'</g>'
+  +'<path class="progress-body-wear" d="'+(back?figure.backWear:figure.frontWear)+'"/>'
+  +(back&&figure.straps?'<path class="progress-body-straps" d="'+figure.straps+'"/>':"")
+  +'</g>';
 }
 function progressSkinfoldEntries(){
  return (assessmentFields.pregas||[]).filter(([key])=>PROGRESS_SKINFOLD_SITES[key]&&progressReadings(key).length).map(([key,label,unit])=>({key,label,unit}));
 }
 function progressBodyMap({selected=null,mini=false,onPick=null}={}){
- const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
- svg.setAttribute("viewBox",mini?"0 0 360 315":"0 0 360 330");svg.setAttribute("class",mini?"progress-body-map mini":"progress-body-map");
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),figure=progressBodyFigure();
+ svg.setAttribute("viewBox",mini?"0 0 360 332":"0 0 360 350");svg.setAttribute("class",mini?"progress-body-map mini":"progress-body-map");
  svg.setAttribute("role","img");svg.setAttribute("aria-label",playerText("Localização das pregas","Skinfold sites"));
- svg.innerHTML=progressBodyShape(0)+progressBodyShape(190)+(mini?"":'<text x="80" y="326" text-anchor="middle" class="progress-body-caption">'+playerText("Frente","Front")+'</text><text x="270" y="326" text-anchor="middle" class="progress-body-caption">'+playerText("Costas","Back")+'</text>');
+ svg.innerHTML=progressBodyShape(figure,0,false)+progressBodyShape(figure,190,true)+(mini?"":'<text x="80" y="346" text-anchor="middle" class="progress-body-caption">'+playerText("Frente","Front")+'</text><text x="270" y="346" text-anchor="middle" class="progress-body-caption">'+playerText("Costas","Back")+'</text>');
  for(const entry of progressSkinfoldEntries()){
-  const [x,y]=PROGRESS_SKINFOLD_SITES[entry.key],values=progressReadings(entry.key).map(r=>r.value),on=entry.key===selected;
+  const [x,y]=figure.sites[entry.key],values=progressReadings(entry.key).map(r=>r.value),on=entry.key===selected;
   if(mini&&!on)continue;
-  const r=mini?14:Math.max(4,Math.min(12,3+values[values.length-1]*0.6));
+  const r=mini?12:Math.max(3.5,Math.min(9,2.5+values[values.length-1]*0.45));
   const g=document.createElementNS(ns,"g");g.setAttribute("class","progress-body-site"+(on?" selected":""));
   if(on){const ring=document.createElementNS(ns,"circle");ring.setAttribute("cx",x);ring.setAttribute("cy",y);ring.setAttribute("r",r+5);ring.setAttribute("class","progress-body-ring");g.append(ring);}
   const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",x);dot.setAttribute("cy",y);dot.setAttribute("r",r);dot.setAttribute("class","progress-body-dot");g.append(dot);
   if(onPick&&!mini){
-   const hit=document.createElementNS(ns,"circle");hit.setAttribute("cx",x);hit.setAttribute("cy",y);hit.setAttribute("r",Math.max(r,18));hit.setAttribute("class","progress-body-hit");
+   const hit=document.createElementNS(ns,"circle");hit.setAttribute("cx",x);hit.setAttribute("cy",y);hit.setAttribute("r",Math.max(r,13));hit.setAttribute("class","progress-body-hit");
    hit.setAttribute("role","button");hit.setAttribute("tabindex","0");hit.setAttribute("aria-label",playerAssessmentLabel(entry.key,entry.label)+" "+assessNumber(values[values.length-1])+" "+entry.unit);
    hit.addEventListener("click",()=>onPick(entry));hit.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();onPick(entry);}});
    g.append(hit);
