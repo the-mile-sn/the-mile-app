@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Consultas · The Mile</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+ <script src="/nutrition-theme.js?v=2"></script>
+ <link rel="stylesheet" href="/tm-design-system.css?v=14">
+ <link rel="stylesheet" href="/nutrition-nav.css?v=17">
+ <link rel="stylesheet" href="/admin-surface-palette.css?v=207">
+ <link rel="stylesheet" href="/admin-consultations.css?v=1">
+</head>
+<body class="tm-cq-body">
+ <div id="tm-cq-auth" class="tm-cq-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
+ <div id="tm-cq-root" class="tm-library-layout" hidden>
+  <aside class="tm-admin-sidebar" aria-label="Navegação do Backoffice" data-tm-nav-page="consultations"></aside>
+  <main class="tm-cq-main" id="tm-cq-main">
+   <div class="tm-cq-layout">
+    <section class="tm-cq-listpane" aria-labelledby="tm-cq-title">
+     <div class="tm-cq-listhead"><h1 id="tm-cq-title">Consultas</h1></div>
+     <label class="tm-cq-search"><span class="tm-cq-visually-hidden">Procurar cliente</span><input id="tm-cq-search" type="search" placeholder="Procurar cliente" autocomplete="off"></label>
+     <div class="tm-cq-segment" role="tablist" aria-label="Lista">
+      <button type="button" role="tab" data-tab="today" aria-selected="true">Hoje <span></span></button>
+      <button type="button" role="tab" data-tab="pending" aria-selected="false">Por tratar <span></span></button>
+      <button type="button" role="tab" data-tab="all" aria-selected="false">Todos <span></span></button>
+     </div>
+     <div id="tm-cq-list" class="tm-cq-list" aria-live="polite"><p class="tm-cq-empty">A carregar…</p></div>
+    </section>
+    <section id="tm-cq-detail" class="tm-cq-detail" aria-live="polite">
+     <div class="tm-cq-placeholder"><p>Escolhe um cliente na lista.</p></div>
+    </section>
+   </div>
+   <section id="tm-cq-focus" class="tm-cq-focus" hidden aria-label="Consulta em curso"></section>
+   <p id="tm-cq-feedback" class="tm-cq-feedback" role="status"></p>
+  </main>
+ </div>
+ <script src="/admin-nav-shell.js?v=17" defer></script>
+ <script src="/admin-consultations.js?v=1" defer></script>
+ <script src="/admin-mobile-nav.js?v=14" defer></script>
+</body>
+</html>
