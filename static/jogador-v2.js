@@ -3133,8 +3133,9 @@ async function overview(){
     const tags=makeRecordedConsumptionTags({host:target,date:d,meal,eventId:'',optionIndex:optionIndex>=0?optionIndex:null,consumedColor:otherColor?previous.prescription.color:null,description:playerText('consumo de ','consumption of ')+names[meal]});
     if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
     if(optionCard?.tagName==='DETAILS'){
-     const summaryLabel=optionCard.querySelector('summary .plan-option-label');
-     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';registeredMark(closedBadge,playerText('Opção registada','Option recorded'));summaryLabel.append(closedBadge);}
+     // The check sits right after «Opção X», not floating in the middle of the card.
+     const summaryNumber=optionCard.querySelector('summary .plan-option-label>small');
+     if(summaryNumber){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';registeredMark(closedBadge,playerText('Opção registada','Option recorded'));summaryNumber.append(closedBadge);}
     }
    }
    cards.forEach((card,i)=>{
