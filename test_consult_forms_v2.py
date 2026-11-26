@@ -16,12 +16,18 @@ SHOP = "the-mile-sports-nutrition.myshopify.com"
 CONFIG = {"MILE_SHOPIFY_APP_SECRET": SECRET, "MILE_SHOPIFY_SHOP_DOMAIN": SHOP}
 PROXY = "/api/v2/shopify/app-proxy/formulario"
 
+FREQ_ALL = {k: "d1_2" for k in ("soup", "vegetables", "fruit", "legumes", "fish", "fatty_fish", "red_meat",
+                                  "dairy", "nuts", "eating_out", "fried", "sweets")}
 ANSWERS = {
-    "for_whom": "self", "birth_date": "1996-03-02", "goal": "Perder 3 kg e recuperar melhor.",
-    "sex": "F", "height_cm": "165", "weight_kg": 61.5, "allergies": "Marisco",
-    "medication": "", "pregnancy": "planning", "trains": "yes", "sport": "Trail",
-    "frequency_grid": {"soup": "w1_3", "vegetables": "rarely"},
-    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre"}, "snack": {"time": "", "text": ""}},
+    "for_whom": "self", "birth_date": "1996-03-02", "sex": "F", "height_cm": "165", "weight_kg": 61.5,
+    "weighs_daily": "no", "allergies": "Marisco", "medication": "", "previous_nutrition": "no",
+    "goals": ["weight_loss", "other"], "goals_other": "Dormir melhor", "smoking": "no", "sleep_hours": "7",
+    "sleep_quality": "3", "cycle": "regular", "activity": "d3_4", "sports": ["running"],
+    "diet_pattern": "omnivore", "shopping": "me", "supermarkets": ["lidl", "continente"], "cooking": "me",
+    "weighs_food": "never", "water": "1_2", "urine_color": "3", "coffee": "1_2", "alcohol": "2",
+    "frequency": FREQ_ALL, "meal_drinks": ["water"], "motivation": "8",
+    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre"}, "lunch": {"time": "", "text": ""}},
+    "protein_portion": "120", "carb_portion": "150", "supplements": ["none"], "athlete": "no",
     "consent": True,
 }
 
@@ -94,7 +100,8 @@ class ConsultFormsTests(unittest.TestCase):
         self.assertEqual(draft["status"], 200, draft)
         self.assertIn("birth_date", draft["body"]["missing"])
         for bad in ({"height_cm": 400}, {"birth_date": "2099-01-01"}, {"sex": "X"}, {"nope": 1},
-                    {"frequency_grid": {"soup": "often"}}, {"meals": {"lunch": {"time": "25:00"}}}):
+                    {"frequency": {"soup": "x5"}}, {"goals": ["x"]}, {"goals": "weight_loss"},
+                    {"meals": {"lunch": {"time": "25:00"}}}):
             self.assertEqual(self.call("/guardar", token, "POST", {"answers": bad})["status"], 400, bad)
         early = self.call("/enviar", token, "POST", {"answers": {"for_whom": "self"}})
         self.assertEqual(early["status"], 400)
@@ -104,9 +111,18 @@ class ConsultFormsTests(unittest.TestCase):
         form = detail["form"]
         self.assertEqual(form["status"], "submitted")
         self.assertEqual(form["answers"]["height_cm"], 165)
-        self.assertEqual([c["label"] for c in form["care"]], ["Alergias", "Gravidez"])
+        self.assertEqual([c["label"] for c in form["care"]], ["Alergias"])
+        rows = {r.get("key"): r.get("value") for sec in form["sections"] for r in sec["rows"]}
+        self.assertEqual(rows["goals"], "Emagrecimento · Outra: Dormir melhor")
+        self.assertEqual(rows["supermarkets"], "Continente · Lidl")
+        self.assertEqual(rows["frequency.soup"], "Às vezes (1–2 dias)")
+        self.assertNotIn("supplements_detail", rows)
+        # Frequências: têm de estar todas respondidas.
+        partial = dict(ANSWERS, frequency={"soup": "never"})
+        self.assertEqual(self.call("/enviar", token, "POST", {"answers": partial})["status"], 400)
         titles = [s["title"] for s in form["sections"]]
         self.assertIn("Saúde feminina", titles)
+        self.assertNotIn("Hábitos em dia de jogo/competição", titles)
         meals = next(r for s in form["sections"] for r in s["rows"] if r["type"] == "meals")
         self.assertEqual([m["key"] for m in meals["items"]], ["breakfast"])
         profile = self.admin.request(f"/api/v2/admin/consult-clients/{self.client_id}")["body"]

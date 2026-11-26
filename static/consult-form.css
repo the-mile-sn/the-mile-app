@@ -67,24 +67,20 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
 .tmf-check{display:flex;gap:12px;align-items:flex-start;background:#F5F5F7;border-radius:14px;padding:14px 16px;cursor:pointer}
 .tmf-check input{width:20px;height:20px;margin:2px 0 0;accent-color:#141416;flex:0 0 auto}
 
-/* Tabela de frequências */
-.tmf-grid{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:14px}
-.tmf-grid th{font-weight:500;color:#939397;font-size:12px;text-align:center;padding:0 4px}
-.tmf-grid th:first-child{text-align:left;padding-left:8px}
-.tmf-grid td{text-align:center;padding:0 3px}
-.tmf-grid td:first-child{text-align:left;padding:6px 8px;line-height:1.3}
-.tmf-grid td:first-child small{display:block;color:#939397;font-size:12px}
-.tmf-dot{width:100%;min-width:44px;height:38px;border-radius:10px;border:0;background:#F5F5F7;cursor:pointer}
-.tmf-dot:hover{background:#E2E2E5}
-.tmf-dot[aria-pressed="true"]{background:#3F526F}
-.tmf-dot:focus-visible{outline:2px solid #6E8DB0;outline-offset:2px}
-.tmf-grid-cards{display:none;flex-direction:column;gap:10px}
-.tmf-grid-card{background:#F5F5F7;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.tmf-grid-card b{font-weight:600}
-.tmf-grid-card small{color:#939397;font-weight:400}
-.tmf-grid-card .tmf-choices{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.tmf-grid-card .tmf-choice{background:#fff;min-height:42px;font-size:13px;padding:6px 8px;text-align:center}
-.tmf-grid-card .tmf-choice[aria-pressed="true"]{background:#141416}
+/* Escalas, cores e frequências */
+.tmf-choices.is-compact{display:flex;flex-wrap:wrap;gap:8px}
+.tmf-choices.is-compact .tmf-choice{min-height:44px;min-width:48px;padding:8px 14px;text-align:center;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.tmf-scale{display:flex;flex-direction:column;gap:6px}
+.tmf-ends{display:flex;justify-content:space-between;font-size:12px;color:#636366}
+.tmf-swatch{width:18px;height:18px;border-radius:999px;border:1px solid rgba(20,20,22,.15);flex:0 0 auto}
+.tmf-field.is-other{margin-top:-10px}
+.tmf-freq{display:flex;flex-direction:column;gap:10px}
+.tmf-freq-card{background:#F5F5F7;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.tmf-freq-card.is-missing{box-shadow:inset 0 0 0 1px #d9776f}
+.tmf-freq-card b{font-weight:600}
+.tmf-freq-card small{color:#939397;font-weight:400}
+.tmf-freq-card .tmf-choice{background:#fff;font-size:13px;min-height:40px}
+.tmf .tmf-freq-card .tmf-choice[aria-pressed="true"]{background:#141416;color:#fff}
 
 /* Dia típico */
 .tmf-meals{display:flex;flex-direction:column;gap:10px}
@@ -111,8 +107,6 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
   .tmf-card{padding:20px 18px;border-radius:18px}
   .tmf-hero{padding:26px 20px}
   .tmf-hero h1{font-size:24px}
-  .tmf-grid{display:none}
-  .tmf-grid-cards{display:flex}
   .tmf-meal{grid-template-columns:1fr 110px}
   .tmf-meal-name{grid-column:1/-1;padding-top:0}
   .tmf-meal .tmf-textarea{grid-column:1/-1}

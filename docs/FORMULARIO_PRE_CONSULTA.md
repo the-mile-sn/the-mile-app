@@ -14,12 +14,12 @@ Formulário próprio (substitui o Google Forms) que o cliente preenche antes da 
 
 - **Consultas → ficha do cliente → Formulário pré-consulta**: estado (link ainda não criado / por preencher / recebido), **Copiar link** e **Ver respostas**.
 - **Modo consulta → passo Formulário** (só primeiras consultas, e é o passo inicial): respostas por secção, frequências alimentares e dia típico.
-- **Nota → A ter em conta**: alergias, intolerâncias, medicação, problemas de saúde e gravidez, vindos do formulário, mais as notas do perfil.
+- **Nota → A ter em conta**: alergias, intolerâncias, medicação e patologias, vindas do formulário, mais as notas do perfil.
 
 ## Dados
 
 - Tabela `consult_forms` (aditiva): um formulário por cliente, `answers_json`, estado `pending`/`submitted`, data do consentimento.
-- As perguntas estão definidas uma só vez em `consult_forms_v2.STEPS` (página e backoffice usam a mesma definição).
+- As perguntas seguem o «Formulário The Mile» (Google Forms) e estão definidas uma só vez em `consult_forms_v2.STEPS` (página e backoffice usam a mesma definição). Lista completa: [FORMULARIO_PRE_CONSULTA_PERGUNTAS.md](FORMULARIO_PRE_CONSULTA_PERGUNTAS.md).
 - Ao enviar, preenche no perfil **apenas os campos vazios**: data de nascimento, sexo e altura. Nunca substitui o que a equipa registou nem altera nomes, marcações ou pagamentos.
 - Depois de enviado, o cliente pode rever e alterar as respostas pelo mesmo link; não pode retirar o consentimento.
 
@@ -27,4 +27,5 @@ Formulário próprio (substitui o Google Forms) que o cliente preenche antes da 
 
 - Incluir o link nos emails de marcação (hoje copia-se no backoffice e envia-se por email/WhatsApp).
 - Versão em inglês.
-- Porções com fotografias no «dia típico».
+- Envio da fotografia do cliente.
+- Fotografias das porções (proteína e hidratos aparecem só em gramas).

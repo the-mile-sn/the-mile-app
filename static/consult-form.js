@@ -33,9 +33,16 @@
     var d = new Date(iso + "T12:00:00");
     return WEEK[d.getDay()] + ", " + d.getDate() + " " + MONTH[d.getMonth()] + (start ? " · " + start : "");
   }
+  function matches(answer, value) {
+    return Array.isArray(answer) ? answer.indexOf(value) >= 0 : answer === value;
+  }
+  function same(a, b) { return JSON.stringify(a == null ? null : a) === JSON.stringify(b); }
   function visible(item) {
-    var when = item.when || {};
-    return Object.keys(when).every(function (k) { return answers[k] === when[k]; });
+    var when = item.when || {}, not = item.when_not || {};
+    var ok = Object.keys(when).every(function (k) { return matches(answers[k], when[k]); });
+    return ok && Object.keys(not).every(function (k) {
+      return !not[k].some(function (h) { return same(answers[k], h); });
+    });
   }
   function steps() { return data.steps.filter(visible); }
   function stepPos() { return steps().indexOf(data.steps[current]); }
@@ -81,17 +88,35 @@
     if (rerender) renderStep();
   }
 
-  function choiceGroup(options, value, onPick, label) {
-    var wrap = el("div", "tmf-choices");
+  var URINE = ["#fbf6d9", "#f7eeaa", "#f1df74", "#e9cc45", "#d9b22a", "#c4951c", "#a87a14"];
+  function choiceGroup(options, value, onPick, label, opts) {
+    opts = opts || {};
+    var multi = !!opts.multi;
+    var wrap = el("div", "tmf-choices" + (opts.compact ? " is-compact" : ""));
     wrap.setAttribute("role", "group");
     if (label) wrap.setAttribute("aria-label", label);
-    options.forEach(function (o) {
+    options.forEach(function (o, i) {
+      var on = multi ? (value || []).indexOf(o[0]) >= 0 : value === o[0];
       var b = el("button", "tmf-choice", o[1]);
       b.type = "button";
-      b.setAttribute("aria-pressed", String(value === o[0]));
-      b.addEventListener("click", function () { onPick(value === o[0] ? "" : o[0]); });
+      b.setAttribute("aria-pressed", String(on));
+      if (opts.swatches && URINE[i]) {
+        var sw = el("span", "tmf-swatch"); sw.style.setProperty("background", URINE[i]); b.prepend(sw);
+      }
+      b.addEventListener("click", function () {
+        if (!multi) { onPick(on ? "" : o[0]); return; }
+        var list = (value || []).slice();
+        if (on) list = list.filter(function (x) { return x !== o[0]; });
+        else list.push(o[0]);
+        onPick(list.length ? list : "");
+      });
       wrap.append(b);
     });
+    if (opts.ends) {
+      var ends = el("div", "tmf-ends");
+      ends.append(el("span", "", opts.ends[0]), el("span", "", opts.ends[1]));
+      var box = el("div", "tmf-scale"); box.append(wrap, ends); return box;
+    }
     return wrap;
   }
 
@@ -101,16 +126,21 @@
     var id = "tmf-" + f.id;
     var label;
     if (f.type !== "check") {
-      label = el(f.type === "choice" || f.type === "grid" || f.type === "meals" ? "div" : "label", "tmf-label", f.label);
+      var block = f.type === "choice" || f.type === "multi" || f.type === "freq" || f.type === "meals";
+      label = el(block ? "div" : "label", "tmf-label", f.label);
       if (label.tagName === "LABEL") label.htmlFor = id;
-      if (!f.required && f.type !== "grid" && f.type !== "meals") label.append(" ", el("small", "", "(opcional)"));
+      if (f.type === "multi") label.append(" ", el("small", "", "(podes escolher várias)"));
+      else if (!f.required && f.type !== "meals" && !f.other_of) label.append(" ", el("small", "", "(opcional)"));
+      if (f.other_of) box.classList.add("is-other");
       box.append(label);
     }
     var hint = f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
     if (hint) box.append(el("div", "tmf-hint", hint));
     var v = answers[f.id];
-    if (f.type === "choice") {
-      box.append(choiceGroup(f.options, v, function (x) { setAnswer(f.id, x, true); }, f.label));
+    if (f.type === "choice" || f.type === "multi") {
+      box.append(choiceGroup(f.options, v, function (x) { setAnswer(f.id, x, true); }, f.label,
+        {multi: f.type === "multi", compact: f.compact, swatches: f.swatches, ends: f.ends}));
+      if (f.unit) box.append(el("div", "tmf-hint", f.unit));
     } else if (f.type === "text" || f.type === "date") {
       var i = el("input", "tmf-input");
       i.id = id; i.type = f.type === "date" ? "date" : "text";
@@ -160,56 +190,28 @@
       lab.append(c, txt);
       box.append(lab);
       if (answers.for_whom === "other") box.append(el("div", "tmf-note", "Se a pessoa que vai à consulta for menor de 18 anos, és tu que dás este consentimento, como responsável."));
-    } else if (f.type === "grid") {
-      box.append(gridTable(f), gridCards(f));
+    } else if (f.type === "freq") {
+      box.append(freqNode(f));
     } else if (f.type === "meals") {
       box.append(mealsNode(f));
     }
-    if (errors[f.id] === "required") box.append(el("div", "tmf-error", "Esta resposta é necessária."));
+    if (errors[f.id] === "required") box.append(el("div", "tmf-error", f.type === "freq" ? "Responde a todos os alimentos." : "Esta resposta é necessária."));
     return box;
   }
 
-  function gridValue(f) { return Object.assign({}, answers[f.id] || {}); }
-  function pickGrid(f, key, opt) {
-    var g = gridValue(f);
-    if (g[key] === opt) delete g[key]; else g[key] = opt;
-    setAnswer(f.id, g, true);
-  }
-  function gridTable(f) {
-    var table = el("table", "tmf-grid");
-    var head = el("tr");
-    head.append(el("th", "", "Alimento"));
-    f.options.forEach(function (o) { var th = el("th", "", o[1]); th.scope = "col"; head.append(th); });
-    var thead = el("thead"); thead.append(head);
-    var tbody = el("tbody");
-    var g = gridValue(f);
+  function freqNode(f) {
+    var wrap = el("div", "tmf-freq");
+    var g = Object.assign({}, answers[f.id] || {});
     f.rows.forEach(function (r) {
-      var tr = el("tr");
-      var name = el("td", "", r[1]);
-      if (r[2]) name.append(el("small", "", r[2]));
-      tr.append(name);
-      f.options.forEach(function (o) {
-        var td = el("td");
-        var b = el("button", "tmf-dot");
-        b.type = "button";
-        b.setAttribute("aria-pressed", String(g[r[0]] === o[0]));
-        b.setAttribute("aria-label", r[1] + ": " + o[1]);
-        b.addEventListener("click", function () { pickGrid(f, r[0], o[0]); });
-        td.append(b); tr.append(td);
-      });
-      tbody.append(tr);
-    });
-    table.append(thead, tbody);
-    return table;
-  }
-  function gridCards(f) {
-    var wrap = el("div", "tmf-grid-cards");
-    var g = gridValue(f);
-    f.rows.forEach(function (r) {
-      var card = el("div", "tmf-grid-card");
+      var card = el("div", "tmf-freq-card");
+      if (errors[f.id] === "required" && !g[r[0]]) card.classList.add("is-missing");
       var title = el("b", "", r[1]);
       if (r[2]) title.append(" ", el("small", "", r[2]));
-      card.append(title, choiceGroup(f.options, g[r[0]], function (x) { pickGrid(f, r[0], x || g[r[0]]); }, r[1]));
+      card.append(title, choiceGroup(r[3], g[r[0]], function (x) {
+        var next = Object.assign({}, answers[f.id] || {});
+        if (x) next[r[0]] = x; else delete next[r[0]];
+        setAnswer(f.id, next, true);
+      }, r[1], {compact: true}));
       wrap.append(card);
     });
     return wrap;
@@ -252,7 +254,7 @@
     h.append(el("span", "", "vamos preparar a tua consulta."));
     var who = data.booking && data.booking.professional ? "A " + data.booking.professional.split(" ")[0] : "A tua nutricionista";
     var facts = el("ul", "tmf-facts");
-    [["10'", "Cerca de 10 minutos, em passos curtos"],
+    [["15'", "Cerca de 15 minutos, em passos curtos"],
      ["✓", "Guarda sozinho. Podes parar e voltar a este link"],
      ["✓", "Só a equipa de nutrição vê as respostas"]].forEach(function (x) {
       var li = el("li"); li.append(el("b", "", x[0]), el("span", "", x[1])); facts.append(li);
@@ -357,6 +359,9 @@
     step.fields.filter(visible).forEach(function (f) {
       if (errors[f.id] === true) ok = false;
       else if (f.required && empty(answers[f.id])) { errors[f.id] = "required"; ok = false; }
+      else if (f.required && f.type === "freq" && f.rows.some(function (r) { return !(answers[f.id] || {})[r[0]]; })) {
+        errors[f.id] = "required"; ok = false;
+      }
     });
     return ok;
   }

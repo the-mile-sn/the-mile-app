@@ -22,116 +22,255 @@ TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{30,60}$")
 LINK_DAYS = 120
 ANSWERS_LIMIT = 60000
 
-FREQ = [["rarely", "Raramente"], ["w1_3", "1–3× semana"], ["w4_6", "4–6× semana"],
-        ["d1", "1× dia"], ["d2", "2× dia"], ["d3", "3× dia ou mais"]]
 YES_NO = [["yes", "Sim"], ["no", "Não"]]
+UNSURE = [["yes", "Sim"], ["no", "Não"], ["unsure", "Não tenho a certeza"]]
+OTHER = ["other", "Outra"]
+# Frequências como no Google Forms (cada alimento tem a sua escala).
+F_BASE = [["never", "Nunca"], ["d1_2", "Às vezes (1–2 dias)"], ["d3_4", "Frequentemente (3–4 dias)"],
+          ["d5_6", "Quase todos os dias (5–6 dias)"]]
+F_DAY2 = F_BASE + [["x1", "Todos os dias (1×/dia)"], ["x2", "Todos os dias (2×/dia)"]]
+F_DAY5 = F_BASE + [["x1", "Todos os dias (1×/dia)"], ["x2_3", "Todos os dias (2–3×/dia)"],
+                   ["x3_5", "Todos os dias (3–5×/dia)"], ["x5", "Todos os dias (>5×/dia)"]]
+F_DAILY = F_BASE + [["daily", "Todos os dias"]]
+WHO = [["me", "Eu"], ["partner", "A/o companheira/o"], ["family", "Outros familiares"], OTHER]
+GAME_FOOD = [["maria", "Bolacha tipo Maria"], ["redbull", "Redbull"], ["sports_drink", "Bebida desportiva"],
+             ["banana", "Banana"], ["gel", "Gel desportivo"], ["bar", "Barra desportiva"], ["nothing", "Nada"], OTHER]
+
+
+def _scale(lo, hi):
+    return [[str(n), str(n)] for n in range(lo, hi + 1)]
+
 
 # Uma só definição de perguntas para a página do cliente e para o backoffice.
-# Tipos: choice, text, textarea, date, number, check, grid (frequências), meals.
+# Segue o «Formulário The Mile» (Google Forms), secção a secção.
+# Tipos: choice, multi, text, textarea, date, number, check, freq (frequências), meals.
+# «other: True» acrescenta um campo de texto «<id>_other» quando se escolhe «Outra».
 STEPS = [
     {"id": "about", "title": "Sobre ti", "fields": [
         {"id": "for_whom", "short": "Para quem", "type": "choice", "label": "Para quem é esta consulta?", "required": True,
          "options": [["self", "Para mim"], ["other", "Para outra pessoa"]]},
-        {"id": "attendee_name", "short": "Nome de quem vai", "type": "text", "label": "Nome de quem vai à consulta", "required": True,
-         "when": {"for_whom": "other"}, "max": 120},
+        {"id": "attendee_name", "short": "Nome de quem vai", "type": "text", "label": "Nome completo de quem vai à consulta",
+         "required": True, "when": {"for_whom": "other"}, "max": 120},
         {"id": "relation", "short": "Relação", "type": "text", "label": "A tua relação com essa pessoa",
          "placeholder": "Ex.: mãe, pai, treinador", "when": {"for_whom": "other"}, "max": 80},
         {"id": "birth_date", "type": "date", "label": "Data de nascimento", "required": True,
          "hint_other": "Da pessoa que vai à consulta."},
-        {"id": "occupation", "short": "Profissão", "type": "text", "label": "Profissão ou ocupação",
-         "placeholder": "Ex.: enfermeira por turnos, estudante", "max": 120},
-        {"id": "goal", "short": "Objetivo", "type": "textarea", "label": "O que te traz à consulta?", "required": True,
-         "placeholder": "O teu principal objetivo, por palavras tuas.", "max": 1500},
+        {"id": "nif", "short": "NIF", "type": "text", "label": "NIF (Número de Identificação Fiscal)", "max": 20},
+        {"id": "occupation", "short": "Profissão", "type": "text", "label": "Profissão", "max": 120},
+        {"id": "city", "short": "Onde vive", "type": "text", "label": "Onde vives? Cidade e país",
+         "placeholder": "Ex.: Porto, Portugal", "max": 120},
+        {"id": "lives_with", "short": "Vive com", "type": "multi", "label": "Com quem vives?", "other": True,
+         "options": [["alone", "Sozinho/a"], ["partner", "Companheiro/a"], ["children", "Filho/a"],
+                     ["family", "Pais ou outros familiares"], ["colleagues", "Colegas"], OTHER]},
+        {"id": "heard_from", "short": "Conheceu-nos por", "type": "choice", "label": "Onde ouviste falar sobre nós?", "other": True,
+         "options": [["friend", "Um amigo ou colega"], ["health_pro", "Outro profissional de saúde"],
+                     ["club", "Clube / Equipa"], ["instagram", "Instagram"], ["facebook", "Facebook"], ["web", "Web"],
+                     ["partner", "Parceiro"], ["gym", "Ginásio / Estúdio de treino / Personal Trainer"], OTHER]},
     ]},
-    {"id": "body", "title": "Corpo e saúde", "fields": [
+    {"id": "health", "title": "Dados antropométricos, clínicos e de saúde", "fields": [
         {"id": "sex", "type": "choice", "label": "Sexo", "required": True,
          "options": [["F", "Feminino"], ["M", "Masculino"]]},
-        {"id": "height_cm", "type": "number", "label": "Altura", "unit": "cm", "required": True,
-         "min": 90, "max": 230, "step": 1},
-        {"id": "weight_kg", "type": "number", "label": "Peso atual", "unit": "kg", "required": True,
-         "min": 20, "max": 250, "step": 0.1},
-        {"id": "weight_year_kg", "short": "Peso há um ano", "type": "number", "label": "Peso há um ano (aproximado)", "unit": "kg",
-         "min": 20, "max": 250, "step": 0.1},
-        {"id": "conditions", "short": "Problemas de saúde", "type": "textarea", "label": "Problemas de saúde diagnosticados",
-         "placeholder": "Ex.: tiroide, diabetes, colesterol. Deixa em branco se não tiveres.", "max": 1500},
-        {"id": "allergies", "short": "Alergias", "type": "text", "label": "Alergias alimentares", "placeholder": "Deixa em branco se não tiveres.", "max": 300},
-        {"id": "intolerances", "short": "Intolerâncias", "type": "text", "label": "Intolerâncias alimentares", "placeholder": "Ex.: lactose", "max": 300},
-        {"id": "medication", "short": "Medicação", "type": "text", "label": "Medicação habitual", "placeholder": "Deixa em branco se não tomares.", "max": 500},
-        {"id": "sleep_hours", "short": "Sono", "type": "number", "label": "Horas de sono por noite", "unit": "h",
-         "min": 2, "max": 14, "step": 0.5},
-        {"id": "sleep_quality", "short": "Qualidade do sono", "type": "choice", "label": "Como dormes?",
-         "options": [["good", "Bem"], ["fair", "Razoavelmente"], ["poor", "Mal"]]},
-        {"id": "bowel", "short": "Intestino", "type": "choice", "label": "Funcionamento do intestino",
-         "options": [["regular", "Regular"], ["constipation", "Preso"], ["loose", "Solto com frequência"],
-                     ["varies", "Varia muito"]]},
+        {"id": "height_cm", "short": "Altura", "type": "number", "label": "Quanto medes?", "unit": "cm", "required": True,
+         "min": 100, "max": 230, "step": 1},
+        {"id": "weight_kg", "short": "Peso atual", "type": "number", "label": "Qual o teu peso atual?", "unit": "kg",
+         "required": True, "min": 25, "max": 250, "step": 0.1},
+        {"id": "weighs_daily", "short": "Pesa-se diariamente", "type": "choice", "required": True,
+         "label": "Tens o hábito de te pesar diariamente?", "options": YES_NO},
+        {"id": "conditions", "short": "Patologias", "type": "text", "max": 500,
+         "label": "Patologias (hipertensão, diabetes, colesterol, outras)"},
+        {"id": "medication", "short": "Medicação", "type": "text", "label": "Medicação", "max": 500},
+        {"id": "allergies", "short": "Alergias", "type": "text", "label": "Alergias", "max": 300},
+        {"id": "intolerances", "short": "Intolerâncias", "type": "text", "max": 300,
+         "label": "Intolerâncias alimentares ou alimentos com que sintas desconforto gastrointestinal"},
+        {"id": "previous_nutrition", "short": "Acompanhamento nutricional anterior", "type": "choice", "required": True,
+         "label": "Já tiveste algum acompanhamento nutricional antes?", "options": YES_NO},
+        {"id": "goals", "short": "Objetivos", "type": "multi", "label": "Qual(ais) o(s) teu(s) objetivo(s)?",
+         "required": True, "other": True,
+         "options": [["weight_loss", "Emagrecimento"], ["muscle", "Aumento de massa muscular"],
+                     ["performance", "Maximização do rendimento desportivo"], ["health", "Otimização de saúde"],
+                     ["injury", "Recuperação de lesão"], OTHER]},
+        {"id": "smoking", "short": "Fuma", "type": "choice", "label": "Fumas?", "required": True,
+         "options": [["no", "Não"], ["s1_10", "Sim (1–10 cigarros/semana)"], ["s11_20", "Sim (11–20 cigarros/semana)"],
+                     ["s20", "Sim (> 20 cigarros/semana)"]]},
+        {"id": "sleep_hours", "short": "Horas de sono", "type": "choice", "compact": True, "unit": "horas",
+         "label": "Quantas horas dormes, em média, por dia?", "required": True, "options": _scale(1, 10)},
+        {"id": "sleep_quality", "short": "Qualidade do sono", "type": "choice", "compact": True,
+         "label": "Como é a qualidade do teu sono?", "required": True, "ends": ["Muito má", "Excelente"],
+         "options": _scale(1, 5)},
     ]},
     {"id": "female", "title": "Saúde feminina", "when": {"sex": "F"}, "fields": [
-        {"id": "cycle", "short": "Ciclo", "type": "choice", "label": "Ciclo menstrual",
-         "options": [["regular", "Regular"], ["irregular", "Irregular"], ["absent", "Sem menstruação"],
-                     ["menopause", "Menopausa"]]},
-        {"id": "contraception", "type": "choice", "label": "Contraceção",
-         "options": [["hormonal", "Hormonal (pílula, anel, implante…)"], ["other", "Não hormonal"],
-                     ["none", "Nenhuma"]]},
-        {"id": "pregnancy", "short": "Gravidez", "type": "choice", "label": "Neste momento",
-         "options": [["no", "Nada a assinalar"], ["pregnant", "Estou grávida"],
-                     ["breastfeeding", "Estou a amamentar"], ["planning", "Estou a planear engravidar"]]},
-        {"id": "cycle_notes", "short": "Notas do ciclo", "type": "textarea", "label": "Algo que queiras referir sobre o ciclo",
-         "placeholder": "Ex.: dores, alterações do apetite ou da energia.", "max": 1000},
+        {"id": "cycle", "short": "Ciclo menstrual", "type": "choice", "label": "Ciclo menstrual", "required": True,
+         "options": [["absent", "Amenorreia (sem menstruação)"], ["regular", "Regular (28–32 dias)"],
+                     ["irregular", "Irregular"], ["unknown", "Não sei"]]},
+        {"id": "amenorrhea_since", "short": "Amenorreia desde", "type": "text", "label": "Desde quando?",
+         "when": {"cycle": "absent"}, "max": 120},
+        {"id": "last_period", "short": "Última menstruação", "type": "date",
+         "label": "Primeiro dia da última menstruação", "hint": "Se não sabes, deixa em branco."},
+        {"id": "heavy_flow", "short": "Fluxo intenso frequente", "type": "choice",
+         "label": "Tens fluxo intenso com frequência?", "options": UNSURE},
+        {"id": "cycle_performance", "short": "Muda a performance no período", "type": "choice", "options": UNSURE,
+         "label": "Se és atleta ou treinas, sentes alguma mudança na tua performance durante o teu período menstrual?"},
+        {"id": "cycle_symptoms", "short": "Sintomas no período", "type": "multi", "label": "Que sintomas tens?",
+         "when": {"cycle_performance": "yes"}, "other": True,
+         "options": [["fatigue", "Fadiga"], ["cramps", "Cãimbras"], ["weakness", "Fraqueza"],
+                     ["muscle_pain", "Dor muscular"], OTHER]},
+        {"id": "pms", "short": "Sintomas pré-menstruais", "type": "choice", "options": UNSURE,
+         "label": "Costumas ter algum sintoma pré-menstrual?",
+         "hint": "Exemplo: mudanças de humor, cãimbras, enxaquecas ou dores de cabeça."},
+        {"id": "pill", "short": "Pílula", "type": "choice", "label": "Tomas a pílula?", "options": YES_NO},
+        {"id": "pill_which", "short": "Qual pílula", "type": "text", "label": "Qual?", "when": {"pill": "yes"}, "max": 120},
     ]},
-    {"id": "training", "title": "Treino", "fields": [
-        {"id": "trains", "short": "Faz exercício", "type": "choice", "label": "Fazes exercício ou desporto?", "required": True,
-         "options": YES_NO},
-        {"id": "sport", "short": "Modalidade", "type": "text", "label": "Modalidade(s)", "when": {"trains": "yes"}, "max": 200},
-        {"id": "frequency", "short": "Frequência", "type": "text", "label": "Quantas vezes por semana e quanto tempo",
-         "placeholder": "Ex.: 4× por semana, 1 h", "when": {"trains": "yes"}, "max": 200},
-        {"id": "sport_goal", "short": "Objetivo desportivo", "type": "text", "label": "Objetivo desportivo",
-         "placeholder": "Ex.: meia maratona em abril", "when": {"trains": "yes"}, "max": 300},
-        {"id": "training_drink", "short": "Bebe no treino", "type": "choice", "label": "O que bebes durante o treino?",
-         "when": {"trains": "yes"},
-         "options": [["water", "Só água"], ["sports", "Água e bebida desportiva"], ["little", "Pouco ou nada"]]},
-        {"id": "daily_activity", "short": "Dia a dia", "type": "choice", "label": "No dia a dia, passas a maior parte do tempo…",
-         "options": [["sitting", "Sentado/a"], ["standing", "Em pé ou a andar"], ["physical", "Em trabalho físico"]]},
+    {"id": "training", "title": "Rotina de treinos", "fields": [
+        {"id": "activity", "short": "Atividade física", "type": "choice", "required": True,
+         "label": "Praticas algum tipo de atividade física ou desporto?",
+         "hint": "Exemplo: futebol, musculação, corrida.",
+         "options": [["never", "Nunca (0 dias)"], ["d1_2", "Às vezes (1–2 dias)"], ["d3_4", "Frequentemente (3–4 dias)"],
+                     ["d5_6", "Quase todos os dias (5–6 dias)"], ["daily", "Todos os dias"]]},
+        {"id": "sports", "short": "Desportos", "type": "multi", "label": "Qual(ais) destes desportos praticas?",
+         "when_not": {"activity": ["never", None]}, "other": True,
+         "options": [["football", "Futebol"], ["futsal", "Futsal"], ["cycling", "Ciclismo"], ["swimming", "Natação"],
+                     ["volleyball", "Voleibol"], ["handball", "Andebol"], ["basketball", "Basquetebol"],
+                     ["tennis", "Ténis"], ["combat", "Desportos de combate"], ["athletics", "Atletismo"],
+                     ["running", "Corrida"], ["crossfit", "CrossFit / Cross training"], ["weights", "Musculação"], OTHER]},
+        {"id": "sport_level", "short": "Nível", "type": "choice", "label": "De forma recreativa ou profissional?",
+         "when_not": {"activity": ["never", None]},
+         "options": [["recreational", "Recreativa"], ["semi", "Semiprofissional"], ["pro", "Profissional"]]},
+        {"id": "weekly_routine", "short": "Rotina semanal", "type": "textarea", "max": 2000,
+         "when_not": {"activity": ["never", None]},
+         "label": "Descreve-nos a tua rotina de treinos e de jogos, caso se aplique, numa semana típica.",
+         "placeholder": "Ex.: Segunda-feira: treino de futebol às 10h30 e ginásio às 14h00."},
+        {"id": "devices", "short": "Monitorização", "type": "multi", "other": True,
+         "label": "Usas algum aparelho de monitorização de sono/treino?",
+         "options": [["watch", "Apple Watch, Garmin, Fitbit (ou semelhantes)"], ["whoop", "WHOOP"], ["oura", "Oura"],
+                     ["none", "Não uso"], OTHER]},
+        {"id": "recovery", "short": "Estratégias de recuperação", "type": "choice", "options": YES_NO,
+         "label": "Fazes alguma estratégia de recuperação?",
+         "hint": "Ex.: ice baths, pressoterapia, foam roll, massagem desportiva."},
     ]},
-    {"id": "habits", "title": "Hábitos alimentares", "fields": [
-        {"id": "frequency_grid", "type": "grid", "label": "Com que frequência comes…",
-         "hint": "Escolhe a opção mais próxima de uma semana normal.", "options": FREQ, "rows": [
-             ["soup", "Sopa", ""], ["vegetables", "Legumes no prato", ""], ["fruit", "Fruta", ""],
-             ["legumes", "Leguminosas", "feijão, grão, lentilhas"],
-             ["fatty_fish", "Peixe gordo", "salmão, sardinha, cavala"],
-             ["red_meat", "Carne vermelha", "vaca, porco, borrego"],
-             ["dairy", "Laticínios", "leite, iogurte, queijo"],
-             ["nuts", "Frutos gordos", "nozes, amêndoas, amendoins"],
-             ["whole_grains", "Cereais integrais", "pão, arroz ou massa integrais, aveia"],
-             ["eating_out", "Refeições fora de casa", ""], ["fried", "Fritos", ""],
-             ["sweets", "Doces e bolos", ""], ["sugary_drinks", "Refrigerantes e sumos", ""],
-             ["alcohol", "Bebidas alcoólicas", ""]]},
-        {"id": "water", "short": "Água por dia", "type": "choice", "label": "Quanta água bebes por dia?",
-         "options": [["lt1", "Menos de 1 L"], ["1_15", "1 a 1,5 L"], ["15_2", "1,5 a 2 L"], ["gt2", "Mais de 2 L"]]},
+    {"id": "habits", "title": "Hábitos e preferências alimentares", "fields": [
+        {"id": "diet_pattern", "short": "Padrão alimentar", "type": "choice", "label": "Padrão alimentar", "required": True,
+         "options": [["omnivore", "Omnívoro (come carne e peixe)"],
+                     ["pescetarian", "Pescetariano (não come carne, mas come peixe)"],
+                     ["ovolacto", "Ovolactovegetariano (não come carne nem peixe, mas laticínios sim)"],
+                     ["vegetarian", "Vegetariano"], ["vegan", "Vegan"]]},
+        {"id": "favorite_foods", "short": "Alimentos preferidos", "type": "textarea", "label": "Alimentos preferidos", "max": 1000},
+        {"id": "disliked_foods", "short": "Alimentos de que não gosta", "type": "text", "label": "Alimentos de que não gostas", "max": 500},
+        {"id": "shopping", "short": "Quem faz as compras", "type": "choice", "label": "Quem vai às compras?",
+         "required": True, "other": True, "options": WHO},
+        {"id": "supermarkets", "short": "Supermercados", "type": "multi", "label": "Em que supermercados?",
+         "required": True, "other": True,
+         "options": [["continente", "Continente"], ["pingo_doce", "Pingo Doce"], ["mercadona", "Mercadona"],
+                     ["lidl", "Lidl"], ["aldi", "Aldi"], ["intermarche", "Intermarché"], ["unknown", "Não sei"], OTHER]},
+        {"id": "cooking", "short": "Quem cozinha", "type": "choice", "label": "Quem cozinha a maior parte das vezes?",
+         "required": True, "other": True, "options": WHO},
+        {"id": "weighs_food", "short": "Pesa a comida", "type": "choice", "label": "Pesas a comida?", "required": True,
+         "options": [["never", "Nunca"], ["sometimes", "Às vezes"], ["often", "Frequentemente"],
+                     ["almost_daily", "Quase todos os dias"], ["daily", "Todos os dias"]]},
+        {"id": "water", "short": "Água por dia", "type": "choice", "required": True,
+         "label": "Que quantidade de água costumas beber por dia?",
+         "hint": "Além da que bebes durante os treinos, se for o caso.",
+         "options": [["lt05", "< 0,5 L"], ["05_1", "0,5 – 1,0 L"], ["1_2", "1,0 – 2,0 L"], ["gt2", "> 2,0 L"]]},
+        {"id": "urine_color", "short": "Cor da urina (1–7)", "type": "choice", "compact": True, "swatches": True,
+         "label": "Qual a cor da tua primeira urina do dia?", "required": True,
+         "hint": "1 é a mais clara e 7 a mais escura.",
+         "options": _scale(1, 7) + [["unknown", "Não sei"]]},
+        {"id": "coffee", "short": "Cafés por dia", "type": "choice", "compact": True, "label": "Cafés por dia",
+         "required": True, "options": [["0", "0"], ["1_2", "1–2"], ["2_3", "2–3"], ["3_4", "3–4"], ["gt4", "> 4"]]},
+        {"id": "alcohol", "short": "Bebidas alcoólicas/semana", "type": "choice", "compact": True, "unit": "copos/bebidas",
+         "label": "Bebidas alcoólicas por semana", "required": True, "options": _scale(0, 10)},
+        {"id": "frequency", "type": "freq", "label": "Com que frequência incluis…", "required": True,
+         "hint": "Por semana ou por dia. Escolhe a opção mais próxima de uma semana normal.", "rows": [
+             ["soup", "Sopa", "", F_DAY2], ["vegetables", "Legumes no prato", "", F_DAY2],
+             ["fruit", "Fruta", "", F_DAY5],
+             ["legumes", "Leguminosas", "feijão, grão, lentilhas, ervilhas…", F_DAY2],
+             ["fish", "Peixe", "", F_DAY2], ["fatty_fish", "Peixe gordo", "salmão, sardinha, cavala…", F_DAY2],
+             ["red_meat", "Carne vermelha", "", F_DAY2],
+             ["dairy", "Laticínios", "leite, iogurtes, queijo…", F_DAY5],
+             ["nuts", "Frutos gordos", "nozes, amêndoas, avelãs, cajus", F_DAILY],
+             ["eating_out", "Refeições fora, take-away ou encomendadas", "", F_DAY2],
+             ["fried", "Fritos", "rissóis, croquetes, batatas fritas…", F_DAILY],
+             ["sweets", "Doces", "bolos de pastelaria, bolachas, chocolates, gomas…", F_DAILY]]},
+        {"id": "meal_drinks", "short": "Bebe às refeições", "type": "multi", "label": "O que bebes ao almoço e ao jantar?",
+         "required": True, "other": True,
+         "options": [["water", "Água"], ["sparkling", "Água com gás"], ["tea", "Chá"], ["soda", "Refrigerante"],
+                     ["soda_zero", "Refrigerante zero"], ["juice", "Sumos de fruta"], ["wine_beer", "Vinho / cerveja"],
+                     ["nothing", "Nada"], OTHER]},
+        {"id": "motivation", "short": "Motivação para mudar (0–10)", "type": "choice", "compact": True,
+         "label": "Qual a tua motivação para aderir a mudanças na tua alimentação?", "required": True,
+         "ends": ["Nenhuma", "Total"], "options": _scale(0, 10)},
     ]},
-    {"id": "day", "title": "Um dia típico", "fields": [
-        {"id": "day_kind", "short": "Dia descrito", "type": "text", "label": "Que dia vais descrever?",
-         "placeholder": "Ex.: dia de trabalho com treino ao fim da tarde", "max": 200},
-        {"id": "meals", "type": "meals", "label": "O que comes ao longo do dia",
-         "hint": "Indica a hora e o que costumas comer. Deixa em branco as refeições que não fazes.",
-         "rows": [["breakfast", "Pequeno-almoço"], ["mid_morning", "Meio da manhã"], ["lunch", "Almoço"],
-                  ["snack", "Lanche"], ["dinner", "Jantar"], ["supper", "Ceia"],
-                  ["training", "Antes ou depois do treino"]]},
+    {"id": "diary", "title": "Diário alimentar", "fields": [
+        {"id": "meals", "type": "meals", "label": "Descreve um dia alimentar típico",
+         "hint": "Indica a hora e o que comes. Ex.: 8h00, pão com queijo magro e leite com café. Se não fazes alguma das refeições, deixa em branco.",
+         "rows": [["breakfast", "Pequeno-almoço"], ["morning_snack", "Lanche da manhã"], ["lunch", "Almoço"],
+                  ["afternoon_snack", "Lanche da tarde"], ["dinner", "Jantar"], ["supper", "Ceia"],
+                  ["other", "Outra refeição importante (ex.: pós-treino)"]]},
+        {"id": "protein_portion", "short": "Porção de proteína", "type": "choice", "compact": True, "required": True,
+         "label": "Qual é a porção de proteína que comes nas refeições principais?",
+         "hint": "Exemplo: carne, peixe, alternativas vegetais.",
+         "options": [[g, g + " g"] for g in ("80", "100", "120", "125", "160", "180", "200", "220")]},
+        {"id": "carb_portion", "short": "Porção de hidratos", "type": "choice", "compact": True, "required": True,
+         "label": "Qual é a porção de hidratos que comes nas refeições principais?",
+         "hint": "Exemplo: arroz, massa, batata, quinoa.",
+         "options": [[g, g + " g"] for g in ("50", "75", "100", "125", "150", "175", "200", "220", "250")]},
     ]},
-    {"id": "supplements", "title": "Suplementação e competição", "fields": [
-        {"id": "supplements", "short": "Suplementos", "type": "textarea", "label": "Tomas algum suplemento? Quais e quando?",
-         "placeholder": "Deixa em branco se não tomares.", "max": 1000},
-        {"id": "competes", "short": "Compete", "type": "choice", "label": "Participas em provas ou competições?", "options": YES_NO},
-        {"id": "next_event", "short": "Próxima prova", "type": "text", "label": "Próxima prova e data", "when": {"competes": "yes"}, "max": 200},
-        {"id": "event_fuel", "short": "Em prova", "type": "textarea", "label": "O que comes e bebes durante as provas?",
-         "when": {"competes": "yes"}, "max": 1000},
+    {"id": "changes", "title": "Mudanças na tua alimentação", "fields": [
+        {"id": "alternatives", "short": "Opções que aceita", "type": "multi", "other": True,
+         "label": "Seleciona as opções que gostas ou que estarias disposto/a a experimentar.",
+         "options": [["eggs_bread", "Ovos mexidos com pão e fruta"], ["toast_yogurt", "Tosta mista com iogurte e fruta"],
+                     ["bread_cheese_jam", "Pão com queijo fresco e compota/doce"],
+                     ["avocado_egg", "Tosta de abacate e ovo"], ["salmon_toast", "Tosta de salmão fumado e queijo creme"],
+                     ["yogurt_bowl", "Bowl de iogurte"], ["oatmeal", "Papas de aveia"], ["overnight", "Overnight oats"],
+                     ["whey_pancakes", "Panquecas com whey na massa"],
+                     ["yogurt_pancakes", "Panquecas com topping de iogurte"], ["mug_cake", "Bolo de caneca"],
+                     ["protein_shake", "Batido proteico"], ["smoothie_bowl", "Smoothie bowl"],
+                     ["protein_milk", "Leite proteico com cereais"],
+                     ["protein_yogurt", "Iogurte proteico com bolachas de arroz e fruta"], OTHER]},
+    ]},
+    {"id": "supplements", "title": "Suplementação", "fields": [
+        {"id": "supplements", "short": "Suplementos", "type": "multi", "label": "Que suplementos fazes?",
+         "required": True, "other": True,
+         "options": [["none", "Não faço"], ["creatine", "Creatina"], ["beta_alanine", "Beta-alanina"],
+                     ["omega3", "Ómega-3"], ["tart_cherry", "Tart Cherry"], ["multivitamin", "Multivitamínico"],
+                     ["vit_d", "Vitamina D"], ["vit_b12", "Vitamina B12"], ["whey", "Proteína whey"], OTHER]},
+        {"id": "supplements_detail", "short": "Marca e dose", "type": "textarea", "max": 1500,
+         "label": "Diz-nos a marca e a dose dos suplementos que tomas.",
+         "placeholder": "Ex.: Creatina, marca X, 5 g antes do treino. Ómega-3, marca Y, 1 cápsula ao jantar.",
+         "when_not": {"supplements": [None, ["none"]]}},
+        {"id": "athlete", "short": "Tem jogos ou competições", "type": "choice", "options": YES_NO,
+         "label": "És atleta ou tens jogos ou competições?"},
+    ]},
+    {"id": "game_day", "title": "Hábitos em dia de jogo/competição", "when": {"athlete": "yes"}, "fields": [
+        {"id": "day_before_change", "short": "Muda a alimentação na véspera", "type": "choice", "options": YES_NO,
+         "label": "No dia anterior ao jogo/competição costumas alterar algo na tua alimentação?"},
+        {"id": "day_before_what", "short": "O que muda na véspera", "type": "text", "label": "O quê?", "required": True,
+         "when": {"day_before_change": "yes"}, "max": 500},
+        {"id": "game_day_change", "short": "Muda a alimentação no dia", "type": "choice", "options": YES_NO, "required": True,
+         "label": "No dia de jogo/competição costumas alterar algo na tua alimentação?"},
+        {"id": "game_day_what", "short": "O que muda no dia", "type": "text", "label": "O quê?",
+         "when": {"game_day_change": "yes"}, "max": 500},
+        {"id": "before_game", "short": "Antes do jogo", "type": "multi", "required": True, "other": True,
+         "label": "Comes ou bebes alguma coisa antes do jogo/competição?",
+         "hint": "Exemplo: no balneário ou no aquecimento.", "options": GAME_FOOD},
+        {"id": "during_game", "short": "Durante o jogo", "type": "multi", "required": True, "other": True,
+         "label": "Comes ou bebes alguma coisa durante o jogo/competição?",
+         "hint": "Exemplo: no balneário, no intervalo.", "options": GAME_FOOD},
     ]},
     {"id": "notes", "title": "Notas e consentimento", "fields": [
-        {"id": "notes", "short": "Notas do cliente", "type": "textarea", "label": "Há mais alguma coisa que queiras que a nutricionista saiba?",
-         "max": 3000},
+        {"id": "notes", "short": "Notas do cliente", "type": "textarea", "max": 3000,
+         "label": "Adiciona alguma nota, comentário ou dúvida que consideres relevante."},
         {"id": "consent", "type": "check", "required": True,
          "label": "Autorizo a The Mile a tratar os dados de saúde deste formulário para preparar e acompanhar as consultas de nutrição."},
     ]},
 ]
+for _step in STEPS:
+    for _f in list(_step["fields"]):
+        if _f.get("other"):
+            # Campo «Outra: …» logo a seguir à pergunta.
+            _i = _step["fields"].index(_f)
+            _step["fields"].insert(_i + 1, {"id": _f["id"] + "_other", "short": _f.get("short", _f["label"]) + " (outra)",
+                                            "type": "text", "label": "Outra:", "max": 200, "other_of": _f["id"],
+                                            "when": {_f["id"]: "other"}})
 FIELDS = {f["id"]: f for s in STEPS for f in s["fields"]}
 STEP_OF = {f["id"]: s for s in STEPS for f in s["fields"]}
 CARE_FIELDS = ("allergies", "intolerances", "medication", "conditions")
@@ -197,14 +336,12 @@ def for_client(c, client_id, org_id=ORG_ID):
 
 
 def care(answers):
-    """O que entra em «A ter em conta»: alergias, intolerâncias, medicação, doenças, gravidez."""
+    """O que entra em «A ter em conta»: alergias, intolerâncias, medicação e patologias."""
     out = []
     for key in CARE_FIELDS:
         value = (answers.get(key) or "").strip()
         if value:
             out.append({"label": FIELDS[key].get("short", FIELDS[key]["label"]), "value": value})
-    if answers.get("sex") == "F" and answers.get("pregnancy") in ("pregnant", "breastfeeding", "planning"):
-        out.append({"label": "Gravidez", "value": _option_label("pregnancy", answers["pregnancy"])})
     return out
 
 
@@ -215,9 +352,25 @@ def _option_label(field_id, value):
     return value
 
 
+def _matches(answer, value):
+    if isinstance(answer, list):
+        return value in answer
+    return answer == value
+
+
 def _visible(item, answers):
     when = item.get("when") or {}
-    return all(answers.get(k) == v for k, v in when.items())
+    if not all(_matches(answers.get(k), v) for k, v in when.items()):
+        return False
+    for k, hidden in (item.get("when_not") or {}).items():
+        if answers.get(k) in hidden:
+            return False
+    return True
+
+
+def _with_other(f, answers, labels):
+    other = (answers.get(f["id"] + "_other") or "").strip()
+    return [("Outra: " + other if other else "Outra") if lab == "Outra" else lab for lab in labels]
 
 
 def readable(answers):
@@ -228,15 +381,18 @@ def readable(answers):
             continue
         rows = []
         for f in step["fields"]:
-            if not _visible(f, answers) or f["type"] == "check":
+            if not _visible(f, answers) or f["type"] == "check" or f.get("other_of"):
                 continue
             value = answers.get(f["id"])
-            if f["type"] == "grid":
+            short = f.get("short", f["label"])
+            if f["type"] == "freq":
                 grid = value if isinstance(value, dict) else {}
-                rows.append({"type": "grid", "label": f["label"], "options": f["options"],
-                             "rows": [{"key": k, "label": lab, "hint": hint, "value": grid.get(k, "")}
-                                      for k, lab, hint in f["rows"]]})
-            elif f["type"] == "meals":
+                for key, label, _hint, options in f["rows"]:
+                    if grid.get(key):
+                        text = dict((k, v) for k, v in options).get(grid[key], grid[key])
+                        rows.append({"type": "text", "key": f["id"] + "." + key, "label": label, "value": text})
+                continue
+            if f["type"] == "meals":
                 meals = value if isinstance(value, dict) else {}
                 items = []
                 for k, lab in f["rows"]:
@@ -244,21 +400,25 @@ def readable(answers):
                     if m.get("time") or m.get("text"):
                         items.append({"key": k, "label": lab, "time": m.get("time", ""), "text": m.get("text", "")})
                 rows.append({"type": "meals", "label": f["label"], "items": items})
-            else:
-                if value in (None, ""):
-                    continue
-                if f["type"] == "choice":
-                    text = _option_label(f["id"], value)
-                elif f["type"] == "number":
-                    text = ("%g" % value).replace(".", ",") + (" " + f["unit"] if f.get("unit") else "")
-                elif f["type"] == "date":
-                    try:
-                        text = date.fromisoformat(value).strftime("%d/%m/%Y")
-                    except ValueError:
-                        text = value
-                else:
+                continue
+            if value in (None, "", []):
+                continue
+            if f["type"] == "choice":
+                text = _with_other(f, answers, [_option_label(f["id"], value)])[0]
+                if f.get("unit"):
+                    text += " " + f["unit"]
+            elif f["type"] == "multi":
+                text = " · ".join(_with_other(f, answers, [_option_label(f["id"], v) for v in value]))
+            elif f["type"] == "number":
+                text = ("%g" % value).replace(".", ",") + (" " + f["unit"] if f.get("unit") else "")
+            elif f["type"] == "date":
+                try:
+                    text = date.fromisoformat(value).strftime("%d/%m/%Y")
+                except ValueError:
                     text = value
-                rows.append({"type": "text", "key": f["id"], "label": f.get("short", f["label"]), "value": text})
+            else:
+                text = value
+            rows.append({"type": "text", "key": f["id"], "label": short, "value": text})
         sections.append({"id": step["id"], "title": step["title"], "rows": rows})
     return sections
 
@@ -313,6 +473,23 @@ def _clean_value(f, value):
         if value not in [k for k, _ in f["options"]]:
             raise ValueError("invalid_" + f["id"])
         return value
+    if kind == "multi":
+        keys = [k for k, _ in f["options"]]
+        if not isinstance(value, list) or len(value) > len(keys) or any(v not in keys for v in value):
+            raise ValueError("invalid_" + f["id"])
+        out = [k for k in keys if k in value]
+        return out or None
+    if kind == "freq":
+        if not isinstance(value, dict):
+            raise ValueError("invalid_" + f["id"])
+        rows = {k: {o for o, _ in opts} for k, _, _, opts in f["rows"]}
+        out = {}
+        for k, v in value.items():
+            if k not in rows or (v and v not in rows[k]):
+                raise ValueError("invalid_" + f["id"])
+            if v:
+                out[k] = v
+        return out or None
     if kind == "check":
         if value is not True:
             raise ValueError("invalid_" + f["id"])
@@ -335,18 +512,6 @@ def _clean_value(f, value):
         if not (f["min"] <= number <= f["max"]):
             raise ValueError("invalid_" + f["id"])
         return round(number, 1)
-    if kind == "grid":
-        if not isinstance(value, dict):
-            raise ValueError("invalid_" + f["id"])
-        keys = {k for k, _, _ in f["rows"]}
-        options = {k for k, _ in f["options"]}
-        out = {}
-        for k, v in value.items():
-            if k not in keys or (v not in options and v not in ("", None)):
-                raise ValueError("invalid_" + f["id"])
-            if v:
-                out[k] = v
-        return out or None
     if kind == "meals":
         if not isinstance(value, dict):
             raise ValueError("invalid_" + f["id"])
@@ -390,7 +555,13 @@ def missing(answers):
         if not _visible(step, answers):
             continue
         for f in step["fields"]:
-            if f.get("required") and _visible(f, answers) and answers.get(f["id"]) in (None, "", {}):
+            if not (f.get("required") and _visible(f, answers)):
+                continue
+            value = answers.get(f["id"])
+            if f["type"] == "freq":
+                if any(not (value or {}).get(k) for k, _, _, _ in f["rows"]):
+                    out.append(f["id"])
+            elif value in (None, "", {}, []):
                 out.append(f["id"])
     return out
 

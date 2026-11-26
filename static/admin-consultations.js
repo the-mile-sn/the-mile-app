@@ -258,7 +258,6 @@
  }
 
  /* ---------- formulário pré-consulta ---------- */
- const SHORT_FREQ = {rarely: "Raramente", w1_3: "1–3×/sem.", w4_6: "4–6×/sem.", d1: "1×/dia", d2: "2×/dia", d3: "3+×/dia"};
  function formStatus(form) {
   if (!form) return el("span", "tm-cq-pill", "Link ainda não criado");
   if (form.status === "submitted") return el("span", "tm-cq-pill is-positive", "Recebido " + dayLabel(new Date(form.submitted_at * 1000).toISOString().slice(0, 10)));
@@ -312,18 +311,6 @@
    for (const row of sec.rows) {
     if (row.type === "text") {
      const r = el("div", "tm-cq-kv"); r.append(el("span", "tm-cq-muted", row.label), el("span", "", row.value)); card.append(r);
-    } else if (row.type === "grid") {
-     const answered = row.rows.filter(x => x.value);
-     if (!answered.length) continue;
-     const list = el("div", "tm-cq-freq");
-     for (const x of row.rows) {
-      const r = el("div", "tm-cq-freq-row");
-      const bar = el("span", "tm-cq-freq-dots");
-      row.options.forEach(([k]) => bar.append(el("i", k === x.value ? "is-on" : "")));
-      r.append(el("span", "", x.label), bar, el("small", "tm-cq-muted", x.value ? SHORT_FREQ[x.value] || x.value : "—"));
-      list.append(r);
-     }
-     card.append(list);
     } else if (row.type === "meals") {
      if (!row.items.length) continue;
      const tl = el("div", "tm-cq-meals");
