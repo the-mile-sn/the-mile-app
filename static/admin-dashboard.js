@@ -1177,6 +1177,7 @@ function ensurePlanningOnlyView(){
  // submissions always describe the last seven days, regardless of day navigation.
  window.tmDashboardActivityIcon=kind=>hugeIcon(kind,"tm-db-activity-svg");
  window.tmDashboardOpenActivity=(athleteId,day)=>openPlayers(athleteId,day);
+ window.tmDashboardOpenClientsPage=()=>openPlayersList();
  // Like the daily events, recent forms have a natural height on short lists.
  // Long lists scroll after two whole responses on mobile or four on desktop.
  const recentHost=$("tm-db-recent");
@@ -1417,7 +1418,7 @@ function ensurePlanningOnlyView(){
  }
  const iconNames={appointment:"calendar03",assessment:"chartEvaluation",game:"football",travel:"airplane01",other:"calendar03",birthday:"cake",meeting:"calendar03",training:"chartEvaluation","internal-other":"calendar03"};
  let day=today(),loading=false,sequence=0,rows=[],failures=[];
- function merge(bookings,activity,internalEvents=[]){
+ function merge(bookings,activity,internalEvents=[],clientBirthdays=[]){
   const merged=[];
   for(const b of bookings){
    if(b.status!=="scheduled"||b.date!==day)continue;
@@ -1448,6 +1449,11 @@ function ensurePlanningOnlyView(){
    merged.push({type:"birthday",title:"Aniversário",
     person:person.name,athleteId:person.athlete_id,time:"",moment:"Dia todo",label:"",lane:"players"});
   }
+  // Aniversários de clientes de consulta: coluna Agenda, dia todo; abre o perfil.
+  for(const client of clientBirthdays){
+   merged.push({type:"birthday",title:client.age?"Aniversário · "+client.age+" anos":"Aniversário",
+    person:client.name,clientId:client.id,time:"",moment:"Dia todo",label:"",lane:"agenda"});
+  }
   const eventKinds={meeting:"Reunião",training:"Formação",travel:"Deslocação",other:"Evento"};
   for(const event of internalEvents){
    merged.push({
@@ -1474,7 +1480,9 @@ function ensurePlanningOnlyView(){
   if(item.href)target.href=item.href;
   else{
    target.type="button";
-   target.addEventListener("click",()=>window.tmDashboardOpenActivity?.(item.athleteId,day));
+   target.addEventListener("click",()=>item.clientId
+    ?window.tmOpenConsultClient?.(item.clientId)
+    :window.tmDashboardOpenActivity?.(item.athleteId,day));
   }
   const icon=el("span","tm-db-activity-icon");
   const svg=window.tmDashboardActivityIcon?.(iconNames[item.type]);
@@ -1707,7 +1715,10 @@ function ensurePlanningOnlyView(){
    }).then(async res=>{if(!res.ok)throw Error("activity");return res.json();}),
    fetch("/api/v2/admin/work/events?"+new URLSearchParams({from:current,to:current}),{
     credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}
-   }).then(async res=>{if(!res.ok)throw Error("internalEvents");return res.json();})
+   }).then(async res=>{if(!res.ok)throw Error("internalEvents");return res.json();}),
+   fetch("/api/v2/admin/consult-clients/birthdays?date="+encodeURIComponent(current),{
+    credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}
+   }).then(async res=>{if(!res.ok)throw Error("clientBirthdays");return res.json();})
   ]);
   if(id!==sequence||day!==current)return;
   let bookings=[],activity={games:[],events:[],birthdays:[]};
@@ -1720,7 +1731,9 @@ function ensurePlanningOnlyView(){
   const internalEvents=responses[2].status==="fulfilled"&&Array.isArray(responses[2].value?.events)?
    responses[2].value.events:[];
   if(responses[2].status!=="fulfilled")failures.push("Eventos internos");
-  rows=merge(bookings,activity,internalEvents);loading=false;paint();
+  const clientBirthdays=responses[3].status==="fulfilled"&&Array.isArray(responses[3].value?.birthdays)?
+   responses[3].value.birthdays:[];
+  rows=merge(bookings,activity,internalEvents,clientBirthdays);loading=false;paint();
   window.tmDashboardWorkRefresh?.();
  }
  $("tm-db-miniagenda-prev").addEventListener("click",()=>{

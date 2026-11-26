@@ -116,6 +116,32 @@ class ConsultClientsTests(unittest.TestCase):
         self.assertEqual(self.req()["body"]["clients"], [])
         self.assertEqual(len(self.req("?status=archived")["body"]["clients"]), 1)
 
+    def test_active_nutritionist_from_first_booking_and_birthdays(self):
+        self.book("09:00", "rita@example.pt", "Rita Sousa")
+        client = self.req()["body"]["clients"][0]
+        detail = self.req("/" + client["id"])["body"]
+        self.assertEqual(detail["client"]["active_professional_id"] if "client" in detail else detail["active_professional_id"], self.pid)
+        # Escolha manual não é substituída por marcações seguintes.
+        other = self.admin.request(self.appt + "/professionals", "POST", {
+            "name": "Outra Prof", "email": "outra@test.invalid", "active": True,
+            "presencial_enabled": True, "online_enabled": True, "service_ids": [self.service["id"]]})["body"]["id"]
+        version = detail["client"]["version"] if "client" in detail else detail["version"]
+        today = datetime.now(ZoneInfo("Europe/Lisbon")).date()
+        born = today.replace(year=today.year - 30) if not (today.month == 2 and today.day == 29) else today.replace(year=today.year - 28)
+        upd = self.req("/" + client["id"], "PUT", {"version": version, "active_professional_id": other,
+                                                   "birth_date": born.isoformat()})
+        self.assertEqual(upd["status"], 200, upd)
+        self.book("10:00", "rita@example.pt", "Rita Sousa")
+        self.req()
+        detail = self.req("/" + client["id"])["body"]
+        self.assertEqual(detail["client"]["active_professional_id"] if "client" in detail else detail["active_professional_id"], other)
+        b = self.req("/birthdays?date=" + today.isoformat())
+        self.assertEqual(b["status"], 200, b)
+        self.assertEqual([x["name"] for x in b["body"]["birthdays"]], ["Rita Sousa"])
+        self.assertEqual(self.req("/birthdays?date=nope")["status"], 400)
+        tomorrow = (today + timedelta(days=1)).isoformat()
+        self.assertEqual(self.req("/birthdays?date=" + tomorrow)["body"]["birthdays"], [])
+
     def test_requires_session(self):
         self.assertEqual(fixtures.Client().request(self.base)["status"], 401)
 

@@ -59,6 +59,16 @@
     panel.querySelector(".tm-cc-feedback").setAttribute("role", "status");
   }
 
+  // Aberto a partir do Início (ex.: aniversário de um cliente de consulta).
+  window.tmOpenConsultClient = async id => {
+    window.tmDashboardOpenClientsPage?.();
+    // Espera que a página Clientes termine de abrir antes de escolher o tipo.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    window.tmSelectClientType?.("consulta");
+    state.open = id; state.status = "active";
+    await load();
+    panel.scrollIntoView({behavior: "smooth", block: "start"});
+  };
   async function load() {
     if (loading) return; loading = true;
     try {

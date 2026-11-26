@@ -305,6 +305,49 @@ def _booking_exists(c, kind, booking_id, org_id):
         WHERE h.org_id=? AND h.id=? AND h.status='confirmed'""", (org_id, booking_id)).fetchone())
 
 
+def _booking_professional(c, kind, booking_id, org_id):
+    if kind == "manual":
+        row = c.execute("SELECT professional_id FROM appt_bookings WHERE org_id=? AND id=?",
+                        (org_id, booking_id)).fetchone()
+    else:
+        row = c.execute("SELECT professional_id FROM appt_checkout_holds WHERE org_id=? AND id=?",
+                        (org_id, booking_id)).fetchone()
+    return row["professional_id"] if row else None
+
+
+def _fill_professional(c, client_id, kind, booking_id, org_id, now):
+    """Nutricionista ativa = profissional da 1.ª marcação ligada, só se ainda estiver vazia.
+
+    Nunca substitui uma escolha feita à mão; pode ser mudada na ficha."""
+    pid = _booking_professional(c, kind, booking_id, org_id)
+    if not pid:
+        return
+    changed = c.execute("""UPDATE consult_clients SET active_professional_id=?,updated_at=?,version=version+1
+        WHERE org_id=? AND id=? AND (active_professional_id IS NULL OR active_professional_id='')""",
+                        (pid, now, org_id, client_id))
+    if changed.rowcount:
+        _audit(c, org_id, client_id, "system", "professional_auto", {"professional": pid}, now)
+
+
+def birthdays(c, day, org_id=ORG_ID):
+    """Clientes de consulta (não arquivados) que fazem anos neste dia (AAAA-MM-DD)."""
+    if not isinstance(day, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        raise ValueError("invalid_date")
+    rows = c.execute("""SELECT id,name,birth_date,active_professional_id FROM consult_clients
+        WHERE org_id=? AND status!='archived' AND merged_into IS NULL
+          AND birth_date<>'' AND substr(birth_date,6,5)=?
+        ORDER BY name""", (org_id, day[5:])).fetchall()
+    out = []
+    for r in rows:
+        try:
+            years = int(day[:4]) - int(r["birth_date"][:4])
+        except ValueError:
+            years = None
+        out.append({"id": r["id"], "name": r["name"], "age": years,
+                    "active_professional_id": r["active_professional_id"]})
+    return {"date": day, "birthdays": out}
+
+
 def link_booking(c, kind, booking_id, client_id, actor, org_id=ORG_ID, now=None):
     if kind not in BOOKING_KINDS or not isinstance(booking_id, str) or len(booking_id) > 70:
         raise ValueError("invalid_booking")
@@ -327,6 +370,7 @@ def link_booking(c, kind, booking_id, client_id, actor, org_id=ORG_ID, now=None)
     _audit(c, org_id, client_id, actor, "booking_linked",
            {"kind": kind, "booking": booking_id,
             "from": previous["client_id"] if previous else None}, now)
+    _fill_professional(c, client_id, kind, booking_id, org_id, now)
 
 
 # ---------- ligação automática ----------
@@ -380,7 +424,14 @@ def sync(c, org_id=ORG_ID, now=None):
             (org_id,booking_kind,booking_id,client_id,linked_by,linked_at) VALUES(?,?,?,?,?,?)
             ON CONFLICT(org_id,booking_kind,booking_id) DO NOTHING""",
                   (org_id, item["kind"], item["id"], client_id, "auto", now))
+        _fill_professional(c, client_id, item["kind"], item["id"], org_id, now)
         linked += 1
+    # Perfis já ligados antes desta regra: preenche a partir da 1.ª marcação.
+    for row in c.execute("""SELECT l.client_id,l.booking_kind,l.booking_id FROM consult_client_bookings l
+            JOIN consult_clients cc ON cc.org_id=l.org_id AND cc.id=l.client_id
+            WHERE l.org_id=? AND (cc.active_professional_id IS NULL OR cc.active_professional_id='')
+            ORDER BY l.linked_at,l.booking_id""", (org_id,)).fetchall():
+        _fill_professional(c, row["client_id"], row["booking_kind"], row["booking_id"], org_id, now)
     return {"linked": linked, "created": created, "unassigned": skipped}
 
 

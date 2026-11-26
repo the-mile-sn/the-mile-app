@@ -1553,6 +1553,8 @@ def application(env, start_response):
                     if parts == ['unassigned'] and method == 'GET':
                         consult_clients_v2.sync(c)
                         return respond(200, consult_clients_v2.unassigned(c))
+                    if parts == ['birthdays'] and method == 'GET':
+                        return respond(200, consult_clients_v2.birthdays(c, (query.get('date') or [''])[0]))
                     if parts == ['link'] and method == 'POST':
                         body = read_json(env)
                         consult_clients_v2.link_booking(c, body.get('kind'), body.get('booking_id'), body.get('client_id'), user['id'])
