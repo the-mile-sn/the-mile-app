@@ -24,7 +24,9 @@ test("time is normal text and labels are universal pills only for bookings",()=>
  assert.doesNotMatch(css,/#tm-dashboard \.tm-db-activity-row::before/);
  assert.doesNotMatch(css,/#tm-dashboard \.tm-db-activity-status\{display:none/);
  assert.doesNotMatch(css,/border-left:3px solid #e4c85d/);
- assert.match(js,/status\.dataset\.state=item\.label==="Por confirmar"\?"pending"/);
+ assert.match(js,/status\.dataset\.state=item\.label==="Confirmada"\?"positive":/);
+ assert.match(js,/item\.label==="Agendada"\|\|item\.label==="Por confirmar"\?"pending"/);
+ assert.match(js,/label:b\.confirmed\?"Confirmada":"Agendada"/);
 });
 test("cache keys are refreshed only for admin dashboard assets",()=>{
  assert.match(html,/admin-microcycles\.css\?v=\d+/);

@@ -142,7 +142,16 @@
   }
   const right=make("div","tm-appt-booking-right");
   const isShopify=item.source==="shopify";
-  right.append(make("span","tm-appt-booking-status"+(item.status==="cancelled"?" is-cancelled":""),item.status==="cancelled"?"Cancelada":(isShopify?"Confirmada · Shopify":"Agendada · Interna")));
+  const cancelled=item.status==="cancelled";
+  const presence=cancelled?"Cancelada":(item.confirmed?"Confirmada":"Agendada");
+  right.append(make("span","tm-appt-booking-status"+(cancelled?" is-cancelled":(item.confirmed?" is-confirmed":" is-pending")),presence+" · "+(isShopify?"Shopify":"Interna")));
+  if(!cancelled){
+   const toggle=make("button","tm-appt-booking-confirm",item.confirmed?"Anular confirmação":"Marcar como confirmada");
+   toggle.type="button";
+   toggle.title=item.confirmed?"Volta a ficar como Agendada.":"Usa quando o cliente confirmou a presença.";
+   toggle.addEventListener("click",()=>toggleConfirmation(item,toggle));
+   right.append(toggle);
+  }
   if(!forAgenda){
    right.append(make("span","tm-appt-booking-payment",isShopify?"Pagamento confirmado · Encomenda "+item.shopify_order_id:"Pagamento não associado"));
    if(item.status==="scheduled"&&!isShopify){
@@ -706,6 +715,15 @@
    }
   }finally{button.disabled=false;}
  });
+ async function toggleConfirmation(item,button){
+  button.disabled=true;
+  try{
+   await api("/bookings/"+encodeURIComponent(item.id)+"/confirmation","POST",{source:item.source==="shopify"?"shopify":"manual",confirmed:!item.confirmed});
+   feedback(item.confirmed?"Confirmação anulada: a marcação volta a ficar Agendada.":"Marcação assinalada como confirmada.");
+   document.dispatchEvent(new CustomEvent("tm:appointments-bookings-updated"));
+   await refreshBookings();
+  }catch(error){feedback(error.message,true);button.disabled=false;}
+ }
  async function cancelBooking(item,button){
   if(!confirm("Cancelar a marcação interna de "+item.customer_name+" em "+item.date+" às "+item.start+"? Esta ação não cancela reservas no Sesami nem em Google Calendar."))return;
   button.disabled=true;

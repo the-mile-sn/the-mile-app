@@ -1430,7 +1430,7 @@ function ensurePlanningOnlyView(){
     person:b.customer_name||"Cliente",
     professional:b.professional_name||"",
     time:b.start||"",end:b.end||"",
-    label:b.source==="shopify"?"Confirmada":"Agendada",
+    label:b.confirmed?"Confirmada":"Agendada",
     href:bookingsLink(day)
    });
   }
@@ -1497,8 +1497,9 @@ function ensurePlanningOnlyView(){
   const isBooking=item.type==="appointment"||item.type==="assessment";
   if(isBooking&&item.label){
    const status=el("span","tm-db-activity-status",item.label);
-   status.dataset.state=item.label==="Por confirmar"?"pending":
-    item.label==="Agendada"||item.label==="Confirmada"?"positive":"neutral";
+   // Confirmada só quando o cliente confirma ou a equipa assinala; o pagamento não conta.
+   status.dataset.state=item.label==="Confirmada"?"positive":
+    item.label==="Agendada"||item.label==="Por confirmar"?"pending":"neutral";
    meta.append(status);
   }
   target.append(icon,details);

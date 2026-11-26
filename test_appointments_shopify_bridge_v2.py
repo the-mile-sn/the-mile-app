@@ -338,6 +338,15 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
         listing=self.admin.request(
             "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
         item=listing["body"]["bookings"][0]
+        # Paying is not confirming presence: it starts as "Agendada".
+        self.assertFalse(item["confirmed"])
+        confirm="/api/v2/admin/appointments/bookings/"+cart["hold_id"]+"/confirmation"
+        self.assertEqual(self.admin.request(confirm,"POST",
+            {"source":"shopify","confirmed":True})["status"],200)
+        listing=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
+        item=listing["body"]["bookings"][0]
+        self.assertTrue(item["confirmed"])
         path="/api/v2/admin/appointments/bookings/paid/"+cart["hold_id"]
         # The calendar can show its own current slot as free while moving it.
         base=("/api/v2/admin/appointments/slots-preview?professional_id="+self.pid+
@@ -369,6 +378,7 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
         paid=[b for b in listing["body"]["bookings"] if b["source"]=="shopify"]
         self.assertEqual((paid[0]["start"],paid[0]["shopify_order_id"]),
                          ("10:00",str(order["id"])))
+        self.assertFalse(paid[0]["confirmed"])  # new time, new confirmation
         self.assertEqual(fixtures.Client().request(path,"PUT",{})["status"],401)
         with app.connect() as c:
             change=c.execute("SELECT * FROM appt_shopify_booking_changes").fetchone()

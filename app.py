@@ -1491,6 +1491,20 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(409 if str(exc) == 'stale_booking' else 400, str(exc))
                 return respond(200, {'ok': True})
+            if (path.startswith('/api/v2/admin/appointments/bookings/')
+                    and path.endswith('/confirmation') and method == 'POST'):
+                # Presença confirmada pelo cliente/equipa; independente do pagamento.
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier = path.rsplit('/',2)[-2]
+                try:
+                    result = appointments_bookings_v2.set_confirmation(
+                        c, identifier, read_json(env), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) == 'booking_cancelled' else 400, str(exc))
+                return respond(200, result)
             if (path.startswith('/api/v2/admin/appointments/bookings/paid/')
                     and method == 'PUT'):
                 # Marcações pagas no site: só se muda dia, hora ou profissional.
