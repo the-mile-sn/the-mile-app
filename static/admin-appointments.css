@@ -262,6 +262,11 @@ body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(
 .tm-appt-booking-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;text-align:right}
 .tm-appt-booking-status{font-size:11px;font-weight:600;color:var(--tm-ui-text);white-space:nowrap}
 .tm-appt-booking-status.is-cancelled{color:var(--tm-ui-muted)}
+.tm-appt-booking-status.is-confirmed,#tm-appt-agenda-list .tm-appt-booking-status.is-confirmed{color:var(--tm-state-success-fg,#8ed0ab)}
+.tm-appt-booking-status.is-pending,#tm-appt-agenda-list .tm-appt-booking-status.is-pending{color:var(--tm-state-pending-fg,#e2c17e)}
+.tm-appt-booking-confirm{margin-top:6px;min-height:32px;padding:0 12px;border:0;border-radius:10px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);font:500 12px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;cursor:pointer}
+.tm-appt-booking-confirm:hover{background:var(--tm-ui-hover)}
+.tm-appt-booking-confirm:disabled{opacity:.6;cursor:default}
 .tm-appt-booking-payment{color:var(--tm-ui-muted);font-size:10px}
 .tm-appt-booking-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:5px;flex-wrap:wrap}
 .tm-appt-booking-actions button{min-height:30px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:8px;padding:6px 9px;color:var(--tm-ui-text);cursor:pointer;font-size:11px}

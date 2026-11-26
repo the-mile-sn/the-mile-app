@@ -75,7 +75,85 @@ def initialize(c):
     );
     CREATE INDEX IF NOT EXISTS appt_booking_history_by_booking
         ON appt_booking_history(org_id,booking_id,created_at);
+
+    -- Presence confirmation ("Confirmada"): only when the client confirms or
+    -- the team marks it. Paying on Shopify does NOT confirm attendance.
+    CREATE TABLE IF NOT EXISTS appt_booking_attendance (
+        org_id TEXT NOT NULL,
+        booking_source TEXT NOT NULL CHECK(booking_source IN ('manual','shopify')),
+        booking_id TEXT NOT NULL,
+        method TEXT NOT NULL DEFAULT 'admin' CHECK(method IN ('admin','client')),
+        confirmed_by TEXT,
+        confirmed_at BIGINT NOT NULL,
+        PRIMARY KEY(org_id, booking_source, booking_id)
+    );
     """)
+
+
+SOURCES = ("manual", "shopify")
+
+
+def clear_confirmation(c, source, identifier, org_id=ORG_ID):
+    """A new day/time needs a new confirmation."""
+    c.execute("""DELETE FROM appt_booking_attendance
+        WHERE org_id=? AND booking_source=? AND booking_id=?""",
+        (org_id, source, identifier))
+
+
+def set_confirmation(c, identifier, payload, actor, org_id=ORG_ID, method="admin"):
+    """Mark (or unmark) that the client confirmed presence. Never touches payment."""
+    if not isinstance(payload, dict):
+        raise ValueError("invalid_request")
+    source, confirmed = payload.get("source"), payload.get("confirmed")
+    if source not in SOURCES or type(confirmed) is not bool:
+        raise ValueError("invalid_request")
+    if not isinstance(identifier, str) or not re.fullmatch(r"[0-9a-f]{32}", identifier):
+        raise LookupError("booking_not_found")
+    if source == "manual":
+        row = c.execute("""SELECT status FROM appt_bookings
+            WHERE org_id=? AND id=?""", (org_id, identifier)).fetchone()
+        active = row is not None and row["status"] == "scheduled"
+    else:
+        row = c.execute("""SELECT status FROM appt_checkout_holds
+            WHERE org_id=? AND id=?""", (org_id, identifier)).fetchone()
+        active = row is not None and row["status"] == "confirmed"
+    if row is None:
+        raise LookupError("booking_not_found")
+    if not active:
+        raise ValueError("booking_cancelled")
+    if confirmed:
+        c.execute("""INSERT INTO appt_booking_attendance
+            (org_id,booking_source,booking_id,method,confirmed_by,confirmed_at)
+            VALUES(?,?,?,?,?,?)
+            ON CONFLICT(org_id,booking_source,booking_id) DO NOTHING""",
+            (org_id, source, identifier, method, actor, int(time.time())))
+    else:
+        clear_confirmation(c, source, identifier, org_id)
+    return {"id": identifier, "source": source, "confirmed": confirmed}
+
+
+def _attach_confirmations(c, org_id, items):
+    for item in items:
+        item["confirmed"] = False
+        item["confirmed_at"] = None
+        item["confirmation_method"] = None
+    ids = [item["id"] for item in items]
+    found = {}
+    for start in range(0, len(ids), 200):
+        chunk = ids[start:start + 200]
+        marks = ",".join("?" for _ in chunk)
+        for row in c.execute(f"""SELECT booking_source,booking_id,confirmed_at,method
+                FROM appt_booking_attendance
+                WHERE org_id=? AND booking_id IN ({marks})""",
+                (org_id, *chunk)).fetchall():
+            found[(row["booking_source"], row["booking_id"])] = row
+    for item in items:
+        row = found.get((item["source"], item["id"]))
+        if row is not None:
+            item["confirmed"] = True
+            item["confirmed_at"] = row["confirmed_at"]
+            item["confirmation_method"] = row["method"]
+    return items
 
 
 def _small_text(value, field, minimum=0, maximum=140):
@@ -261,6 +339,8 @@ def reschedule(c, identifier, payload, actor, org_id=ORG_ID, now=None):
         raise ValueError("stale_booking")
     new = _get(c, org_id, identifier)
     _audit(c, org_id, identifier, actor, "rescheduled", current, new)
+    if (new["day"], new["start_minute"]) != (current["day"], current["start_minute"]):
+        clear_confirmation(c, "manual", identifier, org_id)
     return identifier
 
 
@@ -384,6 +464,7 @@ def list_bookings(c, from_day, to_day, professional_id="", service_id="", status
         sql_paid += " ORDER BY h.day,h.start_minute,h.id LIMIT 301"
         paid = [_paid_shopify_booking(row) for row in
                 c.execute(sql_paid, tuple(paid_params)).fetchall()]
+    _attach_confirmations(c, org_id, local + paid)
     all_rows = sorted(local + paid, key=lambda x: (
         x["date"], x["start"], x["id"]))
     return {

@@ -43,3 +43,7 @@ Os dois temas e os dois tamanhos de ecrã usam os tokens, a fonte Inter Tight e 
 ## Testes
 
 O módulo test_admin_work_v2.py valida CRUD, versões, responsáveis, segurança, CSRF e isolamento das reservas. Os testes de Dashboard e tests/admin-work-v1.test.cjs verificam navegação e estados. A workflow validate-admin-work.yml testa Python e JavaScript no GitHub Actions.
+
+## Confirmação de presença (26/11/2026)
+
+«Confirmada» significa apenas que o cliente confirmou a presença ou que a equipa a assinalou em Agendamentos («Marcar como confirmada» / «Anular confirmação»). O pagamento na Shopify **não** confirma a presença: uma marcação paga entra como «Agendada». Ao mudar o dia ou a hora (reagendamento interno ou de marcação paga), a confirmação é anulada e volta a «Agendada». Cores: Confirmada verde (`--tm-state-success-fg`), Agendada âmbar (`--tm-state-pending-fg`). Registo aditivo em `appt_booking_attendance` (origem, marcação, método admin/cliente, autor, data); endpoint `POST /api/v2/admin/appointments/bookings/{id}/confirmation` com `{"source":"manual"|"shopify","confirmed":true|false}`, só administradores e com CSRF. A confirmação pelo próprio cliente (método `client`) fica preparada para uma fase futura.

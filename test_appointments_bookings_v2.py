@@ -136,6 +136,39 @@ class ManualBookingsTests(unittest.TestCase):
         self.assertEqual(len(self.query(professional_id=self.pid)["body"]["bookings"]),0)
         self.assertEqual(len(self.query(professional_id=second_id)["body"]["bookings"]),1)
 
+    def test_presence_confirmation_is_explicit_and_resets_on_new_time(self):
+        created=self.book()
+        identifier=created["body"]["id"]
+        item=self.query()["body"]["bookings"][0]
+        self.assertFalse(item["confirmed"])
+        path="/bookings/"+identifier+"/confirmation"
+        self.assertEqual(self.req(path,"POST",{"source":"manual","confirmed":"yes"})["status"],400)
+        self.assertEqual(self.req("/bookings/"+"0"*32+"/confirmation","POST",
+                                  {"source":"manual","confirmed":True})["status"],404)
+        done=self.req(path,"POST",{"source":"manual","confirmed":True})
+        self.assertEqual(done["status"],200,done)
+        self.assertEqual(self.req(path,"POST",{"source":"manual","confirmed":True})["status"],200)
+        item=self.query()["body"]["bookings"][0]
+        self.assertTrue(item["confirmed"])
+        self.assertEqual(item["confirmation_method"],"admin")
+        self.assertEqual(item["payment_status"],"not_linked")
+        undo=self.req(path,"POST",{"source":"manual","confirmed":False})
+        self.assertEqual(undo["status"],200,undo)
+        self.assertFalse(self.query()["body"]["bookings"][0]["confirmed"])
+        self.req(path,"POST",{"source":"manual","confirmed":True})
+        change=self.payload(start="11:00",service=self.follow["id"])
+        change["version"]=self.query()["body"]["bookings"][0]["version"]
+        self.assertEqual(self.req("/bookings/"+identifier,"PUT",change)["status"],200)
+        self.assertFalse(self.query()["body"]["bookings"][0]["confirmed"])
+        version=self.query()["body"]["bookings"][0]["version"]
+        self.req("/bookings/"+identifier+"/cancel","POST",{"version":version})
+        late=self.req(path,"POST",{"source":"manual","confirmed":True})
+        self.assertEqual(late["status"],409,late)
+        self.assertEqual(fixtures.Client().request(self.base+path,"POST",
+            {"source":"manual","confirmed":True})["status"],401)
+        self.assertEqual(self.admin.request(self.base+path,"POST",
+            {"source":"manual","confirmed":True},csrf=False)["status"],403)
+
     def test_blocked_without_availability_and_nonquarter_are_rejected(self):
         self.assertEqual(self.book(start="09:05")["status"],400)
         self.assertEqual(self.book(start="12:30")["status"],400) # 90 min exceeds window

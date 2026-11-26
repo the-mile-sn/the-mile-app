@@ -619,6 +619,8 @@ def reschedule_paid(c, hold_id, payload, actor, now=None):
         (pid, day, start, end, start_utc, end_utc, epoch, ORG_ID, hold_id))
     _record_change(c, row, "rescheduled", "backoffice", epoch, actor,
                    {"professional_id": pid, "day": day, "start_minute": start})
+    if (day, start) != (row["day"], row["start_minute"]):
+        bookings.clear_confirmation(c, "shopify", hold_id, ORG_ID)
     return hold_id
 
 
