@@ -1558,13 +1558,15 @@ def application(env, start_response):
                         return respond(200, consult_sessions_v2.start(c, parts[1], parts[2], user['id']))
                     if len(parts) == 2 and parts[0] == 'sessions' and method == 'PUT':
                         return respond(200, {'version': consult_sessions_v2.save(c, parts[1], read_json(env), user['id'])})
+                    if len(parts) == 3 and parts[0] == 'sessions' and parts[2] == 'assessment' and method == 'PUT':
+                        return respond(200, {'assessment': consult_sessions_v2.save_assessment(c, parts[1], read_json(env), user['id'])})
                     if len(parts) == 3 and parts[0] == 'sessions' and parts[2] == 'close' and method == 'POST':
                         body = read_json(env)
                         return respond(200, {'version': consult_sessions_v2.close(c, parts[1], body.get('version'), user['id'])})
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
-                    raise Problem(409 if str(exc) in ('stale_session', 'session_closed') else 400, str(exc))
+                    raise Problem(409 if str(exc) in ('stale_session', 'session_closed', 'stale_assessment') else 400, str(exc))
                 raise Problem(404, 'not_found')
             # Clientes de consulta (fase 1): perfil central, só gestão (admin).
             if path == '/api/v2/admin/consult-clients' or path.startswith('/api/v2/admin/consult-clients/'):
