@@ -13,9 +13,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt
-      - run: python -m unittest -v test_consult_clients_v2 test_appointments_bookings_v2 test_appointments_catalog_v2
+      - run: python -m unittest -v test_consult_clients_v2 test_consult_sessions_v2 test_appointments_bookings_v2 test_appointments_catalog_v2
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: node --check static/admin-consult-clients.js
       - run: node --check static/admin-clients.js
+      - run: node --check static/admin-consultations.js
+      - run: node --check static/admin-nav-shell.js
