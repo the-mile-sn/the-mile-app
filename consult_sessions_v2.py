@@ -68,7 +68,7 @@ def initialize(c):
 
 
 def _basics(c, client_id, org_id):
-    row = c.execute("""SELECT sex,birth_date,height_cm,ethnic_adjustment FROM consult_clients
+    row = c.execute("""SELECT sex,birth_date,height_cm,ethnicity AS ethnic_adjustment FROM consult_clients
         WHERE org_id=? AND id=?""", (org_id, client_id)).fetchone()
     return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnic_adjustment": "none"}
 
