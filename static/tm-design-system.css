@@ -19,7 +19,7 @@
 }
 html[data-admin-theme="light"]{
   --tm-control-ink:#283748;
-  --tm-control-bg:#f0f2f6;
+  --tm-control-bg:#ededef;
   --tm-control-border:#d1d9e3;
   --tm-control-bg-hover:#e4eaf0;
   --tm-control-new-bg:#fff;
@@ -35,21 +35,21 @@ html[data-admin-theme="light"]{
 /* Shared semantic shell colours. Page-specific nutritional/status palettes
    remain separate. Existing exact colour values are retained. */
 :root{
-  --tm-shell-bg:#101114;
+  --tm-shell-bg:#141416;
   --tm-shell-surface:#1b1d22;
   --tm-shell-surface-muted:#22252b;
   --tm-shell-border:#343840;
-  --tm-shell-text:#f2f3f5;
-  --tm-shell-muted:#a2a7b0;
+  --tm-shell-text:#f5f5f7;
+  --tm-shell-muted:#939397;
 }
 html[data-admin-theme="light"]{
-  --tm-shell-bg:#f5f6f8;
+  --tm-shell-bg:#f5f5f7;
   --tm-shell-surface:#ffffff;
-  --tm-shell-surface-muted:#f0f2f6;
+  --tm-shell-surface-muted:#ededef;
   --tm-shell-surface-hover:#e7ebf1;
   --tm-shell-border:#d9dfe7;
-  --tm-shell-text:#1c2633;
-  --tm-shell-muted:#596675;
+  --tm-shell-text:#1e1e20;
+  --tm-shell-muted:#636366;
   --tm-shell-focus:#4a789d;
 }
 

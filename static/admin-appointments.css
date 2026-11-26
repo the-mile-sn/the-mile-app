@@ -2,7 +2,7 @@
 :root{color-scheme:dark}
 html[data-admin-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
-body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(--tm-ui-text,#f2f3f5);font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;font-weight:500}
+body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#141416);color:var(--tm-ui-text,#f5f5f7);font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;font-weight:500}
 .tm-appointments-body [hidden]{display:none!important}
 .tm-appointments-body button,.tm-appointments-body a{font-family:inherit}
 .tm-appointments-body button:focus-visible,.tm-appointments-body a:focus-visible{outline:2px solid #8baac5;outline-offset:3px}

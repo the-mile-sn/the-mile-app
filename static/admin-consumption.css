@@ -1,10 +1,10 @@
 /* The Mile — Planeamento / Registos. Read-only, independent of player UI. */
 html[data-admin-theme] #admin-workspace #consumption-panel{
- --rec-card:var(--tm-ui-card,#15161a);
- --rec-sub:var(--tm-ui-subcard,#1e2025);
- --rec-field:var(--tm-ui-search,#282b33);
- --rec-text:var(--tm-ui-text,#f2f3f5);
- --rec-muted:var(--tm-ui-muted,#a2a7b0);
+ --rec-card:var(--tm-ui-card,#1e1e20);
+ --rec-sub:var(--tm-ui-subcard,#27272a);
+ --rec-field:var(--tm-ui-search,#333333);
+ --rec-text:var(--tm-ui-text,#f5f5f7);
+ --rec-muted:var(--tm-ui-muted,#939397);
  --rec-line:var(--tm-ui-divider,rgba(155,168,185,.085));
  margin-top:0!important;padding:0!important;border:0!important;background:transparent!important;
  box-shadow:none!important;color:var(--rec-text)!important;min-width:0;
