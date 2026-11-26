@@ -5689,3 +5689,22 @@ body.consumption-sheet-open #tabs{visibility:hidden!important}
 #overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline{display:block!important;font-size:var(--day-title-size)!important;line-height:1.3!important}
 #overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro{display:inline!important;line-height:inherit!important}
 #overview #day-details .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal{display:inline!important;vertical-align:baseline!important}
+
+/* ===== Que cor consumiste? — lista com medalhas (26/11, proposta B) ===== */
+/* Same medal as the Início «Planos» widget; one grouped list, each row opens that colour's options. */
+.plan-badge.tone-red{--plan-bg:#5A1F22;--plan-ink:#FF9C97}
+#overview .consumption-color-picker .consumption-color-list{display:flex;flex-direction:column;margin:14px 0 0;border-radius:16px;background:rgba(0,0,0,.18);overflow:hidden}
+#overview .consumption-editor .consumption-color-option.consumption-color-row{
+ appearance:none!important;display:flex!important;align-items:center!important;gap:14px!important;width:100%!important;
+ min-height:72px!important;margin:0!important;padding:12px 16px!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;color:inherit!important;text-align:left!important;font:inherit!important;cursor:pointer;
+}
+#overview .consumption-editor .consumption-color-row+.consumption-color-row{border-top:1px solid rgba(255,255,255,.08)!important}
+#overview .consumption-editor .consumption-color-row:active{background:rgba(255,255,255,.06)!important}
+#overview .consumption-editor .consumption-color-row .plan-badge{width:52px!important;height:52px!important}
+#overview .consumption-editor .consumption-color-row .plan-badge rect.on{fill:var(--plan-ink)!important;fill-opacity:1!important}
+#overview .consumption-editor .consumption-color-row .plan-badge rect.off{fill:var(--plan-ink)!important;fill-opacity:.22!important}
+#overview .consumption-editor .consumption-color-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+#overview .consumption-editor .consumption-color-name{font-size:17px;font-weight:600;line-height:1.25}
+#overview .consumption-editor .consumption-color-sub{font-size:13px;opacity:.72}
+#overview .consumption-editor .consumption-color-chevron{flex:none;display:flex;opacity:.6}
