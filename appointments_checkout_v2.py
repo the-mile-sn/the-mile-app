@@ -128,7 +128,29 @@ def active_by_date(c, org_id, professional_id, start_day, end_day, now=None, exc
     return grouped
 
 
-def start_hold(c, data, actor, org_id=ORG_ID, now=None):
+def same_day_closed(c, org_id, professional_id, day, now=None):
+    """Public booking rule: today is only bookable online when the professional
+    already has a booking that day (otherwise nobody is at the clinic).
+
+    Counts scheduled manual bookings and paid (confirmed) site bookings.
+    Backoffice bookings are never restricted by this rule.
+    """
+    from appointments_availability_v2 import LISBON
+    current = now or datetime.now(timezone.utc)
+    today = current.astimezone(LISBON).date().isoformat()
+    day = day.isoformat() if hasattr(day, "isoformat") else str(day or "")
+    if day != today:
+        return False
+    manual = c.execute("""SELECT 1 FROM appt_bookings WHERE org_id=? AND
+        professional_id=? AND day=? AND status='scheduled' LIMIT 1""",
+        (org_id, professional_id, day)).fetchone()
+    paid = c.execute("""SELECT 1 FROM appt_checkout_holds WHERE org_id=? AND
+        professional_id=? AND day=? AND status='confirmed' LIMIT 1""",
+        (org_id, professional_id, day)).fetchone()
+    return not (manual or paid)
+
+
+def start_hold(c, data, actor, org_id=ORG_ID, now=None, public=False):
     """Create or idempotently return one 15-minute hold.
 
     Callable only through an authenticated backoffice route until app-proxy
@@ -152,8 +174,15 @@ def start_hold(c, data, actor, org_id=ORG_ID, now=None):
         people = assignment.candidates(
             c, org_id, requested_pid, data.get("service_id"), data.get("mode"),
         )
+        if public:
+            people = [p for p in people if not same_day_closed(
+                c, org_id, p["id"], data.get("date"), now)]
+            if not people:
+                raise ValueError("same_day_unavailable")
         ids = [person["id"] for person in people]
     else:
+        if public and same_day_closed(c, org_id, requested_pid, data.get("date"), now):
+            raise ValueError("same_day_unavailable")
         people = []
         ids = [requested_pid]
     bookings._acquire_transaction_locks(c, org_id, ids)
