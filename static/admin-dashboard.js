@@ -1376,6 +1376,65 @@ function ensurePlanningOnlyView(){
  setupDashboardPlayerPicker(search,data.players||[],applyPlayerFilter);
  applyPlayerFilter();
  $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);
+ renderMobileWeek(data,days,today);
+ }
+ /* Telemóvel: escolhe-se o dia e cada jogador mostra a classificação com as
+    cores das refeições (mesmos dados e cliques da grelha do computador). */
+ let mobileDay=null,mobileQuery="";
+ function renderMobileWeek(data,days,today){
+  const grid=document.querySelector("#tm-dashboard .tm-db-grid-scroll");
+  if(!grid)return;
+  let host=$("tm-db-mobile-week");
+  if(!host){host=el("div","tm-db-mobile-week");host.id="tm-db-mobile-week";grid.after(host);}
+  if(!days.includes(mobileDay))mobileDay=days.includes(today)?today:days[0];
+  host.replaceChildren();
+  const chips=el("div","tm-db-mw-days");chips.setAttribute("role","tablist");chips.setAttribute("aria-label","Dia da semana");
+  for(const [i,day] of days.entries()){
+   const chip=el("button","tm-db-mw-day"+(day===today?" is-today":""));chip.type="button";chip.setAttribute("role","tab");
+   chip.setAttribute("aria-selected",String(day===mobileDay));
+   chip.append(el("span","",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]),el("small","",day.slice(8,10)));
+   chip.addEventListener("click",()=>{mobileDay=day;renderMobileWeek(data,days,today);});
+   chips.append(chip);
+  }
+  const tools=el("div","tm-db-mw-tools");
+  const search=el("input","tm-db-mw-search");search.type="search";search.placeholder="Filtrar jogador";search.value=mobileQuery;
+  search.setAttribute("aria-label","Filtrar jogadores");
+  const iconRow=el("div","tm-db-mw-icons");
+  for(const kind of icons){const slot=el("span");slot.append(hugeIcon(kind));iconRow.append(slot);}
+  tools.append(search,iconRow);
+  const list=el("div","tm-db-mw-list");
+  const paintRows=()=>{
+   list.replaceChildren();
+   for(const player of data.players||[]){
+    if(!matchesPlayer(player.name,mobileQuery))continue;
+    const item=(player.days||[]).find(x=>x.date===mobileDay);
+    if(!item)continue;
+    const row=el("div","tm-db-mw-row");
+    const who=el("button","tm-db-mw-who");who.type="button";
+    const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");
+    avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();
+    if(player.has_photo&&player.user_id){const img=el("img","tm-db-avatar-photo");img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);}
+    who.append(avatar,el("span","tm-db-mw-name",player.name));
+    who.addEventListener("click",()=>openPlayers(player.id));
+    const isOff=Boolean(item.is_off)||["Off","Off (+1)","Off (+2)"].includes(item.classification);
+    const state=item.classification==="MD"?" tm-db-match":isOff?" tm-db-off":item.classification==="Geral"?" tm-db-general":"";
+    const pending=Boolean(item.needs_confirmation)&&item.classification==="Geral";
+    const cell=el("button","tm-db-cell tm-db-mw-cell"+state+(pending?" tm-db-general-pending":""));cell.type="button";
+    cell.setAttribute("aria-label",player.name+", "+item.date+", "+(pending?"Geral, por definir":item.classification||"sem MD"));
+    const label=el("span","tm-db-mw-label");
+    label.append(el("span","tm-db-md",pending?"Geral":(item.classification||"—")));
+    if(pending)label.append(el("span","tm-db-pending-hint","por definir"));
+    const dots=el("span","tm-db-five-cols tm-db-dots");
+    for(const meal of meals){const value=item.colors?.[meal];dots.append(el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot")));}
+    cell.append(label,dots);
+    cell.addEventListener("click",()=>openPlayers(player.id,item.date));
+    row.append(who,cell);list.append(row);
+   }
+   if(!list.childNodes.length)list.append(el("p","tm-db-none","Sem jogadores."));
+  };
+  search.addEventListener("input",()=>{mobileQuery=search.value;paintRows();});
+  paintRows();
+  host.append(chips,tools,list);
  }
  async function load(){const id=++seq;if(!weekMonday)weekMonday=monday(dateParts(new Date()));$("tm-db-error").textContent="";$("tm-db-recent").textContent="A consultar…";const res=await request("/api/v2/admin/dashboard?week="+encodeURIComponent(weekMonday));if(id!==seq)return;cache=res;renderTable(res);paintEvents(res);}
  $("tm-db-prev").addEventListener("click",()=>{weekMonday=shifted(weekMonday,-7);load().catch(showError);});
