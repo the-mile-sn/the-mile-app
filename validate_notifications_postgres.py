@@ -26,7 +26,7 @@ class Connection:
     def __init__(self, conn):
         self.conn=conn
     def execute(self, sql, params=()):
-        return self.conn.execute(sql.replace("?", "%s"), params)
+        return self.conn.execute(sql.replace("?", "%s"), params if params else None)
     def commit(self):
         self.conn.commit()
 
@@ -88,7 +88,7 @@ class PostgreSQLTests(unittest.TestCase):
 
     def test_menu_translation_dispatch_read_and_session(self):
         day=self.now.date().isoformat()
-        with patch.dict(os.environ,{"MILE_NOTIFICATIONS_CAPTURE":"1"}):
+        with patch.dict(os.environ,{"MILE_NOTIFICATIONS_CAPTURE":"1"}), patch.object(capture.time,"time",return_value=self.now.timestamp()):
             chef.save_menu(self.c,"a","chef",day,"lunch","category","Carne branca",today=self.now.date())
         candidates=admin.preview(self.c,authorised_athlete_ids=["a"],kind="menu",now=self.now)["items"]
         self.assertEqual({i["recipient_id"] for i in candidates},{"p","chef"})
@@ -133,7 +133,7 @@ class PostgreSQLTests(unittest.TestCase):
         self.assertTrue(activation.state(self.c,user_id="chef",device="a"*32,session_token="renewed",now=103)["prompted"])
 
     def test_capture_savepoint_does_not_abort_primary_write(self):
-        with patch.dict(os.environ,{"MILE_NOTIFICATIONS_CAPTURE":"1"}):
+        with patch.dict(os.environ,{"MILE_NOTIFICATIONS_CAPTURE":"1"}), patch.object(capture.time,"time",return_value=self.now.timestamp()):
             self.c.execute("INSERT INTO documents VALUES(?,?,?,?,?)",("doc","p","nutrition","Synthetic",b"pdf"))
             result=capture.safe(self.c,lambda:self.c.execute("SELECT missing_column FROM documents"))
             self.assertIsNone(result)
