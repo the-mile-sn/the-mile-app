@@ -960,7 +960,7 @@ def application(env, start_response):
                     # inside the native admin workspace, never a second page.
                     params = parse_qs(env.get('QUERY_STRING',''),keep_blank_values=True)
                     kind = params.get('entity_kind',[''])[0]
-                    allowed = ('food','dish','recipe','recipe_category','supplement','plan')
+                    allowed = ('food','dish','recipe','recipe_category','supplement','plan','notification')
                     target = '/?nav=translations'
                     if kind in allowed:
                         target += '&entity_kind=' + kind
@@ -3455,7 +3455,12 @@ def application(env, start_response):
                         selections=body.get('selections'),custom_copy=body.get('custom_copy'),
                         menu_change=body.get('menu_change'),
                         now=datetime.now(ZoneInfo('Europe/Lisbon')))
-                except (ValueError,TypeError):
+                except ValueError as exc:
+                    if str(exc) in ('notification_translation_requires_review','notification_translation_unavailable',
+                                    'invalid_notification_placeholder','invalid_notification_translation'):
+                        raise Problem(409,'notification_translation_requires_review')
+                    raise Problem(400,'notification_selection_invalid_or_changed')
+                except TypeError:
                     raise Problem(400,'notification_selection_invalid_or_changed')
                 import notification_dispatch_v2 as dispatch
                 send_allowed=dispatch.enabled() and 1<=len(rows)<=10 and all(
