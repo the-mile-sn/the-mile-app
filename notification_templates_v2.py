@@ -59,11 +59,48 @@ ACTIVATION = {
 }
 
 
-def render_template(key, language, *, first_name=None):
-    """Resolve an explicit recipient locale; never silently switch language."""
-    title, body = TEMPLATES[key][language]
-    if key == "birthday":
-        if not isinstance(first_name, str) or not first_name.strip():
+def source_rows():
+    """Canonical PT templates and review-only EN suggestions."""
+    return [{"id":key,"title":copies["pt-PT"][0],"body":copies["pt-PT"][1],
+             "title_en":copies["en-GB"][0],"body_en":copies["en-GB"][1]}
+            for key,copies in TEMPLATES.items()]
+
+
+def validate_translation(key, field, text):
+    if key not in TEMPLATES or field not in ("title","body") or not isinstance(text,str):
+        raise ValueError("invalid_notification_translation")
+    if not text.strip() or len(text)>(120 if field=="title" else 1000):
+        raise ValueError("invalid_notification_translation")
+    # The birthday name is interpolated only after the exact placeholder is
+    # reviewed; no other placeholders or formatting expressions are allowed.
+    expected=TEMPLATES[key]["pt-PT"][0 if field=="title" else 1]
+    placeholder="{first_name}"
+    if (text.count(placeholder)!=expected.count(placeholder)
+            or any(x in text.replace(placeholder,"") for x in ("{","}"))):
+        raise ValueError("invalid_notification_placeholder")
+
+
+def render_template(key, language, *, first_name=None, c=None):
+    """PT canonical; EN only from the shared approved translation store."""
+    title,body=TEMPLATES[key]["pt-PT"]
+    if language=="en-GB":
+        if c is None:
+            raise ValueError("notification_translation_unavailable")
+        from content_translations_v2 import resolve
+        translated=[]
+        for field,source in (("title",title),("body",body)):
+            result=resolve(c,entity_kind="notification",entity_id=key,field_path=field,
+                           source_text=source,language="en")
+            if result["status"]!="approved" or result["language"]!="en":
+                raise ValueError("notification_translation_requires_review")
+            validate_translation(key,field,result["text"])
+            translated.append(result["text"])
+        title,body=translated
+    elif language!="pt-PT":
+        raise ValueError("invalid_recipient_locale")
+    if key=="birthday":
+        if not isinstance(first_name,str) or not first_name.strip():
             raise ValueError("first_name_required")
-        title = title.format(first_name=first_name.strip())
-    return title, body
+        title=title.replace("{first_name}",first_name.strip())
+        body=body.replace("{first_name}",first_name.strip())
+    return title,body
