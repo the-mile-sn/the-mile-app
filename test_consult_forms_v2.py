@@ -116,7 +116,16 @@ class ConsultFormsTests(unittest.TestCase):
         self.assertEqual(rows["goals"], "Emagrecimento · Outra: Dormir melhor")
         self.assertEqual(rows["supermarkets"], "Continente · Lidl")
         self.assertEqual(rows["frequency.soup"], "Às vezes (1–2 dias)")
-        self.assertNotIn("supplements_detail", rows)
+        self.assertNotIn("supplements_info", rows)
+        with_sup = dict(ANSWERS, supplements=["creatine", "other"], supplements_other="Magnésio",
+                        supplements_info={"creatine": {"brand": "Marca X", "dose": "5 g", "when": "antes do treino"}})
+        self.assertEqual(self.call("/enviar", token, "POST", {"answers": with_sup})["status"], 200)
+        bad_sup = dict(with_sup, supplements_info={"none": {"brand": "x"}})
+        self.assertEqual(self.call("/guardar", token, "POST", {"answers": bad_sup})["status"], 400)
+        form2 = self.admin.request(f"/api/v2/admin/consultations/bookings/manual/{self.booking}")["body"]["form"]
+        rows2 = {r.get("key"): (r.get("label"), r.get("value")) for sec in form2["sections"] for r in sec["rows"]}
+        self.assertEqual(rows2["supplements_info.creatine"], ("Creatina", "Marca X · 5 g · antes do treino"))
+        self.assertEqual(rows2["supplements_info.other"], ("Magnésio", "—"))
         # Frequências: têm de estar todas respondidas.
         partial = dict(ANSWERS, frequency={"soup": "never"})
         self.assertEqual(self.call("/enviar", token, "POST", {"answers": partial})["status"], 400)

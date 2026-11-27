@@ -233,9 +233,10 @@ STEPS = [
          "options": [["none", "Não faço"], ["creatine", "Creatina"], ["beta_alanine", "Beta-alanina"],
                      ["omega3", "Ómega-3"], ["tart_cherry", "Tart Cherry"], ["multivitamin", "Multivitamínico"],
                      ["vit_d", "Vitamina D"], ["vit_b12", "Vitamina B12"], ["whey", "Proteína whey"], OTHER]},
-        {"id": "supplements_detail", "short": "Marca e dose", "type": "textarea", "max": 1500,
-         "label": "Diz-nos a marca e a dose dos suplementos que tomas.",
-         "placeholder": "Ex.: Creatina, marca X, 5 g antes do treino. Ómega-3, marca Y, 1 cápsula ao jantar.",
+        {"id": "supplements_info", "short": "Marca, dose e quando", "type": "details", "of": "supplements",
+         "label": "Para cada suplemento, diz-nos a marca, a dose e quando tomas.",
+         "columns": [["brand", "Marca"], ["dose", "Dose"], ["when", "Quando"]],
+         "placeholders": ["Ex.: marca X", "Ex.: 5 g", "Ex.: antes do treino"],
          "when_not": {"supplements": [None, ["none"]]}},
         {"id": "athlete", "short": "Tem jogos ou competições", "type": "choice", "options": YES_NO,
          "label": "És atleta ou tens jogos ou competições?"},
@@ -294,7 +295,7 @@ LAYOUT = [
     ("Diário alimentar", ["meals"]),
     ("Diário alimentar", ["protein_portion", "carb_portion"]),
     ("Mudanças", ["alternatives", "motivation"]),
-    ("Suplementação", ["supplements", "supplements_detail", "athlete"]),
+    ("Suplementação", ["supplements", "supplements_info", "athlete"]),
     ("Dia de jogo", ["day_before_change", "day_before_what", "game_day_change", "game_day_what"]),
     ("Dia de jogo", ["before_game", "during_game"]),
     ("Notas", ["notes", "consent"]),
@@ -448,6 +449,18 @@ def readable(answers):
                         items.append({"key": k, "label": lab, "time": m.get("time", ""), "text": m.get("text", "")})
                 rows.append({"type": "meals", "label": f["label"], "items": items})
                 continue
+            if f["type"] == "details":
+                info = value if isinstance(value, dict) else {}
+                for key in answers.get(f["of"]) or []:
+                    if key == "none":
+                        continue
+                    name = _option_label(f["of"], key)
+                    if key == "other":
+                        name = (answers.get(f["of"] + "_other") or "Outro").strip()
+                    parts = [info.get(key, {}).get(c, "") for c, _ in f["columns"]]
+                    text = " · ".join(p for p in parts if p) or "—"
+                    rows.append({"type": "text", "key": f["id"] + "." + key, "label": name, "value": text})
+                continue
             if value in (None, "", []):
                 continue
             if f["type"] == "choice":
@@ -536,6 +549,24 @@ def _clean_value(f, value):
                 raise ValueError("invalid_" + f["id"])
             if v:
                 out[k] = v
+        return out or None
+    if kind == "details":
+        if not isinstance(value, dict):
+            raise ValueError("invalid_" + f["id"])
+        keys = {k for k, _ in FIELDS[f["of"]]["options"]} - {"none"}
+        cols = {k for k, _ in f["columns"]}
+        out = {}
+        for k, row in value.items():
+            if k not in keys or not isinstance(row, dict) or any(c not in cols for c in row):
+                raise ValueError("invalid_" + f["id"])
+            clean = {}
+            for c, v in row.items():
+                if not isinstance(v, str) or len(v) > 120:
+                    raise ValueError("invalid_" + f["id"])
+                if v.strip():
+                    clean[c] = " ".join(v.split())
+            if clean:
+                out[k] = clean
         return out or None
     if kind == "check":
         if value is not True:
