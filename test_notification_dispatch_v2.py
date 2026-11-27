@@ -3,6 +3,7 @@ import sqlite3
 import unittest
 from unittest.mock import patch
 import os
+import time
 from notification_store_v2 import initialize
 from notification_activation_v2 import initialize as init_devices
 from notification_dispatch_v2 import dispatch, confirmation_digest, lock_manual
@@ -12,8 +13,11 @@ class DispatchTests(unittest.TestCase):
     def setUp(self):
         self.c=sqlite3.connect(":memory:")
         self.c.row_factory=sqlite3.Row
+        self.c.execute('PRAGMA foreign_keys=ON')
         self.c.execute("CREATE TABLE users(id TEXT PRIMARY KEY,active INTEGER)")
         self.c.executemany("INSERT INTO users VALUES(?,1)",[("p",),("q",),("admin",)])
+        self.c.execute('CREATE TABLE sessions(token TEXT PRIMARY KEY,user_id TEXT,expires BIGINT)')
+        self.c.execute('INSERT INTO sessions VALUES(?,?,?)',('p-session','p',int(time.time())+3600))
         initialize(self.c)
         init_devices(self.c)
         self.c.executemany("""INSERT INTO v2_manual_notifications
@@ -21,8 +25,8 @@ class DispatchTests(unittest.TestCase):
             VALUES(?,?,?,'admin','custom','pt-PT','Private title','Private body',100)""",
             [("n1","r1","p"),("n2","r2","q")])
         self.c.execute("""INSERT INTO v2_notification_devices
-            (device_id,user_id,endpoint,p256dh,auth,created_at)
-            VALUES('dev','p','https://fcm.googleapis.com/fcm/send/fake','fake','fake',100)""")
+            (device_id,user_id,session_token,endpoint,p256dh,auth,created_at)
+            VALUES('dev','p','p-session','https://fcm.googleapis.com/fcm/send/fake','fake','fake',100)""")
         self.c.commit()
         self.env=patch.dict(os.environ,{"MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS":"p"})
         self.env.start()
@@ -51,6 +55,18 @@ class DispatchTests(unittest.TestCase):
         self.c.commit()
         self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"not_subscribed"})
         self.assertEqual(self.status("n1"),"not_subscribed")
+        self.assertEqual(self.calls,[])
+
+    def test_expired_session_cannot_receive_push(self):
+        self.c.execute("UPDATE sessions SET expires=0 WHERE token='p-session'")
+        self.c.commit()
+        self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"not_subscribed"})
+        self.assertEqual(self.calls,[])
+
+    def test_logged_out_session_cannot_receive_push(self):
+        self.c.execute("DELETE FROM sessions WHERE token='p-session'")
+        self.c.commit()
+        self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"not_subscribed"})
         self.assertEqual(self.calls,[])
 
     def test_gateway_failure_no_retry(self):
