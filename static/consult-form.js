@@ -150,10 +150,12 @@
       if (f.other_of) box.classList.add("is-other");
       box.append(label);
     }
-    var hint = f.type === "freq" ? "" : f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
+    var hint = f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
     if (hint) box.append(el("div", "tmf-hint", hint));
     var v = answers[f.id];
-    if (f.type === "choice" || f.type === "multi") {
+    if (f.type === "choice" && f.photos && data.portions && Object.keys(data.portions[f.id] || {}).length) {
+      box.append(photoChoices(f, v));
+    } else if (f.type === "choice" || f.type === "multi") {
       box.append(choiceGroup(f.options, v, function (x) {
         setAnswer(f.id, x, true, f.type === "choice" && x ? f.id : null);
       }, f.label, {multi: f.type === "multi", compact: f.compact, swatches: f.swatches, ends: f.ends}));
@@ -310,8 +312,7 @@
     var bar = el("span", "tmf-freq-bar"); var fill = el("i"); bar.append(fill);
     fill.style.setProperty("width", Math.round(done / f.rows.length * 100) + "%");
     head.append(el("span", "tmf-freq-count", done + " de " + f.rows.length + " alimentos"), bar);
-    wrap.append(el("div", "tmf-freq-title", "Quantos dias por semana?"),
-      el("div", "tmf-hint", "Pensa numa semana normal. Se for todos os dias, perguntamos quantas vezes."), head);
+    wrap.append(head);
     f.rows.forEach(function (r) {
       var key = r[0], opts = r[3], value = g[key];
       var row = el("div", "tmf-freq-row");
@@ -369,6 +370,28 @@
     return wrap;
   }
 
+  // Porções com fotografias da biblioteca Porções visuais.
+  function photoChoices(f, value) {
+    var wrap = el("div", "tmf-photos");
+    wrap.setAttribute("role", "group"); wrap.setAttribute("aria-label", f.label);
+    var photos = data.portions[f.id] || {};
+    f.options.forEach(function (o) {
+      var b = el("button", "tmf-photo");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(value === o[0]));
+      if (photos[o[0]]) {
+        var img = el("img");
+        img.src = "formulario/porcao?t=" + encodeURIComponent(token) + "&id=" + photos[o[0]];
+        img.alt = o[1]; img.loading = "lazy";
+        b.append(img);
+      }
+      b.append(el("span", "", o[1]));
+      b.addEventListener("click", function () { setAnswer(f.id, value === o[0] ? "" : o[0], true, value === o[0] ? null : f.id); });
+      wrap.append(b);
+    });
+    return wrap;
+  }
+
   // Uma linha por suplemento escolhido: marca, dose e quando.
   function detailsNode(f) {
     var wrap = el("div", "tmf-details");
@@ -403,33 +426,44 @@
     return wrap;
   }
 
+  // Diário: primeiro escolhem-se as refeições; cada uma abre hora, o que come e quantidades.
   function mealsNode(f) {
     var wrap = el("div", "tmf-meals");
     var meals = Object.assign({}, answers[f.id] || {});
-    function update(key, part, value, card) {
-      var cur = Object.assign({time: "", text: ""}, meals[key] || {});
+    var chosen = f.rows.filter(function (r) { return meals[r[0]]; }).map(function (r) { return r[0]; });
+    wrap.append(choiceGroup(f.rows, chosen, function (list) {
+      var next = {};
+      (list || []).forEach(function (k) { next[k] = meals[k] || {time: "", text: "", qty: "", on: true}; });
+      setAnswer(f.id, next, true);
+    }, f.label, {multi: true, compact: true}));
+    function update(key, part, value) {
+      var cur = Object.assign({time: "", text: "", qty: "", on: true}, meals[key] || {});
       cur[part] = value;
-      if (!cur.time && !cur.text.trim()) delete meals[key]; else meals[key] = cur;
-      card.classList.toggle("is-done", !!meals[key]);
+      meals[key] = cur;
       setAnswer(f.id, Object.assign({}, meals));
     }
     f.rows.forEach(function (r) {
+      if (!meals[r[0]]) return;
+      var m = meals[r[0]];
       var card = el("div", "tmf-meal");
-      var m = meals[r[0]] || {};
-      if (meals[r[0]]) card.classList.add("is-done");
       var head = el("div", "tmf-meal-head");
       var time = el("input", "tmf-input tmf-time");
       time.type = "time"; time.value = m.time || ""; time.setAttribute("aria-label", r[1] + " – hora");
-      time.addEventListener("input", function () { update(r[0], "time", time.value, card); });
+      time.addEventListener("input", function () { update(r[0], "time", time.value); });
       var tl = el("label", "tmf-time-label");
       tl.append(el("span", "", "Hora"), time);
       head.append(el("div", "tmf-meal-name", r[1]), tl);
       var text = el("textarea", "tmf-textarea");
       text.maxLength = 600; text.value = m.text || ""; text.rows = 2;
-      text.placeholder = "O que costumas comer e beber (deixa em branco se não fazes)";
+      text.placeholder = "O que comes e bebes";
       text.setAttribute("aria-label", r[1] + " – o que comes");
-      text.addEventListener("input", function () { update(r[0], "text", text.value, card); });
-      card.append(head, text);
+      text.addEventListener("input", function () { update(r[0], "text", text.value); });
+      var qty = el("input", "tmf-input");
+      qty.type = "text"; qty.maxLength = 300; qty.value = m.qty || "";
+      qty.placeholder = "Quantidades (ex.: 2 fatias de pão, 1 iogurte)";
+      qty.setAttribute("aria-label", r[1] + " – quantidades");
+      qty.addEventListener("input", function () { update(r[0], "qty", qty.value); });
+      card.append(head, text, qty);
       wrap.append(card);
     });
     return wrap;

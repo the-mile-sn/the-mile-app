@@ -876,6 +876,11 @@ def application(env, start_response):
                     if method == 'GET' and sub == '/dados':
                         today = datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                         return respond(200, consult_forms_v2.public_view(form_c, token, today=today))
+                    if method == 'GET' and sub == '/porcao':
+                        image_id = (parse_qs(env.get('QUERY_STRING', '')).get('id') or [''])[0]
+                        headers[:] = [(k, v) for k, v in headers if k.lower() != 'cache-control']
+                        headers.append(('Cache-Control', 'private, max-age=86400'))
+                        return respond(200, consult_forms_v2.portion_image(form_c, token, image_id), 'image/webp')
                     if method == 'POST' and sub == '/guardar':
                         return respond(200, consult_forms_v2.save(form_c, token, read_json(env)))
                     if method == 'POST' and sub == '/enviar':

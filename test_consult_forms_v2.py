@@ -26,7 +26,7 @@ ANSWERS = {
     "diet_pattern": "omnivore", "shopping": "me", "supermarkets": ["lidl", "continente"], "cooking": "me",
     "weighs_food": "never", "water": "1_2", "urine_color": "3", "coffee": "1_2", "alcohol": "2",
     "frequency": FREQ_ALL, "meal_drinks": ["water"], "motivation": "8",
-    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre"}, "lunch": {"time": "", "text": ""}},
+    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre", "qty": "2 fatias"}, "lunch": {"time": "", "text": ""}},
     "protein_portion": "120", "carb_portion": "150", "supplements": ["none"], "athlete": "no",
     "consent": True,
 }
@@ -160,3 +160,23 @@ class ConsultFormsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConsultFormPortionPhotosTests(ConsultFormsTests):
+    def test_portion_photos_need_valid_link(self):
+        import base64
+        with app.connect() as c:
+            c.execute("INSERT INTO v2_visual_portion_images(sha256,data_base64) VALUES('abc',?)",
+                      (base64.b64encode(b"RIFFfakewebp").decode(),))
+            c.execute("""INSERT INTO v2_visual_portions(id,source_row,category,total_g,image_sha256,active,created_at,updated_at)
+                VALUES('aaaaaaaaaaaaaaaaaaaaaaaa',1,'Carne / Peixe',120,'abc',1,1,1),
+                      ('bbbbbbbbbbbbbbbbbbbbbbbb',2,'Massa',120,'abc',1,1,1)""")
+        token = parse_qs(urlparse(self.link()["link"]).query)["t"][0]
+        view = self.call("/dados", token)["body"]
+        self.assertEqual(view["portions"]["protein_portion"], {"120": "aaaaaaaaaaaaaaaaaaaaaaaa"})
+        ok = self.public.request(PROXY + "/porcao?" + self.signed(t=token, id="aaaaaaaaaaaaaaaaaaaaaaaa"), csrf=False)
+        self.assertEqual((ok["status"], ok["headers"]["Content-Type"]), (200, "image/webp"))
+        other = self.public.request(PROXY + "/porcao?" + self.signed(t=token, id="bbbbbbbbbbbbbbbbbbbbbbbb"), csrf=False)
+        self.assertEqual(other["status"], 404)
+        no_token = self.public.request(PROXY + "/porcao?" + self.signed(t="x" * 43, id="aaaaaaaaaaaaaaaaaaaaaaaa"), csrf=False)
+        self.assertEqual(no_token["status"], 404)
