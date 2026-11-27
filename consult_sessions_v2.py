@@ -69,9 +69,10 @@ def initialize(c):
 
 
 def _basics(c, client_id, org_id):
-    row = c.execute("""SELECT sex,birth_date,height_cm,ethnicity FROM consult_clients
+    row = c.execute("""SELECT sex,birth_date,height_cm,ethnicity,arm_point_cm,thigh_point_cm FROM consult_clients
         WHERE org_id=? AND id=?""", (org_id, client_id)).fetchone()
-    return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnicity": "none"}
+    return dict(row) if row else {"sex": "", "birth_date": "", "height_cm": None, "ethnicity": "none",
+                                  "arm_point_cm": None, "thigh_point_cm": None}
 
 
 def _assessment_public(row):
@@ -99,6 +100,7 @@ def save_assessment(c, session_id, payload, actor, org_id=ORG_ID, now=None):
     if row["status"] == "closed":
         raise ValueError("session_closed")
     measures = body.clean_measures(payload.get("measures") or {})
+    _save_points(c, row["client_id"], payload.get("points"), actor, org_id, now)
     equation = payload.get("equation") or body.DEFAULT_EQUATION
     if equation not in body.EQUATIONS:
         raise ValueError("invalid_equation")
@@ -128,6 +130,24 @@ def save_assessment(c, session_id, payload, actor, org_id=ORG_ID, now=None):
                    actor, actor, now, now))
     return _assessment_public(c.execute("SELECT * FROM consult_assessments WHERE org_id=? AND session_id=?",
                                         (org_id, session_id)).fetchone())
+
+
+def _save_points(c, client_id, points, actor, org_id, now):
+    """Pontos médios do braço e da coxa: medidos uma vez (1.ª avaliação) e guardados no perfil."""
+    if points in (None, {}):
+        return
+    if not isinstance(points, dict) or any(k not in ("arm_point_cm", "thigh_point_cm") for k in points):
+        raise ValueError("invalid_points")
+    clean = {k: clients._number(v, k, 1, 100) for k, v in points.items()}
+    current = c.execute("SELECT arm_point_cm,thigh_point_cm FROM consult_clients WHERE org_id=? AND id=?",
+                        (org_id, client_id)).fetchone()
+    changed = {k: v for k, v in clean.items() if current and current[k] != v}
+    if not changed:
+        return
+    sets = ",".join(f"{k}=?" for k in changed)
+    c.execute(f"UPDATE consult_clients SET {sets},version=version+1,updated_by=?,updated_at=? WHERE org_id=? AND id=?",
+              (*changed.values(), actor, now, org_id, client_id))
+    clients._audit(c, org_id, client_id, actor, "updated", {"fields": sorted(changed)}, now)
 
 
 def _hhmm(minutes):
