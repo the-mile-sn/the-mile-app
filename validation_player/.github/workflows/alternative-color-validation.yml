@@ -1,0 +1,32 @@
+name: Alternative color validation
+on:
+  push:
+    branches:
+      - feature/player-consumed-alternative-color
+  pull_request:
+    paths:
+      - 'consumption_source_v2.py'
+      - 'consumption_nutrition_v2.py'
+      - 'consumption_records_v2.py'
+      - 'static/jogador-v2.js'
+      - 'app.py'
+      - 'test_consumption*'
+      - '.github/workflows/alternative-color-validation.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python syntax
+        run: python -m py_compile consumption_source_v2.py app.py consumption_records_v2.py consumption_nutrition_v2.py
+      - name: JavaScript syntax
+        run: node --check static/jogador-v2.js
+      - name: Consumption regression tests
+        run: python -m unittest test_consumption_nutrition_v2 test_consumption_persistence_v2 test_consumption_alternative_color_v2

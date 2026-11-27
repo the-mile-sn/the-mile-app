@@ -1,0 +1,16 @@
+name: Validate player loading experience
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  loading-experience:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/jogador-v2.js
+      - run: node --test tests/player-loading-experience.test.cjs tests/player-overview-performance.test.cjs tests/player-weight-navigation.test.cjs tests/player-session-isolation.test.cjs
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest -v test_player_access_profile_bridge

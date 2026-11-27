@@ -1,0 +1,17 @@
+name: Validate player sex source
+on:
+  push:
+    branches:
+      - refactor/sex-single-source-player-20261030
+  pull_request:
+    branches:
+      - main
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m compileall -q app.py test_player_sex_source_v2.py
+      - run: python -m unittest -v test_player_sex_source_v2 test_reference_weight_v2

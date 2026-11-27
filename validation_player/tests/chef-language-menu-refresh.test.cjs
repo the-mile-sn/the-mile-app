@@ -1,0 +1,150 @@
+"use strict";
+/* In-memory Chef locale-switch regression, no real requests or accounts. */
+const {test}=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const vm=require("node:vm");
+
+const chef=fs.readFileSync("static/chef.js","utf8");
+
+test("Chef language preference reloads translated week menus before displaying the chosen language",()=>{
+ const start=chef.indexOf("function renderProfile(root){");
+ const end=chef.indexOf("const notifications=node",start);
+ assert.ok(start>=0&&end>start);
+ const handler=chef.slice(start,end);
+ const saved=handler.indexOf('await request("/api/v2/chef/preferences","PUT",{language:code})');
+ const plans=handler.indexOf('await request("/api/v2/chef/plans")');
+ const week=handler.indexOf("await loadWeek();");
+ assert.ok(saved>=0 && plans>saved && week>plans,
+   "A successful Chef locale preference must be persisted before fetching translated menus");
+ assert.doesNotMatch(handler.slice(saved),/\brender\(\);/,
+   "Must not re-render the old PT menus cache immediately after EN was selected");
+ assert.match(chef,/const q="\?start="\+weekKey\+"&end="\+dateKey\(end\)/);
+ assert.match(chef,/request\("\/api\/v2\/chef\/menus"\+q\)/);
+ assert.match(chef,/menus=menuResponse\.menus\|\|\[\]/);
+ assert.match(chef,/appendChefMenuDish\(preview,plannedMenu\(date,meal\),txt\(\)\.pending\)/);
+});
+
+test("Existing Chef week loader updates Home and Menus PT → EN → PT without changing dish identity",async()=>{
+ const start=chef.indexOf("async function loadWeek(){");
+ const end=chef.indexOf("\nfunction colorFor(",start);
+ assert.ok(start>=0&&end>start);
+ const canonical={kind:"dish",dish_id:"dish-1",menu_date:"2026-11-23",meal:"lunch",
+                  value:"Salmão com crosta de ervas"};
+ const views=[], urls=[];
+ const context={
+   lang:"pt",selectedDay:new Date(2026,10,23,12),
+   chefWeekRequestId:0,chefSkeletonTimer:null,chefSkeletonVisible:false,
+   activeTab:"profile",days:[],colors:{},menus:[],executions:[],
+   clearTimeout(){},el:()=>({hidden:false}),
+   renderChefHomeSkeleton(){throw Error("Profile must not trigger Home skeletons")},
+   clearChefSkeleton(){context.chefSkeletonVisible=false},
+   monday(d){const date=new Date(d);date.setDate(date.getDate()-(date.getDay()+6)%7);return date},
+   shift(d,n){const date=new Date(d);date.setDate(date.getDate()+n);return date},
+   dateKey(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")},
+   async request(url){
+     urls.push(url);
+     if(url.startsWith("/api/v2/chef/menus?")){
+       const value=context.lang==="en"?"Herb-crusted salmon":canonical.value;
+       return {menus:[{...canonical,value}]};
+     }
+     if(url.startsWith("/api/v2/chef/calendar?"))return {days:[],effective_colors:{}};
+     if(url.startsWith("/api/v2/chef/menu-executions?"))return {executions:[]};
+     throw Error("Unexpected route "+url);
+   },
+   render(){views.push({lang:context.lang,menus:context.menus.map(item=>({...item}))})}
+ };
+ vm.createContext(context);
+ vm.runInContext(chef.slice(start,end),context);
+ for(const language of ["pt","en","pt"]){
+   context.lang=language;
+   await vm.runInContext("loadWeek()",context);
+ }
+ assert.equal(views.length,3);
+ assert.deepEqual(views.map(view=>view.menus[0].value),
+   [canonical.value,"Herb-crusted salmon",canonical.value]);
+ assert.deepEqual(views.map(view=>view.lang),["pt","en","pt"]);
+ for(const view of views){
+   const row=view.menus[0];
+   assert.equal(row.dish_id,canonical.dish_id);
+   assert.equal(row.kind,"dish");
+   assert.equal(row.menu_date,canonical.menu_date);
+   assert.equal(row.meal,canonical.meal);
+ }
+ assert.equal(canonical.value,"Salmão com crosta de ervas");
+ assert.equal(urls.length,9);
+ assert.ok(urls.every(url=>url.includes("start=2026-11-23&end=2026-11-29")));
+});
+
+test("Chef approved-dish list localises only category labels, retaining canonical saved values",()=>{
+ const start=chef.indexOf("const chefDishCategoryEnglish={");
+ const end=chef.indexOf("\nfunction dateKey(",start);
+ assert.ok(start>=0&&end>start);
+ const source=chef.slice(start,end);
+ for(const [locale,expected] of [
+   ["pt",["Pratos","Crustáceos / Moluscos","Peixe magro"]],
+   ["en",["Dishes","Crustaceans / molluscs","Lean fish"]]
+ ]){
+   const context=vm.createContext({lang:locale});
+   vm.runInContext(source,context);
+   const original=["Pratos","Crustáceos / Moluscos","Peixe magro"];
+   const result=original.map(value=>vm.runInContext(
+      "chefDishCategoryLabel("+JSON.stringify(value)+")",context));
+   assert.deepEqual(result,expected);
+   assert.deepEqual(original,["Pratos","Crustáceos / Moluscos","Peixe magro"]);
+   assert.equal(vm.runInContext('chefDishCategoryLabel("Unknown category")',context),
+                "Unknown category");
+ }
+ assert.match(chef,/button\.append\(node\("span","",dish\.name_pt\)\)/);
+ assert.match(chef,/chefDishCategoryLabel\(dish\.category\)/);
+ assert.match(chef,/selectedDish=\{id:dish\.id,name:dish\.name_pt\}/);
+ assert.match(chef,/dish_id:selectedDish\.id/);
+});
+
+test("Chef Home and Menus translate only menu-category display, never saved text or dish data",()=>{
+ const mapStart=chef.indexOf("const chefDishCategoryEnglish={");
+ const mapEnd=chef.indexOf("\nfunction dateKey(",mapStart);
+ const menuStart=chef.indexOf("function appendChefMenuDish(");
+ const menuEnd=chef.indexOf("\nfunction renderChefMeal(",menuStart);
+ assert.ok(mapStart>=0&&mapEnd>mapStart&&menuStart>=0&&menuEnd>menuStart);
+ const source=chef.slice(mapStart,mapEnd)+"\n"+chef.slice(menuStart,menuEnd);
+ const cases=[
+  ["category","Carne branca","White meat"],
+  ["category","Peixe magro","Lean fish"],
+  ["category","Livre","Free choice"],
+  ["category","Estágio","Training camp"],
+  ["category","Pós-jogo","Post-match"],
+  ["category","Mix","Mix"],
+  ["text","Estágio","Training camp"],
+  ["text"," Estágio ","Training camp"],
+  ["text","Estágio de inverno","Estágio de inverno"],
+  ["text","Livre","Livre"],
+  ["text","Carne branca","Carne branca"],
+  ["dish","Herb-crusted salmon","Herb-crusted salmon"]
+ ];
+ for(const locale of ["pt","en"]){
+  const ctx=vm.createContext({
+   lang:locale,
+   asText(value){return String(value??"");},
+   chefMenuPhoto(){return null;},
+   node(type,cls,text){return {type,cls,text,children:[],
+    append(child){this.children.push(child);}};}
+  });
+  vm.runInContext(source,ctx);
+  for(const [kind,value,english] of cases){
+   const item=Object.freeze({kind,value,menu_date:"2026-11-23",meal:"lunch"});
+   const host={children:[],append(child){this.children.push(child);}};
+   ctx.item=item;ctx.host=host;
+   vm.runInContext('appendChefMenuDish(host,item,"Menu not assigned")',ctx);
+   assert.equal(host.children[0].children[0].text,
+     locale==="en"?english:value,kind+" "+locale);
+   assert.equal(item.value,value);
+   assert.equal(item.kind,kind);
+  }
+  const host={children:[],append(child){this.children.push(child);}};
+  ctx.item=null;ctx.host=host;
+  vm.runInContext('appendChefMenuDish(host,item,"Menu not assigned")',ctx);
+  assert.equal(host.children[0].children[0].text,"Menu not assigned");
+ }
+});
+

@@ -1,0 +1,19 @@
+name: Validate daily game and form icon alignment
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/player-daily-game-icon-geometry.test.cjs
+      - .github/workflows/validate-player-daily-game-icons.yml
+  workflow_dispatch:
+jobs:
+  game-and-form-icons:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check game and post-match icon sizing and alignment
+        run: node --test tests/player-daily-game-icon-geometry.test.cjs

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=contain">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="The Mile">
+  <meta name="application-name" content="The Mile">
+  <meta name="description" content="Área privada The Mile para acesso a planos nutricionais, menus e documentos.">
+  <title>The Mile · Área privada</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    html{margin:0;min-height:100%;background:#000;color-scheme:dark}
+    body{margin:0;min-height:100%;background:#000}
+    .app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#000;min-height:100%;min-height:100dvh;isolation:isolate}
+    .app-splash::before{content:"";position:absolute;inset:-1px 0 calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));background:#000;z-index:-1;pointer-events:none}
+    html.skip-launch-splash .app-splash{display:none!important}
+  </style>
+  <script>
+    try{
+      const seen=sessionStorage.getItem('mile-launch-seen')==='1';
+      if(seen){
+        document.documentElement.classList.add('skip-launch-splash');
+      }else{
+        sessionStorage.setItem('mile-launch-seen','1');
+      }
+    }catch(e){}
+  </script>
+  <link rel="stylesheet" href="/style.css?v=160">
+  <script defer src="/app.js?v=160"></script>
+</head>
+<body>
+<div id="splash" class="app-splash" aria-hidden="true"><div class="splash-wordmark" role="img" aria-label="The Mile"></div></div>
+<div class="app">
+  <header>
+    <button id="header-back" type="button" hidden></button>
+    <div class="wordmark" role="img" aria-label="The Mile"></div>
+    <div class="header-actions">
+      <button id="notification-bell" type="button" hidden aria-label="Notificações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button>
+      <button id="install" type="button" hidden>Instalar</button>
+      <button id="language" type="button">EN</button>
+      <button id="logout" type="button" hidden>Sair</button>
+    </div>
+  </header>
+  <main id="content" aria-live="polite"><p>A carregar…</p></main>
+  <footer><span>The Mile</span><span id="tagline">Nutrição. Performance. Detalhe.</span></footer>
+</div>
+<dialog id="notice"><form method="dialog"><h2 id="notice-title"></h2><p id="notice-text"></p><input id="notice-link" readonly aria-label="Link de ativação" hidden><div class="actions"><button id="copy-link" type="button" hidden>Copiar link</button><button class="primary" value="close">OK</button></div></form></dialog>
+</body>
+</html>

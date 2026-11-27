@@ -1,0 +1,111 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const html=fs.readFileSync('static/jogador-v2.html','utf8');
+const js=fs.readFileSync('static/jogador-v2.js','utf8');
+const css=fs.readFileSync('static/jogador-v2.css','utf8');
+test('bottom middle button uses the existing assessment chart icon',()=>{
+ assert.match(html,/data-tab="assessments"[^>]*>.*icon-chart-03.*<span>Progresso<\/span>/);
+ assert.doesNotMatch(html,/data-tab="new"/);
+ assert.doesNotMatch(html,/id="plans-open-assessments"/);
+});
+test('assessments are a standalone view connected to the original published data',()=>{
+ assert.match(html,/<section id="assessments"/);
+ assert.match(html,/<div id="plans-assessments">/);
+ assert.match(html,/id="assessment-measurements"/);
+ assert.match(js,/if\(t==="assessments"\)openPlansSection\("assessments"\)/);
+ assert.match(js,/cachedOverviewRead\("\/api\/v2\/player\/assessments"\)/);
+ assert.match(js,/renderPlayerAssessments\(\)/);
+});
+test('header uses official Backoffice wordmark and right-side private avatar',()=>{
+ assert.match(html,/viewBox="0 0 1605 244"/);
+ assert.match(html,/class="player-header-wordmark"/);
+ assert.match(css,/#tabs button\[data-tab="profile"\] \.profile-tab-avatar\{/);
+ assert.match(html,/id="header-player-photo"/);
+});
+test('profile notifications are a noninteractive placeholder without network calls',()=>{
+ assert.match(html,/class="profile-notifications-card"/);
+ assert.match(html,/id="profile-notifications-open"/);
+ assert.match(html,/id="profile-notifications-page"/);
+ assert.match(html,/>Notificações<\/span>/);
+ assert.match(html,/class="profile-notification-indicator" hidden/);
+ assert.doesNotMatch(html,/id="profile-notifications-toggle"/);
+});
+
+test('Progresso keeps the assessment module and chart CSS, no duplicated partial rules',()=>{
+ assert.match(css,/#plans \.assessment-trend\{/);
+ assert.doesNotMatch(css,/assessment-measure-card/);
+ assert.equal(css.split("{").length,css.split("}").length);
+ assert.match(html,/<div id="plans-assessments">/);
+ assert.ok(js.includes('$("plans-assessments").hidden=section!=="assessments"'));
+});
+
+test('Planos left the tab bar (25/11): each plan opens from the Início widget, with a back button',()=>{
+ assert.doesNotMatch(html,/data-tab="plans"/);
+ assert.match(html,/id="plans-prescriptions"/);
+ assert.doesNotMatch(html,/<h1>Planos<\/h1>/);
+ assert.doesNotMatch(html,/<h2 class="assessments-page-heading">Avaliações<\/h2>/);
+ assert.doesNotMatch(html,/id="plans-landing"/);
+ assert.match(js,/b\.onclick=\(\)=>openPlanPage\(entry\);/);
+ assert.match(js,/back\.onclick=closePlanPage;/);
+ assert.match(js,/if\(ret\)requestAnimationFrame\(\(\)=>window\.scrollTo\(\{top:ret\.scrollY\}\)\);/);
+});
+test('Progresso shows the latest assessment date in the heading and the formula inside the body fat page',()=>{
+ assert.match(html,/<header class="progress-heading"><p id="progress-kicker" class="progress-kicker"><\/p><h2 class="progress-title">Progresso<\/h2><\/header>/);
+ assert.doesNotMatch(html,/id="assessment-most-recent"/);
+ assert.match(js,/kicker\.textContent=playerText\("Última avaliação · ","Latest assessment · "\)\+progressLongDate/);
+ assert.match(js,/key==="body_fat"/);
+ assert.match(js,/playerBodyFatFormulaNote\(source\?\.formula_note\)/);
+ assert.match(js,/card\.append\(note\)/);
+});
+
+test("profile tab shows the existing private photo and header has only the brand",()=>{
+ assert.match(html,/<button data-tab="profile"[^>]*><span class="profile-tab-avatar"/);
+ assert.match(html,/id="header-player-photo"/);
+ assert.match(html,/id="avatar-initials"/);
+ assert.doesNotMatch(html,/id="player-avatar"/);
+ assert.match(css,/#tabs button\[data-tab="profile"\] \.profile-tab-avatar img\{/);
+});
+
+test('8-skinfold graph colours reflect sex and goalkeeper cutoffs',()=>{
+ const start=js.indexOf('function playerSkinfoldCategory(');
+ const end=js.indexOf('\n}',start);
+ assert.ok(start>=0&&end>start);
+ const fn=vm.runInNewContext(js.slice(start,end+2)+';playerSkinfoldCategory');
+ for(const [sex,pos,limits] of [['M','',[45,55,60]],['M','GR',[50,60,65]],['F','',[65,70,80]],['F','GR',[70,75,85]]]){
+  const [dark,yellow,red]=limits;
+  for(const [value,expected] of [[dark,'dark-green'],[dark+.1,'light-green'],[yellow-.1,'light-green'],[yellow,'yellow'],[red-.1,'yellow'],[red,'red'],[red+5,'red']]){
+   assert.equal(fn(value,pos,sex).code,expected,sex+' '+pos+' '+value);
+  }
+ }
+ assert.equal(fn(62.5,'','M').code,'red');
+ assert.equal(fn(62.5,'GR','M').code,'yellow');
+ assert.equal(fn(80,'','F').color,'#E17878');
+ assert.equal(fn(85,'GR','F').color,'#E17878');
+ assert.equal(fn(null,'','F'),null);
+ assert.equal(fn(60,'',null).code,'red');
+ assert.match(js,/buildAssessmentTrend\(progressReadings\(key\),unit,progressAxisStep\(group,unit\),key==="sum_8"\)/);
+ assert.match(js,/dot\.style\.stroke=category\.color/);
+ assert.match(js,/label\.style\.fill=category\.color/);
+});
+
+test("Assessments, Menus, Profile and bottom navigation share approved typography tokens",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#plans \.progress-tile-label\{/);
+ assert.match(css,/#menus \.day-menu \.menu-entry-heading strong/);
+ assert.match(css,/#profile \.profile-action\{[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
+ assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);
+ assert.match(css,/#tabs button,#tabs button>span:not\(\.profile-tab-avatar\)/);
+ assert.match(css,/font-weight:var\(--mile-type-medium\)!important/);
+ assert.match(css,/font-weight:var\(--mile-type-semibold\)!important/);
+ assert.match(css,/font-weight:var\(--mile-type-regular\)!important/);
+});
+
+test('body fat formula note excludes Excel provenance but preserves clinical methods',()=>{
+ const begin=js.indexOf('function playerBodyFatFormulaNote('),end=js.indexOf('\n}',begin);
+ assert.ok(begin>=0&&end>begin);
+ const formula=vm.runInNewContext(js.slice(begin,end+2)+';playerBodyFatFormulaNote');
+ for(const value of ['Histórico importado de Excel','historico importado de excel','Importado de Excel','Dados importados de CSV','Excel'])
+  assert.equal(formula(value),'',value);
+ for(const value of ['Média de 4','Jackson & Pollock','Média de 4 pregas'])
+  assert.equal(formula(value),value);
+ assert.equal(formula(''),'');
+});

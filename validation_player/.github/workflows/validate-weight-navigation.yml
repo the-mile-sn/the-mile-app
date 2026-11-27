@@ -1,0 +1,16 @@
+name: Validate weight card navigation
+on:
+  push:
+    branches: [fix/player-weight-future-render-nav-20261030]
+  pull_request:
+    branches: [main]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/jogador-v2.js
+      - run: node --test tests/player-weight-navigation.test.cjs
+      - run: python -m unittest -v test_reference_weight_v2 test_nutrition_totals_v2

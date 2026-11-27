@@ -1,0 +1,26 @@
+name: Validate player manual access and profile bridge
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  profile-regressions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install application dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Python and JavaScript syntax
+        run: |
+          python -m compileall -q app.py microcycles_v2.py test_player_access_profile_bridge.py
+          node --check static/jogador-v2.js
+      - name: Player profile and access security
+        run: python -m unittest -v test_player_access_profile_bridge
+      - name: UI contract and session isolation
+        run: |
+          node --test tests/player-followup-profile.test.cjs tests/player-session-isolation.test.cjs

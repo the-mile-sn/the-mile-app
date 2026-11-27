@@ -1,0 +1,62 @@
+name: Validate opt-in approved Planos read-only translations
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app_content_i18n_v2.py
+      - player_language_v2.py
+      - food_plan_player_v2.py
+      - app.py
+      - static/chef.js
+      - static/jogador-v2.js
+      - static/jogador-v2.html
+      - static/jogador-v2.css
+      - static/player-recipes.js
+      - static/player-visual-portions.js
+      - test_app_content_i18n_v2.py
+      - test_player_language_v2.py
+      - test_player_i18n_rollout_preflight.py
+      - test_player_i18n_final_acceptance.py
+      - tools/player_i18n_rollout_preflight.py
+      - tests/test_i18n_private_diagnostic.py
+      - tests/player-native-i18n-textonly.test.cjs
+      - tests/player-profile-language.test.cjs
+      - .github/workflows/validate-content-i18n.yml
+  workflow_dispatch:
+jobs:
+  approved-only-presentation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest -v test_app_content_i18n_v2 test_player_language_v2 test_player_i18n_rollout_preflight test_player_i18n_final_acceptance tests.test_food_plan_player_v2 test_chef_player_integration
+      - run: python -m py_compile app_content_i18n_v2.py player_language_v2.py food_plan_player_v2.py tools/player_i18n_rollout_preflight.py app.py
+      - run: python -m unittest discover -s tests -p test_i18n_private_diagnostic.py -v
+      - run: node --check static/chef.js
+      - run: node --test tests/chef-language-menu-refresh.test.cjs
+      - run: node --check static/jogador-v2.js
+      - run: node --check static/player-recipes.js
+      - run: node --check static/player-visual-portions.js
+      - name: Block visual changes outside approved Player language and Chef privacy acknowledgement
+        run: |
+          git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" |
+          while IFS= read -r path; do
+            case "$path" in
+              static/jogador-v2.html|static/jogador-v2.css|static/chef.html|static/chef-chat-demo.css) ;;
+              *.css|*.html|*.svg)
+                echo "Unapproved visual asset: $path" >&2
+                exit 1;;
+            esac
+          done
+      - run: node --test tests/player-native-i18n-textonly.test.cjs
+      - name: Verify original Player layout assets are byte-for-byte preserved
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node --test tests/player-profile-language.test.cjs

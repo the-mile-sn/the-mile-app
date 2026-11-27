@@ -1,0 +1,124 @@
+/* Chef messaging prototype, isolated from existing Chef cards and navigation. */
+.chef-chat-trigger{
+ position:fixed;z-index:45;
+ top:calc(env(safe-area-inset-top,0px) + 4px);
+ right:calc(env(safe-area-inset-right,0px) + 14px);
+ display:grid;place-items:center;width:44px;height:44px;min-width:44px;
+ padding:10px;border:0;border-radius:50%;background:transparent;color:#f3f3f6;
+}
+.chef-chat-unread{
+ position:absolute;top:-1px;right:2px;transform:translate(12%,-15%);
+ box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+ min-width:17px;height:17px;padding:0 3px;border-radius:999px;
+ background:#ca4769;color:#fff;font-size:10px;font-weight:700;line-height:1;
+ white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums;
+}
+.chef-chat-unread[hidden]{display:none}
+.chef-chat-trigger .mile-icon{display:flex;align-items:center;justify-content:center;width:24px;height:24px}
+.chef-chat-trigger svg{display:block;width:100%;height:100%}
+@media(hover:hover){.chef-chat-trigger:hover{background:rgba(255,255,255,.07)}}
+.chef-chat-trigger:active{background:rgba(255,255,255,.12)}
+.chef-chat-dialog{
+ width:min(480px,calc(100vw - 28px));
+ height:min(650px,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 20px));
+ max-width:none;max-height:none;margin:auto;padding:0;
+ border:0;border-radius:18px;
+ background:#0d0d10;color:#f5f5f7;box-shadow:none;overflow:hidden;
+}
+.chef-chat-dialog::backdrop{background:rgba(0,0,0,.75);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+.chef-chat-panel{height:100%;min-height:0;display:flex;flex-direction:column}
+.chef-chat-panel-header{
+ display:flex;align-items:center;justify-content:space-between;gap:16px;
+ padding:20px 18px 16px;border:0;
+}
+.chef-chat-panel-header h2{font-size:21px;font-weight:600;line-height:1.2;margin:0}
+/* Programmatic title focus announces the modal to assistive technology.
+   The title is not tabbable (tabindex=-1), so hide its Safari focus rectangle.
+   Interactive buttons and fields retain their visible keyboard focus. */
+#chef-chat-title:focus{outline:none}
+.chef-chat-close{
+ border:0;border-radius:50%;background:#29292e;color:#f5f5f7;
+ width:40px;height:40px;min-width:40px;padding:0 0 3px;font-size:28px;font-weight:400;line-height:1;
+}
+.chef-chat-disclaimer{
+ flex:none;margin:0 16px 4px;padding:12px 15px;border-radius:13px;background:#242429;
+ color:#b8b8c0;font-size:12px;line-height:1.5;
+}
+/* Acknowledgement appears only for the first use of each notice version.
+   All existing chat cards, bubbles, spacing and typography remain unchanged. */
+.chef-chat-privacy-ack{
+ display:inline-flex;align-items:center;gap:9px;
+ flex:none;align-self:flex-start;margin:7px 16px 10px;padding:10px 16px;
+ border:1px solid rgba(148,231,182,.38);border-radius:999px;
+ background:rgba(52,172,109,.23);color:#a9efc6;
+ min-height:44px;font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 8px rgba(0,0,0,.1);
+ transition:background-color .15s ease,border-color .15s ease,transform .12s ease;
+}
+/* Inline SVG avoids browser/CSP restrictions on CSS data URL images.
+   Outline check signals a tappable action, never prior acceptance. */
+.chef-chat-privacy-ack .chef-chat-privacy-ack-icon{
+ display:block;flex:none;width:20px;height:20px;
+ stroke:currentColor;fill:none;
+}
+@media(hover:hover){.chef-chat-privacy-ack:not(:disabled):hover{background:rgba(52,172,109,.29);border-color:rgba(148,231,182,.58)}}
+.chef-chat-privacy-ack:not(:disabled):active{background:rgba(52,172,109,.36);transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.chef-chat-privacy-ack{transition:none}}
+.chef-chat-privacy-ack:disabled{opacity:.6;cursor:default}
+.chef-chat-privacy-ack:focus-visible{outline:2px solid #f5f5f7;outline-offset:3px}
+.chef-chat-privacy-ack[hidden],.chef-chat-disclaimer[hidden],
+.chef-chat-thread[hidden],.chef-chat-form[hidden]{display:none}
+.chef-chat-thread{
+ flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+ display:flex;flex-direction:column;gap:20px;padding:24px 18px;
+}
+.chef-chat-message{max-width:83%;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.chef-chat-message-local{align-self:flex-end;align-items:flex-end}
+.chef-chat-message-author,.chef-chat-message-caption{font-size:11px;color:#a9a9b4;font-weight:400;line-height:1.4}
+.chef-chat-bubble{
+ margin:0;padding:12px 15px;border-radius:18px 18px 18px 5px;
+ background:#242429;color:#f4f4f6;font-size:14px;line-height:1.48;
+ white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.chef-chat-message-local .chef-chat-bubble{background:#414148;border-radius:18px 18px 5px 18px}
+.chef-chat-form{
+ display:flex;align-items:center;gap:13px;padding:12px 14px 4px;
+ border:0;
+}
+.chef-chat-form textarea{
+ box-sizing:border-box;flex:1;min-width:0;height:46px;min-height:46px;max-height:108px;
+ resize:none;overflow-y:auto;
+ background:#242429;color:#f5f5f7;border:0;box-shadow:none;
+ border-radius:18px;padding:11px 13px;font-size:16px;line-height:1.4;
+}
+.chef-chat-form textarea::placeholder{color:#9f9fa7}
+/* The locked composer remains visible, with readable multi-line guidance. */
+.chef-chat-form textarea:disabled{opacity:1;cursor:default;-webkit-text-fill-color:#9f9fa7}
+.chef-chat-form textarea:disabled::placeholder{color:#9f9fa7;opacity:1}
+.chef-chat-form .chef-chat-send{
+ position:relative;flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+ width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+ border:0;border-radius:50%;background:transparent;color:#f5f5f7;
+ cursor:pointer;transition:opacity .16s ease;
+}
+.chef-chat-form .chef-chat-send::before{
+ content:"";position:absolute;inset:3px;border-radius:50%;
+ background:#696970;transition:background-color .16s ease;
+}
+.chef-chat-form .chef-chat-send svg{position:relative;z-index:1;display:block;width:20px;height:20px}
+.chef-chat-form .chef-chat-send:disabled{background:transparent;color:#9f9fa7;opacity:.65;cursor:default}
+.chef-chat-form .chef-chat-send:disabled::before{background:#414148}
+.chef-chat-form .chef-chat-send:not(:disabled):active::before{background:#818188}
+.chef-chat-result{
+ margin:0;min-height:35px;padding:7px 18px max(10px,env(safe-area-inset-bottom,0px));
+ color:#aeb0b8;font-size:11px;line-height:1.4;
+}
+.chef-chat-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:640px){
+ .chef-chat-dialog{
+  width:calc(100vw - 20px);
+  height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 20px);
+  border-radius:19px;
+ }
+}
+@media(prefers-reduced-motion:reduce){.chef-chat-dialog::backdrop{-webkit-backdrop-filter:none;backdrop-filter:none}.chef-chat-form .chef-chat-send{transition:none}}

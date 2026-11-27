@@ -1,0 +1,612 @@
+/* Isolated recipe UI. Existing menu, calendar and navigation styles remain unchanged. */
+#menus #menus-recipe-switch{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;
+ gap:3px;padding:3px;height:38px;min-height:38px;margin:14px 0 18px;
+ background:#202024;border-radius:999px;overflow:hidden;
+}
+#menus #menus-recipe-switch button{
+ display:flex;justify-content:center;align-items:center;min-width:0;width:100%;
+ min-height:32px;height:32px;border:0;margin:0;padding:4px 8px;
+ background:transparent;color:#f2f2f5;border-radius:999px;
+ font-family:inherit;font-weight:500;font-size:13px;line-height:1.1;box-shadow:none;cursor:pointer;
+}
+#menus #menus-recipe-switch button[aria-pressed="true"]{background:#55555b;color:#fff;}
+#menus #menus-recipe-switch button:focus-visible,
+#menus #player-recipes-area button:focus-visible{outline:2px solid currentColor;outline-offset:3px;}
+#menus #player-recipes-area{padding-bottom:24px;}
+#menus .recipe-topline{display:flex;align-items:center;gap:12px;margin:12px 0 22px;}
+#menus .recipe-back{
+ display:flex;align-items:center;justify-content:center;border:0;border-radius:100%;
+ background:rgba(255,255,255,.06);color:inherit;min-width:38px;height:38px;
+ font:inherit;cursor:pointer;
+}
+#menus .recipe-topline h2{font-size:22px;font-weight:600;line-height:1.25;margin:0;}
+#menus .recipe-topline .recipe-subtitle{margin:4px 0 0;color:#a9a9b2;font-size:13px;}
+#menus .recipe-list{display:grid;gap:9px;}
+#menus .recipe-item{
+ display:flex;align-items:center;gap:14px;width:100%;min-height:86px;
+ background:rgba(255,255,255,.055);border:0;border-radius:18px;
+ padding:11px 13px;color:inherit;font:inherit;text-align:left;cursor:pointer;
+ --recipe-list-title-weight:var(--mile-type-card-title,400);
+}
+/* Category headers retain medium weight; individual recipe names follow universal cards. */
+#menus .recipe-item--category{--recipe-list-title-weight:var(--mile-type-medium,500);}
+#menus .recipe-thumb{height:64px;width:64px;border-radius:15px;flex:none;}
+/* Recipe image loading state is shared by cards and the full-width hero.
+   Hide the uninitialised <img> to prevent broken-image lines in mobile Safari. */
+#menus .recipe-photo-frame{position:relative;display:block;overflow:hidden;background:#29292e}
+#menus .recipe-photo-frame > .recipe-photo-img{
+ display:block;width:100%;height:100%;object-fit:cover;opacity:0;
+ transition:opacity 180ms ease;
+}
+#menus .recipe-photo-frame.is-loaded > .recipe-photo-img{opacity:1}
+#menus .recipe-photo-frame.is-loading::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
+ transform:translateX(-100%);animation:recipe-photo-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes recipe-photo-shimmer{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){
+ #menus .recipe-photo-frame.is-loading::after{animation:none}
+ #menus .recipe-photo-frame > .recipe-photo-img{transition:none}
+}
+#menus .recipe-thumb-placeholder{
+ width:64px;height:64px;border-radius:15px;flex:none;
+ display:block;background:#29292e;
+}
+#menus .recipe-item-body{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;}
+#menus .recipe-item-body strong{font-size:16px;line-height:1.35;font-weight:var(--recipe-list-title-weight);}
+#menus .recipe-item-body small{color:#a9a9b2;font-size:12px;}
+#menus .recipe-chevron{color:#a9a9b2;font-size:28px;font-weight:300;padding:0 3px;}
+#menus .recipe-detail{background:rgba(255,255,255,.055);border-radius:20px;padding:18px;margin:0 0 16px;}
+#menus .recipe-detail>h2{font-size:23px;line-height:1.2;font-weight:600;margin:0 0 14px;}
+#menus .recipe-servings{display:flex;gap:8px;align-items:center;color:#dddde0;font-size:13px;margin:0 0 20px;}
+#menus .recipe-detail h3{font-size:18px;line-height:1.25;font-weight:600;margin:25px 0 12px;}
+#menus .recipe-section-heading{margin:17px 0 9px;font-weight:500;font-size:15px;color:#bfc0c6;}
+#menus .recipe-ingredient{
+ display:flex;align-items:baseline;justify-content:space-between;
+ column-gap:15px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.075);
+ font-size:14px;line-height:1.4;
+}
+#menus .recipe-ingredient:last-child{border-bottom:0;}
+#menus .recipe-ingredient-name{flex:1;min-width:0;}
+#menus .recipe-ingredient-quantity{flex:none;text-align:right;white-space:nowrap;color:#d5d5da;}
+#menus .recipe-step{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;margin:0 0 12px;font-size:14px;line-height:1.55;}
+#menus .recipe-step-number{color:#b6b6bd;font-variant-numeric:tabular-nums;}
+#menus .recipe-notes{white-space:pre-line;font-size:14px;line-height:1.55;color:#d5d5dc;}
+#menus .recipe-accordion{margin:0 0 9px;background:rgba(255,255,255,.055);border-radius:17px;overflow:hidden;}
+#menus .recipe-accordion summary{display:flex;gap:10px;align-items:center;justify-content:space-between;cursor:pointer;padding:18px 16px;list-style:none;font-weight:500;}
+#menus .recipe-accordion summary::-webkit-details-marker{display:none;}
+#menus .recipe-accordion summary:after{content:'⌄';font-size:21px;color:#a9a9b2;}
+#menus .recipe-accordion[open] summary:after{transform:rotate(180deg);}
+#menus .recipe-accordion .recipe-detail{margin:0;border-radius:0;background:transparent;padding-top:0;}
+#menus .recipe-message{padding:24px 8px;text-align:center;color:#a9a9b2;font-size:14px;line-height:1.5;}
+@media(max-width:390px){
+ #menus .recipe-detail{padding:15px;}
+ #menus .recipe-thumb,#menus .recipe-thumb-placeholder{width:56px;height:56px;}
+}
+/* The recipe views inherit the app's active palette. No global styles changed. */
+
+/* Recipe subpages: no redundant selector or heading. The bottom navigation is untouched. */
+#menus .recipe-topline:has(> .recipe-back:only-child){
+ margin:8px 0 14px;
+ min-height:38px;
+}
+#menus .recipe-detail-standalone{
+ background:transparent;
+ padding:0;
+ border-radius:0;
+ margin-bottom:18px;
+}
+#menus .recipe-detail-standalone>h2{margin-bottom:9px;}
+#menus .recipe-detail-standalone .recipe-servings{margin-bottom:16px;}
+#menus .recipe-detail-standalone .recipe-ingredient{padding-top:6px;padding-bottom:6px;}
+
+/* Compact text-only recipe panels opened from a dish in Menus. */
+#menus .recipe-accordion{
+ margin-bottom:9px;
+}
+#menus .recipe-accordion summary{
+ min-height:58px;
+ padding:12px 15px;
+ line-height:1.35;
+}
+#menus .recipe-accordion .recipe-detail{
+ padding:0 15px 15px;
+}
+#menus .recipe-accordion .recipe-servings{
+ margin:0 0 14px;
+}
+#menus .recipe-accordion .recipe-detail h3:first-of-type{
+ margin-top:12px;
+}
+
+/* Recipe-only refinement: no extra cards, outlines or dividers in read-only content. */
+#menus .recipe-detail,
+#menus .recipe-detail-standalone{
+ background:transparent;
+ border:0;
+ box-shadow:none;
+ padding:0;
+ margin:0 0 28px;
+ border-radius:0;
+}
+#menus .recipe-identity{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:16px;
+ margin:2px 0 29px;
+ min-height:70px;
+}
+#menus .recipe-identity-copy{
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ flex:1 1 auto;
+ min-width:0;
+}
+#menus .recipe-identity h2{
+ margin:0 0 10px;
+ font-size:clamp(21px,5.3vw,23px);
+ font-weight:var(--mile-type-semibold,600);
+ line-height:1.24;
+ overflow-wrap:break-word;
+}
+#menus .recipe-identity .recipe-servings{
+ margin:0;
+ font-size:13px;
+ font-weight:var(--mile-type-regular,400);
+ color:#aaaab2;
+}
+#menus .recipe-detail-photo{
+ width:clamp(76px,23vw,92px);
+ height:clamp(76px,23vw,92px);
+ flex:0 0 auto;
+ border-radius:15px;
+ display:block;
+}
+/* Library-only photo hero: reuse the published, session-authorized recipe image. */
+#menus .recipe-detail-standalone > .recipe-hero{
+ display:block;
+ width:100%;
+ height:clamp(170px,46vw,190px);
+ border-radius:18px;
+ margin:0 0 18px;
+}
+#menus .recipe-detail-standalone.recipe-detail--hero .recipe-identity{
+ min-height:0;
+ margin:0 0 23px;
+}
+#menus .recipe-content-section{
+ margin:0 0 27px;
+ padding:0;
+ background:transparent;
+ border:0;
+ box-shadow:none;
+}
+#menus .recipe-content-section:last-child{margin-bottom:0;}
+#menus .recipe-content-section .recipe-section-title{
+ display:flex;
+ align-items:center;
+ gap:11px;
+ margin:0 0 10px;
+ font-size:16px;
+ font-weight:var(--mile-type-card-title,400);
+ line-height:1.35;
+ color:#e6e6eb;
+}
+#menus .recipe-section-title .mile-icon,
+#menus .recipe-section-title .recipe-section-icon{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ width:22px;
+ height:22px;
+ flex:0 0 22px;
+ color:#c3c3ca;
+}
+#menus .recipe-section-title svg{width:100%;height:100%;display:block;}
+#menus .recipe-content-section .recipe-ingredient{
+ border:0;
+ padding:4px 0;
+ min-height:27px;
+ gap:12px;
+}
+#menus .recipe-content-section .recipe-ingredient:last-child{border:0;}
+#menus .recipe-content-section .recipe-step{
+ margin:0 0 12px;
+ line-height:1.52;
+}
+#menus .recipe-content-section .recipe-step:last-child{margin-bottom:0;}
+#menus .recipe-content-section .recipe-notes{
+ margin:0;
+ color:#d5d5dc;
+}
+/* Multi-recipe cards mirror the filled, borderless Assessment surfaces. */
+#menus details.recipe-accordion{
+ display:block;
+ padding:0;
+ margin:0 0 9px;
+ background:#242429;
+ border:0;
+ box-shadow:none;
+ border-radius:15px;
+ overflow:hidden;
+}
+#menus details.recipe-accordion>summary{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ width:100%;
+ min-height:65px;
+ height:auto;
+ padding:13px 16px;
+ gap:14px;
+ background:transparent;
+ border:0;
+ color:inherit;
+ list-style:none;
+ cursor:pointer;
+}
+#menus details.recipe-accordion>summary::-webkit-details-marker{display:none;}
+#menus .recipe-accordion-label{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;}
+#menus .recipe-accordion-label strong{
+ font-size:15px;
+ font-weight:var(--mile-type-medium,500);
+ color:#f1f1f4;
+ line-height:1.3;
+}
+#menus .recipe-accordion-label small{
+ font-size:12px;
+ font-weight:var(--mile-type-regular,400);
+ color:#aaaab2;
+ line-height:1.25;
+}
+#menus details.recipe-accordion>summary:after{
+ content:"";
+ display:block;
+ box-sizing:border-box;
+ width:9px;
+ height:9px;
+ flex:0 0 9px;
+ border:solid #bfc0c9;
+ border-width:0 2px 2px 0;
+ border-radius:1px;
+ background:none;
+ transform:rotate(45deg);
+ transition:transform .18s ease;
+ margin:0 4px 5px 4px;
+ align-self:center;
+}
+#menus details.recipe-accordion[open]>summary:after{
+ transform:rotate(225deg);
+ margin-top:5px;
+ margin-bottom:0;
+}
+#menus details.recipe-accordion .recipe-detail{
+ background:transparent;
+ border:0;
+ margin:0;
+ padding:7px 16px 20px;
+}
+#menus details.recipe-accordion .recipe-content-section{
+ margin-bottom:23px;
+}
+#menus details.recipe-accordion .recipe-content-section:last-child{margin-bottom:0;}
+#menus details.recipe-accordion .recipe-content-section .recipe-section-title{
+ margin:0 0 12px;
+}
+@media(max-width:390px){
+ #menus .recipe-identity{gap:12px;}
+ #menus details.recipe-accordion .recipe-detail{padding:7px 14px 18px;}
+}
+
+/* Recipe-only revision: very subtle sections, never glass or outlined. */
+#menus .recipe-content-section{
+ background:rgba(255,255,255,.035);
+ border:0;
+ box-shadow:none;
+ border-radius:15px;
+ padding:15px 15px 16px;
+ margin:0 0 12px;
+}
+#menus .recipe-content-section .recipe-ingredient{
+ padding:7px 0;
+ min-height:0;
+ border:0;
+ border-bottom:1px solid rgba(255,255,255,.09);
+}
+#menus .recipe-content-section .recipe-ingredient:last-child{
+ border-bottom:0;
+}
+#menus details.recipe-accordion .recipe-identity{
+ min-height:0;
+ margin:0 0 14px;
+}
+#menus details.recipe-accordion .recipe-identity-copy{
+ display:block;
+}
+#menus details.recipe-accordion .recipe-identity .recipe-servings{
+ margin:0;
+ color:#aaaab2;
+ font-size:13px;
+}
+#menus details.recipe-accordion .recipe-content-section{
+ margin:0 0 12px;
+ padding:15px 13px 16px;
+ background:rgba(255,255,255,.035);
+ border:0;
+ box-shadow:none;
+ border-radius:14px;
+}
+#menus details.recipe-accordion .recipe-content-section:last-child{margin-bottom:0;}
+@media(max-width:390px){
+ #menus .recipe-content-section{padding:13px 12px 14px;}
+ #menus details.recipe-accordion .recipe-content-section{padding:13px 12px 14px;}
+}
+
+/* Only recipe details: align the library photo with the top of the recipe name. */
+#menus .recipe-identity{
+ align-items:flex-start;
+}
+#menus .recipe-identity-copy{
+ justify-content:flex-start;
+}
+#menus .recipe-identity h2{margin-top:0;}
+
+/* Quiet icon tiles in the same grayscale family as the app's meal icon tiles.
+   No tinted green and no new icons or decorative borders. */
+#menus .recipe-section-title > .recipe-icon-tile{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ box-sizing:border-box;
+ flex:0 0 34px;
+ width:34px;
+ height:34px;
+ padding:7px;
+ border-radius:10px;
+ background:#222228;
+ color:#b8b8c0;
+}
+#menus .recipe-icon-tile .mile-icon,
+#menus .recipe-icon-tile .recipe-section-icon{
+ display:inline-flex;
+ justify-content:center;
+ align-items:center;
+ width:20px;
+ height:20px;
+ flex:0 0 20px;
+ color:inherit;
+}
+#menus .recipe-icon-tile svg{
+ width:100%;
+ height:100%;
+ display:block;
+}
+/* Ingredient separators remain, but are less prominent than previously. */
+#menus .recipe-content-section .recipe-ingredient{
+ border-bottom:1px solid rgba(255,255,255,.045);
+}
+#menus .recipe-content-section .recipe-ingredient:last-child{
+ border-bottom:0;
+}
+
+/* Recipe titles now follow the full-width library photo or a photo-free Menus detail. */
+/* Use the very same darker inset surface as the expanded Avaliações chart
+   (#plans .assessment-trend). Keep outer cards at their existing #242429. */
+#menus details.recipe-accordion .recipe-content-section{
+ background:#1b1b20;
+}
+
+/* Menus: photo enlargement and recipe reading are independent actions. */
+#menus .menu-entry-body .menu-dish-name-column{
+ display:flex;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:7px;
+}
+#menus .menu-entry-body .menu-dish-name-column .value{
+ flex:none;min-width:0;overflow-wrap:anywhere;width:100%;
+}
+#menus .menu-entry-body .menu-view-recipe{
+ appearance:none;border:0;box-shadow:none;background:transparent;color:#dcdce3;
+ font:inherit;font-size:12px;font-weight:var(--mile-type-medium,500);
+ line-height:1.3;letter-spacing:0;padding:3px 0;text-decoration:underline;
+ text-decoration-color:rgba(255,255,255,.38);text-underline-offset:3px;
+ cursor:pointer;text-align:left;min-height:27px;
+}
+#menus .menu-entry-body .menu-view-recipe:focus-visible{
+ outline:2px solid currentColor;outline-offset:3px;border-radius:3px;
+}
+#menus .menu-entry-body .dish-photo-frame{
+ position:relative;display:block;flex:0 0 auto;width:88px;height:88px;
+}
+#menus .menu-entry-body .dish-photo-frame .dish-img{
+ display:block;width:100%;height:100%;cursor:zoom-in;
+}
+#menus .menu-entry-body .dish-photo-zoom{
+ pointer-events:none;position:absolute;right:5px;bottom:5px;
+ display:flex;align-items:center;justify-content:center;
+ width:23px;height:23px;border-radius:8px;
+ background:rgba(18,18,21,.43);color:#f0f0f2;
+}
+#menus .menu-entry-body .dish-photo-zoom svg{width:14px;height:14px;}
+@media(max-width:620px){
+ #menus .menu-entry-body .dish-photo-frame{width:82px;height:82px;}
+}
+/* Slightly deeper than the assessment inset, to overcome the overly bright photographed view. */
+#menus details.recipe-accordion .recipe-content-section{
+ background:#17171b;
+}
+
+/* Menu action polish: small outlined pill, not an underlined link. */
+#menus .menu-entry-body .menu-view-recipe{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ width:auto;max-width:100%;min-height:27px;
+ padding:4px 10px;border:1px solid rgba(255,255,255,.19);
+ border-radius:999px;background:rgba(255,255,255,.035);
+ color:#ebebef;text-decoration:none;box-shadow:none;
+ font-size:12px;font-weight:var(--mile-type-medium,500);line-height:1.3;
+ transition:background .18s ease,border-color .18s ease;
+}
+#menus .menu-entry-body .menu-view-recipe::after{
+ content:"";display:inline-block;width:6px;height:6px;flex:none;
+ border-top:1.5px solid currentColor;border-right:1.5px solid currentColor;
+ transform:rotate(45deg);
+}
+#menus .menu-entry-body .menu-view-recipe:active{
+ background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.32);
+}
+/* Keep the magnifying glass in its rounded-square tile, with softer translucency. */
+#menus .menu-entry-body .dish-photo-zoom{
+ width:22px;height:22px;border-radius:8px;
+ background:rgba(18,18,21,.32);
+ border:1px solid rgba(255,255,255,.10);
+ box-sizing:border-box;
+}
+#menus .menu-entry-body .dish-photo-zoom svg{width:13px;height:13px;}
+
+/* Small, more detached recipe CTA with native-feeling pressed feedback. */
+#menus .menu-entry-body .menu-view-recipe{
+ margin-top:6px;
+ min-height:24px;
+ padding:3px 8px;
+ gap:7px;
+ font-size:11px;
+ background:rgba(255,255,255,.025);
+ border-color:rgba(255,255,255,.16);
+ transition:background-color 160ms ease,border-color 160ms ease,transform 160ms ease;
+ -webkit-tap-highlight-color:transparent;
+}
+#menus .menu-entry-body .menu-view-recipe::after{
+ width:5px;height:5px;
+}
+#menus .menu-entry-body .menu-view-recipe:active{
+ background:rgba(255,255,255,.18);
+ border-color:rgba(255,255,255,.33);
+ transform:scale(.98);
+}
+@media(hover:hover){
+ #menus .menu-entry-body .menu-view-recipe:hover{
+  background:rgba(255,255,255,.095);
+  border-color:rgba(255,255,255,.25);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #menus .menu-entry-body .menu-view-recipe{transition:none;}
+}
+
+/* Touch feedback is held in a class before navigation replaces the button. */
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ background:rgba(255,255,255,.20)!important;
+ border-color:rgba(255,255,255,.35)!important;
+ transform:scale(.98);
+}
+/* The zoom tile is rounded and translucent, without any stroke. */
+#menus .menu-entry-body .dish-photo-zoom{
+ border:0!important;
+ box-shadow:none!important;
+}
+
+/* Recipe subpages follow The Mile's established horizontal navigation rhythm. */
+#menus #player-recipes-area > .recipe-page-enter{
+ animation:recipe-subpage-enter 500ms cubic-bezier(.22,1,.36,1) both;
+}
+#menus #player-recipes-area > .recipe-page-leave{
+ animation:recipe-subpage-leave 380ms cubic-bezier(.4,0,.2,1) both;
+ pointer-events:none;
+}
+@keyframes recipe-subpage-enter{
+ from{opacity:.94;transform:translate3d(30px,0,0);}
+ to{opacity:1;transform:translate3d(0,0,0);}
+}
+@keyframes recipe-subpage-leave{
+ from{opacity:1;transform:translate3d(0,0,0);}
+ to{opacity:.92;transform:translate3d(32px,0,0);}
+}
+@media(prefers-reduced-motion:reduce){
+ #menus #player-recipes-area > .recipe-page-enter,
+ #menus #player-recipes-area > .recipe-page-leave{animation:none;}
+}
+
+/* Menu recipe CTA has a clearly filled resting state, not a stroke.
+   Only .is-pressed gets the temporary stronger fill. */
+#menus .menu-entry-body .menu-view-recipe,
+#menus .menu-entry-body .menu-view-recipe:active,
+#menus .menu-entry-body .menu-view-recipe:hover{
+ border:0!important;
+ box-shadow:none!important;
+ outline:0;
+ background:rgba(255,255,255,.105);
+ transform:none;
+}
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ border:0!important;
+ background:rgba(255,255,255,.25)!important;
+ transform:scale(.98);
+}
+#menus .menu-entry-body .menu-view-recipe:focus-visible{
+ outline:2px solid currentColor;
+ outline-offset:3px;
+}
+/* Faster, less theatrical recipe navigation. */
+#menus #player-recipes-area > .recipe-page-enter{
+ animation-duration:260ms;
+}
+#menus #player-recipes-area > .recipe-page-leave{
+ animation-duration:180ms;
+}
+
+/* Recipe CTA: dark translucent fill in the same neutral family as the photo zoom tile. */
+#menus .menu-entry-body .menu-view-recipe,
+#menus .menu-entry-body .menu-view-recipe:hover,
+#menus .menu-entry-body .menu-view-recipe:active{
+ background:rgba(11,14,17,.22);
+ color:rgba(255,255,255,.84);
+ border:0!important;
+ box-shadow:none!important;
+}
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ background:rgba(8,10,13,.56)!important;
+ border:0!important;
+}
+
+
+/* Recipe subpages: back button shares the global header with the centered
+   The Mile wordmark. Positioning does not affect logo centering or page flow. */
+.player-top > #recipe-header-back{
+ position:absolute;
+ inset-inline-start:0;
+ top:50%;
+ transform:translateY(-50%);
+ z-index:2;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:40px;
+ height:40px;
+ min-width:40px;
+ margin:0;
+ padding:0 0 3px;
+ border:0;
+ border-radius:50%;
+ background:rgba(255,255,255,.06);
+ color:inherit;
+ font:inherit;
+ font-size:30px;
+ font-weight:400;
+ line-height:1;
+ box-shadow:none;
+ cursor:pointer;
+}
+.player-top > #recipe-header-back:focus-visible{
+ outline:2px solid currentColor;
+ outline-offset:3px;
+}
+
+
+/* Recipe subpages: align the first recipe card or recipe title with the top
+   of the Menus / Receitas selector on the main screen. The back action stays
+   in the global header and no extra row is added inside the page. */
+#menus #menus-recipe-switch[hidden] ~ #player-recipes-area{
+ padding-top:26px;
+}

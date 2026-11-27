@@ -1,0 +1,2826 @@
+"""The Mile private document portal. WSGI; standard-library application."""
+import base64
+import csv
+import io
+from PIL import Image, ImageOps, UnidentifiedImageError
+import zipfile
+import hashlib
+import hmac
+import json
+import logging
+import mimetypes
+import os
+import re
+import secrets
+import sqlite3
+import microcycles_v2
+import chef_accounts_v2
+import player_language_v2
+import chef_collaboration_v2
+import chat_api_v2
+import player_recipes_v2
+import calendar_v2
+import events_v2
+import day_colors_v2
+import prescription_effective_v2
+import peri_v2
+import supplements_v2
+import assessments_v2
+import weight_reference_v2
+import plan_import_v2
+import food_plan_player_v2
+import app_content_i18n_v2
+import player_visual_portions_v2
+import meal_option_selection_v2
+import consumption_records_v2
+import consumption_timing_v2
+import consumption_nutrition_v2
+import consumption_source_v2
+import nutrition_preview_v2
+import time
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from http.cookies import SimpleCookie
+from pathlib import Path
+from urllib.parse import parse_qs, quote, urlparse
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:
+    psycopg = None
+    dict_row = None
+
+
+def shift_native_splash_down(png, shift=68):
+    """Move the existing monochrome iOS launch artwork down without changing its size."""
+    import struct
+    import zlib
+    import binascii
+
+    def chunk(tag, data):
+        return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', binascii.crc32(tag + data) & 0xffffffff)
+
+    if png[:8] != b'\x89PNG\r\n\x1a\n':
+        return png
+    pos = 8
+    header = None
+    compressed = bytearray()
+    while pos + 12 <= len(png):
+        length = struct.unpack_from('>I', png, pos)[0]
+        tag = png[pos + 4:pos + 8]
+        data = png[pos + 8:pos + 8 + length]
+        pos += 12 + length
+        if tag == b'IHDR':
+            header = data
+        elif tag == b'IDAT':
+            compressed.extend(data)
+        elif tag == b'IEND':
+            break
+    if header is None:
+        return png
+    width, height, depth, colour, compression, filtering, interlace = struct.unpack('>IIBBBBB', header)
+    if colour != 0 or depth != 1 or interlace != 0:
+        return png
+    stride = (width + 7) // 8
+    raw = zlib.decompress(bytes(compressed))
+    rows = []
+    previous = bytearray(stride)
+    offset = 0
+    for _ in range(height):
+        kind = raw[offset]
+        scan = bytearray(raw[offset + 1:offset + 1 + stride])
+        offset += stride + 1
+        for j in range(stride):
+            left = scan[j - 1] if j else 0
+            up = previous[j]
+            upper_left = previous[j - 1] if j else 0
+            if kind == 1:
+                predictor = left
+            elif kind == 2:
+                predictor = up
+            elif kind == 3:
+                predictor = (left + up) // 2
+            elif kind == 4:
+                p = left + up - upper_left
+                da, db, dc = abs(p - left), abs(p - up), abs(p - upper_left)
+                predictor = left if da <= db and da <= dc else up if db <= dc else upper_left
+            elif kind == 0:
+                predictor = 0
+            else:
+                return png
+            scan[j] = (scan[j] + predictor) & 255
+        rows.append(bytes(scan))
+        previous = scan
+    shift = min(max(shift, 0), height)
+    black = bytes(stride)
+    output = b''.join(b'\x00' + row for row in ([black] * shift + rows[:height - shift]))
+    return png[:8] + chunk(b'IHDR', header) + chunk(b'IDAT', zlib.compress(output, 9)) + chunk(b'IEND', b'')
+
+
+ROOT = Path(__file__).resolve().parent
+DATA = Path(os.environ.get('MILE_DATA_DIR', ROOT / 'data')).resolve()
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+BASE_URL = os.environ.get('MILE_BASE_URL', 'http://localhost:8000').strip().rstrip('/')
+ALLOWED_ORIGINS = {BASE_URL, 'https://the-mile-app.onrender.com'}
+ALLOWED_ORIGIN_HOSTS = {h for h in (urlparse(x).hostname for x in ALLOWED_ORIGINS) if h}
+ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'admin.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
+# Separate release approval, OFF for every player unless explicitly enabled
+# after the Backoffice/preview validation. Admin preview sessions may inspect
+# the UI read-only when the athlete's own flag has been enabled.
+PLAYER_VISUAL_PORTIONS_RELEASE = os.environ.get('TM_PLAYER_VISUAL_PORTIONS_RELEASE', '0').strip().lower() in ('1', 'true', 'yes')
+SITE_ROLE = os.environ.get('MILE_SITE_ROLE', 'both').strip().lower()
+if SITE_ROLE not in ('both', 'admin', 'player'):
+    raise RuntimeError('Invalid MILE_SITE_ROLE')
+SECURE = BASE_URL.startswith('https://')
+MAX_PDF = 20 * 1024 * 1024
+MAX_JSON = 5 * 1024 * 1024
+MAX_PHOTO = 3 * 1024 * 1024
+FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry', 'weekly')
+ADMINS = (('Filipe Sousa', 'filipesousa@themile.pt'), ('Raquel Gomes', 'raquelgomes@themile.pt'))
+WEIGHT_FORM_M = os.environ.get('MILE_WEIGHT_FORM_M', 'https://forms.gle/iRhSJ8zkqgUy2eye7').strip()
+WEIGHT_FORM_F = os.environ.get('MILE_WEIGHT_FORM_F', 'https://forms.gle/AAc9xFmZE4vrYLbw9').strip()
+GAME_FORM = os.environ.get('MILE_GAME_FORM', 'https://forms.gle/NFmz3rLNJmC44VGC8').strip()
+USERNAME_RE = re.compile(r'^[a-z]+$')
+
+
+class ClosingSQLiteConnection(sqlite3.Connection):
+    """Commit/rollback and close SQLite connections on context exit."""
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
+def connect():
+    if DATABASE_URL:
+        if psycopg is None:
+            raise RuntimeError('DATABASE_URL is set but psycopg is not installed')
+        return PgConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+    c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20, factory=ClosingSQLiteConnection)
+    c.row_factory = sqlite3.Row
+    c.execute('PRAGMA foreign_keys = ON')
+    return c
+
+
+class PgCursor:
+    def __init__(self, cursor):
+        self.cursor = cursor
+
+    @property
+    def rowcount(self):
+        return self.cursor.rowcount
+
+    def fetchone(self):
+        return self.cursor.fetchone()
+
+    def fetchall(self):
+        return self.cursor.fetchall()
+
+
+class PgConnection:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if exc_type:
+            self.conn.rollback()
+        else:
+            self.conn.commit()
+        self.conn.close()
+
+    def execute(self, sql, params=()):
+        sql = sql.replace('?', '%s')
+        if sql.startswith('INSERT OR IGNORE INTO users'):
+            sql = sql.replace('INSERT OR IGNORE INTO users', 'INSERT INTO users', 1) + ' ON CONFLICT (email) DO NOTHING'
+        elif sql.startswith('INSERT OR REPLACE INTO attempts'):
+            sql = 'INSERT INTO attempts(key,count,until_time) VALUES(%s,%s,%s) ON CONFLICT (key) DO UPDATE SET count=EXCLUDED.count, until_time=EXCLUDED.until_time'
+        return PgCursor(self.conn.execute(sql, params))
+
+    def executescript(self, script):
+        self.conn.execute(script)
+
+    def commit(self):
+        self.conn.commit()
+
+
+def report_internal_translation_readiness(c):
+    """Emit counts only to private startup logs; never expose an HTTP endpoint."""
+    if SITE_ROLE != 'player' or os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC') != '1':
+        return
+    try:
+        status = app_content_i18n_v2.translation_readiness(c)
+        logging.warning('TM translation readiness: available=%s approved_count=%s kinds=%s',
+                        status['available'], status['approved_count'], status['kinds'])
+    except Exception:
+        # This probe must not affect normal service availability.
+        logging.exception('TM translation readiness diagnostic unavailable')
+
+
+def initialize():
+    DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with connect() as c:
+        c.execute('CREATE TABLE IF NOT EXISTS v2_shared_images (image_key TEXT PRIMARY KEY, image_data ' + ('BYTEA' if DATABASE_URL else 'BLOB') + ' NOT NULL)')
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_tickets (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
+        if DATABASE_URL:
+            c.executescript('''
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size BIGINT NOT NULL, updated BIGINT NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BYTEA NOT NULL);
+            CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS push_subscriptions(endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), p256dh TEXT NOT NULL, auth TEXT NOT NULL, created BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created BIGINT NOT NULL, read_at BIGINT, document_opened_at BIGINT, created_by TEXT REFERENCES users(id));
+            CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
+
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS sex TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS height DOUBLE PRECISION;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS weight DOUBLE PRECISION;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS menus_enabled INTEGER NOT NULL DEFAULT 0;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS anthropometry_enabled INTEGER NOT NULL DEFAULT 0;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS photo BYTEA;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_mime TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_name TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS renewal_date TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_status TEXT NOT NULL DEFAULT 'waiting';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_next_activate_at BIGINT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS current_weekly_document_id TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS access_until TEXT;
+            CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL;
+            ''')
+        else:
+            c.executescript('''
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size INTEGER NOT NULL, updated INTEGER NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BLOB NOT NULL);
+            CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS push_subscriptions(endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), p256dh TEXT NOT NULL, auth TEXT NOT NULL, created INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created INTEGER NOT NULL, read_at INTEGER, document_opened_at INTEGER, created_by TEXT REFERENCES users(id));
+            CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
+
+            ''')
+            existing = {r['name'] for r in c.execute('PRAGMA table_info(users)').fetchall()}
+            additions = {
+                'username': 'TEXT',
+                'birth_date': 'TEXT',
+                'sex': 'TEXT',
+                'height': 'REAL',
+                'weight': 'REAL',
+                'menus_enabled': 'INTEGER NOT NULL DEFAULT 0',
+                'anthropometry_enabled': 'INTEGER NOT NULL DEFAULT 0',
+                'photo': 'BLOB',
+                'photo_mime': 'TEXT',
+                'plan_name': 'TEXT',
+                'renewal_date': 'TEXT',
+                'weekly_status': "TEXT NOT NULL DEFAULT 'waiting'",
+                'weekly_next_activate_at': 'INTEGER',
+                'current_weekly_document_id': 'TEXT',
+                'access_until': 'TEXT',
+            }
+            for column, spec in additions.items():
+                if column not in existing:
+                    c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
+            c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
+        chef_accounts_v2.enable_role(c)
+        microcycles_v2.initialize(c)
+        chef_accounts_v2.initialize(c)
+        player_language_v2.initialize(c)
+        chef_collaboration_v2.initialize(c)
+        if SITE_ROLE == 'player' and os.environ.get('MILE_CHAT_API_ENABLED') == '1':
+            # Gated, add-only migration of privacy acknowledgements only.
+            # Do not activate the older full chat schema on app startup.
+            chat_api_v2.domain.initialize_privacy_acknowledgements(c)
+        meal_option_selection_v2.initialize(c)
+        consumption_records_v2.initialize(c)
+        player_recipes_v2.initialize(c)
+        plan_import_v2.initialize(c)
+        events_v2.initialize(c)
+        day_colors_v2.initialize(c)
+        calendar_v2.initialize(c)
+        peri_v2.initialize(c)
+        if SITE_ROLE == 'player':
+            # Release gate: do not activate the player build unless the shared
+            # database contains the approved, audited Planos prescriptions.
+            try:
+                approved=c.execute(
+                    "SELECT COUNT(*) AS total, COUNT(DISTINCT athlete_id) AS athletes "
+                    "FROM v2_food_plan_editor_publications WHERE state='published'").fetchone()
+                logging.warning('Player published Planos ready: %s prescriptions, %s athletes',
+                                approved['total'], approved['athletes'])
+                if approved['total'] < 58 or approved['athletes'] < 12:
+                    raise RuntimeError('Incomplete approved Planos roster for player activation')
+                option_audit=food_plan_player_v2.audit_published_options(c)
+                logging.warning('Player published Planos option audit: %s', option_audit)
+                if (option_audit['published_plans'] < 58 or
+                    option_audit['options'] < 354 or
+                    option_audit['peri_options'] < 15 or
+                    option_audit['bad_options']):
+                    raise RuntimeError('Published Planos option validation failed')
+            except Exception:
+                logging.exception('Player published Planos readiness check failed')
+                raise
+            import unittest
+            output=io.StringIO()
+            suite=unittest.defaultTestLoader.discover(
+                str(ROOT / 'tests'), pattern='test_food_plan_player_v2.py')
+            tests=unittest.TextTestRunner(stream=output,verbosity=0).run(suite)
+            logging.warning('Player Planos conversion tests: %s run, %s failures, %s errors',
+                            tests.testsRun,len(tests.failures),len(tests.errors))
+            if tests.testsRun < 11 or tests.failures or tests.errors:
+                logging.error('Player Planos conversion test failures: %s',
+                              output.getvalue()[:1800])
+                raise RuntimeError('Player Planos conversion tests failed')
+        report_internal_translation_readiness(c)
+        supplements_v2.initialize(c)
+        assessments_v2.initialize(c)
+        weight_reference_v2.ensure_weighins_table(c)
+        c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
+        # Preserve scheduled weekly activation timestamps across application restarts.
+        c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
+        for name, email in ADMINS:
+            c.execute('INSERT OR IGNORE INTO users(id,name,email,role) VALUES(?,?,?,?)', (secrets.token_hex(16), name, email, 'admin'))
+
+
+def store_dish_image(c, filename, image_data):
+    """Keep dish photos in the same database both production services use."""
+    c.execute('DELETE FROM v2_shared_images WHERE image_key=?', (filename,))
+    c.execute('INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)', (filename, image_data))
+
+
+def read_dish_image(c, filename):
+    row = c.execute('SELECT image_data FROM v2_shared_images WHERE image_key=?', (filename,)).fetchone()
+    if row:
+        return bytes(row['image_data'])
+    # Compatibility with existing test images; migrate explicitly before production.
+    file = DATA / 'v2_dish_images' / filename
+    return file.read_bytes() if file.is_file() else None
+
+
+from functools import lru_cache
+
+@lru_cache(maxsize=32)
+def player_menu_photo(image_bytes):
+    """Remove only near-black edge-connected matte; preserve the opaque food."""
+    from collections import deque
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as original:
+            rgba = original.convert('RGBA')
+            if rgba.width * rgba.height > 800000:
+                return image_bytes
+            px = rgba.load()
+            w, h = rgba.size
+            visited = bytearray(w*h)
+            queue = deque()
+            def candidate(x,y):
+                r,g,b,a = px[x,y]
+                return a > 0 and max(r,g,b) < 46
+            for x in range(w):
+                if candidate(x,0): queue.append((x,0))
+                if candidate(x,h-1): queue.append((x,h-1))
+            for y in range(h):
+                if candidate(0,y): queue.append((0,y))
+                if candidate(w-1,y): queue.append((w-1,y))
+            count=0
+            while queue:
+                x,y=queue.popleft()
+                i=y*w+x
+                if visited[i]: continue
+                visited[i]=1
+                if not candidate(x,y): continue
+                r,g,b,a=px[x,y]
+                px[x,y]=(r,g,b,0)
+                count+=1
+                if x>0: queue.append((x-1,y))
+                if x+1<w: queue.append((x+1,y))
+                if y>0: queue.append((x,y-1))
+                if y+1<h: queue.append((x,y+1))
+            if not count: return image_bytes
+            buf=io.BytesIO()
+            rgba.save(buf,'WEBP',lossless=True,method=3)
+            return buf.getvalue()
+    except (OSError,UnidentifiedImageError):
+        return image_bytes
+
+
+
+@lru_cache(maxsize=64)
+def player_daily_dish_thumbnail(image_bytes):
+    """Small WebP for the 64-76px daily card, keeping the Menus image unchanged."""
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as original:
+            if original.width * original.height > 32_000_000:
+                return player_menu_photo(image_bytes)
+            photo = ImageOps.exif_transpose(original)
+            photo.thumbnail((176, 176), Image.Resampling.LANCZOS)
+            output = io.BytesIO()
+            photo.save(output, format='WEBP', quality=82, method=2)
+            # Retain the same transparent-matte handling as the Menus photo.
+            return player_menu_photo(output.getvalue())
+    except (OSError, ValueError, Image.DecompressionBombError, UnidentifiedImageError):
+        return player_menu_photo(image_bytes)
+
+
+def player_avatar_photo(image_data, mime):
+    """Serve a smaller private avatar without modifying the original stored photo."""
+    if len(image_data) <= 120_000:
+        return image_data, mime
+    try:
+        with Image.open(io.BytesIO(image_data)) as original:
+            # Do not expand unusually large or malformed uploads.
+            if original.width * original.height > 32_000_000:
+                return image_data, mime
+            photo = ImageOps.exif_transpose(original)
+            photo.thumbnail((480, 480), Image.Resampling.LANCZOS)
+            if "A" in photo.getbands() or "transparency" in photo.info:
+                rgba = photo.convert("RGBA")
+                background = Image.new("RGB", rgba.size, (17, 17, 19))
+                background.paste(rgba, mask=rgba.getchannel("A"))
+                photo = background
+            else:
+                photo = photo.convert("RGB")
+            output = io.BytesIO()
+            photo.save(output, format="JPEG", quality=82, optimize=True)
+            result = output.getvalue()
+            if len(result) < len(image_data):
+                return result, "image/jpeg"
+    except (OSError, ValueError, Image.DecompressionBombError):
+        # Preserve the existing API if legacy photo bytes cannot be decoded.
+        pass
+    return image_data, mime
+
+
+def digest(value):
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def password_hash(value):
+    salt = secrets.token_bytes(16)
+    key = hashlib.scrypt(value.encode(), salt=salt, n=16384, r=8, p=1)
+    return salt.hex() + ':' + key.hex()
+
+
+def password_valid(value, stored):
+    if not stored:
+        hashlib.scrypt(value.encode(), salt=b'\0' * 16, n=16384, r=8, p=1)
+        return False
+    salt, key = stored.split(':')
+    actual = hashlib.scrypt(value.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
+    return hmac.compare_digest(actual, key)
+
+
+def activation(c, user_id):
+    token = secrets.token_urlsafe(32)
+    c.execute('DELETE FROM activations WHERE user_id=?', (user_id,))
+    c.execute('INSERT INTO activations VALUES(?,?,?)', (digest(token), user_id, int(time.time()) + 86400))
+    return BASE_URL + '/?activate=' + quote(token)
+
+
+def parse_photo(value):
+    if not isinstance(value, str) or not value.startswith('data:image/'):
+        raise Problem(400, 'photo')
+    try:
+        header, encoded = value.split(',', 1)
+        mime = header.split(';', 1)[0][5:]
+        if mime not in ('image/jpeg', 'image/png', 'image/webp'):
+            raise ValueError
+        blob = base64.b64decode(encoded, validate=True)
+    except Exception:
+        raise Problem(400, 'photo')
+    if not blob or len(blob) > MAX_PHOTO:
+        raise Problem(400, 'photo')
+    return blob, mime
+
+
+def clean_player_payload(body, require_password=False, require_photo=False):
+    name = str(body.get('name', '')).strip()
+    username = str(body.get('username', '')).strip().lower()
+    password = body.get('password', '')
+    birth_date = str(body.get('birth_date', '')).strip()
+    sex = str(body.get('sex', '')).strip().upper()
+    plan_name = str(body.get('plan_name', '')).strip()
+    renewal_date = str(body.get('renewal_date', '')).strip()
+    try:
+        height = float(body.get('height'))
+        weight = float(body.get('weight'))
+    except (TypeError, ValueError):
+        raise Problem(400, 'user_fields')
+    if not name or len(name) > 120 or not USERNAME_RE.fullmatch(username):
+        raise Problem(400, 'user_fields')
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', birth_date) or sex not in ('M', 'F'):
+        raise Problem(400, 'user_fields')
+    if not plan_name or len(plan_name) > 80 or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', renewal_date):
+        raise Problem(400, 'user_fields')
+    if not (50 <= height <= 250) or not (20 <= weight <= 300):
+        raise Problem(400, 'user_fields')
+    if require_password and (not isinstance(password, str) or len(password) < 8 or len(password) > 256):
+        raise Problem(400, 'password_length')
+    if password and (not isinstance(password, str) or len(password) < 8 or len(password) > 256):
+        raise Problem(400, 'password_length')
+    menus_enabled = body.get('menus_enabled')
+    anthropometry_enabled = body.get('anthropometry_enabled')
+    if not isinstance(menus_enabled, bool) or not isinstance(anthropometry_enabled, bool):
+        raise Problem(400, 'user_fields')
+    photo = None
+    photo_mime = None
+    if body.get('photo'):
+        photo, photo_mime = parse_photo(body.get('photo'))
+    elif require_photo:
+        raise Problem(400, 'photo')
+    return {
+        'name': name, 'username': username, 'password': password, 'birth_date': birth_date,
+        'sex': sex, 'height': height, 'weight': weight, 'plan_name': plan_name, 'renewal_date': renewal_date,
+        'menus_enabled': int(menus_enabled), 'anthropometry_enabled': int(anthropometry_enabled),
+        'photo': photo, 'photo_mime': photo_mime,
+    }
+
+
+
+def send_player_push(c, user_id, title, message, notification_id):
+    """Deliver a push to each subscribed device without affecting in-app storage."""
+    private = os.environ.get('MILE_VAPID_PRIVATE_KEY_B64', '')
+    if not private:
+        return
+    try:
+        from pywebpush import webpush, WebPushException
+        from cryptography.hazmat.primitives import serialization
+        key = serialization.load_pem_private_key(base64.b64decode(private), password=None)
+        der = key.private_bytes(serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+        private_key = base64.urlsafe_b64encode(der).rstrip(b'=').decode('ascii')
+        subscriptions = c.execute(
+            "SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE user_id=?", (user_id,)).fetchall()
+        logging.warning('Push attempt: subscribed devices=%d', len(subscriptions))
+        for sub in subscriptions:
+            try:
+                response = webpush(
+                    subscription_info={'endpoint':sub['endpoint'],'keys':{'p256dh':sub['p256dh'],'auth':sub['auth']}},
+                    data=json.dumps({'title':title,'body':message,'id':notification_id},ensure_ascii=False),
+                    vapid_private_key=private_key,
+                    vapid_claims={'sub':'mailto:themile.sn@gmail.com'},
+                    timeout=8)
+                logging.warning('Push gateway response status=%s', getattr(response, 'status_code', None))
+            except WebPushException as exc:
+                status = getattr(getattr(exc,'response',None),'status_code',None)
+                if status in (404,410):
+                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=?",(sub['endpoint'],))
+                else:
+                    logging.warning('Push delivery failed (status %s)',status)
+            except Exception:
+                logging.exception('Push delivery failure')
+        c.commit()
+    except Exception:
+        logging.exception('Push dispatch unavailable')
+
+
+def create_due_renewal_notifications(c, today=None):
+    """Compatibility no-op. Renewal dates are informational only."""
+    return 0
+
+
+def start_renewal_notification_scheduler():
+    """Renewal reminders are intentionally disabled until explicitly activated."""
+    return None
+
+
+def player_dict(row, include_private=True):
+    data = {
+        'id': row['id'], 'name': row['name'], 'username': row['username'], 'role': row['role'],
+        'active': bool(row['active']), 'access_expired': False, 'menus_enabled': bool(row['menus_enabled']),
+        'anthropometry_enabled': bool(row['anthropometry_enabled']),
+        'has_photo': bool(row['photo_mime']),
+    }
+    if include_private:
+        data.update({
+            'birth_date': row['birth_date'], 'sex': row['sex'], 'height': row['height'], 'weight': row['weight'],
+            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'], 'access_until': row['access_until'], 'weekly_status': row['weekly_status'],
+            'weekly_next_activate_at': row['weekly_next_activate_at'], 'current_weekly_document_id': row['current_weekly_document_id'],
+        })
+    return data
+
+
+
+def folder_allowed(player, folder):
+    if folder in ('nutrition', 'other', 'weekly'):
+        return True
+    if folder == 'menus':
+        return bool(player['menus_enabled'])
+    if folder == 'anthropometry':
+        return bool(player['anthropometry_enabled'])
+    return False
+
+
+def client_local_day(raw):
+    """The user's own calendar day, sent by the app from the device clock.
+
+    "Today" always follows the user's current time zone, including while
+    travelling. Accepted only within one day of UTC, which covers every time
+    zone (UTC-12 to UTC+14). Returns None when absent or out of range, so
+    older app versions keep the previous server-side behaviour.
+    """
+    if not isinstance(raw, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', raw):
+        return None
+    try:
+        day = datetime.strptime(raw, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+    utc_today = datetime.now(ZoneInfo('UTC')).date()
+    return day if abs((day - utc_today).days) <= 1 else None
+
+
+class Problem(Exception):
+    def __init__(self, status, code):
+        self.status, self.code = status, code
+
+
+PLAYER_SESSION_SECONDS = 180 * 24 * 60 * 60
+PLAYER_SESSION_RENEW_WINDOW = 30 * 24 * 60 * 60
+ADMIN_SESSION_SECONDS = 12 * 60 * 60
+
+
+def application(env, start_response):
+    headers = [('Cache-Control', 'no-store'), ('X-Content-Type-Options', 'nosniff'), ('X-Frame-Options', 'DENY'), ('Referrer-Policy', 'no-referrer'), ('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")]
+    if SECURE:
+        headers.append(('Strict-Transport-Security', 'max-age=31536000'))
+
+    def respond(status, data, mime='application/json; charset=utf-8'):
+        if not isinstance(data, bytes):
+            data = json.dumps(data, ensure_ascii=False).encode()
+        headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
+        start_response(f'{status} ' + {200:'OK', 201:'Created', 303:'See Other', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
+        return [data]
+
+    try:
+        method = env.get('REQUEST_METHOD', 'GET')
+        path = env.get('PATH_INFO', '/')
+        # Deployment-level separation. The test environment defaults to both.
+        # Role authorization remains mandatory on all protected API endpoints.
+        if SITE_ROLE == 'player':
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css')
+                    or path == '/api/v2/athletes'
+                    or path.startswith('/api/v2/athletes/')
+                    or path.startswith('/api/v2/supplement-library')
+                    or path.startswith('/api/v2/dishes/edit')
+                    or path.startswith('/api/v2/dishes/photo')
+                    or path.startswith('/api/v2/dishes/import')
+                    or path.startswith('/api/players')
+                    or path.startswith('/api/admins')):
+                raise Problem(404, 'not_found')
+        elif SITE_ROLE == 'admin':
+            if (path in ('/chef', '/chef.js', '/chef.css', '/chef-chat-demo.js', '/chef-chat-demo.css',
+                         '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
+                    or path.startswith('/api/v2/player/')
+                    or path.startswith('/api/push/')):
+                raise Problem(404, 'not_found')
+        static_files = {
+            '/': 'jogador-v2.html' if SITE_ROLE == 'player' else 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
+            '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
+            '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
+            '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
+            '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
+            '/consumption-preview': 'consumption-preview.html',
+            '/consumption-preview.css': 'consumption-preview.css',
+            '/consumption-preview.js': 'consumption-preview.js',
+            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css', '/notification-inbox-v2.js': 'notification-inbox-v2.js', '/notification-inbox-v2.css': 'notification-inbox-v2.css', '/notification-activation-v2.js': 'notification-activation-v2.js', '/notification-activation-v2.css': 'notification-activation-v2.css',
+            '/chef-chat-demo.js': 'chef-chat-demo.js', '/chef-chat-demo.css': 'chef-chat-demo.css',
+            '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
+            '/player-consumption.css': 'player-consumption.css',
+            '/player-visual-portions.js': 'player-visual-portions.js', '/player-visual-portions.css': 'player-visual-portions.css',
+            '/player-recipes.js': 'player-recipes.js', '/player-recipes.css': 'player-recipes.css',
+        }
+        if method == 'GET' and path == '/ios-launch-1320x2868.png':
+            return respond(200, shift_native_splash_down(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAABSgAAAs0AQAAAACjwb+YAAAFX0lEQVR42u3aP27bZhwG4JeyEKtAgGjokCFohZ6gY4cCUW/iI3Tslq83yBFyFHbrmCOoQIeOSpHBKWSzA21HIh07kGhTQZ5nUGRGoV5+//j7GCcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwGN72Vw5z6vNbR/4vtncvDtv3zTrQ75x8jAXcn3axbCneyDLJHl1fqQpq4fpmqGVnT+OvMePvC2Xg3b8192Wi0HP/rBtOT2GlHesg/PRr/aPKmku7v6Xs63XL2P2/D471pTTQfv9616JJkOWRA/dls1Rp6yrrfvkEbdlSZJyeTQpX9ZJkpNm9fHY9dvOhuPl5SErxiFO64skyc/5rlsUdUuikzqrxTht+VNOkqSqU9U3B9fb99DrHVpeJC9G6vG6HYNPkvy4dYdf3HLys7RX9PgpT9pvz/MkT3t/u7O/rUp7USOknF7dCM92TrbJvD/oJ3sv9AennG2tPFXZPT7LavujT3PV5o+fct4m6qzilx8HbafmnI6SctF+c+e+3dyMhO4uYzJKymV7kmlSlX6lVnY/+m6237by4JTlr2k7DN/l9VZtXib9mVIy/7Dfg4RDU1Z5c9GOubd5f19JdLFv/XFoyklTUqp2olxsTY26SrK83L2gTfJ2r5wH9/hlO5EXTbnq5q0hWTpf9c/1TenRU26uCqDL3XVndVtJtOodeayU5227LZNkVW3dGpfd6TxtL2Y+Rsr1ViW5vuexQr3vFuPglKs2XDnv5ltkshu7XabKbIyU9U60cuczmLL3SjLMxqS6ZVJlultsjLnvKZ9aoGbdp0Tzfv3xePueK8+aW7a29S23oosR2rL55PFp5kM9/P/KnxOlTLJojiXl5edP+2Nsy7pbEh1lylVK2Qx1ssFWonefUUVUo7fluvfzL91iozm+Hh90Pg2Wct4r2n7oV3JH15abIU/2gD3+backWo+esun9N9llZr36p3wJs2f8Hi/TpH08uLXslM58WqZ9GjteW06S5PXd3btI8s2YKesqycnsrlW8ffI6L6OOy5JMpzvlRq/YmCU5W46YcpWz5Pnk7iLvSVKVxYgp13menFU7uTfd1aoqeTLOs42bCXya03LfmPg1v41buSXN7nxZ936to86zZr9b0FBt+V9vf3Hey7Paeh0nZduK7z+jBK1HTNku4uud5XHVG7tJmlHXyzc3L3ePir12bMPuKMrO8tjt26bcOygeOuW/ST7sjtRyW3u/HjVlU5I/7/nM33sOywGdNvdvIl41dQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACO0/8MV9LumUcAZAAAAABJRU5ErkJggg==')), 'image/png')
+        if method == 'GET' and path in static_files:
+            file = ROOT / 'static' / static_files[path]
+            mime = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
+            if file.name.endswith('.webmanifest'):
+                mime = 'application/manifest+json'
+            content = file.read_bytes()
+            if SITE_ROLE == 'player' and file.name == 'jogador-v2.html':
+                content = content.replace(b'THE MILE <small>TESTES</small>', b'THE MILE')
+                content = content.replace('Ambiente de testes · The Mile 2.0'.encode(), b'The Mile')
+                content = content.replace('The Mile · Jogador (testes)'.encode(), b'The Mile')
+            return respond(200, content, mime)
+        if not path.startswith('/api/') and path != '/preview-entry':
+            raise Problem(404, 'not_found')
+
+        cookies = SimpleCookie()
+        try:
+            cookies.load(env.get('HTTP_COOKIE', ''))
+        except Exception:
+            pass
+        token = cookies['mile_session'].value if 'mile_session' in cookies else ''
+
+        with connect() as c:
+            now = int(time.time())
+            user = c.execute('SELECT u.*,s.csrf,s.expires AS session_expires FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
+
+            if user and not (SITE_ROLE == 'both' or user['role'] == SITE_ROLE or (SITE_ROLE == 'player' and user['role'] == 'chef')):
+                user = None
+
+            if path == '/preview-entry' and method == 'GET' and SITE_ROLE in ('player','both'):
+                ticket=parse_qs(env.get('QUERY_STRING','')).get('token',[''])[0]
+                if not re.fullmatch(r'[A-Za-z0-9_-]{40,100}',ticket):
+                    raise Problem(404,'invalid_preview')
+                consumed=c.execute(
+                    "DELETE FROM v2_admin_preview_tickets WHERE token=? AND expires>? RETURNING admin_id,player_id",
+                    (digest(ticket),now)).fetchone()
+                if not consumed:
+                    raise Problem(404,'expired_preview')
+                # Preserve player previews; allow active Chefs with a valid player link.
+                target=c.execute(
+                    "SELECT id,role FROM users WHERE id=? AND role IN ('player','chef') AND active=1",
+                    (consumed['player_id'],)).fetchone()
+                if not target:
+                    raise Problem(404,'preview_account_unavailable')
+                if target['role']=='chef' and not chef_accounts_v2.assigned_athlete(c,target['id']):
+                    raise Problem(404,'chef_not_linked')
+                if os.environ.get('MILE_NOTIFICATIONS_PUSH')=='1' and token:
+                    c.execute('DELETE FROM sessions WHERE token=?',(digest(token),))
+                preview_token=secrets.token_urlsafe(32)
+                csrf_preview=secrets.token_urlsafe(24)
+                expires=now+3600
+                c.execute("INSERT INTO sessions(token,user_id,csrf,expires) VALUES(?,?,?,?)",
+                          (digest(preview_token),target['id'],csrf_preview,expires))
+                c.execute("INSERT INTO v2_admin_preview_sessions(token,admin_id,player_id,expires) VALUES(?,?,?,?)",
+                          (digest(preview_token),consumed['admin_id'],target['id'],expires))
+                c.commit()
+                headers.append(('Set-Cookie',
+                    f'mile_session={preview_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600'
+                    + ('; Secure' if SECURE else '')))
+                headers.append(('Location','/chef' if target['role']=='chef' else '/'))
+                headers.append(('Cache-Control','no-store'))
+                return respond(303,b'', 'text/plain; charset=utf-8')
+
+            preview_session=None
+            if user:
+                preview_session=c.execute(
+                    "SELECT admin_id FROM v2_admin_preview_sessions WHERE token=? AND expires>?",
+                    (digest(token),now)).fetchone()
+            # Read-only preview is enforced by the server, not merely hidden controls.
+            if preview_session and method not in ('GET','HEAD') and path != '/api/logout':
+                raise Problem(403,'admin_preview_read_only')
+
+            if method != 'GET':
+                origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
+                if origin:
+                    parsed_origin = urlparse(origin)
+                    origin_host = (parsed_origin.hostname or '').lower()
+                    if parsed_origin.scheme not in ('https', 'http') or origin_host not in ALLOWED_ORIGIN_HOSTS:
+                        logging.warning('Blocked origin: %r', origin)
+                        raise Problem(403, 'origin')
+                if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
+                    raise Problem(403, 'csrf')
+
+            # Chef accounts have a separate, session-scoped API. No legacy
+            # player/admin/document endpoints are exposed to professional users.
+            if user and user['role']=='chef' and path.startswith('/api/'):
+                if path not in ('/api/me','/api/login','/api/logout','/api/change-password', '/api/v2/notifications/inbox','/api/v2/notifications/open','/api/v2/notifications/activation') and not path.startswith('/api/v2/chef/'):
+                    raise Problem(403,'forbidden')
+
+            # Players can reschedule ordinary events, but cannot change nutrition or games.
+            if path.startswith('/api/v2/player/events/') and method in ('PUT','DELETE'):
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                event_id=path.rsplit('/',1)[-1]
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                existing=c.execute("""SELECT kind,event_date FROM v2_calendar_events WHERE id=? AND athlete_id=?""",
+                                   (event_id,link['athlete_id'])).fetchone()
+                if not existing: raise Problem(404,'not_found')
+                if existing['kind']=='match':raise Problem(403,'forbidden')
+                local_query=parse_qs(env.get('QUERY_STRING','')).get('local_date',[''])[0]
+                local_day=client_local_day(local_query)
+                today=(local_day or datetime.now(ZoneInfo('Europe/Lisbon')).date()).isoformat()
+                if method=='DELETE':
+                    if existing['event_date']<today:raise Problem(400,'past_event_locked')
+                    if not events_v2.delete_event(c,link['athlete_id'],event_id):raise Problem(404,'not_found')
+                    return respond(200,{'ok':True})
+                body=read_json(env)
+                local_day=client_local_day(body.get('local_date'))
+                today=(local_day or datetime.now(ZoneInfo('Europe/Lisbon')).date()).isoformat()
+                if existing['event_date']<today or body.get('event_date','')<today:
+                    raise Problem(400,'past_event_locked')
+                try:
+                    changed=events_v2.update_event(c,link['athlete_id'],event_id,
+                        {'event_date':body.get('event_date'),'session':body.get('session')},
+                        user['id'],False)
+                except ValueError:raise Problem(400,'invalid_event')
+                if changed is None:raise Problem(404,'not_found')
+                return respond(200,{'event':changed})
+
+            if path == '/api/v2/supplement-library/bulk-preview' and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),False)
+                except ValueError:raise Problem(400,'invalid_supplement_package')
+                return respond(200,result)
+            if path == '/api/v2/supplement-library/bulk-import' and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if body.get('confirmation')!='IMPORTAR':raise Problem(400,'confirmation_required')
+                try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
+                except ValueError:raise Problem(400,'invalid_supplement_package')
+                return respond(200,result)
+            if path == '/api/v2/supplement-library' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                if method=='GET':return respond(200,{'items':supplements_v2.library_list(c)})
+                try:ident=supplements_v2.library_save(c,read_json(env))
+                except ValueError:raise Problem(400,'invalid_supplement_catalogue')
+                return respond(200,{'id':ident})
+            if path.startswith('/api/v2/supplement-library/') and method=='DELETE':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{1,64}',ident):raise Problem(400,'invalid_id')
+                c.execute('DELETE FROM v2_supplement_library WHERE id=?',(ident,))
+                return respond(200,{'ok':True})
+            if path.startswith('/api/v2/supplement-library/') and path.endswith('/image') and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                ident=path.split('/')[-2]
+                image=supplements_v2.library_image(c,ident)
+                if not image:raise Problem(404,'not_found')
+                binary=base64.b64decode(image)
+                mime='image/png' if binary.startswith(b'\x89PNG') else 'image/jpeg' if binary.startswith(b'\xff\xd8') else 'image/webp'
+                return respond(200,binary,mime)
+            # Supplementation: published routine and calendar day exceptions.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=5 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=seg[3]
+                if method=='GET':return respond(200,supplements_v2.read(c,aid))
+                try: return respond(200,supplements_v2.save(c,aid,read_json(env)))
+                except ValueError:raise Problem(400,'invalid_supplementation')
+            if path == '/api/v2/player/supplements' and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                plan=supplements_v2.read(c,link['athlete_id'])['plan']
+                plan=app_content_i18n_v2.localise_supplement_plan(
+                    c,plan,language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{"plan":plan})
+            # Peri-training and peri-match imports: draft review precedes publication.
+            if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)<5 or seg[:3]!=['api','v2','athletes'] or seg[4]!='peri-imports':
+                    raise Problem(404,'not_found')
+                aid=seg[3]
+                if len(seg)==5 and method=='GET':
+                    return respond(200,{'imports':peri_v2.list_imports(c,aid),'active':peri_v2.current(c,aid)})
+                if len(seg)==5 and method=='POST':
+                    body=read_json(env)
+                    try:
+                        encoded=body.get('pdf_base64','')
+                        if not isinstance(encoded,str) or len(encoded)>4*1024*1024:raise ValueError('invalid_pdf')
+                        content=base64.b64decode(encoded,validate=True)
+                        draft=peri_v2.save_import(c,aid,body.get('kind'),body.get('filename'),content)
+                    except (ValueError,TypeError,base64.binascii.Error):
+                        raise Problem(400,'invalid_or_unreadable_peri_pdf')
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(201,{'draft':draft})
+                if len(seg)==6 and method=='GET':
+                    draft=peri_v2.get_import(c,aid,seg[5])
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(200,{'draft':draft})
+                if len(seg)==7 and seg[6]=='copy' and method=='POST':
+                    draft=peri_v2.copy_as_draft(c,aid,seg[5])
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(201,{'draft':draft})
+                if len(seg)==7 and seg[6]=='option' and method=='PUT':
+                    body=read_json(env)
+                    try:
+                        option=peri_v2.update_option(c,aid,seg[5],body.get('group_index'),body.get('option_index'),body.get('option'))
+                    except ValueError:raise Problem(400,'invalid_peri_option')
+                    if option is None:raise Problem(404,'not_found')
+                    return respond(200,{'option':option})
+                if len(seg)==7 and seg[6]=='publish' and method=='POST':
+                    body=read_json(env)
+                    if body.get('confirmation')!='PUBLICAR' or body.get('athlete_id')!=aid:
+                        raise Problem(400,'publication_confirmation_required')
+                    try: published=peri_v2.publish(c,aid,seg[5],user['id'])
+                    except ValueError:raise Problem(400,'peri_review_incomplete')
+                    if published is None:raise Problem(404,'not_found')
+                    return respond(200,{'publication':published})
+                raise Problem(404,'not_found')
+            if path.startswith('/api/v2/athletes/') and '/match-peri/' in path and method=='PUT':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=7 or seg[4]!='match-peri':raise Problem(404,'not_found')
+                try: saved=peri_v2.update_match_override(c,seg[3],seg[5],seg[6],read_json(env).get('state'))
+                except ValueError:raise Problem(400,'invalid_override')
+                if not saved:raise Problem(404,'not_found')
+                return respond(200,{'ok':True})
+
+            # Training and other simple calendar events. Nutrition overrides belong to admins.
+            if path.startswith('/api/v2/athletes/') and '/events' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                segments=path.strip('/').split('/')
+                if len(segments) not in (5,6) or segments[:3]!=['api','v2','athletes'] or segments[4]!='events':
+                    raise Problem(404,'not_found')
+                athlete_id=segments[3]
+                if len(segments)==5 and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    try: entries=events_v2.list_events(c,athlete_id,(q.get('start') or [''])[0],(q.get('end') or [''])[0])
+                    except ValueError: raise Problem(400,'invalid_range')
+                    return respond(200,{'events':entries})
+                if len(segments)==5 and method=='POST':
+                    try: event=events_v2.create_event(c,athlete_id,read_json(env),user['id'])
+                    except ValueError: raise Problem(400,'invalid_event')
+                    if event is None: raise Problem(404,'not_found')
+                    return respond(201,{'event':event})
+                if len(segments)==6 and method=='PUT':
+                    try: event=events_v2.update_event(c,athlete_id,segments[5],read_json(env),user['id'],True)
+                    except ValueError: raise Problem(400,'invalid_event')
+                    if event is None: raise Problem(404,'not_found')
+                    return respond(200,{'event':event})
+                if len(segments)==6 and method=='DELETE':
+                    if not events_v2.delete_event(c,athlete_id,segments[5]): raise Problem(404,'not_found')
+                    return respond(200,{'ok':True})
+                raise Problem(404,'not_found')
+
+            # Administrator-only draft imports. Never expose these via player APIs.
+            if path.startswith('/api/v2/athletes/') and '/plan-imports' in path:
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                segments = path.strip('/').split('/')
+                if len(segments) < 5 or segments[:3] != ['api', 'v2', 'athletes'] or segments[4] != 'plan-imports':
+                    raise Problem(404, 'not_found')
+                athlete_id = segments[3]
+                if len(segments) == 6 and segments[5] == 'meal-options' and method == 'GET':
+                    return respond(200, {'options_by_color': plan_import_v2.validated_meal_options(c, athlete_id)})
+                if len(segments) == 6 and segments[5] == 'published-preview' and method == 'GET':
+                    return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,athlete_id)})
+                if len(segments) == 6 and segments[5] == 'publication-history' and method == 'GET':
+                    return respond(200,{'history':plan_import_v2.publication_history(c,athlete_id)})
+                if len(segments) == 7 and segments[6] == 'publish' and method == 'POST':
+                    body=read_json(env)
+                    if body.get('confirmation')!='PUBLICAR' or body.get('athlete_id')!=athlete_id:
+                        raise Problem(400,'publication_confirmation_required')
+                    try:
+                        publication=plan_import_v2.publish_validated_plan(c,athlete_id,segments[5],user['id'])
+                    except ValueError: raise Problem(400,'plan_not_validated')
+                    if publication is None: raise Problem(404,'not_found')
+                    return respond(200,{'publication':publication})
+                if len(segments) == 6 and segments[5] == 'publication-status' and method == 'GET':
+                    return respond(200, {'colors': plan_import_v2.color_plan_status(c, athlete_id)})
+                if len(segments) == 5:
+                    if method == 'GET':
+                        return respond(200, {'drafts': plan_import_v2.list_drafts(c, athlete_id)})
+                    if method == 'POST':
+                        body = read_json(env)
+                        try:
+                            encoded = body.get('pdf_base64', '')
+                            if not isinstance(encoded, str) or len(encoded) > 4 * 1024 * 1024:
+                                raise ValueError('invalid_pdf')
+                            content = base64.b64decode(encoded, validate=True)
+                            if not content.startswith(b'%PDF-') or len(content) > 3 * 1024 * 1024:
+                                raise ValueError('invalid_pdf')
+                            draft = plan_import_v2.save_draft(c, athlete_id, body.get('color'),
+                                                               body.get('filename'), content)
+                        except (ValueError, TypeError, base64.binascii.Error):
+                            raise Problem(400, 'invalid_or_unreadable_pdf')
+                        if draft is None:
+                            raise Problem(404, 'not_found')
+                        return respond(201, {'draft': draft})
+                if len(segments) == 7 and segments[6] == 'group-meals' and method == 'PUT':
+                    body=read_json(env)
+                    try:
+                        meals=plan_import_v2.update_group_meals(c,athlete_id,segments[5],body.get('group_index'),body.get('meals'))
+                    except ValueError: raise Problem(400,'invalid_meal_mapping')
+                    if meals is None: raise Problem(404,'not_found')
+                    return respond(200,{'meals':meals})
+                if len(segments) == 7 and segments[6] == 'review-status' and method == 'POST':
+                    body = read_json(env)
+                    try:
+                        state = plan_import_v2.set_review_status(c, athlete_id, segments[5], body.get('action'))
+                    except ValueError:
+                        raise Problem(400, 'review_incomplete_or_invalid_status')
+                    if state is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'status': state})
+                if len(segments) == 6 and method == 'PUT':
+                    body = read_json(env)
+                    try:
+                        updated = plan_import_v2.update_option(c, athlete_id, segments[5],
+                            body.get('group_index'), body.get('option_index'), body.get('option'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_option_data')
+                    if updated is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'option': updated})
+                if len(segments) == 6 and method == 'GET':
+                    draft = plan_import_v2.get_draft(c, athlete_id, segments[5])
+                    if draft is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'draft': draft})
+                raise Problem(404, 'not_found')
+
+            if path.startswith('/api/v2/athletes/') and path.endswith('/calendar/meal-color') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                body=read_json(env)
+                try:
+                    saved=day_colors_v2.set_color(c,aid,body.get('date'),body.get('meal'),body.get('color'),user['id'])
+                except ValueError: raise Problem(400,'invalid_day_meal_color')
+                if saved is None: raise Problem(404,'not_found')
+                return respond(200,{'override':saved})
+
+            if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                start = (query.get('start') or [''])[0]
+                end = (query.get('end') or [''])[0]
+                try:
+                    from calendar_v2 import classify_range
+                    matches = microcycles_v2.list_matches(c, aid)
+                    days = calendar_v2.effective_days(c,aid,classify_range(start, end, [m['match_date'] for m in matches]))
+                except ValueError:
+                    raise Problem(400, 'invalid_calendar_range')
+                event_data=events_v2.list_events(c,aid,start,end)
+                override_rows=c.execute("SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",(aid,)).fetchall()
+                resolved_colors=calendar_v2.effective_colors(c,aid,days,microcycles_v2.get_model(c,aid))
+                return respond(200, {'matches': matches, 'days': days,'events':event_data, 'effective_colors':resolved_colors,
+                                     'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
+                                     'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
+                                     'match_peri_overrides':[dict(r) for r in override_rows]})
+            if path == '/api/v2/dishes/photo' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                import uuid
+                body=read_json(env)
+                dish_id=body.get('id')
+                payload=body.get('image')
+                if not isinstance(payload,str) or len(payload)>17000000: raise Problem(400,'invalid_image')
+                try:
+                    raw=base64.b64decode(payload,validate=True)
+                    if len(raw)>12000000: raise ValueError()
+                    source=Image.open(io.BytesIO(raw))
+                    source.verify()
+                    source=Image.open(io.BytesIO(raw))
+                    if source.width>8000 or source.height>8000 or source.width*source.height>32000000: raise ValueError()
+                    source=source.convert('RGB')
+                    source.thumbnail((900,900))
+                    result=io.BytesIO()
+                    source.save(result,format='WEBP',quality=76,method=4)
+                    raw=result.getvalue()
+                    if len(raw)>1200000: raise ValueError()
+                except (ValueError,UnidentifiedImageError,OSError,base64.binascii.Error):
+                    raise Problem(400,'invalid_image')
+                if dish_id:
+                    dish=c.execute("SELECT id FROM v2_dish_library WHERE id=?",(dish_id,)).fetchone()
+                    if not dish: raise Problem(404,'not_found')
+                else:
+                    name_pt=body.get('name_pt')
+                    name_en=body.get('name_en','')
+                    category=body.get('category')
+                    if not all(isinstance(v,str) for v in (name_pt,name_en,category)) or not 1<=len(name_pt.strip())<=200 or not 1<=len(category.strip())<=100 or len(name_en)>200: raise Problem(400,'invalid_dish')
+                    dish_id=secrets.token_hex(12)
+                filename=dish_id+'.webp'
+                store_dish_image(c, filename, raw)
+                if not body.get('id'):
+                    c.execute("INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename) VALUES(?,?,?,?,?)",(dish_id,category.strip(),name_pt.strip(),name_en.strip(),filename))
+                    c.commit()
+                return respond(200,{'id':dish_id,'ok':True})
+            if path == '/api/v2/dishes/edit' and method == 'PUT':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    ok=microcycles_v2.update_dish(c,body.get('id'),body.get('name_pt'),body.get('name_en',''),body.get('category'),body.get('active',True))
+                except ValueError: raise Problem(400,'invalid_dish')
+                if not ok: raise Problem(404,'not_found')
+                return respond(200,{'ok':True})
+            if path == '/api/v2/dishes' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, {'dishes':microcycles_v2.list_dish_library(c)})
+            if path == '/api/v2/dishes/import' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                raw=read_body(env, 22*1024*1024)
+                try:
+                    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                        rows=list(csv.DictReader(io.TextIOWrapper(z.open('catalog.csv'),encoding='utf-8-sig')))
+                        if not 1 <= len(rows) <= 1000: raise ValueError()
+                        files={}
+                        for row in rows:
+                            dish_id=row['id']
+                            filename=row['image_filename']
+                            if not re.fullmatch(r'[a-z0-9-]{4,60}',dish_id) or filename!=dish_id+'.webp':
+                                raise ValueError()
+                            if not row['name_pt'].strip() or not row['category'].strip(): raise ValueError()
+                            data=z.read('images/'+filename)
+                            if len(data)>400000 or data[:4]!=b'RIFF' or data[8:12]!=b'WEBP': raise ValueError()
+                            files[filename]=data
+                    for filename,data in files.items():
+                        store_dish_image(c,filename,data)
+                    microcycles_v2.import_dish_catalog(c,rows)
+                except (ValueError,KeyError,zipfile.BadZipFile,FileNotFoundError) as exc:
+                    raise Problem(400,'invalid_dish_archive') from exc
+                return respond(200,{'imported':len(rows)})
+            if path.startswith('/api/v2/dishes/image/') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
+                dish=c.execute("SELECT image_filename FROM v2_dish_library WHERE id=? AND active=1",(identifier,)).fetchone()
+                if not dish: raise Problem(404,'not_found')
+                image_data=read_dish_image(c,dish['image_filename'])
+                if image_data is None: raise Problem(404,'not_found')
+                return respond(200,image_data,'image/webp')
+            if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method == 'PUT':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                athlete_id=path.split('/')[4]
+                body=read_json(env)
+                try:
+                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''))
+                except ValueError: raise Problem(400,'invalid_athlete_profile')
+                if result is None: raise Problem(404,'not_found')
+                return respond(200,{'athlete':result})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                items=read_json(env).get('items')
+                if not isinstance(items,list) or len(items)>14:
+                    raise Problem(400,'invalid_menu_batch')
+                try:
+                    validated=[]
+                    for item in items:
+                        if not isinstance(item,dict): raise ValueError()
+                        date=calendar_v2.parse_day(item.get('menu_date')).isoformat()
+                        meal=item.get('meal')
+                        kind=item.get('kind')
+                        value=item.get('value')
+                        if meal not in ('lunch','dinner') or kind not in ('category','dish','text') or not isinstance(value,str) or not value.strip() or len(value)>(2000 if kind=='text' else 200): raise ValueError()
+                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix'): raise ValueError()
+                        validated.append((date,meal,kind,value.strip()))
+                    if len(set((v[0],v[1]) for v in validated))!=len(validated): raise ValueError()
+                except (ValueError,TypeError,AttributeError):
+                    raise Problem(400,'invalid_menu_batch')
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
+                for date,meal,kind,value in validated:
+                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
+                      VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
+                      kind=excluded.kind,value=excluded.value""",(aid,date,meal,kind,value))
+                c.commit()
+                return respond(200,{'saved':len(validated)})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                if method == 'GET':
+                    q = parse_qs(env.get('QUERY_STRING', ''))
+                    try:
+                        menus = microcycles_v2.list_menus(c, aid, (q.get('start') or [''])[0], (q.get('end') or [''])[0])
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu_range')
+                    return respond(200, {'menus': menus})
+                if method == 'PUT':
+                    body = read_json(env)
+                    try:
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu')
+                    if item is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'menu': item})
+                if method == 'DELETE':
+                    body = read_json(env)
+                    try:
+                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu')
+                    return respond(200, {'ok': True})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/matches'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                if method == 'GET':
+                    return respond(200, {'matches': microcycles_v2.list_matches(c, aid)})
+                if method == 'POST':
+                    body = read_json(env)
+                    try:
+                        if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (aid,body.get('match_date'))).fetchone():
+                            raise Problem(409,'day_has_off_event')
+                        match = microcycles_v2.add_match(c, aid, body.get('match_date'), body.get('match_time'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_or_duplicate_match')
+                    if match is None:
+                        raise Problem(404, 'not_found')
+                    return respond(201, {'match': match})
+            if path.startswith('/api/v2/athletes/') and '/matches/' in path and method == 'PUT':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 7 or parts[5] != 'matches':
+                    raise Problem(404, 'not_found')
+                body = read_json(env)
+                try:
+                    if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (parts[4],body.get('match_date'))).fetchone():
+                        raise Problem(409,'day_has_off_event')
+                    match = microcycles_v2.update_match(c, parts[4], parts[6], body.get('match_date'), body.get('match_time'))
+                except ValueError:
+                    raise Problem(400, 'invalid_or_duplicate_match')
+                if match is None:
+                    raise Problem(404, 'not_found')
+                return respond(200, {'match': match})
+            if path.startswith('/api/v2/athletes/') and '/matches/' in path and method == 'DELETE':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 7 or parts[5] != 'matches':
+                    raise Problem(404, 'not_found')
+                if not microcycles_v2.delete_match(c, parts[4], parts[6]):
+                    raise Problem(404, 'not_found')
+                return respond(200, {'ok': True})
+
+            if path == '/api/v2/athletes':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200, {'athletes': microcycles_v2.list_athletes(c)})
+                if method == 'POST':
+                    try:
+                        athlete = microcycles_v2.create_athlete(c, read_json(env).get('name', ''))
+                    except ValueError:
+                        raise Problem(400, 'invalid_athlete_name')
+                    return respond(201, {'athlete': athlete})
+            if path.startswith('/api/v2/athletes/'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                segments = path.strip('/').split('/')
+                if len(segments) == 5 and segments[4] == 'weight' and method == 'PUT':
+                    try:
+                        weight = microcycles_v2.update_athlete_weight(c, segments[3], read_json(env).get('weight_kg'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_weight')
+                    return respond(200, {'weight_kg': weight})
+                if len(segments) == 5 and segments[4] == 'microcycles' and method == 'GET':
+                    result = microcycles_v2.get_model(c, segments[3])
+                    if result is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, result)
+                if len(segments) >= 6 and segments[4] == 'microcycles' and method == 'PUT':
+                    body = read_json(env)
+                    if 'color' not in body:
+                        raise Problem(400, 'invalid_model_cell')
+                    try:
+                        ok = microcycles_v2.update_cell(c, segments[3], '/'.join(segments[5:]),
+                            body.get('meal'), body.get('color'), user['id'])
+                    except ValueError:
+                        raise Problem(400, 'invalid_model_cell')
+                    if not ok:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'ok': True})
+
+            # Administrative V2 account management; all operations scoped to an athlete.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/access'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5: raise Problem(404,'not_found')
+                aid=parts[3]
+                athlete=c.execute("SELECT id,name FROM v2_athletes WHERE id=?",(aid,)).fetchone()
+                if not athlete: raise Problem(404,'not_found')
+                existing=c.execute("""SELECT u.id,u.username,u.active FROM v2_player_links l
+                   JOIN users u ON u.id=l.user_id WHERE l.athlete_id=?""",(aid,)).fetchone()
+                if method=='GET':
+                    return respond(200,{'access':dict(existing) if existing else None})
+                if method=='POST':
+                    if existing: raise Problem(409,'access_exists')
+                    body=read_json(env);username=str(body.get('username','')).strip().lower()
+                    password=body.get('password','')
+                    if not re.fullmatch(r'[a-z]{4,40}',username) or not isinstance(password,str) or len(password)<12 or len(password)>256:
+                        raise Problem(400,'invalid_credentials')
+                    if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
+                        raise Problem(409,'username_exists')
+                    uid=secrets.token_hex(16)
+                    # Internal unique email is never a login identifier for player accounts.
+                    email='v2-'+uid+'@accounts.internal.invalid'
+                    c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
+                                 VALUES(?,?,?,?,?,?,1)""",(uid,athlete['name'],email,username,'player',password_hash(password)))
+                    c.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES(?,?,?)",(uid,aid,int(time.time())))
+                    c.commit()
+                    return respond(201,{'access':{'id':uid,'username':username,'active':1}})
+                if method=='PUT':
+                    if not existing: raise Problem(404,'access_not_found')
+                    body=read_json(env)
+                    if type(body.get('active')) is not bool: raise Problem(400,'invalid_status')
+                    active=int(body['active'])
+                    c.execute("UPDATE users SET active=? WHERE id=? AND role='player'",(active,existing['id']))
+                    if not active: c.execute("DELETE FROM sessions WHERE user_id=?",(existing['id'],))
+                    c.commit()
+                    return respond(200,{'access':{'id':existing['id'],'username':existing['username'],'active':active}})
+            # V2 player access: self-only, no athlete id supplied by the client.
+            # Accounts are not linked or activated by this read-only endpoint.
+            # Player-specific loading photograph is private and never replaces the profile avatar.
+            if path == '/api/v2/player/loading-photo' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                image_key = 'player-loading:' + user['id']
+                photo = c.execute("SELECT image_data FROM v2_shared_images WHERE image_key=?", (image_key,)).fetchone()
+                if not photo: raise Problem(404, 'not_found')
+                data = bytes(photo['image_data'])
+                return respond(200, data, 'image/webp' if data[:4] == b'RIFF' and data[8:12] == b'WEBP' else 'image/jpeg')
+
+            if path == '/api/v2/player/profile-photo' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                photo = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND active=1 AND role='player'", (user['id'],)).fetchone()
+                if not photo or not photo['photo']: raise Problem(404, 'not_found')
+                avatar_bytes, avatar_mime = player_avatar_photo(bytes(photo['photo']), photo['photo_mime'] or 'image/jpeg')
+                return respond(200, avatar_bytes, avatar_mime)
+
+            if path == '/api/v2/player/assessments' and method == 'GET':
+                if not user or user['role'] != 'player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                return respond(200,{'assessments':assessments_v2.rows(c,link['athlete_id'],public=True),
+                                   'fields':assessments_v2.FIELDS,'averages_fields':assessments_v2.AVERAGES})
+            if path.startswith('/api/v2/athletes/') and '/assessments' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                bits=path.strip('/').split('/')
+                if len(bits)!=5 or bits[0:3]!=['api','v2','athletes'] or bits[4]!='assessments':
+                    raise Problem(404,'not_found')
+                athlete_id=bits[3]
+                if not c.execute('SELECT id FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone():
+                    raise Problem(404,'not_found')
+                if method=='GET':
+                    return respond(200,{'assessments':assessments_v2.rows(c,athlete_id),
+                                        'fields':assessments_v2.FIELDS,'averages_fields':assessments_v2.AVERAGES})
+                if method=='POST':
+                    payload=json.loads(read_body(env, 29 * 1024 * 1024))
+                    if not isinstance(payload,dict):raise Problem(400,'invalid_request')
+                    if payload.get('action')=='preview':
+                        try:
+                            result=assessments_v2.parse_pdf(payload.get('pdf_base64'))
+                        except ValueError:raise Problem(400,'invalid_assessment_pdf')
+                        result.pop('pdf_bytes',None)
+                        return respond(200,result)
+                    if payload.get('action')=='save':
+                        try:aid=assessments_v2.save(c,athlete_id,payload,user['id'])
+                        except ValueError:raise Problem(400,'invalid_assessment')
+                        return respond(200,{'saved':True,'id':aid})
+                    raise Problem(400,'invalid_action')
+            # Chef API: the athlete scope always comes from the authenticated session.
+            if path.startswith('/api/v2/chef/'):
+                if SITE_ROLE == 'admin': raise Problem(404,'not_found')
+                if not user: raise Problem(401,'unauthorized')
+                if user['role'] != 'chef': raise Problem(403,'forbidden')
+                athlete=chef_accounts_v2.assigned_athlete(c,user['id'])
+                if not athlete: raise Problem(403,'chef_unlinked')
+                aid=athlete['id']
+                if path.startswith('/api/v2/chef/chat'):
+                    # Deliberately disabled until shared DB and reviewed migration
+                    # are explicitly activated for both services.
+                    if os.environ.get('MILE_CHAT_API_ENABLED')!='1':
+                        raise Problem(404,'not_found')
+                    try:
+                        status,output=chat_api_v2.chef(
+                            c,user['id'],path,method,env.get('QUERY_STRING',''),lambda:read_json(env))
+                    except chat_api_v2.ChatApiError as exc:
+                        raise Problem(exc.status,exc.code)
+                    except chat_api_v2.domain.ChatAccessError:
+                        raise Problem(403,'forbidden')
+                    return respond(status,output)
+                if path == '/api/v2/chef/preferences' and method == 'PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
+                        raise Problem(400,'invalid_language')
+                    chef_accounts_v2.set_language_preference(c,user['id'],body['language'])
+                    c.commit()
+                    return respond(200,{'language':body['language']})
+                if path == '/api/v2/chef/me' and method == 'GET':
+                    return respond(200,{'chef':{'id':user['id'],'name':user['name'],
+                         'username':user['username'],'language':athlete['language']},
+                         'player':{'id':aid,'name':athlete['name']}})
+                if path == '/api/v2/chef/menu-executions' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=chef_collaboration_v2.executions(
+                            c,aid,(q.get('start') or [''])[0],(q.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution_range')
+                    return respond(200,{'executions':items})
+                if path == '/api/v2/chef/menu-executions' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_execution')
+                    try:
+                        result=chef_collaboration_v2.record_execution(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),body.get('state'),
+                            body.get('served_description',''),body.get('note',''))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution')
+                    return respond(201,{'execution':result})
+                if path == '/api/v2/chef/menu-proposals' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_proposal')
+                    try:
+                        result=chef_collaboration_v2.propose_dish(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('name'),body.get('note',''),
+                            today=client_local_day(body.get('local_date')))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_proposal')
+                    return respond(201,{'proposal':result})
+                if path == '/api/v2/chef/menus' and method=='PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_menu')
+                    try:
+                        result=chef_collaboration_v2.save_menu(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('kind'),body.get('value'),body.get('dish_id'),
+                            today=client_local_day(body.get('local_date')))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu')
+                    return respond(200,{'menu':result})
+                if path == '/api/v2/chef/dishes' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    search=(q.get('q') or [''])[0]
+                    if not isinstance(search,str) or len(search)>90:
+                        raise Problem(400,'invalid_search')
+                    if app_content_i18n_v2.enabled(athlete['language']) and (
+                            app_content_i18n_v2.translation_store_available(c)):
+                        dishes=app_content_i18n_v2.search_approved_dishes(c,search)
+                    else:
+                        rows=c.execute("""SELECT id,name_pt,category
+                          FROM v2_dish_library WHERE active=1
+                            AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
+                            ('%'+search+'%',)).fetchall()
+                        dishes=[dict(row) for row in rows]
+                    return respond(200,{'dishes':dishes})
+                if path == '/api/v2/chef/menus' and method == 'GET':
+                    query=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=chef_collaboration_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu_range')
+                    items=app_content_i18n_v2.localise_dish_menus(
+                        c,items,language=athlete['language'])
+                    return respond(200,{'menus':items})
+                if method != 'GET': raise Problem(403,'forbidden')
+                if path == '/api/v2/chef/calendar':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    first=(q.get('start') or [''])[0]
+                    last=(q.get('end') or [''])[0]
+                    try:
+                        matches=microcycles_v2.list_matches(c,aid)
+                        days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(
+                            first,last,[m['match_date'] for m in matches]))
+                        model_data=microcycles_v2.get_model(c,aid)
+                        colors=calendar_v2.effective_colors(c,aid,days,model_data)
+                    except ValueError:
+                        raise Problem(400,'invalid_calendar_range')
+                    return respond(200,{'days':days,'effective_colors':colors})
+                if path.startswith('/api/v2/chef/dish-photo/'):
+                    identifier=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier):
+                        raise Problem(404,'not_found')
+                    linked=c.execute("""SELECT d.image_filename FROM v2_dish_library d
+                        JOIN v2_weekly_menus m ON m.kind='dish' AND m.dish_id=d.id
+                        WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",
+                        (aid,identifier)).fetchone()
+                    if not linked: raise Problem(404,'not_found')
+                    image=read_dish_image(c,linked['image_filename'])
+                    if image is None: raise Problem(404,'not_found')
+                    # Same edge-connected near-black matte removal as Player Menus.
+                    # Transform only the response: the canonical stored image and
+                    # Chef's existing athlete/assigned-dish access gates are unchanged.
+                    return respond(200,player_menu_photo(image),'image/webp')
+                if path == '/api/v2/chef/plans':
+                    # Language belongs to the authenticated chef, never a client
+                    # supplied athlete id; the presentation gate defaults OFF.
+                    language=athlete['language'] if athlete['language'] in ('pt','en') else 'pt'
+                    return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
+                        c,aid,language=language)['options_by_color']})
+                raise Problem(404,'not_found')
+            if path == '/api/v2/player/preferences' and method in ('GET','PUT'):
+                # The preference is strictly bound to the authenticated user;
+                # there is no client-provided athlete or user identifier.
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                linked=c.execute("SELECT 1 FROM v2_player_links WHERE user_id=?",
+                                 (user['id'],)).fetchone()
+                if not linked:raise Problem(404,'player_not_linked')
+                allowed=player_language_v2.selection_available(c,user['id'])
+                if method=='GET':
+                    return respond(200,{'language':
+                        player_language_v2.get(c,user['id']) if allowed else 'pt',
+                        'enabled':allowed})
+                if not allowed:raise Problem(404,'not_found')
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'language'} or (
+                        type(body['language'])!=str or
+                        body['language'] not in ('pt','en')):
+                    raise Problem(400,'invalid_language')
+                value=player_language_v2.set_language(c,user['id'],body['language'])
+                c.commit()
+                return respond(200,{'language':value})
+            if path == '/api/v2/player/me' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("""SELECT a.id,a.name,a.weight_kg,a.field_position,a.followup_plan,a.followup_renewal_date,a.visual_portions_enabled FROM v2_player_links l
+                                    JOIN v2_athletes a ON a.id=l.athlete_id
+                                    WHERE l.user_id=?""", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                player=dict(link)
+                player['visual_portions_enabled']=bool(link['visual_portions_enabled']) and (
+                    PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session))
+                player['sex']=user['sex']
+                # Only a language code, never a new UI element, is added.
+                player['language']=player_language_v2.presentation_language(
+                    c,user['id'])
+                return respond(200, {'player': player})
+            if path == '/api/v2/player/reference-weights' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                q=parse_qs(env.get('QUERY_STRING',''))
+                first=(q.get('start') or [''])[0]
+                last=(q.get('end') or [''])[0]
+                try:
+                    from datetime import date as reference_date, timedelta as reference_delta
+                    start_day=reference_date.fromisoformat(first)
+                    end_day=reference_date.fromisoformat(last)
+                    if end_day<start_day or (end_day-start_day).days>31: raise ValueError()
+                except ValueError: raise Problem(400,'invalid_date_range')
+                weights={}
+                for offset in range((end_day-start_day).days+1):
+                    on_day=(start_day+reference_delta(days=offset)).isoformat()
+                    weights[on_day]=weight_reference_v2.reference_weight(c,link['athlete_id'],on_day)
+                return respond(200,{'weights_by_date':weights})
+            # Read-only player color parity probe; excludes post-match scenarios.
+            # No dependency on admin monitoring tables, no writes or UI changes.
+            if path in ('/api/v2/player/effective-colors-preview', '/api/v2/player/effective-nutrition-preview') and method == 'GET':
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                query=parse_qs(env.get('QUERY_STRING',''))
+                start=(query.get('start') or [''])[0]
+                end=(query.get('end') or [''])[0]
+                try:
+                    first=calendar_v2.parse_day(start)
+                    last=calendar_v2.parse_day(end)
+                    if last<first or (last-first).days>6:raise ValueError()
+                except ValueError:raise Problem(400,'invalid_preview_range')
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                if first<today-timedelta(days=365) or last>today+timedelta(days=60):
+                    raise Problem(400,'invalid_preview_range')
+                matches=microcycles_v2.list_matches(c,aid)
+                model_data=microcycles_v2.get_model(c,aid)
+                classes={row['name']:row['meals'] for row in model_data['classifications']}
+                manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(start,end,[m['match_date'] for m in matches]))
+                # Optional, read-only scenario simulation. Some deployments do not
+                # have the admin monitoring schema yet. Never create tables here.
+                required={'v2_scenario_cells','v2_post_match_responses','v2_monitoring_audit'}
+                if isinstance(c, PgConnection):
+                    present={r['table_name'] for r in c.execute(
+                        "SELECT table_name FROM information_schema.tables "
+                        "WHERE table_schema=current_schema() AND table_name IN (?,?,?)",
+                        tuple(sorted(required))).fetchall()}
+                else:
+                    present={r['name'] for r in c.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?,?)",
+                        tuple(sorted(required))).fetchall()}
+                scenario_available=(present==required)
+                scenario_cells={}
+                responses=[]
+                if scenario_available:
+                    scenario_cells={(r['classification'],r['scenario'],r['meal']):r['color']
+                        for r in c.execute(
+                            "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",
+                            (aid,)).fetchall()}
+                    for response in c.execute(
+                        "SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",
+                        (aid,)).fetchall():
+                        raw=dict(response)
+                        audit=[dict(event) for event in c.execute(
+                            "SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit "
+                            "WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",
+                            (aid,raw['id'])).fetchall()]
+                        responses.append({'match_id':raw['match_id'],
+                            'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                nutrition_mode=(path == '/api/v2/player/effective-nutrition-preview')
+                if nutrition_mode:
+                    published=food_plan_player_v2.player_plans(c,aid)['options_by_color']
+                    event_data=events_v2.list_events(c,aid,start,end)
+                    peri_meals=food_plan_player_v2.player_peri_days(c,aid,start,end,event_data)
+                output=[]
+                for row in days:
+                    day=row['date'];classification=row['classification']
+                    base=classes.get(classification,{})
+                    colors=prescription_effective_v2.resolve_day(
+                        day,classification,base,manual,{},matches,[],today.isoformat())
+                    entry={'date':day,'classification':classification,
+                        'colors':{meal:colors[meal]['color'] for meal in model_data['meals']}}
+                    if scenario_available:
+                        simulated=prescription_effective_v2.resolve_day(
+                            day,classification,base,manual,scenario_cells,matches,responses,today.isoformat())
+                        entry['simulated_colors']={meal:simulated[meal]['color'] for meal in model_data['meals']}
+                        entry['simulation_sources']={meal:simulated[meal]['source'] for meal in model_data['meals']}
+                        entry['changed_meals']=[meal for meal in model_data['meals']
+                            if entry['colors'][meal]!=entry['simulated_colors'][meal]]
+                        entry['manual_priority_meals']=[meal for meal in model_data['meals']
+                            if simulated[meal]['source']=='manual']
+                    if nutrition_mode:
+                        current=nutrition_preview_v2.totals(entry['colors'],published,peri_meals,day,model_data['meals'])
+                        entry['current_nutrition']=current
+                        if scenario_available:
+                            alternative=nutrition_preview_v2.totals(entry['simulated_colors'],published,peri_meals,day,model_data['meals'])
+                            entry['simulated_nutrition']=alternative
+                            entry['nutrition_delta']=({key:alternative['totals'][key]-current['totals'][key] for key in nutrition_preview_v2.KEYS} if current['complete'] and alternative['complete'] else None)
+                    output.append(entry)
+                return respond(200,{'days':output,'preview_only':True,
+                    'scenario_data_available':scenario_available,
+                    'scenario_automation_enabled':False})
+            # Player daily fasting weight; uses the same monitoring records as Backoffice.
+            if path == '/api/v2/player/weight' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                from datetime import date as weight_date
+                if method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    current=client_local_day((q.get('local_date') or [''])[0]) or weight_date.today()
+                    selected=(q.get('date') or [current.isoformat()])[0]
+                else:
+                    payload=read_json(env)
+                    current=client_local_day(payload.get('local_date')) or weight_date.today()
+                    selected=payload.get('date')
+                try:
+                    target=weight_date.fromisoformat(selected)
+                    if target.isoformat()!=selected or target>current+timedelta(days=1) or target<current-timedelta(days=60):raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight_date')
+                first=(target-timedelta(days=9)).isoformat()
+                last=(target+timedelta(days=1)).isoformat()
+                if method=='GET':
+                    rows=[dict(row) for row in c.execute(
+                        "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date BETWEEN ? AND ? ORDER BY weigh_date",
+                        (aid,first,last)).fetchall()]
+                    previous=c.execute(
+                        "SELECT weight_kg,weigh_date FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date<? ORDER BY weigh_date DESC LIMIT 1",
+                        (aid,selected)).fetchone()
+                    return respond(200,{'date':selected,'entries':rows,'previous':dict(previous) if previous else None})
+                if selected>current.isoformat():raise Problem(400,'future_weight_date')
+                raw=payload.get('weight')
+                try:
+                    weight=float(str(raw).replace(',','.'))
+                    if not 40<=weight<=140 or abs(weight*10-round(weight*10))>0.00001:raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight')
+                # Single source of truth: sex belongs to the linked player account.
+                is_f=str(user['sex'] or '').upper()=='F'
+                menstruating=payload.get('menstruating')
+                if menstruating is not None and type(menstruating)!=bool:raise Problem(400,'invalid_menstruation')
+                if not is_f:menstruating=None
+                # PostgreSQL stores this optional tri-state flag as INTEGER (1/0/NULL).
+                stored_menstruating=None if menstruating is None else int(menstruating)
+                before=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,selected)).fetchone()
+                now=int(time.time())
+                if before:
+                    entry_id=before['id']
+                    c.execute("UPDATE v2_daily_weighins SET weight_kg=?,menstruating=?,updated_at=? WHERE id=? AND athlete_id=?",
+                              (weight,stored_menstruating,now,entry_id,aid))
+                else:
+                    entry_id=secrets.token_hex(16)
+                    c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
+                              (entry_id,aid,selected,weight,stored_menstruating,now,now))
+                c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                          (secrets.token_hex(16),aid,'weight',entry_id,user['id'],
+                           json.dumps(dict(before)) if before else None,
+                           json.dumps({'date':selected,'weight_kg':weight,'menstruating':menstruating}),now))
+                c.commit()
+                return respond(200,{'ok':True})
+            # Read-only fasting-weight history for the player's own weight screen (Semana / Mês).
+            # It never writes; recording stays on /api/v2/player/weight.
+            if path == '/api/v2/player/weight-history' and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                from datetime import date as weight_date
+                q=parse_qs(env.get('QUERY_STRING',''))
+                current=client_local_day((q.get('local_date') or [''])[0]) or weight_date.today()
+                raw_end=(q.get('end') or [current.isoformat()])[0]
+                try:
+                    end=weight_date.fromisoformat(raw_end)
+                    if end.isoformat()!=raw_end or end>current+timedelta(days=1):raise ValueError()
+                    days=int((q.get('days') or ['30'])[0])
+                    if not 1<=days<=400:raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight_history')
+                first=(end-timedelta(days=days-1)).isoformat()
+                rows=[dict(row) for row in c.execute(
+                    "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date BETWEEN ? AND ? ORDER BY weigh_date",
+                    (link['athlete_id'],first,end.isoformat())).fetchall()]
+                return respond(200,{'end':end.isoformat(),'days':days,'entries':rows})
+            # Player post-match minutes: shared records with admin monitoring.
+            # No edits or deletion by players; admins retain correction controls.
+            if path == '/api/v2/player/post-match' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                matches=microcycles_v2.list_matches(c,aid)
+                # The player UI sends its local calendar date. Validate the
+                # date against UTC to prevent arbitrary future-day unlocking.
+                utc_today=datetime.now(ZoneInfo('UTC')).date()
+                query=parse_qs(env.get('QUERY_STRING',''))
+                body=read_json(env) if method=='POST' else None
+                raw_date=(body.get('local_date') if body is not None else (query.get('local_date') or [''])[0])
+                try:local_day=datetime.fromisoformat(raw_date).date()
+                except (TypeError,ValueError):raise Problem(400,'invalid_local_date')
+                if abs((local_day-utc_today).days)>1:raise Problem(400,'invalid_local_date')
+                def available(match):
+                    return match['match_date']<=local_day.isoformat()
+                if method=='GET':
+                    required={'v2_post_match_responses','v2_monitoring_audit'}
+                    if isinstance(c,PgConnection):
+                        present={row['table_name'] for row in c.execute(
+                            "SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema() AND table_name IN (?,?)",
+                            tuple(sorted(required))).fetchall()}
+                    else:
+                        present={row['name'] for row in c.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?)",
+                            tuple(sorted(required))).fetchall()}
+                    if present!=required:return respond(200,{'matches':[],'available':False})
+                    rows=c.execute("SELECT match_id,minutes,scenario,answers_json FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall()
+                    saved={row['match_id']:dict(row) for row in rows}
+                    return respond(200,{'available':True,'matches':[
+                        {'id':m['id'],'date':m['match_date'],'can_answer':available(m),
+                         'answered':m['id'] in saved,'minutes':saved.get(m['id'],{}).get('minutes'),
+                         'answers':json.loads(saved[m['id']]['answers_json']) if m['id'] in saved else {}}
+                        for m in matches if m['match_date']>= (local_day-timedelta(days=30)).isoformat()
+                        and m['match_date']<=local_day.isoformat()]})
+                match=next((m for m in matches if m['id']==body.get('match_id')),None)
+                if not match:raise Problem(404,'match_not_found')
+                if not available(match):raise Problem(403,'post_match_not_open')
+                prior=c.execute("SELECT * FROM v2_post_match_responses WHERE athlete_id=? AND match_id=?",(aid,match['id'])).fetchone()
+                raw=body.get('minutes')
+                if raw=='not_played':
+                    minutes=None;scenario='very_low'
+                else:
+                    try:
+                        if isinstance(raw,bool):raise ValueError()
+                        minutes=int(raw)
+                        if str(minutes)!=str(raw) or minutes not in range(5,121,5):raise ValueError()
+                    except (TypeError,ValueError):raise Problem(400,'invalid_match_minutes')
+                    scenario='low' if minutes<30 else 'medium' if minutes<60 else 'high'
+                answers=body.get('answers',{})
+                if not isinstance(answers,dict):raise Problem(400,'invalid_match_answers')
+                allowed={'feeling','effort','gi_level','gi_symptoms','game_symptoms',
+                         'food_pre','food_between','food_during','caffeine_pre',
+                         'caffeine_half','nitrates_pre','recovery_shake'}
+                if set(answers)-allowed:raise Problem(400,'invalid_match_answers')
+                if minutes is None:answers={}
+                for name in ('feeling','effort'):
+                    value=answers.get(name)
+                    if value is not None and (type(value)!=int or value not in range(1,11)):
+                        raise Problem(400,'invalid_match_answers')
+                if answers.get('gi_level') not in (None,'none','mild','moderate','severe'):
+                    raise Problem(400,'invalid_match_answers')
+                choices={'nausea','abdominal_pain','bloating','reflux','urgency','vomiting','other'}
+                symptoms={'none','cramps','muscle_pain','injury','weakness_dizziness','other'}
+                for name,options in (('gi_symptoms',choices),('game_symptoms',symptoms)):
+                    value=answers.get(name)
+                    if value is not None and (not isinstance(value,list) or
+                       len(value)!=len(set(str(x) for x in value)) or
+                       any(not isinstance(x,str) or x not in options for x in value)):
+                        raise Problem(400,'invalid_match_answers')
+                if answers.get('gi_level') not in ('mild','moderate','severe'):
+                    answers.pop('gi_symptoms',None)
+                if 'none' in (answers.get('game_symptoms') or []) and len(answers['game_symptoms'])>1:
+                    raise Problem(400,'invalid_match_answers')
+                for name in ('food_pre','food_between','food_during'):
+                    value=answers.get(name)
+                    if value is not None and (not isinstance(value,str) or len(value)>2000):
+                        raise Problem(400,'invalid_match_answers')
+                for name in ('caffeine_pre','caffeine_half','nitrates_pre','recovery_shake'):
+                    if answers.get(name) not in (None,True,False):
+                        raise Problem(400,'invalid_match_answers')
+                if len(json.dumps(answers,ensure_ascii=False))>10000:
+                    raise Problem(400,'invalid_match_answers')
+                answers_json=json.dumps(answers,ensure_ascii=False)
+                stamp=int(time.time())
+                if prior:
+                    record_id=prior['id']
+                    c.execute("UPDATE v2_post_match_responses SET minutes=?,scenario=?,answers_json=?,updated_at=? WHERE id=? AND athlete_id=?",
+                              (minutes,scenario,answers_json,stamp,record_id,aid))
+                else:
+                    record_id=secrets.token_hex(16)
+                    c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+                              (record_id,aid,match['id'],minutes,scenario,answers_json,stamp,stamp))
+                c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                          (secrets.token_hex(16),aid,'post_match',record_id,user['id'],
+                           json.dumps(dict(prior)) if prior else None,
+                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':answers}),stamp))
+                c.commit()
+                return respond(200,{'ok':True,'scenario':scenario})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                athlete = c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL", (aid,)).fetchone()
+                if not athlete: raise Problem(404, 'not_found')
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records = consumption_records_v2.read_range(
+                        c, aid, (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
+            # Independent nutrition choice publication. Save is a draft only;
+            # the player app never receives unapproved selections.
+            if path == '/api/v2/player/consumption-options' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                meal_date=(query.get('date') or [''])[0]
+                meal_key=(query.get('meal') or [''])[0]
+                event_id=(query.get('event_id') or [''])[0]
+                try:
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id,
+                        consumed_color=(query.get('consumed_color') or [None])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_meal_key')
+                if not source: raise Problem(404, 'published_meal_unavailable')
+                display_language=player_language_v2.presentation_language(
+                    c,user['id'])
+                source=app_content_i18n_v2.localise_consumption_source(
+                    c,link['athlete_id'],source,language=display_language)
+                timing=(query.get('timing') or [None])[0]
+                if timing is not None:
+                    if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
+                    try:
+                        if (query.get('extra_timing') or [''])[0]=='1':
+                            if consumption_timing_v2.has_legacy(c,link['athlete_id'],meal_date,event_id):
+                                raise Problem(409,'legacy_consumption_exists')
+                            source['options']=[consumption_timing_v2.validate_added_timing(
+                                c,link['athlete_id'],meal_date,event_id,timing,source['options'])]
+                        else:
+                            source['options']=[slice_ for option in source['options']
+                                if (slice_ := consumption_timing_v2.timing_option(option, timing)) is not None]
+                    except ValueError as exc:
+                        raise Problem(400, str(exc))
+                    if not source['options']: raise Problem(404, 'published_timing_unavailable')
+                if display_language=='en':
+                    for option in source['options']:
+                        if (str(option.get('option_ref') or '').startswith(
+                                'player-added:') and
+                                option.get('title')=='Adicionado pelo jogador'):
+                            option['title']='Added by player'
+                return respond(200, {'date': meal_date, 'meal': meal_key,
+                    'event_id': event_id, 'options': source['options'],
+                    'color': source['color'], 'planned_color': source['planned_color'],
+                    'alternative_colors': consumption_source_v2.available_alternative_colors(
+                        c, link['athlete_id'], meal_date, meal_key, event_id)})
+
+            if path == '/api/v2/player/consumption-preview' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                body=read_json(env)
+                if not isinstance(body,dict): raise Problem(400,'invalid_request')
+                try:
+                    source=consumption_source_v2.current_source(c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''),
+                        consumed_color=body.get('consumed_color'))
+                    if not source: raise Problem(409,'published_meal_unavailable')
+                    timing=body.get('timing')
+                    extra_timing=body.get('extra_timing') is True
+                    if timing is not None:
+                        if body.get('meal') != 'intra_match': raise ValueError('invalid_timing')
+                        if extra_timing:
+                            source['options']=[consumption_timing_v2.validate_added_timing(
+                                c,link['athlete_id'],body.get('date'),body.get('event_id',''),timing,source['options'])]
+                        else:
+                            source['options']=[piece for option in source['options']
+                                if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                    elif extra_timing:
+                        raise ValueError('invalid_extra_timing')
+                    option=next((o for o in source['options'] if o['option_ref']==body.get('option_ref')),None)
+                    if not option: raise Problem(409,'option_stale')
+                    if extra_timing and body.get('status')!='partial':
+                        raise ValueError('additional_timing_requires_food')
+                    library=consumption_nutrition_v2.active_library(c)
+                    actual=consumption_nutrition_v2.calculate(option,library,body.get('status'),body.get('edits'),body.get('additional'))
+                    planned_source=consumption_source_v2.current_source(
+                        c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
+                    if not planned_source: raise Problem(409,'published_meal_unavailable')
+                    if timing is not None:
+                        if extra_timing:
+                            planned_source['options']=[option]
+                        else:
+                            planned_source['options']=[piece for option in planned_source['options']
+                                if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                    if not planned_source['options']: raise Problem(409,'published_timing_unavailable')
+                    planned_option=next((o for o in planned_source['options']
+                        if o['option_ref']==body.get('option_ref')),None)
+                    if not planned_option:
+                        planned_option=planned_source['options'][0]
+                    planned=consumption_nutrition_v2.calculate(planned_option,library,'all',None,None)
+                except ValueError as exc:
+                    raise Problem(400,str(exc))
+                return respond(200,{'nutrition':actual['nutrition'],'planned':planned['nutrition']})
+
+            # Save confirmed consumption only against an approved, current plan.
+            # Never trust client-supplied athlete, food macros or prescription.
+            if path == '/api/v2/player/consumption-records' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                body=read_json(env)
+                if not isinstance(body, dict): raise Problem(400, 'invalid_request')
+                meal_date=body.get('date')
+                meal_key=body.get('meal')
+                event_id=body.get('event_id', '')
+                try:
+                    meal_option_selection_v2.valid_key(meal_date, meal_key, event_id)
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id,
+                        consumed_color=body.get('consumed_color'))
+                    if not source: raise Problem(409, 'published_meal_unavailable')
+                    option_ref=body.get('option_ref')
+                    timing=body.get('timing')
+                    extra_timing=body.get('extra_timing') is True
+                    if extra_timing:
+                        if meal_key != 'intra_match' or timing is None:
+                            raise ValueError('invalid_extra_timing')
+                        option=consumption_timing_v2.validate_added_timing(
+                            c,link['athlete_id'],meal_date,event_id,timing,source['options'])
+                        if option_ref!=option['option_ref']:
+                            raise Problem(409,'option_stale')
+                        if body.get('status')!='partial' or not isinstance(body.get('additional'),list) or not body['additional']:
+                            raise ValueError('additional_timing_requires_food')
+                        if body.get('edits') not in (None,[]):
+                            raise ValueError('additional_timing_has_no_prescribed_foods')
+                    else:
+                        option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
+                        if not option: raise Problem(409, 'option_stale')
+                        if timing is not None:
+                            if meal_key != 'intra_match': raise ValueError('invalid_timing')
+                            option=consumption_timing_v2.timing_option(option,timing)
+                            if not option: raise Problem(409,'published_timing_unavailable')
+                    if timing is None and meal_key == 'intra_match' and consumption_timing_v2.has_timings(
+                            c,link['athlete_id'],meal_date,event_id):
+                        raise Problem(409,'timing_consumption_exists')
+                    library=consumption_nutrition_v2.active_library(c)
+                    calculated=consumption_nutrition_v2.calculate(
+                        option, library, body.get('status'), body.get('edits'), body.get('additional'))
+                    if extra_timing:
+                        # Persist trusted library labels for the app and backoffice.
+                        # Never use a player-supplied food name or macro value.
+                        for consumed in calculated['foods']:
+                            catalog=library[consumed['id']]
+                            consumed['display_name']=(catalog.get('display_name')
+                                or catalog.get('name_pt') or catalog.get('name') or 'Alimento')
+                    prescription={'option': option, 'color': source.get('color'),
+                                  'planned_color': source.get('planned_color'),
+                                  'draft_id': source.get('draft_id')}
+                    if extra_timing:
+                        prescription['origin']='player_added'
+                        prescription['timing']=timing
+                    if timing is not None:
+                        consumption_timing_v2.save_timing(
+                            c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                            event_id=event_id, timing=timing, status=body['status'],
+                            option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                            prescription=prescription, consumed_foods=calculated['foods'],
+                            nutrition=calculated['nutrition'])
+                    else:
+                        consumption_records_v2.save_record(
+                            c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                            meal_key=meal_key, event_id=event_id, status=body['status'],
+                            option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                            prescription=prescription, consumed_foods=calculated['foods'],
+                            nutrition=calculated['nutrition'])
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'saved': True, 'nutrition': calculated['nutrition']})
+
+            if path == '/api/v2/player/consumption-records' and method == 'DELETE':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                body=read_json(env)
+                if not isinstance(body, dict): raise Problem(400, 'invalid_request')
+                try:
+                    timing=body.get('timing')
+                    if timing is not None:
+                        if body.get('meal') != 'intra_match': raise ValueError('invalid_timing')
+                        deleted=consumption_timing_v2.delete_timing(
+                            c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
+                            event_id=body.get('event_id',''), timing=timing)
+                    else:
+                        if body.get('meal') == 'intra_match' and consumption_timing_v2.has_timings(
+                                c,link['athlete_id'],body.get('date'),body.get('event_id','')):
+                            raise Problem(409,'timing_consumption_exists')
+                        deleted=consumption_records_v2.delete_record(
+                            c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
+                            meal_key=body.get('meal'), event_id=body.get('event_id', ''))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'deleted': deleted})
+
+            # Player-only consumption read and food search. Both derive athlete
+            # identity from the authenticated session, never client input.
+            if path == '/api/v2/player/consumption-records' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records=consumption_records_v2.read_range(c, link['athlete_id'],
+                        (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
+            if path == '/api/v2/player/consumption-foods' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                search=(query.get('q') or [''])[0].strip()[:120]
+                if len(search) < 2: return respond(200, {'foods': []})
+                try:
+                    columns={row['column_name'] for row in c.execute("SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='v2_food_library'").fetchall()}
+                except Exception:
+                    columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
+                note_column=next((name for name in ('note','notes','observation','observations','description','preparation_notes') if name in columns), None)
+                selected="id, display_name, variant, kcal, protein_g, carbs_g, fat_g"+((", "+note_column) if note_column else "")
+                if player_language_v2.presentation_language(c,user['id'])=='en':
+                    matches=app_content_i18n_v2.search_approved_food_names(
+                        c,search,['id','display_name','variant','kcal',
+                                  'protein_g','carbs_g','fat_g']+
+                        ([note_column] if note_column else []))
+                else:
+                    matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
+                return respond(200, {'foods': [{**{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')}, 'note': (f[note_column] or '') if note_column else ''} for f in matches]})
+
+            # V2 player access: self-only, no athlete id supplied by the client.
+            # Accounts are not linked or activated by this read-only endpoint.
+            if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                q = parse_qs(env.get('QUERY_STRING', ''))
+                first=(q.get('start') or [''])[0]
+                last=(q.get('end') or [''])[0]
+                try:
+                    if path.endswith('/menus'):
+                        menus=microcycles_v2.list_menus(c,link['athlete_id'],first,last)
+                        classes=calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])]))
+                        class_by_day={d['date']:d['classification'] for d in classes}
+                        model_data=microcycles_v2.get_model(c,link['athlete_id'])
+                        class_meals={row['name']:row['meals'] for row in model_data['classifications']}
+                        effective=calendar_v2.effective_colors(c,link['athlete_id'],classes,model_data)
+                        for menu in menus:
+                            key=(menu['menu_date'],menu['meal'])
+                            base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
+                            menu['effective_color']=effective.get(menu['menu_date'],{}).get(menu['meal'],{}).get('color')
+                        menus=app_content_i18n_v2.localise_dish_menus(
+                            c,menus,language=player_language_v2.presentation_language(
+                                c,user['id']))
+                        return respond(200,{'menus':menus})
+                    days = calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])]))
+                except ValueError: raise Problem(400, 'invalid_calendar_range')
+                model_data = microcycles_v2.get_model(c, link['athlete_id'])
+                event_data=events_v2.list_events(c,link['athlete_id'],first,last)
+                matches=[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last]
+                peri_meals=food_plan_player_v2.player_peri_days(
+                    c,link['athlete_id'],first,last,event_data,matches,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                published_choices=meal_option_selection_v2.published_for_player(
+                    c,link['athlete_id'],first,last)
+                # Only approved selections can affect the daily/wk player view.
+                # The option ref, source publication and position must all
+                # match the active published Planos: stale choices show all.
+                for peri in peri_meals:
+                    row=next((item for item in published_choices if
+                        item['meal_date']==peri['event_date'] and
+                        item['meal_key']==peri.get('selection_phase') and
+                        item['event_id']==peri['event_id']),None)
+                    if row:
+                        peri['options']=meal_option_selection_v2.visible_options(
+                            peri.get('options') or [],row,None)
+                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':app_content_i18n_v2.localise_supplement_days(
+                    c,supplements_v2.days(c,link['athlete_id'],first,last,
+                    microcycles_v2.list_matches(c,link['athlete_id']),event_data),
+                    language=player_language_v2.presentation_language(c,user['id']))})
+            if path == '/api/v2/player/recipes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                items=player_recipes_v2.library_for_athlete(c,link['athlete_id'])
+                items=app_content_i18n_v2.localise_recipe_summaries(c,items,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'recipes':items})
+            if path.startswith('/api/v2/player/recipe-photo/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                rid=path.rsplit('/',1)[-1]
+                recipe=player_recipes_v2.recipe_for_athlete(c,link['athlete_id'],rid)
+                if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
+                image_data=read_dish_image(c,recipe['photo_key'])
+                if image_data is None: raise Problem(404,'not_found')
+                return respond(200,image_data,'image/webp')
+            if path.startswith('/api/v2/player/recipes/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                recipe=player_recipes_v2.recipe_for_athlete(c,link['athlete_id'],path.rsplit('/',1)[-1])
+                if not recipe: raise Problem(404,'not_found')
+                recipe.pop('photo_key',None)
+                recipe['has_photo']=bool(c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=? AND photo_key IS NOT NULL",(recipe['id'],)).fetchone())
+                recipe=app_content_i18n_v2.localise_recipe_detail(c,recipe,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'recipe':recipe})
+            if path.startswith('/api/v2/player/dish-recipes/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                recipes=player_recipes_v2.published_for_dish(c,link['athlete_id'],path.rsplit('/',1)[-1])
+                if recipes is None: raise Problem(404,'not_found')
+                recipes=app_content_i18n_v2.localise_recipe_summaries(c,recipes,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'recipes':recipes})
+            if path == '/api/v2/player/dishes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                rows=c.execute("""SELECT DISTINCT d.id,d.name_pt
+                  FROM v2_dish_library d JOIN v2_weekly_menus m
+                  ON m.athlete_id=? AND m.kind='dish' AND
+                  (m.dish_id=d.id OR (m.dish_id IS NULL AND m.value=d.name_pt
+                   AND (SELECT COUNT(*) FROM v2_dish_library matches
+                        WHERE matches.name_pt=m.value)=1))
+                  WHERE d.active=1""",(link['athlete_id'],)).fetchall()
+                counts=player_recipes_v2.dish_recipe_counts(c,link['athlete_id'])
+                dishes=[{'id':row['id'],'name_pt':row['name_pt'],
+                    'recipe_count':counts.get(row['id'],0)} for row in rows]
+                dishes=app_content_i18n_v2.localise_dish_summaries(c,dishes,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'dishes':dishes})
+            if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                identifier=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
+                if not player_recipes_v2.dish_assigned_to_athlete(c,link['athlete_id'],identifier):
+                    raise Problem(404,'not_found')
+                row=c.execute("SELECT image_filename FROM v2_dish_library WHERE id=? AND active=1",(identifier,)).fetchone()
+                if not row: raise Problem(404,'not_found')
+                image_data=read_dish_image(c,row['image_filename'])
+                if image_data is None: raise Problem(404,'not_found')
+                thumbnail = parse_qs(env.get('QUERY_STRING','')).get('size',[''])[0] == 'thumbnail'
+                photo_bytes = player_daily_dish_thumbnail(image_data) if thumbnail else player_menu_photo(image_data)
+                return respond(200,photo_bytes,'image/webp')
+            # Player photos: two explicit gates (per-athlete opt-in and a
+            # separate release approval). Until release, only read-only admin
+            # previews may exercise the integration.
+            if (path == '/api/v2/player/visual-portions' or
+                    path.startswith('/api/v2/player/visual-portions/image/')) and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("""SELECT a.id,a.visual_portions_enabled FROM v2_player_links l
+                                  JOIN v2_athletes a ON a.id=l.athlete_id
+                                  WHERE l.user_id=? AND a.archived_at IS NULL""",
+                               (user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                if not link['visual_portions_enabled'] or not (
+                        PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session)):
+                    raise Problem(404,'not_found')
+                if path == '/api/v2/player/visual-portions':
+                    return respond(200,player_visual_portions_v2.compiled_for_athlete(c,link['id']))
+                photo_id=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{24}',photo_id):
+                    raise Problem(404,'not_found')
+                photo=c.execute("""SELECT im.data_base64 FROM v2_visual_portions p
+                                   JOIN v2_visual_portion_images im ON im.sha256=p.image_sha256
+                                   WHERE p.id=? AND p.active=1""",(photo_id,)).fetchone()
+                if not photo: raise Problem(404,'not_found')
+                return respond(200,base64.b64decode(photo['data_base64']),'image/webp')
+            if path == '/api/v2/player/plans' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                # Never trust a query parameter to override the player's
+                # authenticated, persisted language preference.
+                language=player_language_v2.presentation_language(
+                    c,user['id'])
+                return respond(200, food_plan_player_v2.player_plans(
+                    c, link['athlete_id'],language=language))
+            if path == '/api/me' and method == 'GET':
+                # Player and Chef PWAs share the same persistent session policy.
+                # Renew only near expiry. Admin and preview sessions retain
+                # their existing limits; inactive users remain revoked.
+                if user and user['role'] in ('player','chef') and not preview_session and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
+                    renewed_token = secrets.token_urlsafe(32)
+                    c.execute('UPDATE sessions SET token=?, expires=? WHERE token=? AND user_id=?',
+                              (digest(renewed_token), now + PLAYER_SESSION_SECONDS, digest(token), user['id']))
+                    c.commit()
+                    headers.append(('Set-Cookie', f'mile_session={renewed_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={PLAYER_SESSION_SECONDS}' + ('; Secure' if SECURE else '')))
+                if not user:
+                    return respond(200, {'user': None, 'csrf': None})
+                if user['role'] == 'player':
+                    data = player_dict(user)
+                    data['weight_form_url'] = WEIGHT_FORM_M if user['sex'] == 'M' else WEIGHT_FORM_F if user['sex'] == 'F' else ''
+                    data['game_form_url'] = GAME_FORM
+                elif user['role'] == 'chef':
+                    data = {'id': user['id'], 'name': user['name'],
+                            'username': user['username'], 'role': 'chef'}
+                else:
+                    data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role']}
+                return respond(200, {'user': data, 'csrf': user['csrf'], 'admin_preview': bool(preview_session)})
+
+            if path in ('/api/login', '/api/activate') and method == 'POST':
+                body = read_json(env)
+                limit_key = digest(env.get('REMOTE_ADDR', '') + ':' + path)
+                rate_limit(c, limit_key, now)
+                password = body.get('password', '')
+                if not isinstance(password, str) or len(password) > 256:
+                    raise Problem(400, 'password')
+                if path == '/api/login':
+                    identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
+                    u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                    if u and not (SITE_ROLE == 'both' or u['role'] == SITE_ROLE or (SITE_ROLE == 'player' and u['role'] == 'chef')):
+                        u = None
+                    if not password_valid(password, u['password'] if u else None):
+                        raise Problem(401, 'credentials')
+                else:
+                    if SITE_ROLE == 'player':
+                        raise Problem(404, 'not_found')
+                    if len(password) < 12:
+                        raise Problem(400, 'password_length')
+                    a = c.execute("SELECT u.* FROM activations a JOIN users u ON u.id=a.user_id WHERE a.token=? AND a.expires>? AND u.active=1 AND u.role='admin'", (digest(str(body.get('token', ''))), now)).fetchone()
+                    if not a:
+                        raise Problem(400, 'activation')
+                    c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(password), a['id']))
+                    c.execute('DELETE FROM activations WHERE user_id=?', (a['id'],))
+                    c.execute('DELETE FROM sessions WHERE user_id=?', (a['id'],))
+                    u = a
+                # A successful app login replaces the current browser session.
+                # When the pilot is enabled, revoke the replaced session, which
+                # also revokes its v2 push subscriptions via the foreign key.
+                if SITE_ROLE in ('player','both') and os.environ.get('MILE_NOTIFICATIONS_PUSH')=='1' and token:
+                    c.execute('DELETE FROM sessions WHERE token=?',(digest(token),))
+                session_token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
+                c.execute('DELETE FROM sessions WHERE expires<=?', (now,))
+                session_seconds = PLAYER_SESSION_SECONDS if u['role'] in ('player','chef') else ADMIN_SESSION_SECONDS
+                c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (digest(session_token), u['id'], csrf, now + session_seconds))
+                c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
+                c.commit()
+                headers.append(('Set-Cookie', f'mile_session={session_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={session_seconds}' + ('; Secure' if SECURE else '')))
+                return respond(200, {'ok': True})
+
+            if path == '/api/change-password' and method == 'POST':
+                body = read_json(env)
+                limit_key = digest(env.get('REMOTE_ADDR', '') + ':' + path)
+                rate_limit(c, limit_key, now)
+                identifier = str(body.get('identifier', '')).strip().lower()
+                current = body.get('current_password', '')
+                new = body.get('new_password', '')
+                if not isinstance(current, str) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
+                    raise Problem(400, 'password_change')
+                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                if target and not (SITE_ROLE == 'both' or target['role'] == SITE_ROLE or (SITE_ROLE == 'player' and target['role'] == 'chef')):
+                    target = None
+                if not target or not password_valid(current, target['password']):
+                    raise Problem(400, 'password_change')
+                c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(new), target['id']))
+                c.execute('DELETE FROM sessions WHERE user_id=?', (target['id'],))
+                c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
+                c.commit()
+                return respond(200, {'ok': True})
+
+            if not user:
+                raise Problem(401, 'login_required')
+
+            if path == '/api/logout' and method == 'POST':
+                c.execute('DELETE FROM sessions WHERE token=?', (digest(token),))
+                c.commit()
+                headers.append(('Set-Cookie', 'mile_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0' + ('; Secure' if SECURE else '')))
+                return respond(200, {'ok': True})
+
+            if path == '/api/password' and method == 'POST':
+                body = read_json(env)
+                current = body.get('current_password', '')
+                new = body.get('new_password', '')
+                if not password_valid(current, user['password']) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
+                    raise Problem(400, 'password_change')
+                c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(new), user['id']))
+                c.execute('DELETE FROM sessions WHERE user_id=? AND token<>?', (user['id'], digest(token)))
+                c.commit()
+                return respond(200, {'ok': True})
+
+            if path == '/api/players':
+                admin(user)
+                if method == 'GET':
+                    rows = c.execute("""SELECT u.*,(SELECT count(*) FROM documents d WHERE d.user_id=u.id) documents
+                                      FROM users u WHERE role='player' ORDER BY u.name""").fetchall()
+                    players = []
+                    for r in rows:
+                        p = player_dict(r)
+                        p['documents'] = r['documents']
+                        players.append(p)
+                    return respond(200, {'players': players})
+                if method == 'POST':
+                    body = read_json(env)
+                    p = clean_player_payload(body, require_password=True, require_photo=True)
+                    uid = secrets.token_hex(16)
+                    internal_email = f"{p['username']}@players.themile.local"
+                    c.execute("""INSERT INTO users(id,name,email,username,role,password,active,birth_date,sex,height,weight,menus_enabled,anthropometry_enabled,photo,photo_mime,plan_name,renewal_date)
+                                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                              (uid, p['name'], internal_email, p['username'], 'player', password_hash(p['password']), 1,
+                               p['birth_date'], p['sex'], p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['photo'], p['photo_mime'], p['plan_name'], p['renewal_date']))
+                    c.commit()
+                    return respond(201, {'id': uid})
+
+            if path == '/api/admins' and method == 'GET':
+                admin(user)
+                rows = c.execute("SELECT id,name,email,active,(password IS NOT NULL) activated FROM users WHERE role='admin' ORDER BY name").fetchall()
+                return respond(200, {'admins': [dict(r) for r in rows]})
+
+            if path.startswith('/api/admins/') and method == 'POST':
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 5:
+                    raise Problem(404, 'not_found')
+                uid, action = parts[3:]
+                target = c.execute("SELECT * FROM users WHERE id=? AND role='admin' AND active=1", (uid,)).fetchone()
+                if not target:
+                    raise Problem(404, 'not_found')
+                if action == 'activation':
+                    link = activation(c, uid)
+                    c.commit()
+                    return respond(200, {'activation_url': link})
+                raise Problem(404, 'not_found')
+
+            if path.startswith('/api/players/') and path.endswith('/photo') and method == 'GET':
+                parts = path.split('/')
+                if len(parts) != 5:
+                    raise Problem(404, 'not_found')
+                uid = parts[3]
+                target = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                if not target:
+                    raise Problem(404, 'not_found')
+                authorize_owner(user, uid)
+                if not target['photo']:
+                    raise Problem(404, 'not_found')
+                return respond(200, bytes(target['photo']), target['photo_mime'] or 'image/jpeg')
+
+            if path.startswith('/api/players/') and path.endswith('/access-extension') and method == 'POST':
+                admin(user)
+                # Historical access and renewal deadlines cannot be extended or enforced.
+                raise Problem(409, 'access_expiry_disabled')
+
+            if path.startswith('/api/players/') and method in ('PUT', 'DELETE'):
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 4:
+                    raise Problem(404, 'not_found')
+                uid = parts[3]
+                player = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                if not player:
+                    raise Problem(404, 'not_found')
+                if method == 'PUT':
+                    body = read_json(env)
+                    p = clean_player_payload(body)
+                    access_until = body.get('access_until', player['access_until'])
+                    if access_until in (None, ''):
+                        access_until = None
+                    else:
+                        if not isinstance(access_until, str):
+                            raise Problem(400, 'invalid_request')
+                        try:
+                            access_until = datetime.strptime(access_until, '%Y-%m-%d').date().isoformat()
+                        except ValueError:
+                            raise Problem(400, 'invalid_request')
+                    fields = [p['name'], f"{p['username']}@players.themile.local", p['username'], p['birth_date'], p['sex'],
+                              p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['plan_name'], p['renewal_date'], access_until]
+                    sql = 'UPDATE users SET name=?,email=?,username=?,birth_date=?,sex=?,height=?,weight=?,menus_enabled=?,anthropometry_enabled=?,plan_name=?,renewal_date=?,access_until=?'
+                    if p['password']:
+                        sql += ',password=?'
+                        fields.append(password_hash(p['password']))
+                    if p['photo'] is not None:
+                        sql += ',photo=?,photo_mime=?'
+                        fields.extend([p['photo'], p['photo_mime']])
+                    sql += ' WHERE id=?'
+                    fields.append(uid)
+                    c.execute(sql, tuple(fields))
+                    # Revoke all active sessions when access or credentials change.
+                    if p['password'] or (access_until != player['access_until']):
+                        c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                # Legacy hard delete removes only legacy portal rows. Accounts
+                # linked to a v2 athlete are refused so that link is never broken.
+                if c.execute('SELECT 1 FROM v2_player_links WHERE user_id=?', (uid,)).fetchone():
+                    raise Problem(409, 'player_linked')
+                c.execute('DELETE FROM notifications WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM push_subscriptions WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM documents WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM activations WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM users WHERE id=?', (uid,))
+                c.commit()
+                return respond(200, {'ok': True})
+
+            if path.startswith('/api/players/') and method == 'POST':
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 5:
+                    raise Problem(404, 'not_found')
+                uid, action = parts[3:]
+                player = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                if not player:
+                    raise Problem(404, 'not_found')
+                if action == 'status':
+                    active = read_json(env).get('active')
+                    if not isinstance(active, bool):
+                        raise Problem(400, 'user_fields')
+                    c.execute('UPDATE users SET active=? WHERE id=?', (int(active), uid))
+                    c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                if action == 'password':
+                    password = read_json(env).get('password', '')
+                    if not isinstance(password, str) or len(password) < 8 or len(password) > 256:
+                        raise Problem(400, 'password_length')
+                    c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(password), uid))
+                    c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                if action == 'weekly-status':
+                    status = str(read_json(env).get('status', '')).strip()
+                    if status not in ('available', 'waiting', 'updating'):
+                        raise Problem(400, 'weekly_status')
+                    c.execute('UPDATE users SET weekly_status=? WHERE id=?', (status, uid))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                if action == 'weekly-current':
+                    did = str(read_json(env).get('document_id', '')).strip()
+                    doc = c.execute("SELECT id FROM documents WHERE id=? AND user_id=? AND folder='weekly'", (did, uid)).fetchone()
+                    if not doc:
+                        raise Problem(404, 'not_found')
+                    c.execute("UPDATE users SET current_weekly_document_id=?,weekly_status='available',weekly_next_activate_at=NULL WHERE id=?", (did, uid))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                raise Problem(404, 'not_found')
+
+            # Explicit activation only. Legacy push endpoints remain unchanged.
+            if path == '/api/v2/notifications/activation':
+                if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_PUSH','') != '1':
+                    raise Problem(404,'not_found')
+                if preview_session:raise Problem(403,'admin_preview_read_only')
+                public_key=os.environ.get('MILE_VAPID_PUBLIC_KEY','')
+                if not public_key or not os.environ.get('MILE_VAPID_PRIVATE_KEY_B64',''):
+                    raise Problem(404,'not_found')
+                if not user or user['role'] not in ('player','chef'):
+                    raise Problem(403,'forbidden')
+                if user['role']=='chef':
+                    if not chef_accounts_v2.assigned_athlete(c,user['id']):
+                        raise Problem(403,'forbidden')
+                elif not c.execute("""SELECT 1 FROM v2_player_links l
+                    JOIN v2_athletes a ON a.id=l.athlete_id
+                    WHERE l.user_id=? AND a.archived_at IS NULL""",(user['id'],)).fetchone():
+                    raise Problem(403,'forbidden')
+                import notification_activation_v2 as activation
+                try:
+                    if method=='GET':
+                        device=(parse_qs(env.get('QUERY_STRING','')).get('device') or [''])[0]
+                        return respond(200,{**activation.state(c,user_id=user['id'],device=device,session_token=digest(token),now=now),
+                                            'publicKey':public_key})
+                    if method=='POST':
+                        body=read_json(env)
+                        if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                        device=activation.device_id(body.get('device'))
+                        action=body.get('action')
+                        if action=='acknowledge':
+                            activation.acknowledge(c,user_id=user['id'],now=now)
+                        elif action=='activate':
+                            activation.activate(c,user_id=user['id'],device=device,
+                                                subscription=body.get('subscription'),session_token=digest(token),now=now)
+                        elif action=='deactivate':
+                            activation.deactivate(c,user_id=user['id'],device=device)
+                        else:raise Problem(400,'invalid_action')
+                        c.commit()
+                        return respond(200,activation.state(c,user_id=user['id'],device=device,session_token=digest(token),now=now))
+                    raise Problem(405,'method_not_allowed')
+                except (ValueError,TypeError):
+                    raise Problem(400,'invalid_activation')
+
+            # New notification inbox, isolated and disabled by default.
+            if path in ('/api/v2/notifications/inbox','/api/v2/notifications/open'):
+                if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_INBOX','') != '1':
+                    raise Problem(404,'not_found')
+                if preview_session:raise Problem(403,'admin_preview_read_only')
+                if not user or user['role'] not in ('player','chef'):
+                    raise Problem(403,'forbidden')
+                if user['role']=='chef':
+                    if not chef_accounts_v2.assigned_athlete(c,user['id']):
+                        raise Problem(403,'forbidden')
+                elif not c.execute("""SELECT 1 FROM v2_player_links l
+                    JOIN v2_athletes a ON a.id=l.athlete_id
+                    WHERE l.user_id=? AND a.archived_at IS NULL""",(user['id'],)).fetchone():
+                    raise Problem(403,'forbidden')
+                import notification_inbox_v2
+                if path.endswith('/inbox') and method=='GET':
+                    return respond(200,{'items':notification_inbox_v2.inbox(c,user['id'])})
+                if path.endswith('/open') and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                    item=notification_inbox_v2.open_notification(c,recipient_id=user['id'],
+                        notification_id=body.get('id'),now=now)
+                    if not item:raise Problem(404,'not_found')
+                    target=notification_inbox_v2.destination(c,user=user,item=item)
+                    c.commit()
+                    return respond(200,{'item':item,'destination':target})
+                raise Problem(405,'method_not_allowed')
+
+            if path == '/api/push/config' and method == 'GET':
+                if not user or user['role'] != 'player':
+                    raise Problem(401, 'unauthorized')
+                return respond(200, {'publicKey': os.environ.get('MILE_VAPID_PUBLIC_KEY','')})
+
+            if path == '/api/push/subscription':
+                if not user or user['role'] != 'player':
+                    raise Problem(401, 'unauthorized')
+                if method == 'POST':
+                    body = read_json(env)
+                    endpoint = body.get('endpoint')
+                    keys = body.get('keys')
+                    if (not isinstance(endpoint,str) or len(endpoint)>1800 or not endpoint.startswith('https://') or
+                        not isinstance(keys,dict) or not all(isinstance(keys.get(k),str) and 10<=len(keys[k])<=300 for k in ('p256dh','auth'))):
+                        raise Problem(400,'invalid_request')
+                    c.execute("DELETE FROM push_subscriptions WHERE user_id=? OR endpoint=?", (user['id'],endpoint))
+                    c.execute("INSERT INTO push_subscriptions(endpoint,user_id,p256dh,auth,created) VALUES(?,?,?,?,?)",(endpoint,user['id'],keys['p256dh'],keys['auth'],now))
+                    c.commit()
+                    return respond(200, {'ok':True})
+                if method == 'DELETE':
+                    body=read_json(env)
+                    endpoint=body.get('endpoint','')
+                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?",(endpoint,user['id']))
+                    c.commit()
+                    return respond(200, {'ok':True})
+
+            if path == '/api/notifications':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                if method == 'GET':
+                    if user['role'] == 'player':
+                        rows = c.execute('SELECT id,title,message,category,document_id,folder,created,read_at,document_opened_at FROM notifications WHERE user_id=? ORDER BY created DESC LIMIT 150', (user['id'],)).fetchall()
+                    else:
+                        rows = c.execute('SELECT id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at FROM notifications ORDER BY created DESC LIMIT 200').fetchall()
+                    return respond(200, {'notifications': [dict(r) for r in rows]})
+                if method == 'POST':
+                    admin(user)
+                    payload = read_json(env)
+                    title = str(payload.get('title', '')).strip()
+                    message = str(payload.get('message', '')).strip()
+                    category = str(payload.get('category', 'manual')).strip()
+                    recipients = payload.get('recipients', [])
+                    document_id = payload.get('document_id')
+                    if (not title or len(title)>120 or not message or len(message)>1000
+                            or category not in ('manual','weight','game','document','renewal')
+                            or not isinstance(recipients,list) or not 1<=len(recipients)<=200
+                            or not all(isinstance(x,str) for x in recipients)
+                            or len(set(recipients))!=len(recipients)):
+                        raise Problem(400, 'invalid_request')
+                    valid = c.execute("SELECT id FROM users WHERE role='player' AND active=1").fetchall()
+                    allowed = {r['id'] for r in valid}
+                    if not set(recipients).issubset(allowed):
+                        raise Problem(400, 'invalid_request')
+                    folder_target = None
+                    if document_id:
+                        if len(recipients)!=1:
+                            raise Problem(400, 'invalid_request')
+                        d = c.execute('SELECT user_id,folder FROM documents WHERE id=?', (document_id,)).fetchone()
+                        if not d or d['user_id']!=recipients[0]:
+                            raise Problem(400, 'invalid_request')
+                        folder_target = d['folder']
+                    created_push=[]
+                    for uid in recipients:
+                        nid=secrets.token_hex(16)
+                        c.execute('INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,?,?,?,NULL,NULL,?)',
+                                  (nid,uid,title,message,category,document_id,folder_target,now,user['id']))
+                        created_push.append((uid,nid))
+                    c.commit()
+                    for uid,nid in created_push:
+                        send_player_push(c,uid,title,message,nid)
+                    return respond(201, {'ok':True,'sent':len(recipients)})
+
+            if path.startswith('/api/notifications/'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                parts = path.strip('/').split('/')
+                if len(parts)==4 and parts[1]=='notifications' and parts[3]=='read' and method=='POST':
+                    nid=parts[2]
+                    c.execute('UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE id=? AND user_id=?', (now,nid,user['id']))
+                    c.commit()
+                    return respond(200, {'ok':True})
+
+            if path == '/api/documents':
+                # Only explicit account activation and document permissions control access.
+                qs = parse_qs(env.get('QUERY_STRING', ''))
+                uid = qs.get('player', [user['id']])[0]
+                authorize_owner(user, uid)
+                owner = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                if not owner:
+                    raise Problem(404, 'not_found')
+                if method == 'GET':
+                    rows = c.execute('SELECT id,folder,title,size,updated FROM documents WHERE user_id=? ORDER BY updated DESC', (uid,)).fetchall()
+                    result = [dict(r) for r in rows if user['role'] == 'admin' or folder_allowed(owner, r['folder'])]
+                    return respond(200, {'documents': result})
+                if method == 'POST':
+                    admin(user)
+                    folder = qs.get('folder', [''])[0]
+                    title = qs.get('title', [''])[0].strip()
+                    if folder not in FOLDERS or not title or len(title) > 180 or any(ord(ch) < 32 for ch in title):
+                        raise Problem(400, 'document_fields')
+                    blob = read_body(env, MAX_PDF)
+                    if not blob.startswith(b'%PDF-') or b'%%EOF' not in blob[-4096:]:
+                        raise Problem(400, 'pdf_only')
+                    did = secrets.token_hex(16)
+                    c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
+                              (did, uid, folder, title, len(blob), now, user['id'], blob))
+                    document_push=None
+                    if qs.get('notify', ['0'])[0] == '1':
+                        labels = {'weekly':'Plano semanal', 'nutrition':'Plano alimentar', 'menus':'Menu', 'other':'Documento', 'anthropometry':'Avaliação antropométrica'}
+                        nid=secrets.token_hex(16)
+                        msg=labels.get(folder,'Documento') + ': ' + title
+                        c.execute('INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,?,?,?,NULL,NULL,?)',
+                                  (nid,uid,'Novo documento disponível',msg,'document',did,folder,now,user['id']))
+                        document_push=(nid,msg)
+                    c.commit()
+                    if document_push:
+                        send_player_push(c,uid,'Novo documento disponível',document_push[1],document_push[0])
+                    return respond(201, {'id': did})
+
+            if path.startswith('/api/documents/'):
+                # No date-driven restrictions on individual documents.
+                did = path.split('/')[-1]
+                d = c.execute('SELECT * FROM documents WHERE id=?', (did,)).fetchone()
+                if not d:
+                    raise Problem(404, 'not_found')
+                authorize_owner(user, d['user_id'])
+                owner = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (d['user_id'],)).fetchone()
+                if user['role'] != 'admin' and not folder_allowed(owner, d['folder']):
+                    raise Problem(403, 'forbidden')
+                if method == 'PATCH':
+                    admin(user)
+                    payload = read_json(env)
+                    title = str(payload.get('title', '')).strip()
+                    if not title or len(title) > 180 or any(ord(ch) < 32 for ch in title):
+                        raise Problem(400, 'document_fields')
+                    c.execute('UPDATE documents SET title=?,updated=? WHERE id=?', (title, now, d['id']))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                if method == 'PUT':
+                    admin(user)
+                    blob = read_body(env, MAX_PDF)
+                    if not blob.startswith(b'%PDF-') or b'%%EOF' not in blob[-4096:]:
+                        raise Problem(400, 'pdf_only')
+                    c.execute('UPDATE documents SET size=?,updated=?,uploaded_by=?,data=? WHERE id=?', (len(blob), now, user['id'], blob, d['id']))
+                    c.commit()
+                    return respond(200, {'ok': True})
+                if method == 'GET':
+                    if user['role']=='player' and not preview_session:
+                        c.execute('UPDATE notifications SET document_opened_at=COALESCE(document_opened_at,?) WHERE user_id=? AND document_id=?', (now,user['id'],did))
+                        c.commit()
+                    headers.append(('Content-Disposition', "inline; filename=document.pdf; filename*=UTF-8''" + quote((d['title'] if d['title'].lower().endswith('.pdf') else d['title'] + '.pdf'), safe='')))
+                    return respond(200, bytes(d['data']), 'application/pdf')
+                if method == 'DELETE':
+                    admin(user)
+                    if d['folder'] == 'weekly':
+                        c.execute("UPDATE users SET current_weekly_document_id=NULL,weekly_status=CASE WHEN current_weekly_document_id=? THEN 'waiting' ELSE weekly_status END WHERE id=? AND current_weekly_document_id=?", (did, d['user_id'], did))
+                    c.execute('DELETE FROM documents WHERE id=?', (did,))
+                    c.commit()
+                    return respond(200, {'ok': True})
+
+            raise Problem(404, 'not_found')
+    except Problem as e:
+        return respond(e.status, {'error': e.code})
+    except sqlite3.IntegrityError:
+        return respond(409, {'error': 'username_exists'})
+    except (ValueError, json.JSONDecodeError):
+        return respond(400, {'error': 'invalid_request'})
+    except Exception as e:
+        if psycopg is not None and isinstance(e, psycopg.errors.UniqueViolation):
+            return respond(409, {'error': 'username_exists'})
+        logging.exception('The Mile request failed')
+        return respond(500, {'error': 'server_error'})
+
+
+def read_body(env, limit):
+    try:
+        length = int(env.get('CONTENT_LENGTH') or 0)
+    except ValueError:
+        raise Problem(400, 'invalid_request')
+    if length <= 0:
+        raise Problem(400, 'invalid_request')
+    if length > limit:
+        raise Problem(413, 'file_size')
+    data = env['wsgi.input'].read(length)
+    if len(data) != length:
+        raise Problem(400, 'invalid_request')
+    return data
+
+
+def read_json(env):
+    value = json.loads(read_body(env, MAX_JSON))
+    if not isinstance(value, dict):
+        raise Problem(400, 'invalid_request')
+    return value
+
+
+def admin(user):
+    if user['role'] != 'admin':
+        raise Problem(403, 'forbidden')
+
+
+def authorize_owner(user, uid):
+    if user['role'] != 'admin' and user['id'] != uid:
+        raise Problem(403, 'forbidden')
+
+
+def rate_limit(c, key, now):
+    row = c.execute('SELECT * FROM attempts WHERE key=?', (key,)).fetchone()
+    if row and row['until_time'] > now and row['count'] >= 10:
+        raise Problem(429, 'rate_limit')
+    count = row['count'] + 1 if row and row['until_time'] > now else 1
+    until = row['until_time'] if row and row['until_time'] > now else now + 900
+    c.execute('INSERT OR REPLACE INTO attempts VALUES(?,?,?)', (key, count, until))
+    c.execute('DELETE FROM attempts WHERE until_time<=?', (now,))
+    c.commit()
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command', choices=('init', 'activate', 'serve'))
+    parser.add_argument('--email')
+    args = parser.parse_args()
+    initialize()
+    if args.command == 'activate':
+        with connect() as c:
+            user = c.execute("SELECT id FROM users WHERE email=? AND active=1 AND role='admin'", ((args.email or '').lower(),)).fetchone()
+            if not user:
+                parser.error('Conta de administrador inexistente ou desativada.')
+            print(activation(c, user['id']))
+    elif args.command == 'serve':
+        from wsgiref.simple_server import make_server
+        print('Desenvolvimento local: http://localhost:8000')
+        make_server('127.0.0.1', 8000, application).serve_forever()

@@ -1,0 +1,168 @@
+/* The Mile | private, opt-in visual portion guidance.
+   Original optimized photographs only: no image transformations or downloads. */
+
+/* Below the expanded option's nutrition details. White translucent pill
+   like the app's menu card controls, with a barely visible outline. */
+#overview .daily-meal .tm-daily-portions-action{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:7px!important;align-self:flex-start!important;
+ width:max-content!important;max-width:100%!important;min-height:34px!important;
+ box-sizing:border-box!important;margin:14px 0 2px!important;padding:7px 11px!important;
+ border:1px solid rgba(255,255,255,.11)!important;border-radius:999px!important;
+ color:#fff!important;background:rgba(255,255,255,.06)!important;
+ box-shadow:none!important;letter-spacing:0!important;text-transform:none!important;
+ font:400 12px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+ transition:background-color .15s ease,border-color .15s ease
+}
+#overview .daily-meal > details.player-meal-option-subcard:not([open]) > .tm-daily-portions-action{
+ display:none!important
+}
+#overview .daily-meal .single-meal-option > .tm-daily-portions-action{
+ margin:14px 0 2px!important
+}
+/* True SVG shapes (not CSS masks) render reliably in iOS preview. */
+#overview .daily-meal .tm-daily-portions-action > svg{
+ display:block!important;width:16px!important;height:16px!important;
+ flex:0 0 16px!important;fill:none!important;stroke:currentColor!important;
+ overflow:visible!important
+}
+#overview .daily-meal .tm-daily-portions-action > .tm-portion-arrow-icon{
+ width:13px!important;height:13px!important;flex-basis:13px!important;
+ margin-left:2px!important
+}
+#overview .daily-meal .tm-daily-portions-action:disabled{opacity:.55;cursor:wait}
+#overview .daily-meal .tm-daily-portions-action:focus-visible{
+ outline:2px solid #f9e6bd!important;outline-offset:3px!important
+}
+@media(hover:hover){
+ #overview .daily-meal .tm-daily-portions-action:hover{
+  background:rgba(255,255,255,.10)!important
+ }
+}
+body.visual-portions-open{overflow:hidden}
+.tm-portion-overlay{
+ position:fixed;z-index:11000;inset:0;display:flex;align-items:flex-end;
+ justify-content:center;box-sizing:border-box;
+ background:rgba(6,6,9,.70);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)
+}
+.tm-portion-sheet{
+ position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;
+ width:min(100%,660px);height:72dvh;max-height:94dvh;overflow:hidden;
+ color:#f3f3f5;background:#1d1d22;border:0;
+ border-radius:22px 22px 0 0;box-shadow:0 -16px 50px rgba(0,0,0,.34);
+ padding:0 0 max(12px,env(safe-area-inset-bottom));
+ font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ transition:height .22s ease
+}
+.tm-portion-sheet.is-expanded{height:94dvh}
+.tm-portion-sheet.is-dragging{transition:none!important}
+.tm-portion-sheet-drag-handle{
+ display:flex;align-items:center;justify-content:center;flex:0 0 22px;
+ height:22px;width:100%;padding:5px 18px 3px;
+ border:0;background:transparent;color:#a6a6b1;cursor:ns-resize;touch-action:none
+}
+.tm-portion-sheet-drag-handle:focus-visible{
+ outline:2px solid #e9d5a0;outline-offset:-2px
+}
+.tm-portion-sheet-grip{
+ display:block;width:44px;height:5px;border-radius:999px;background:#73737d
+}
+.tm-portion-sheet-header{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+ padding:8px 22px 16px;flex:0 0 auto;border-bottom:0;
+ touch-action:none;cursor:ns-resize
+}
+.tm-portion-sheet-header h2{
+ font-size:20px;line-height:1.2;letter-spacing:-.02em;font-weight:600;
+ color:#f6f6f7;margin:0
+}
+.tm-portion-sheet-header p{
+ font-size:12px;line-height:1.35;color:#a7a7b0;margin:6px 0 0
+}
+.tm-portion-sheet-close{
+ flex:0 0 42px;display:flex;align-items:center;justify-content:center;
+ width:42px;height:42px;box-sizing:border-box;padding:0;
+ border:0;background:#29292f;border-radius:50%;
+ color:#f2f2f5;cursor:pointer;touch-action:manipulation
+}
+.tm-portion-sheet-close .tm-portion-close-icon{
+ display:block;width:20px;height:20px;flex:0 0 20px;
+ fill:none;stroke:#f2f2f5;stroke-width:2;
+}
+.tm-portion-sheet-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.tm-portion-sheet-content{
+ overflow-y:auto;overflow-x:hidden;min-height:0;flex:1 1 auto;
+ padding:20px 19px 16px;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch
+}
+.tm-portion-photo-group{margin:0 0 24px;min-width:0}
+.tm-portion-photo-group:last-child{margin-bottom:5px}
+.tm-portion-photo-group h3{
+ font-size:14px;color:#d9d9e2;font-weight:600;margin:0 0 13px;line-height:1.4
+}
+/* Same 2-column grid in each group: meat/fish and all sides use equal-sized
+   square original WEBPs. The tile never grows just because it is the sole item. */
+.tm-portion-photo-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;
+ align-items:stretch;min-width:0;width:100%;box-sizing:border-box
+}
+.tm-portion-photo-tile{
+ display:flex;flex-direction:column;box-sizing:border-box;width:100%;
+ min-width:0;overflow:hidden;align-self:stretch;
+ border:0;background:#27272c;border-radius:15px
+}
+.tm-portion-photo-tile img{
+ display:block;flex:0 0 auto;width:100%;height:auto;aspect-ratio:1/1;
+ object-fit:contain;background:#fff
+}
+.tm-portion-photo-description{
+ display:flex;flex-direction:column;gap:3px;min-width:0;
+ padding:11px 12px 13px;line-height:1.3;flex:1 1 auto
+}
+.tm-portion-photo-description strong{
+ font-size:13px;color:#f4f4f6;font-weight:600;overflow-wrap:anywhere
+}
+.tm-portion-photo-description .tm-portion-approximate{
+ font-size:11px;color:#acacb6
+}
+@media(min-width:700px){
+ .tm-portion-sheet{
+  margin-bottom:24px;border-radius:22px;border:0;
+  height:min(74dvh,760px);max-height:94dvh;padding-bottom:12px
+ }
+ .tm-portion-sheet.is-expanded{height:94dvh}
+}
+@media(max-width:390px){
+ .tm-portion-sheet-header{padding:6px 17px 15px}
+ .tm-portion-sheet-content{padding:16px 15px 14px}
+ .tm-portion-photo-grid{gap:10px}
+ .tm-portion-photo-description{padding:10px 10px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tm-portion-sheet,
+ #overview .daily-meal .tm-daily-portions-action{transition:none}
+}
+
+/* Shared understated text-link style for both meal actions. */
+#overview .daily-meal .tm-daily-portions-action{
+ display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;width:max-content!important;min-height:32px!important;
+ margin:12px 0 0!important;padding:4px 0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;color:inherit!important;font-size:13px!important;font-weight:400!important;
+}
+#overview .daily-meal .tm-daily-portions-action:hover{background:transparent!important;opacity:.8!important}
+#overview .daily-meal .tm-daily-portions-action > .tm-portion-arrow-icon{width:14px!important;height:14px!important;flex-basis:14px!important;margin-left:0!important}
+
+/* Both meal text links share right alignment, independent of earlier pill rules. */
+#overview #day-details .daily-meal .tm-daily-portions-action,
+#overview .daily-meal .tm-daily-portions-action{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ align-self:flex-end!important;width:max-content!important;max-width:100%!important;
+ margin:12px 0 0 auto!important;padding:4px 0!important;
+ min-height:32px!important;height:auto!important;border:0!important;
+ background:transparent!important;color:inherit!important;opacity:1!important;
+ font:400 13px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
+ gap:7px!important;box-shadow:none!important;text-align:right!important;
+}

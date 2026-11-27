@@ -1,0 +1,280 @@
+"""Read-only guardrails for the approved player daily-card geometry.
+
+Checks source contracts only, not Safari/iPhone pixel rendering.
+"""
+from pathlib import Path
+import re
+import unittest
+
+ROOT = Path(__file__).resolve().parent
+CSS = (ROOT / "static" / "jogador-v2.css").read_text(encoding="utf-8")
+JS = (ROOT / "static" / "jogador-v2.js").read_text(encoding="utf-8")
+GUIDE = (ROOT / "docs" / "GUIA_VISUAL_APP_JOGADORES.md").read_text(encoding="utf-8")
+
+
+def declarations(selector):
+    escaped = re.escape(selector)
+    return re.findall(r"(?m)^" + escaped + r"\s*\{([^{}]*)\}", CSS)
+
+
+class DailyCardGeometryTests(unittest.TestCase):
+    def test_meal_reference_remains_61_closed_55_open(self):
+        self.assertIn(".daily-meal:not([open])", CSS)
+        self.assertIn("height:61px!important", CSS)
+        self.assertIn(".daily-meal[open]>.daily-meal-head{height:55px", CSS)
+        self.assertIn("padding:12px 17px 6px", CSS)
+
+    def test_supplements_in_light_match_are_readable_without_dark_card_regression(self):
+        supplement = declarations(".supplement-in-meal")
+        self.assertEqual(len(supplement), 1)
+        self.assertIn("color:var(--supplement-ink,#eeeef1)", supplement[0])
+        self.assertIn("border-top:1px solid var(--supplement-divider,rgba(255,255,255,.15))", supplement[0])
+        match = declarations("#overview #day-details .daily-event-card.match-intra-card")
+        self.assertTrue(any("--supplement-ink:#22232A" in block
+                            and "--supplement-divider:rgba(34,35,42,.14)" in block
+                            for block in match))
+        self.assertIn("--consumption-editor-surface:#E1E1E5", CSS)
+        self.assertIn("Suplementação integrada no Jogo branco — contraste (20/11)", GUIDE)
+        self.assertIn("registar consumo de Intra-jogo por timing", GUIDE)
+
+    def test_peri_plans_single_option_is_directly_visible(self):
+        # Only the Planos peri branch changes; no second collapsible Opção 1.
+        self.assertIn('if(key.startsWith("peri-"))', JS)
+        self.assertIn('if(opts.length===1)appendMealItems(section,opts[0].items);', JS)
+        self.assertIn('else opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});', JS)
+        self.assertIn('const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);', JS)
+        # 25/11: each plan (colour, Treino, Jogo, Suplementação) opens from the Início widget into the same renderer.
+        self.assertIn('detail.replaceChildren();planPhase=null;renderPlanContent(entry.key,detail);', JS)
+        self.assertIn('if(opts.length===1){', JS)
+        self.assertIn('appendGroupedPeriItems(section,opts[0].items,opts[0].timing_groups)', JS)
+        self.assertIn('Planos → Treino/Jogo — opção única (20/11)', GUIDE)
+
+    def test_peri_training_title_and_match_color_contract(self):
+        self.assertIn('--day-title-size:16px;--day-title-weight:var(--mile-type-card-title)', CSS)
+        self.assertEqual(CSS.count('--mile-type-card-title:400'), 1)
+        self.assertIn('const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";', JS)
+        self.assertIn('const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);', JS)
+        self.assertIn('font-weight:var(--mile-type-card-title)!important', CSS)
+        self.assertIn('section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"")', JS)
+        light = declarations('#overview #day-details .daily-event-card:is(.daily-match-card,.match-intra-card),\n#weekly-view .weekly-event-card.weekly-match-with-intra')
+        self.assertEqual(len(light), 1, 'Shared light match surface, not a late override')
+        self.assertIn('background:#F2F2F4!important;color:#22232A!important', light[0])
+        self.assertIn('const eventCardElement=intra?matchWithIntraCard(event,intra,consumptionEnabled,consumptionRecords):eventCard(event)', JS)
+        self.assertIn('Jogo — superfície branca em todos os casos (20/11)', GUIDE)
+
+    def test_weight_title_matches_the_meal_title_column(self):
+        rules = declarations(".daily-weight-header")
+        self.assertEqual(len(rules), 1)
+        self.assertIn("height:61px", rules[0])
+        self.assertIn("padding-block:9px", rules[0])
+        # Início now shows fasting weight as a widget (Peso) beside the Semana widget.
+        self.assertIn('dayWidget("daily-weight-card day-weight-widget",playerText("Peso","Weight"))', JS)
+        self.assertIn('renderWeekWidget(row,date,calendar)', JS)
+        self.assertIn("#overview #day-details > .day-widgets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important", CSS)
+        self.assertNotIn(".daily-weight-icon{width:40px;height:40px", CSS)
+        self.assertIn(".daily-weight-card:has(.daily-weight-panel:not([hidden]))", CSS)
+
+    def test_post_match_header_is_single_normative_family(self):
+        base = declarations("#overview #day-details .post-match-inline")
+        header = declarations("#overview #day-details .post-match-inline-trigger")
+        self.assertEqual([len(x) for x in (base, header)], [1, 1])
+        self.assertIn("min-height:61px", base[0])
+        self.assertIn("border-radius:13px", base[0])
+        self.assertIn("background:#303135", base[0])
+        self.assertIn("height:61px", header[0])
+        self.assertIn("padding-top:12px", header[0])
+        self.assertIn("post-match-inline-icon tm-day-icon", JS)
+        self.assertIn("post-match-inline-title tm-day-title", JS)
+        self.assertIn(".post-match-inline-form:not([hidden]))", CSS)
+        self.assertIn("border-radius:18px", CSS)
+        self.assertNotIn("post-match-inline-trigger>span:nth-child(2)", CSS)
+
+    def test_approved_icon_and_pencil_only_interaction_are_preserved(self):
+        self.assertIn('icon.append(mealIcon("football-pitch"))', JS)
+        self.assertIn('title.className="post-match-inline-title tm-day-title"', JS)
+        self.assertIn("button.disabled=true", JS)
+        self.assertIn("action.onclick=()=>", JS)
+        self.assertIn('const steps=["Participação e bem-estar","Alimentação","Suplementação"]', JS)
+        self.assertIn("Por preencher", JS)
+        self.assertIn("Preenchido", JS)
+
+    def test_shared_icon_and_typography_contract(self):
+        for prop in ("--day-icon-box:37px", "--day-icon-glyph:24px",
+                     "--day-icon-radius:11px", "--day-header-inset:17px",
+                     "--day-header-gap:8px", "--day-icon-space:10px",
+                     "--day-title-size:16px", "--day-title-weight:var(--mile-type-card-title)",
+                     "--day-kcal-size:11px", "--day-kcal-weight:500"):
+            self.assertEqual(CSS.count(prop), 1, prop)
+        for cls in ("tm-day-header", "tm-day-icon", "tm-day-title"):
+            self.assertIn(cls, CSS)
+            self.assertIn(cls, JS)
+        for key in ("meal-leading-icon tm-day-icon",
+                    "post-match-inline-icon tm-day-icon",
+                    "meal-leading-icon supplement-leading-icon tm-day-icon"):
+            self.assertIn(key, JS)
+        self.assertIn('mealIcon("football")', JS)
+        self.assertIn('mealIcon("football-pitch")', JS)
+        self.assertIn('"soft-drink-01"', JS)
+        self.assertIn(".tm-day-header .meal-average-inline .macro>.kcal", CSS)
+        self.assertNotIn("#overview #day-details .daily-meal>.daily-meal-head>strong,", CSS)
+        self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
+        self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
+
+    def test_plans_all_groups_are_recipe_style_category_cards(self):
+        base = declarations("#plans #plan-detail .plans-all-group")
+        header = declarations("#plans #plan-detail .plans-all-group > summary")
+        body = declarations("#plans #plan-detail .plans-all-body")
+        self.assertEqual([len(base),len(header),len(body)], [1,1,1])
+        self.assertIn("background:rgba(255,255,255,.055)!important", base[0])
+        self.assertIn("border-radius:18px!important", base[0])
+        self.assertIn("padding:0!important", base[0], "Do not inherit global details padding:12px 0")
+        self.assertIn("details{border-top:1px solid #38383f;padding:12px 0}", CSS)
+        self.assertIn("margin:0 0 9px!important", base[0])
+        self.assertIn("min-height:86px", header[0])
+        self.assertIn("font-size:16px;font-weight:500", header[0])
+        self.assertNotIn("font-size:17px;font-weight:600", header[0])
+        self.assertIn("padding:11px 17px", header[0])
+        self.assertIn("padding:0 17px 8px", body[0])
+        self.assertIn('group.className="plans-all-group"', JS)
+        self.assertIn('group.addEventListener("toggle"', JS)
+        self.assertIn('renderPlanContent(key,content)', JS)
+        self.assertIn("sem fotografia nem espaço reservado para fotografia", GUIDE)
+        self.assertIn("Implementação Planos → Todos (20/11)", GUIDE)
+        self.assertIn("| Título de categoria — Planos → Todos | **16 px / 500** |", GUIDE)
+        self.assertIn("Receitas mantém 15 px / 500", GUIDE)
+
+    def test_assessment_graph_matches_daily_weight_graph_surface(self):
+        graph = declarations("#plans .assessment-trend")
+        self.assertEqual(len(graph), 1, "Assessment graph margins must have one CSS source")
+        self.assertIn("margin:8px 17px 12px", graph[0])
+        weight = declarations(".daily-weight-chart-surface")
+        self.assertEqual(len(weight), 1)
+        for fragment in ("background:#1b1b20", "border-radius:14px",
+                         "padding:10px 8px 9px"):
+            self.assertIn(fragment, graph[0])
+            self.assertIn(fragment, weight[0])
+        weight_panel = declarations("#overview .daily-weight-panel")
+        self.assertEqual(len(weight_panel), 1)
+        self.assertIn("padding:8px 17px 12px!important", weight_panel[0])
+        self.assertIn('svg.style.width=width>344?width+"px":"min(100%, 344px)"', JS)
+        self.assertIn('if(width>344)requestAnimationFrame(', JS)
+        self.assertIn('Gráficos de Avaliações — referência Peso em jejum (20/11)', GUIDE)
+
+    def test_universal_card_title_weight_400_preserves_other_roles(self):
+        self.assertEqual(CSS.count("--mile-type-card-title:400"), 1)
+        # The Progresso metric cards became widgets on 25/11; the card-title role remains on Início.
+        for selector in ("#overview .daily-supplements > summary > strong",):
+            self.assertTrue(any("font-weight:var(--mile-type-card-title)!important" in body
+                                for body in declarations(selector)), selector)
+        self.assertIn("#weekly-view .weekly-meal-name{font-weight:var(--mile-type-medium)!important}", CSS)
+        self.assertIn("--day-kcal-weight:500", CSS)
+        self.assertIn("font-size:16px!important;font-weight:600!important", CSS)
+        self.assertIn("**16 px / 400**", GUIDE)
+        self.assertNotIn("16/500", GUIDE)
+
+    def test_day_right_edge_alignment_contract(self):
+        self.assertEqual(CSS.count("--day-chevron-size:9px"), 1)
+        self.assertEqual(CSS.count("--post-match-edit-inset:7px"), 1)
+        self.assertIn("width:var(--day-chevron-size,9px)!important;height:var(--day-chevron-size,9px)!important", CSS)
+        base = declarations(".daily-weight-header .daily-weight-action")
+        self.assertEqual(len(base), 1)
+        self.assertIn("width:32px;height:32px", base[0])
+        self.assertIn("margin:0 -11.5px 0 0", base[0])
+        chevron = declarations(".daily-weight-header .daily-weight-chevron-action::after")
+        self.assertEqual(len(chevron), 1)
+        self.assertIn("width:var(--day-chevron-size,9px)", chevron[0])
+        self.assertIn("height:var(--day-chevron-size,9px)", chevron[0])
+        self.assertNotIn(".daily-weight-action{width:41px", CSS)
+        self.assertNotIn(".daily-weight-action{width:31px", CSS)
+        self.assertNotIn("#overview .daily-weight-action[aria-controls]", CSS)
+        self.assertNotIn("#overview .daily-weight-header .daily-weight-chevron-action{", CSS)
+        event = declarations("#overview #day-details .daily-event-card")
+        self.assertEqual(len(event), 1)
+        self.assertNotIn("padding-right:", event[0])
+        postmatch = declarations("#overview #day-details .post-match-edit")
+        self.assertEqual(len(postmatch), 1)
+        self.assertIn("margin:0 calc(10px + var(--post-match-edit-inset)) 0 3px", postmatch[0])
+        self.assertIn("Alinhamento direito", GUIDE)
+        self.assertIn("7 px para a direita", GUIDE)
+
+    def test_change_color_buttons_use_shared_hue_matched_text(self):
+        base = declarations("#overview .consumption-editor .consumption-color-option")
+        self.assertEqual(len(base), 1)
+        self.assertIn("color:var(--consumption-option-ink,#18231d)!important", base[0])
+        for key, background, ink in (
+            ("orange", "#e6ad7d", "#763500"),
+            ("yellow", "#e5c66b", "#614800"),
+            ("blue", "#a4c9e9", "#174F7B"),
+            ("green", "#a8dfc1", "#175E39"),
+            ("red", "#e9a6a3", "#78242A"),
+            ("vp", "var(--meal-vp)", "var(--meal-vp-text)"),
+        ):
+            with self.subTest(color=key):
+                rules = declarations("#overview .consumption-editor .consumption-color-" + key)
+                self.assertEqual(len(rules), 1)
+                self.assertIn("background:" + background + "!important", rules[0])
+                self.assertIn("--consumption-option-ink:" + ink, rules[0])
+        self.assertIn("--meal-vp:#10251A", CSS)
+        self.assertIn("--meal-vp-text:#4E996B", CSS)
+        self.assertIn("Alterar cor", GUIDE)
+        self.assertIn("#A8DFC1", GUIDE)
+
+    def test_registered_actions_and_universal_food_search(self):
+        from pathlib import Path
+        sheet=(Path(__file__).resolve().parent/"static"/"player-consumption.css").read_text(encoding="utf-8")
+        self.assertIn("function makeRecordedConsumptionTags(", JS)
+        self.assertEqual(JS.count("makeRecordedConsumptionTags({"), 4)
+        self.assertIn("consumptionActionLabel(edit,'Edit02Icon',' Editar')", JS)
+        self.assertIn("consumptionActionLabel(undo,'UndoIcon',' Anular')", JS)
+        self.assertIn("JSON.stringify({date,meal,event_id:eventId})", JS)
+        self.assertIn("if(optionCard&&options.length===1)target.prepend(tags)", JS)
+        self.assertIn("const otherColor=", JS)
+        self.assertIn("consumption-actions consumption-actions--recorded", JS)
+        self.assertIn("action-pill action-pill--registered", JS)
+        self.assertEqual(JS.count("action-pill action-pill--secondary"), 2)
+        self.assertIn("--consumption-status-bg:rgba(154,224,191,.20)", CSS)
+        self.assertIn("--consumption-status-bg:rgba(154,224,191,.45)", CSS)
+        self.assertIn("--consumption-status-ink:#176044", CSS)
+        self.assertIn("background:var(--consumption-status-bg)", CSS)
+        self.assertIn("background:var(--consumption-secondary-bg)", CSS)
+        self.assertNotIn(".meal-consumption-tags", CSS)
+        self.assertNotIn(".meal-edit-consumption-tag", CSS)
+        self.assertNotIn(".meal-undo-consumption-tag", CSS)
+        self.assertNotIn("feedback.textContent='Consumo registado.'", JS)
+        self.assertIn("consumption-feedback", JS)
+        self.assertIn(".consumption-feedback:empty{display:none!important}", CSS)
+        self.assertIn("componente único aprovado", GUIDE)
+        self.assertIn("sem borda", GUIDE)
+        self.assertIn(".consumption-search-wrap input:is(:focus,:focus-visible)", sheet)
+        self.assertIn("box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important", sheet)
+        self.assertIn(".consumption-food-sheet .consumption-search-wrap{", sheet)
+        self.assertIn("display:flex!important;align-items:center!important;gap:0", sheet)
+        self.assertIn(".consumption-food-sheet .consumption-search-wrap:focus-within{box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important}", sheet)
+        self.assertIn(".consumption-food-sheet .consumption-search-symbol{", sheet)
+        self.assertIn("width:48px;height:48px;min-height:48px", sheet)
+        self.assertIn("searchWrap.append(search,searchIcon)", JS)
+        self.assertIn("searchIcon.className='consumption-search-symbol'", JS)
+        self.assertNotIn("background-image:url(\"data:image/svg+xml,", sheet)
+        self.assertNotIn("background-position:right 14px center", sheet)
+        self.assertNotIn("search.style.borderRadius=", JS)
+        self.assertNotIn("search.style.setProperty('background'", JS)
+        self.assertIn("único componente flexível", GUIDE)
+        self.assertIn("gap:8px;max-height:38dvh", sheet)
+        self.assertIn("background:transparent!important;border:0!important;border-radius:0!important", sheet)
+        self.assertIn("background:var(--food-card-surface)!important", sheet)
+        self.assertIn("border-radius:13px!important", sheet)
+        self.assertNotIn("background:var(--food-list-surface)!important", sheet)
+        self.assertNotIn(".consumption-food-sheet .consumption-suggestions button:last-child{border-bottom:0}", sheet)
+        self.assertIn("cards individuais", GUIDE)
+
+    def test_visual_guide_matches_active_geometry(self):
+        self.assertIn("72 px", GUIDE)
+        self.assertIn("Questionário pós-jogo — card universal", GUIDE)
+        self.assertIn("61 px", GUIDE)
+        self.assertIn("55 px", GUIDE)
+        self.assertIn("FootballPitchIcon", GUIDE)
+        self.assertIn("tm-day-header", GUIDE)
+
+
+if __name__ == "__main__":
+    unittest.main()

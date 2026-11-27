@@ -1,0 +1,50 @@
+name: Consumption pilot isolated tests
+on:
+  push:
+    branches:
+      - feature/jorge-consumption-pilot-from-main
+  pull_request:
+    paths:
+      - 'consumption_*.py'
+      - 'test_consumption_*.py'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies for HTTP smoke test
+        run: pip install -r requirements.txt
+      - name: Check isolated Render staging HTTP (read-only)
+        run: |
+          python - <<'PY'
+          import time
+          from urllib.request import urlopen
+          from urllib.error import HTTPError
+          base="https://the-mile-consumption-pilot-staging.onrender.com"
+          paths=[("/",200),("/jogador-v2",200),
+                 ("/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",401),
+                 ("/api/v2/player/consumption-foods?q=arroz",401)]
+          for path,expected in paths:
+              for attempt in range(3):
+                  try:
+                      with urlopen(base+path,timeout=75) as response:
+                          status=response.status
+                  except HTTPError as error:
+                      status=error.code
+                  except Exception:
+                      if attempt==2: raise
+                      time.sleep(8)
+                      continue
+                  assert status==expected,(path,status,expected)
+                  print(path,status)
+                  break
+          PY
+      - name: Compile modules
+        run: python -m py_compile app.py consumption_records_v2.py consumption_nutrition_v2.py consumption_source_v2.py
+      - name: Check player JavaScript syntax
+        run: node --check static/jogador-v2.js
+      - name: Test nutrition and persistence
+        run: python -m unittest -v test_consumption_nutrition_v2 test_consumption_persistence_v2 test_consumption_integration_gate test_consumption_source_v2 test_consumption_service_flow_v2 test_consumption_api_contract test_consumption_http_smoke_v2
