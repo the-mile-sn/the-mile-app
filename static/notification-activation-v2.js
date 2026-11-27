@@ -69,7 +69,7 @@ window.tmNotificationActivation=(()=>{
   promptedHere=true;
   const d=make("dialog","tm-notification-activation-dialog");
   d.setAttribute("aria-labelledby","tm-notification-activation-title");
-  const title=make("h2","",t("Ativar notificações","Enable notifications"));title.id="tm-notification-activation-title";
+  const title=make("h2","",t("Ativar notificações","Enable notifications"));title.id="tm-notification-activation-title";title.tabIndex=-1;title.setAttribute("autofocus","");
   const body=make("p","",t("Recebe informações importantes e atualizações sobre o teu acompanhamento.","Receive important information and updates about your ongoing support."));
   const actions=make("div","tm-notification-activation-actions");
   const yes=make("button","is-primary",t("Ativar notificações","Enable notifications"));yes.type="button";
@@ -80,7 +80,7 @@ window.tmNotificationActivation=(()=>{
   no.onclick=()=>dismiss();
   d.addEventListener("cancel",e=>{e.preventDefault();dismiss();});
   document.body.append(d);dialog=d;
-  try{d.showModal();}catch(_){closePrompt();}
+  try{d.showModal();title.focus({preventScroll:true});}catch(_){closePrompt();}
  }
  async function dismiss(){
   if(!ctx||busy)return;
