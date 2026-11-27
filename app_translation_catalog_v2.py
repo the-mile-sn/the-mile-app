@@ -17,6 +17,7 @@ GROUPS=(
  ("recipe","Receitas"),
  ("recipe_category","Categorias de receitas"),
  ("supplement","Suplementação"),
+ ("notification","Notificações"),
 )
 
 def _hash(s):
@@ -47,7 +48,7 @@ def _entries(c):
     entries=[]
     field_count=0
     for kind,label in GROUPS:
-        rows=c.execute(sources.SQL[kind]).fetchall()
+        rows=sources.rows_for(c,kind)
         if len(rows)>MAX_RECORDS:
             raise ValueError("translation_catalog_record_limit")
         for row in rows:
@@ -116,7 +117,7 @@ def overview(c,actor):
 
 def list_fields(c,actor,*,entity_kind="food",status="all",query="",page=1,page_size=25):
     review._admin(c,actor)
-    if entity_kind not in sources.KINDS:raise ValueError("invalid_catalog_library")
+    if entity_kind not in (*sources.KINDS,"notification"):raise ValueError("invalid_catalog_library")
     if status!="all" and status not in STATUSES:
         raise ValueError("invalid_catalog_status")
     if not isinstance(query,str) or len(query)>120:raise ValueError("invalid_catalog_query")
