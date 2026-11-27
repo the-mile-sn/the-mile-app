@@ -180,3 +180,23 @@ class ConsultFormPortionPhotosTests(ConsultFormsTests):
         self.assertEqual(other["status"], 404)
         no_token = self.public.request(PROXY + "/porcao?" + self.signed(t="x" * 43, id="aaaaaaaaaaaaaaaaaaaaaaaa"), csrf=False)
         self.assertEqual(no_token["status"], 404)
+
+
+class AnamnesisTests(ConsultFormsTests):
+    def test_team_fills_and_edits_anamnesis(self):
+        base = f"/api/v2/admin/consultations/clients/{self.client_id}/anamnesis"
+        view = self.admin.request(base)
+        self.assertEqual(view["status"], 200, view)
+        self.assertIsNone(view["body"]["form"])
+        self.assertTrue(view["body"]["steps"])
+        saved = self.admin.request(base, "PUT", {"answers": {"sex": "M", "medication": "Ferro", "goals": ["health"]}})
+        self.assertEqual(saved["status"], 200, saved)
+        form = saved["body"]["form"]
+        self.assertEqual(form["status"], "pending")
+        self.assertEqual(sorted(form["team_fields"]), ["goals", "medication", "sex"])
+        self.assertEqual([c["label"] for c in form["care"]], ["Medicação"])
+        rows = [r for s in form["sections"] for r in s["rows"] if r["type"] == "text"]
+        self.assertTrue(all(r.get("team") for r in rows))
+        self.assertEqual(self.admin.request(base, "PUT", {"answers": {"sex": "X"}})["status"], 400)
+        profile = self.admin.request(f"/api/v2/admin/consult-clients/{self.client_id}")["body"]
+        self.assertEqual(profile["sex"], "M")

@@ -345,6 +345,14 @@ def initialize(c):
         UNIQUE(org_id, client_id)
     );
     """)
+    # Anamnese editada pela equipa: que perguntas foram preenchidas/alteradas no backoffice.
+    cols = clients._columns(c, "consult_forms")
+    if "team_fields_json" not in cols:
+        c.execute("ALTER TABLE consult_forms ADD COLUMN team_fields_json TEXT NOT NULL DEFAULT '[]'")
+    if "team_updated_by" not in cols:
+        c.execute("ALTER TABLE consult_forms ADD COLUMN team_updated_by TEXT")
+    if "team_updated_at" not in cols:
+        c.execute("ALTER TABLE consult_forms ADD COLUMN team_updated_at BIGINT")
 
 
 def public_base():
@@ -380,9 +388,45 @@ def for_client(c, client_id, org_id=ORG_ID):
     if not row:
         return None
     answers = json.loads(row["answers_json"] or "{}")
+    team = json.loads(row["team_fields_json"] or "[]")
+    sections = readable(answers)
+    for sec in sections:
+        for r in sec["rows"]:
+            if (r.get("key") or "").split(".")[0] in team:
+                r["team"] = True
     return {"status": row["status"], "link": _link(row["token"]), "submitted_at": row["submitted_at"],
-            "updated_at": row["updated_at"], "answers": answers,
-            "sections": readable(answers), "care": care(answers)}
+            "updated_at": row["updated_at"], "answers": answers, "team_fields": team,
+            "team_updated_at": row["team_updated_at"], "has_answers": bool(answers),
+            "sections": sections, "care": care(answers)}
+
+
+def anamnesis(c, client_id, org_id=ORG_ID):
+    """Anamnese para editar no backoffice: perguntas (por secção) e respostas atuais."""
+    clients._row(c, client_id, org_id)
+    return {"steps": SECTIONS, "form": for_client(c, client_id, org_id)}
+
+
+def save_anamnesis(c, client_id, payload, actor, org_id=ORG_ID, now=None):
+    """A equipa preenche ou corrige a anamnese (sem obrigatórias nem consentimento)."""
+    now = now or int(time.time())
+    if not isinstance(payload, dict):
+        raise ValueError("invalid_request")
+    answers = clean_answers(payload.get("answers") or {})
+    ensure(c, client_id, actor, org_id, now)
+    row = c.execute("SELECT * FROM consult_forms WHERE org_id=? AND client_id=?", (org_id, client_id)).fetchone()
+    previous = json.loads(row["answers_json"] or "{}")
+    for legacy in LEGACY_TEXT:
+        if legacy in previous and legacy not in answers:
+            answers[legacy] = previous[legacy]
+    if answers.get("consent") is None and previous.get("consent"):
+        answers["consent"] = True
+    changed = {k for k in set(previous) | set(answers) if previous.get(k) != answers.get(k)}
+    team = sorted(set(json.loads(row["team_fields_json"] or "[]")) | changed)
+    c.execute("""UPDATE consult_forms SET answers_json=?,team_fields_json=?,team_updated_by=?,team_updated_at=?,
+        updated_at=? WHERE id=?""", (json.dumps(answers, ensure_ascii=False, sort_keys=True), json.dumps(team),
+                                     actor, now, now, row["id"]))
+    _fill_profile(c, row, answers, now)
+    return for_client(c, client_id, org_id)
 
 
 def care(answers):
