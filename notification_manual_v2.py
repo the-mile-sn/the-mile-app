@@ -83,7 +83,7 @@ def prepare(c, *, authorised_athlete_ids, kind, selections, now, custom_copy=Non
         else:
             key = kind
             if kind in ("document","assessment","menu"):
-                change = menu_change if kind == "menu" else item.get("change_kind")
+                change = item.get("change_kind") or (menu_change if kind == "menu" else None)
                 if change not in ("new","updated"):
                     raise ValueError("missing_content_change")
                 key += "_" + change
