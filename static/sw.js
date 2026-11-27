@@ -49,6 +49,14 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; } catch (_) {}
+  if (payload.version === 2 && /^[a-f0-9]{32}$/.test(payload.id || '')) {
+    const body = payload.language === 'en-GB' ? 'You have a new notification.' : 'Tens uma nova notificação.';
+    event.waitUntil(self.registration.showNotification('The Mile', {
+      body, icon:'/icon-192.png', badge:'/icon-192.png',
+      tag:'mile-v2-'+payload.id, data:{notificationId:payload.id}
+    }));
+    return;
+  }
   const title = String(payload.title || 'The Mile');
   const options = {body: String(payload.body || ''), icon: '/icon-192.png', badge: '/icon-192.png', tag: String(payload.id || 'mile-notification'), data: {url: '/'}};
   event.waitUntil(self.registration.showNotification(title, options));
@@ -56,7 +64,9 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const destination = new URL('/?view=notifications', self.location.origin).href;
+  const id = event.notification.data?.notificationId;
+  const isV2 = typeof id === 'string' && /^[a-f0-9]{32}$/.test(id);
+  const destination = new URL(isV2 ? '/?notification='+encodeURIComponent(id) : '/?view=notifications', self.location.origin).href;
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({type:'window', includeUncontrolled:true});
     for (const client of windows) {
@@ -65,7 +75,7 @@ self.addEventListener('notificationclick', event => {
           const target = await client.navigate(destination);
           if (target) return target.focus();
         } catch (_) {
-          try { return client.focus(); } catch (_) {}
+          if (!isV2) { try { return client.focus(); } catch (_) {} }
         }
       }
     }
