@@ -20,6 +20,8 @@ class ActivationTests(unittest.TestCase):
         self.c.execute("PRAGMA foreign_keys=ON")
         self.c.execute("CREATE TABLE users(id TEXT PRIMARY KEY)")
         self.c.executemany("INSERT INTO users VALUES(?)",[("p",),("chef",)])
+        self.c.execute("CREATE TABLE sessions(token TEXT PRIMARY KEY,user_id TEXT,expires BIGINT)")
+        self.c.executemany("INSERT INTO sessions VALUES(?,?,?)",[("p-session","p",1000),("chef-session","chef",1000)])
         initialize(self.c)
         initialize(self.c)
 
@@ -27,11 +29,11 @@ class ActivationTests(unittest.TestCase):
         self.c.close()
 
     def current(self,user="p",device=None):
-        return state(self.c,user_id=user,device=device or self.device)
+        return state(self.c,user_id=user,device=device or self.device,session_token=user+"-session",now=100)
 
     def enable(self,user="p",device=None,subscription=None):
         activate(self.c,user_id=user,device=device or self.device,
-                 subscription=subscription if subscription is not None else self.subscription,now=100)
+                 subscription=subscription if subscription is not None else self.subscription,session_token=user+"-session",now=100)
 
     def test_dismissal_never_subscribes_and_is_account_specific(self):
         self.assertEqual(self.current(),{"prompted":False,"active":False})
@@ -57,6 +59,25 @@ class ActivationTests(unittest.TestCase):
         self.enable("chef",self.other)
         self.assertFalse(self.current()["active"])
         self.assertTrue(self.current("chef",self.other)["active"])
+
+    def test_session_rotation_and_logout(self):
+        self.enable()
+        self.c.execute("UPDATE sessions SET token='p-renewed' WHERE token='p-session'")
+        self.assertFalse(self.current()["active"])
+        self.assertTrue(state(self.c,user_id="p",device=self.device,session_token="p-renewed",now=100)["active"])
+        self.c.execute("DELETE FROM sessions WHERE token='p-renewed'")
+        self.assertEqual(self.c.execute("SELECT COUNT(*) FROM v2_notification_devices").fetchone()[0],0)
+        self.assertEqual(self.current(),{"prompted":True,"active":False})
+
+    def test_expired_and_other_account_session_rejected(self):
+        self.enable()
+        self.assertFalse(state(self.c,user_id="p",device=self.device,session_token="p-session",now=1000)["active"])
+        self.c.execute("UPDATE sessions SET expires=99 WHERE token='p-session'")
+        with self.assertRaises(ValueError):
+            self.enable()
+        with self.assertRaises(ValueError):
+            activate(self.c,user_id="p",device=self.device,subscription=self.subscription,
+                     session_token="chef-session",now=100)
 
     def test_reject_invalid_endpoint_and_key_without_altering_state(self):
         for endpoint in ("http://fcm.googleapis.com/path","https://127.0.0.1/path",
