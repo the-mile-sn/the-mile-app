@@ -646,18 +646,65 @@
   for (const w of [2, 4, 6, 8]) {
    const b = el("button", "", w + " sem."); b.type = "button"; b.disabled = closed;
    b.setAttribute("aria-selected", String(s.next_weeks === w));
-   b.addEventListener("click", () => { s.next_weeks = w; for (const x of seg.children) x.setAttribute("aria-selected", String(x === b)); queueSave({next_weeks: w}); });
+   b.addEventListener("click", () => { s.next_weeks = w; weekOffset = 0; for (const x of seg.children) x.setAttribute("aria-selected", String(x === b)); queueSave({next_weeks: w}); drawPlanner(); });
    seg.append(b);
   }
   const how = el("div", "tm-cq-choices");
-  for (const [value, title, hint] of [["link", "Enviar link para marcar", "A cliente escolhe o dia e paga no site"], ["book", "Marcar já", "Escolher o dia agora em Agendamentos"]]) {
+  for (const [value, title, hint] of [["link", "Enviar link para marcar", "A cliente escolhe o dia e paga no site"], ["book", "Marcar já", "Escolher o dia e a hora agora"]]) {
    const b = el("button", "tm-cq-choice" + (s.next_action === value ? " is-on" : "")); b.type = "button"; b.disabled = closed;
    b.append(el("strong", "", title), el("small", "", hint));
-   b.addEventListener("click", () => { s.next_action = value; for (const x of how.children) x.classList.toggle("is-on", x === b); queueSave({next_action: value}); });
+   b.addEventListener("click", () => { s.next_action = value; for (const x of how.children) x.classList.toggle("is-on", x === b); queueSave({next_action: value}); drawPlanner(); });
    how.append(b);
   }
-  next.append(el("p", "tm-cq-muted", "Daqui a"), seg, how);
+  const planner = el("div", "tm-cq-planner");
+  next.append(el("p", "tm-cq-muted", "Daqui a"), seg, how, planner);
   side.append(next);
+  // «Marcar já»: vagas reais da nutricionista na semana sugerida; escolhe-se dia e hora aqui.
+  let weekOffset = 0;
+  async function drawPlanner() {
+   planner.replaceChildren();
+   if (s.next_action !== "book" || closed) return;
+   const b = focus.booking, contact = focus.contact || {};
+   const service = focus.followup_service_id || b.service_id;
+   const base = new Date(b.date + "T12:00:00");
+   base.setDate(base.getDate() + 7 * (s.next_weeks || 4) + 7 * weekOffset);
+   const monday = new Date(base); monday.setDate(base.getDate() - ((base.getDay() + 6) % 7));
+   const days = [...Array(6)].map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d.toISOString().slice(0, 10); });
+   const head = el("div", "tm-cq-planner-head");
+   const prevW = el("button", "tm-cq-ghost", "‹"); prevW.type = "button"; prevW.title = "Semana anterior";
+   const nextW = el("button", "tm-cq-ghost", "›"); nextW.type = "button"; nextW.title = "Semana seguinte";
+   prevW.addEventListener("click", () => { weekOffset--; drawPlanner(); });
+   nextW.addEventListener("click", () => { weekOffset++; drawPlanner(); });
+   head.append(prevW, el("strong", "", "Semana de " + dayLabel(days[0])), nextW);
+   planner.append(head, el("p", "tm-cq-muted", b.professional_name + " · " + (b.mode === "online" ? "online" : "presencial")));
+   const grid = el("div", "tm-cq-planner-days"); planner.append(grid);
+   const results = await Promise.all(days.map(d => api(`/api/v2/admin/appointments/slots-preview?professional_id=${encodeURIComponent(b.professional_id)}&service_id=${encodeURIComponent(service)}&mode=${b.mode}&date=${d}`).catch(() => ({slots: []}))));
+   let any = false;
+   days.forEach((d, i) => {
+    const slots = results[i].slots || [];
+    const col = el("div", "tm-cq-planner-day"); col.append(el("strong", "", dayLabel(d)));
+    if (!slots.length) col.append(el("small", "tm-cq-muted", "sem vagas"));
+    for (const sl of slots) {
+     any = true;
+     const t = el("button", "tm-cq-slot", sl.start); t.type = "button";
+     t.addEventListener("click", async () => {
+      if (!confirm(`Marcar ${b.client_name} a ${dayLabel(d)} às ${sl.start} com ${b.professional_name}?`)) return;
+      try {
+       const created = await api("/api/v2/admin/appointments/bookings", {method: "POST", body: JSON.stringify({
+        professional_id: b.professional_id, service_id: service, mode: b.mode, date: d, start: sl.start,
+        customer_name: contact.name || b.client_name, customer_email: contact.email || "", customer_phone: contact.phone || ""})});
+       await api("/api/v2/admin/consult-clients/link", {method: "POST", body: JSON.stringify({kind: "manual", booking_id: created.id, client_id: b.client_id})}).catch(() => {});
+       planner.replaceChildren(el("p", "tm-cq-planner-done", "Marcada: " + dayLabel(d) + " às " + sl.start + " com " + b.professional_name + "."));
+       feedback("Próxima consulta marcada.");
+      } catch (e) { feedback(e.message, true); drawPlanner(); }
+     });
+     col.append(t);
+    }
+    grid.append(col);
+   });
+   if (!any) planner.append(el("p", "tm-cq-muted", "Sem vagas nesta semana. Usa as setas para ver outras semanas."));
+  }
+  drawPlanner();
 
   const internal = el("section", "tm-cq-card");
   const ih = el("div", "tm-cq-section-head"); ih.append(el("h3", "", "Nota interna para a próxima"), el("span", "tm-cq-muted", "só a equipa"));

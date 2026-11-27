@@ -357,3 +357,13 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 .tm-cq-point strong{font-size:14px}
 .tm-cq-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .tm-cq-result .tm-cq-delta{display:block;margin-top:2px}
+
+/* Marcar já */
+.tm-cq-planner{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.tm-cq-planner:empty{display:none}
+.tm-cq-planner-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tm-cq-planner-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tm-cq-planner-day{display:flex;flex-direction:column;gap:5px;font-size:12px}
+.tm-cq-slot{border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);color:var(--tm-ui-text);border-radius:999px;padding:5px 8px;font:inherit;font-size:12px;cursor:pointer}
+.tm-cq-slot:hover{background:var(--tm-brand);border-color:var(--tm-brand);color:#fff}
+.tm-cq-planner-done{color:var(--tm-state-success-fg);font-weight:500;margin:0}
