@@ -226,3 +226,49 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
   .tmf-freq-n{display:inline}
   .tmf-card h1{font-size:24px}
 }
+
+/* Modo escuro: segue o modo do telemóvel/computador. Paleta The Mile. */
+@media (prefers-color-scheme:dark){
+  :root{color-scheme:dark}
+  body.tmf{background:#141416;color:#F5F5F7}
+  .tmf a{color:#6E8DB0}
+  .tmf a:hover{color:#F5F5F7}
+  .tmf-top{color:#F5F5F7}
+  .tmf-top-info,.tmf-loading,.tmf-small,.tmf-hint,.tmf-unit span,.tmf-ends,.tmf-freq-head,.tmf-progress-text,.tmf-booking dt,.tmf-wheel-unit{color:#939397}
+  .tmf-hero,.tmf-card{background:#1E1E20}
+  .tmf-hero p,.tmf-facts li,.tmf-tips,.tmf-welcome-lead,.tmf-done-lead,.tmf-done .tmf-tips li,.tmf-note,.tmf-freq-more,.tmf-step-link.is-done{color:#BFBFBF}
+  .tmf-pill,.tmf-facts li,.tmf-booking,.tmf-done .tmf-booking,.tmf-note,.tmf-check,.tmf-choice,.tmf-freq-row,.tmf-meal,.tmf-wheel-wrap,.tmf-input,.tmf-textarea{background:#27272a;color:#F5F5F7}
+  .tmf-pill{color:#BFBFBF}
+  .tmf-progress{background:#141416}
+  .tmf-progress-track,.tmf-freq-bar{background:#333}
+  .tmf-progress-track span{background:#6E8DB0}
+  .tmf-progress-text span:last-child{color:#6E8DB0}
+  .tmf-step-link.is-current{background:#1E1E20;color:#F5F5F7;box-shadow:none}
+  .tmf-input:focus,.tmf-textarea:focus{background:#1E1E20;border-color:#6E8DB0}
+  .tmf-input::placeholder,.tmf-textarea::placeholder{color:#636366}
+  .tmf-choice:hover,.tmf-dot:hover{background:#333}
+  .tmf .tmf-choice[aria-pressed="true"]{background:#F5F5F7;color:#141416}
+  .tmf-choice.is-multi::before{background:#1E1E20;border-color:#636366}
+  .tmf .tmf-choice.is-multi[aria-pressed="true"]::before{background:#141416;border-color:#141416;color:#F5F5F7}
+  .tmf-check input{accent-color:#6E8DB0}
+  .tmf-freq-row.is-done,.tmf-meal.is-done{background:#2a3140}
+  .tmf-dot,.tmf-chip,.tmf-meal .tmf-input,.tmf-meal .tmf-textarea{background:#1E1E20;color:#F5F5F7}
+  .tmf .tmf-dot[aria-pressed="true"],.tmf .tmf-chip[aria-pressed="true"]{background:#6E8DB0;border-color:#6E8DB0;color:#141416}
+  .tmf-chip{border-color:#3a3a3d}
+  .tmf .tmf-freq-card .tmf-choice{background:#1E1E20}
+  .tmf .tmf-btn-primary{background:#F5F5F7;color:#141416}
+  .tmf .tmf-btn-primary:hover{background:#BFBFBF}
+  .tmf-btn-ghost{background:#27272a;color:#F5F5F7}
+  .tmf-btn-ghost:hover{background:#333}
+  .tmf-banner{background:#3a3220;color:#e2c17e}
+  .tmf-error,.tmf-save.is-error{color:#f2a19a}
+  .tmf-done-mark{background:#F5F5F7;color:#141416}
+  .tmf-fact-icon,.tmf-toast b{background:#3F526F}
+  .tmf-toast{background:#F5F5F7;color:#141416;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+  .tmf-toast b{color:#F5F5F7}
+  .tmf-wheel::before{background:#1E1E20;box-shadow:none}
+  .tmf-wheel-item{color:#636366}
+  .tmf-wheel-item.is-on,.tmf-wheel-comma{color:#F5F5F7}
+  .tmf-wheel.is-placeholder .tmf-wheel-item.is-on{color:#939397}
+  .tmf-swatch{border-color:rgba(255,255,255,.2)}
+}
