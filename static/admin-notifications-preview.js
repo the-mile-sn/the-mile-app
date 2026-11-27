@@ -336,7 +336,8 @@
   for(const b of tabs){const on=b.dataset.notifyPreviewTab===next;b.classList.toggle("is-selected",on);b.setAttribute("aria-pressed",String(on));}
   load();
  }
- open.addEventListener("click",()=>{dialog.showModal();setTab("new");});
+ open.addEventListener("click",()=>{dialog.showModal();setTab("history");});
+ $("tm-notify-add").addEventListener("click",()=>{dialog.showModal();setTab("new");});
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{

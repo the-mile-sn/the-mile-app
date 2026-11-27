@@ -1,11 +1,10 @@
 /* Isolated preview: reuse the Admin surface tokens and chat row geometry. */
 #tm-dashboard #tm-notify-preview-card[hidden]{display:none!important}
 #tm-dashboard #tm-notify-preview-card{flex:none;padding:0!important;overflow:hidden}
-#tm-dashboard #tm-notify-preview-open{appearance:none;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:19px 17px;border:0;border-radius:inherit;background:transparent;color:var(--tm-ui-text);font:600 16px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;text-align:left;cursor:pointer}
-#tm-dashboard #tm-notify-preview-open svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--tm-ui-muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#tm-dashboard #tm-notify-preview-open:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:-3px}
-@media(hover:hover){#tm-dashboard #tm-notify-preview-open:hover{background:var(--tm-ui-hover)}}
-@media(max-width:800px){#tm-dashboard #tm-notify-preview-open{padding:14px}}
+#tm-dashboard #tm-notify-preview-card .tm-notify-header{padding:19px 17px 12px}
+#tm-dashboard #tm-notify-preview-open{appearance:none;min-width:0;padding:0;border:0;background:transparent;color:var(--tm-ui-text);font:600 16px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;text-align:left;cursor:pointer}
+#tm-dashboard #tm-notify-preview-open:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
+@media(max-width:800px){#tm-dashboard #tm-notify-preview-card .tm-notify-header{padding:14px 14px 10px}}
 #tm-notify-preview-dialog{width:min(94vw,620px)}
 #tm-notify-preview-dialog .tm-work-task-segments{margin:12px 0}
 #tm-notify-preview-controls[hidden]{display:none!important}
