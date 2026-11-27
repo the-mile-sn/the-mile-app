@@ -35,11 +35,14 @@ SCHEMA = (
         CHECK((kind IN ('document','assessment','menu') AND target_id IS NOT NULL
                AND content_version IS NOT NULL)
               OR (kind NOT IN ('document','assessment','menu') AND content_version IS NULL)),
-        CHECK(kind <> 'game' OR target_id IS NOT NULL)
+        CHECK(kind NOT IN ('game','birthday') OR target_id IS NOT NULL)
     )""",
     """CREATE UNIQUE INDEX IF NOT EXISTS v2_manual_notifications_content_once
         ON v2_manual_notifications(recipient_id,kind,target_id,content_version)
         WHERE content_version IS NOT NULL""",
+    """CREATE UNIQUE INDEX IF NOT EXISTS v2_manual_notifications_birthday_once
+        ON v2_manual_notifications(recipient_id,target_id)
+        WHERE kind='birthday' AND target_id IS NOT NULL""",
     """CREATE INDEX IF NOT EXISTS v2_manual_notifications_recipient_created
         ON v2_manual_notifications(recipient_id,created_at DESC)""",
     """CREATE INDEX IF NOT EXISTS v2_manual_notifications_sender_created
