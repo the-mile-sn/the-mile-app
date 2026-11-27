@@ -1,0 +1,15 @@
+/* Reuse existing app profile geometry and notification palette. */
+.tm-notification-activation{margin:0 0 8px;padding:14px 16px;border-radius:13px;background:#242429}
+.tm-notification-activation-button{appearance:none;display:block;width:100%;min-height:44px;border:0;border-radius:10px;background:rgba(255,255,255,.06);color:inherit;font:inherit;font-size:16px;text-align:center;cursor:pointer}
+.tm-notification-activation-button:disabled{opacity:.5}
+.tm-notification-activation-caption{margin:9px 0 0;color:#aaaab3;font-size:12px;line-height:1.45;text-align:center}
+.tm-notification-activation-dialog{box-sizing:border-box;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:23px 20px 14px;border:0;border-radius:18px;background:#242429;color:#fff;font:inherit;text-align:center;overflow-y:auto}
+.tm-notification-activation-dialog::backdrop{background:rgba(0,0,0,.65)}
+.tm-notification-activation-dialog h2{margin:0 0 10px;font-size:21px;font-weight:600;line-height:1.25}
+.tm-notification-activation-dialog>p{margin:0;font-size:14px;line-height:1.5;color:#aaaab3}
+.tm-notification-activation-actions{display:flex;flex-direction:column;gap:1px;margin:18px -5px 0;border-radius:13px;overflow:hidden;background:rgba(255,255,255,.06)}
+.tm-notification-activation-actions button{appearance:none;min-height:54px;margin:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;font-size:16px;cursor:pointer}
+.tm-notification-activation-actions button+button{border-top:1px solid rgba(255,255,255,.08)}
+.tm-notification-activation-actions button.is-primary{font-weight:600;color:#c8d9cd}
+.tm-notification-activation-actions button:disabled{opacity:.5}
+.tm-notification-activation-dialog .tm-notification-activation-feedback:not(:empty){margin-top:10px;font-size:12px}
