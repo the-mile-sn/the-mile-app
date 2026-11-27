@@ -688,7 +688,7 @@ def application(env, start_response):
             '/consumption-preview': 'consumption-preview.html',
             '/consumption-preview.css': 'consumption-preview.css',
             '/consumption-preview.js': 'consumption-preview.js',
-            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
+            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css', '/notification-inbox-v2.js': 'notification-inbox-v2.js', '/notification-inbox-v2.css': 'notification-inbox-v2.css',
             '/chef-chat-demo.js': 'chef-chat-demo.js', '/chef-chat-demo.css': 'chef-chat-demo.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
             '/player-consumption.css': 'player-consumption.css',
@@ -2512,6 +2512,32 @@ def application(env, start_response):
                     c.commit()
                     return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
+
+            # New notification inbox, isolated and disabled by default.
+            if path in ('/api/v2/notifications/inbox','/api/v2/notifications/open'):
+                if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_INBOX','') != '1':
+                    raise Problem(404,'not_found')
+                if not user or user['role'] not in ('player','chef'):
+                    raise Problem(403,'forbidden')
+                if user['role']=='chef':
+                    if not chef_accounts_v2.assigned_athlete(c,user['id']):
+                        raise Problem(403,'forbidden')
+                elif not c.execute("""SELECT 1 FROM v2_player_links l
+                    JOIN v2_athletes a ON a.id=l.athlete_id
+                    WHERE l.user_id=? AND a.archived_at IS NULL""",(user['id'],)).fetchone():
+                    raise Problem(403,'forbidden')
+                import notification_inbox_v2
+                if path.endswith('/inbox') and method=='GET':
+                    return respond(200,{'items':notification_inbox_v2.inbox(c,user['id'])})
+                if path.endswith('/open') and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                    item=notification_inbox_v2.open_notification(c,recipient_id=user['id'],
+                        notification_id=body.get('id'),now=now)
+                    if not item:raise Problem(404,'not_found')
+                    c.commit()
+                    return respond(200,{'item':item})
+                raise Problem(405,'method_not_allowed')
 
             if path == '/api/push/config' and method == 'GET':
                 if not user or user['role'] != 'player':
