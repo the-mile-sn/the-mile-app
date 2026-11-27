@@ -6,7 +6,7 @@ concurrent notification writes before revalidating (including weight cooldown).
 No startup hook, timer, background worker, endpoint or commit.
 """
 import secrets
-from notification_admin_preview_v2 import preview
+from notification_admin_preview_v2 import preview, manual_content
 from notification_templates_v2 import render_template
 
 KINDS = frozenset(("game","weight","birthday","document","assessment","menu","custom"))
@@ -68,6 +68,9 @@ def prepare(c, *, authorised_athlete_ids, kind, selections, now, custom_copy=Non
         if any(v is not None and not isinstance(v,str) for v in (target,version)):
             raise ValueError("invalid_selection")
         item = eligible.get((uid,target,version))
+        if item is None and kind in ("document","assessment") and selected.get("manual") is True and target:
+            item=next((r for r in manual_content(c,authorised_athlete_ids,kind,uid,target)
+                       if r["version"]==version),None)
         if item is None:
             raise ValueError("selection_no_longer_eligible")
         seen.add(uid)
@@ -84,7 +87,7 @@ def prepare(c, *, authorised_athlete_ids, kind, selections, now, custom_copy=Non
             key = kind
             if kind in ("document","assessment","menu"):
                 change = item.get("change_kind") or (menu_change if kind == "menu" else None)
-                if change not in ("new","updated"):
+                if change not in ("new","updated","available"):
                     raise ValueError("missing_content_change")
                 key += "_" + change
             title, body = render_template(key,locale,first_name=item.get("first_name"))
