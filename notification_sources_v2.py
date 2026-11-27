@@ -190,3 +190,53 @@ def recent_document_assessment_candidates(c, *, authorised_athlete_ids, since, n
              "changed_at": item.changed_at.isoformat()}
             for item in suggested_content(candidates, notified_keys=notified,
                                           since=since, now=now)]
+
+
+def birthday_candidates(c, *, authorised_athlete_ids, now):
+    """Today's birthdays, active linked players only; one greeting per year.
+
+    Uses the same calendar month/day as the existing dashboard. Feb 29 is
+    not shifted to another day. Reading candidates never sends a greeting.
+    """
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("timezone_required")
+    day = now.date()
+    target_id = "birthday:" + str(day.year)
+    result = []
+    for player in active_players(c, authorised_athlete_ids=authorised_athlete_ids):
+        uid = player["recipient_id"]
+        row = c.execute("SELECT birth_date FROM users WHERE id=?", (uid,)).fetchone()
+        try:
+            birth = date.fromisoformat(row["birth_date"])
+        except (TypeError, ValueError):
+            continue
+        if birth > day or (birth.month, birth.day) != (day.month, day.day):
+            continue
+        if c.execute("""
+            SELECT 1 FROM v2_manual_notifications
+            WHERE recipient_id=? AND kind='birthday' AND target_id=?
+        """, (uid,target_id)).fetchone():
+            continue
+        first_name = player["name"].strip().split()
+        if not first_name:
+            continue
+        result.append({**player, "kind": "birthday", "target_id": target_id,
+                       "first_name": first_name[0]})
+    return result
+
+
+def custom_recipients(c, *, authorised_athlete_ids):
+    """Active player/chef accounts, constrained to server-authorised athletes."""
+    allowed = set(authorised_athlete_ids)
+    players = [{**p, "role": "player"} for p in active_players(
+        c, authorised_athlete_ids=allowed)]
+    chefs = [dict(row) for row in c.execute("""
+        SELECT a.id AS athlete_id,u.id AS recipient_id,u.name,u.role
+        FROM v2_athletes a
+        JOIN v2_chef_links l ON l.athlete_id=a.id
+        JOIN users u ON u.id=l.user_id
+        WHERE a.archived_at IS NULL AND l.archived_at IS NULL
+          AND u.role='chef' AND u.active=1
+        ORDER BY u.name,u.id
+    """).fetchall() if row["athlete_id"] in allowed]
+    return sorted(players + chefs, key=lambda p: (p["name"].casefold(), p["recipient_id"]))
