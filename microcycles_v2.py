@@ -485,6 +485,8 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None, actor_i
         raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
+    import notification_capture_v2 as capture
+    before_notification=capture.before(c,lambda:capture.menu(c,athlete_id,[day])) if actor_id else None
     previous=None
     if actor_id:
         import chef_collaboration_v2
@@ -499,6 +501,7 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None, actor_i
     if actor_id:
         chef_collaboration_v2.record_admin_menu(c,athlete_id,actor_id,day,meal,
             previous,{"kind":kind,"value":value,"dish_id":dish_id})
+    capture.after(c,before_notification,lambda:capture.menu(c,athlete_id,[day]))
     c.commit()
     return {"menu_date":day,"meal":meal,"kind":kind,"value":value,"dish_id":dish_id}
 
@@ -508,6 +511,8 @@ def delete_menu(c, athlete_id, menu_date, meal, actor_id=None):
     day=parse_day(menu_date).isoformat()
     if meal not in ("lunch","dinner"):
         raise ValueError("invalid_menu")
+    import notification_capture_v2 as capture
+    before_notification=capture.before(c,lambda:capture.menu(c,athlete_id,[day])) if actor_id else None
     previous=None
     if actor_id:
         import chef_collaboration_v2
@@ -518,6 +523,7 @@ def delete_menu(c, athlete_id, menu_date, meal, actor_id=None):
     if actor_id and previous:
         chef_collaboration_v2.record_admin_menu(c,athlete_id,actor_id,day,meal,
                                                previous,None,action="plan_deleted")
+    capture.after(c,before_notification,lambda:capture.menu(c,athlete_id,[day]))
     c.commit()
     return result.rowcount > 0
 
