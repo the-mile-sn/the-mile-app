@@ -135,6 +135,12 @@ async function init(){
     prescriptions=(await request("/api/v2/chef/plans")).options_by_color||{};
     show("chef");
     await loadWeek();
+    if(!previewReadOnly){
+     const actor=sessionUser;
+     window.tmNotificationActivation?.start({
+      language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
+     });
+    }
   }catch(err){
     if(err.status===401){location.replace("/");}
     else {el("loading-view").textContent=txt().fail;}
@@ -1113,6 +1119,7 @@ function renderChefNotifications(page){
  empty.append(node("p","",txt().notificationsEmpty));
  section.append(empty);page.append(section);
  const actor=sessionUser;
+ if(!previewReadOnly)window.tmNotificationActivation?.mount(section);
  if(!previewReadOnly)window.tmNotificationInbox?.mount({
   container:section,language:()=>lang,
   active:()=>!!actor&&sessionUser===actor&&chefProfileSubpage==="notifications"&&!previewReadOnly,
@@ -1228,6 +1235,7 @@ async function chefLogout(button){
  button.disabled=true;
  try{
   await request("/api/logout","POST",{});
+  window.tmNotificationActivation?.reset();
   csrf="";sessionUser=null;chef=null;player=null;
   location.replace("/");
  }catch(error){
