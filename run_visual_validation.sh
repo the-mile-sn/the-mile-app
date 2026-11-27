@@ -1,19 +1,45 @@
 #!/bin/sh
 set -eu
+export PYTHONUNBUFFERED=1
+export PATH="/opt/validation/bin:$PATH"
+echo "VISUAL_BOOT_BEGIN" >&2
 if [ -n "${DATABASE_URL:-}" ]; then
     echo "External database forbidden in validation" >&2
     exit 1
 fi
 : "${MILE_VALIDATION_PASSWORD:?Set a synthetic account password}"
 root="$(mktemp -d /tmp/mile-notify-pg-XXXXXXXX)"
+export MILE_VALIDATION_READY_FILE="$root/ready"
+export MILE_VALIDATION_STAGE_FILE="$root/stage"
+printf "%s\n" "database" > "$MILE_VALIDATION_STAGE_FILE"
+admin_pid=""
+player_pid=""
+proxy_pid=""
+cleanup() {
+  status=$?
+  trap - EXIT INT TERM
+  echo "VISUAL_BOOT_EXIT status=$status stage=$(cat "$MILE_VALIDATION_STAGE_FILE" 2>/dev/null || true)" >&2
+  for pid in "$admin_pid" "$player_pid" "$proxy_pid"; do
+    if [ -n "$pid" ]; then kill "$pid" 2>/dev/null || true; fi
+  done
+  if [ -f "$root/postgres.log" ] && [ "$status" -ne 0 ]; then tail -n 30 "$root/postgres.log" >&2; fi
+  runuser -u postgres -- pg_ctl -D "$root/data" -m fast -w stop >/dev/null 2>&1 || true
+  rm -rf "$root"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
 mkdir "$root/socket"
 chown -R postgres:postgres "$root"
 chmod 700 "$root" "$root/socket"
+echo "VISUAL_BOOT_DATABASE_INIT" >&2
 runuser -u postgres -- initdb -D "$root/data" -A trust --no-locale -E UTF8 >/dev/null
-runuser -u postgres -- pg_ctl -D "$root/data" -o "-h '' -k $root/socket -c shared_buffers=16MB -c max_connections=20" -w start >/dev/null
+runuser -u postgres -- pg_ctl -D "$root/data" -l "$root/postgres.log" -o "-h '' -k $root/socket -c shared_buffers=16MB -c max_connections=20" -w -t 30 start
+echo "VISUAL_BOOT_DATABASE_READY" >&2
 runuser -u postgres -- createdb -h "$root/socket" mile_notification_validation
 export MILE_VALIDATION_SOCKET="$root/socket"
-runuser -u postgres --preserve-environment -- python /srv/admin/validate_notifications_postgres.py
+runuser -u postgres --preserve-environment -- /opt/validation/bin/python /srv/admin/validate_notifications_postgres.py
 export DATABASE_URL="dbname=mile_notification_validation user=postgres host=$root/socket"
 export MILE_DATA_DIR="$root/portal"
 export MILE_BASE_URL="https://the-mile-notifications-pg-validation.onrender.com"
@@ -23,21 +49,24 @@ export MILE_BACKOFFICE_TRANSLATIONS_ENABLED=1
 # Generated exclusively for this temporary instance. No production credentials.
 eval "$(python /srv/admin/visual_validation_keys.py)"
 cd /srv/admin
-MILE_SITE_ROLE=admin python visual_validation_wsgi.py initialize
+echo "VISUAL_BOOT_ADMIN_INIT" >&2
+printf "%s\n" "admin-init" > "$MILE_VALIDATION_STAGE_FILE"
+timeout 120s /usr/bin/env MILE_SITE_ROLE=admin python visual_validation_wsgi.py initialize
 cd /srv/admin/validation_player
-PYTHONPATH=/srv/admin MILE_SITE_ROLE=player python /srv/admin/visual_validation_wsgi.py initialize-player
+echo "VISUAL_BOOT_PLAYER_INIT" >&2
+printf "%s\n" "player-init" > "$MILE_VALIDATION_STAGE_FILE"
+timeout 120s /usr/bin/env PYTHONPATH=/srv/admin MILE_SITE_ROLE=player python /srv/admin/visual_validation_wsgi.py initialize-player
 cd /srv/admin
-MILE_SITE_ROLE=admin python visual_validation_wsgi.py seed
+echo "VISUAL_BOOT_SEED" >&2
+printf "%s\n" "seed" > "$MILE_VALIDATION_STAGE_FILE"
+timeout 60s /usr/bin/env MILE_SITE_ROLE=admin python visual_validation_wsgi.py seed
+echo "VISUAL_BOOT_GUNICORN" >&2
+printf "%s\n" "workers" > "$MILE_VALIDATION_STAGE_FILE"
 MILE_SITE_ROLE=admin gunicorn --workers 1 --threads 2 --bind 127.0.0.1:10001 visual_validation_wsgi:application &
 admin_pid=$!
 cd /srv/admin/validation_player
 PYTHONPATH=/srv/admin MILE_SITE_ROLE=player gunicorn --chdir /srv/admin/validation_player --workers 1 --threads 2 --bind 127.0.0.1:10002 visual_validation_wsgi:application &
 player_pid=$!
 cd /srv/admin
-cleanup() {
-  kill "$admin_pid" "$player_pid" 2>/dev/null || true
-  runuser -u postgres -- pg_ctl -D "$root/data" -m fast -w stop >/dev/null || true
-  rm -rf "$root"
-}
-trap cleanup EXIT INT TERM
+printf "%s\n" "http-smoke" > "$MILE_VALIDATION_STAGE_FILE"
 python visual_validation_proxy.py

@@ -4,6 +4,9 @@ import http.cookies
 import os
 import json
 import time
+import threading
+import traceback
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
@@ -30,19 +33,24 @@ def smoke(port, identifier, role, path):
     conn.close()
     print("VISUAL_HTTP_SMOKE_OK",role,flush=True)
 
-for port,identifier,role,path in (
-    (10001,"validation-admin@example.invalid","admin","/api/v2/admin/i18n/overview"),
-    (10002,"validationplayer","player","/api/v2/notifications/inbox"),
-    (10002,"validationchef","chef","/api/v2/notifications/activation?device="+"b"*32),
-):
-    for attempt in range(30):
-        try:
-            smoke(port,identifier,role,path)
-            break
-        except (ConnectionRefusedError,ConnectionResetError):
-            time.sleep(1)
-    else:
-        raise RuntimeError("Validation service did not start")
+def verify():
+    for port,identifier,role,path in (
+        (10001,"validation-admin@example.invalid","admin","/api/v2/admin/i18n/overview"),
+        (10002,"validationplayer","player","/api/v2/notifications/inbox"),
+        (10002,"validationchef","chef","/api/v2/notifications/activation?device="+"b"*32),
+    ):
+        for attempt in range(30):
+            try:
+                smoke(port,identifier,role,path)
+                break
+            except (ConnectionRefusedError,ConnectionResetError):
+                time.sleep(1)
+        else:
+            raise RuntimeError("Validation service did not start")
+    Path(os.environ["MILE_VALIDATION_READY_FILE"]).touch()
+    Path(os.environ["MILE_VALIDATION_STAGE_FILE"]).write_text("ready\n")
+    print("VISUAL_VALIDATION_READY",flush=True)
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self): self.proxy()
@@ -52,6 +60,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_PATCH(self): self.proxy()
     def do_DELETE(self): self.proxy()
     def proxy(self):
+        if not Path(os.environ["MILE_VALIDATION_READY_FILE"]).exists():
+            self.send_response(503)
+            self.send_header("Content-Type","text/plain; charset=utf-8")
+            self.send_header("Cache-Control","no-store")
+            self.end_headers()
+            if self.command!="HEAD": self.wfile.write(b"Validation startup not ready.")
+            return
         if self.path in ("/__validation/admin","/__validation/app"):
             mode=self.path.rsplit("/",1)[-1]
             self.send_response(303)
@@ -91,5 +106,15 @@ class Handler(BaseHTTPRequestHandler):
         finally:
             conn.close()
 
-print("VISUAL_VALIDATION_READY",flush=True)
-ThreadingHTTPServer(("0.0.0.0",int(os.environ.get("PORT","10000"))),Handler).serve_forever()
+server=ThreadingHTTPServer(("0.0.0.0",int(os.environ.get("PORT","10000"))),Handler)
+print("VISUAL_HTTP_BOUND",flush=True)
+def check():
+    try:
+        verify()
+    except Exception:
+        traceback.print_exc()
+        server.shutdown()
+threading.Thread(target=check,daemon=True).start()
+server.serve_forever()
+if not Path(os.environ["MILE_VALIDATION_READY_FILE"]).exists():
+    raise SystemExit(1)
