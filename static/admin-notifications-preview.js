@@ -1,5 +1,5 @@
 "use strict";
-/* Read-only development preview. No timer, polling or send request. */
+/* Read-only development preview and confirmation. No timer, polling or delivery. */
 (()=>{
  const workspace=document.getElementById("admin-workspace");
  const card=document.getElementById("tm-notify-preview-card");
@@ -10,7 +10,56 @@
  const kind=$("tm-notify-preview-kind"),list=$("tm-notify-preview-list");
  const controls=$("tm-notify-preview-controls"),status=$("tm-notify-preview-status");
  const tabs=[...dialog.querySelectorAll("[data-notify-preview-tab]")];
- let checked=false,checking=false,generation=0,tab="new";
+ const confirmation=$("tm-notify-confirm-controls"),prepareButton=$("tm-notify-prepare");
+ const confirmationResult=$("tm-notify-confirm-result"),menuChange=$("tm-notify-menu-change");
+ const customFields=$("tm-notify-custom-copy");
+ let checked=false,checking=false,generation=0,tab="new",selectionRevision=0;
+ const selected=new Map();
+ function clearConfirmation(){
+  selectionRevision++;
+  confirmationResult.replaceChildren();
+  prepareButton.disabled=!selected.size;
+ }
+ function resetSelection(){
+  selected.clear();clearConfirmation();
+ }
+ const customCopy=()=>Object.fromEntries(["pt","en"].map(lang=>[
+  lang==="pt"?"pt-PT":"en-GB",
+  {title:$("tm-notify-title-"+lang).value,body:$("tm-notify-body-"+lang).value}
+ ]));
+ async function confirmSelection(){
+  if(!selected.size||tab!=="new")return;
+  const revision=++selectionRevision, type=kind.value;
+  prepareButton.disabled=true;
+  confirmationResult.replaceChildren(make("p","tm-chat-empty","A validar seleção…"));
+  try{
+   const session=await fetch("/api/me",{credentials:"same-origin",cache:"no-store"});
+   if(!session.ok)throw Error("session");
+   const auth=await session.json();
+   const res=await fetch("/api/v2/admin/notifications-prepare",{
+    method:"POST",credentials:"same-origin",cache:"no-store",
+    headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},
+    body:JSON.stringify({kind:type,selections:[...selected.values()].map(item=>({
+     recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null
+    })),custom_copy:type==="custom"?customCopy():null,menu_change:type==="menu"?menuChange.value:null})
+   });
+   if(!res.ok)throw Error(String(res.status));
+   const data=await res.json();
+   if(revision!==selectionRevision||!dialog.open)return;
+   confirmationResult.replaceChildren(make("p","tm-chat-empty",data.items.length+" destinatário(s) validado(s)."));
+   for(const item of data.items){
+    const row=make("div","tm-chat-inbox-row");
+    const details=make("div","tm-chat-inbox-details");
+    details.append(make("strong","",selected.get(item.recipient_id)?.name||"Destinatário"),
+     make("span","",item.language+" · "+item.title),make("span","",item.body));
+    row.append(details);confirmationResult.append(row);
+   }
+  }catch(_){
+   if(revision===selectionRevision)confirmationResult.replaceChildren(make("p","tm-chat-empty","Não foi possível validar a seleção. Atualiza os destinatários e verifica os textos."));
+  }finally{
+   if(revision===selectionRevision)prepareButton.disabled=!selected.size;
+  }
+ }
  const make=(tag,cls,text)=>{
   const el=document.createElement(tag);
   if(cls)el.className=cls;
@@ -32,8 +81,9 @@
  }
  async function load(){
   const token=++generation,type=tab==="history"?"history":kind.value;
-  list.replaceChildren();status.textContent="A consultar…";
-  controls.hidden=tab==="history";
+  resetSelection();list.replaceChildren();status.textContent="A consultar…";
+  controls.hidden=tab==="history";confirmation.hidden=tab==="history";
+  customFields.hidden=type!=="custom";$("tm-notify-menu-change-field").hidden=type!=="menu";
   try{
    const data=await request(type);
    if(token!==generation||!dialog.open)return;
@@ -53,6 +103,16 @@
      if(label)details.append(make("span","",label));
      const select=make("input");select.type="checkbox";
      select.setAttribute("aria-label","Selecionar "+item.name);
+     select.addEventListener("change",()=>{
+      if(select.checked){
+       for(const other of list.querySelectorAll("input[type=checkbox]")){
+        if(other!==select&&other.dataset.recipientId===item.recipient_id)other.checked=false;
+       }
+       selected.set(item.recipient_id,item);
+      }else if(selected.get(item.recipient_id)===item)selected.delete(item.recipient_id);
+      clearConfirmation();
+     });
+     select.dataset.recipientId=item.recipient_id;
      row.append(select);
     }
     row.append(details);list.append(row);
@@ -66,8 +126,11 @@
  }
  open.addEventListener("click",()=>{dialog.showModal();setTab("new");});
  close.addEventListener("click",()=>dialog.close());
- dialog.addEventListener("close",()=>{generation++;list.replaceChildren();status.textContent="";});
+ dialog.addEventListener("close",()=>{generation++;resetSelection();list.replaceChildren();status.textContent="";});
  kind.addEventListener("change",load);
+ prepareButton.addEventListener("click",confirmSelection);
+ menuChange.addEventListener("change",clearConfirmation);
+ customFields.addEventListener("input",clearConfirmation);
  for(const b of tabs)b.addEventListener("click",()=>setTab(b.dataset.notifyPreviewTab));
  const observer=new MutationObserver(check);
  observer.observe(workspace,{attributes:true,attributeFilter:["hidden"]});
