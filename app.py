@@ -2263,10 +2263,10 @@ def application(env, start_response):
                 return respond(200, food_plan_player_v2.player_plans(
                     c, link['athlete_id'],language=language))
             if path == '/api/me' and method == 'GET':
-                # Player PWA: keep the HttpOnly cookie alive across app restarts.
-                # Renew only when the existing session is nearing expiry. Admin
-                # sessions remain short-lived; inactive users remain revoked.
-                if user and user['role'] == 'player' and not preview_session and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
+                # Player and Chef PWAs share the same persistent session policy.
+                # Renew only near expiry. Admin and preview sessions retain
+                # their existing limits; inactive users remain revoked.
+                if user and user['role'] in ('player','chef') and not preview_session and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
                     renewed_token = secrets.token_urlsafe(32)
                     c.execute('UPDATE sessions SET token=?, expires=? WHERE token=? AND user_id=?',
                               (digest(renewed_token), now + PLAYER_SESSION_SECONDS, digest(token), user['id']))
@@ -2318,7 +2318,7 @@ def application(env, start_response):
                     c.execute('DELETE FROM sessions WHERE token=?',(digest(token),))
                 session_token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
                 c.execute('DELETE FROM sessions WHERE expires<=?', (now,))
-                session_seconds = PLAYER_SESSION_SECONDS if u['role'] == 'player' else ADMIN_SESSION_SECONDS
+                session_seconds = PLAYER_SESSION_SECONDS if u['role'] in ('player','chef') else ADMIN_SESSION_SECONDS
                 c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (digest(session_token), u['id'], csrf, now + session_seconds))
                 c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
                 c.commit()
