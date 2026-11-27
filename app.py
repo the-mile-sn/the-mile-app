@@ -3379,6 +3379,59 @@ def application(env, start_response):
                 except LookupError: raise Problem(404,'audit_not_found')
                 except (ValueError,TypeError): raise Problem(400,'invalid_review')
                 return respond(200,result)
+            # Explicit manual pilot send. No startup, scheduler or automatic retry.
+            if path == '/api/v2/admin/notifications-send':
+                if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':
+                    raise Problem(404,'not_found')
+                import notification_manual_v2, notification_dispatch_v2 as dispatch
+                if not dispatch.enabled():raise Problem(404,'not_found')
+                if method != 'POST':raise Problem(405,'method_not_allowed')
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                request_id=body.get('request_id')
+                confirmed=body.get('confirmation')
+                selections=body.get('selections')
+                allowed=dispatch.allowed_recipients()
+                if (not isinstance(request_id,str) or not re.fullmatch(r'[a-zA-Z0-9-]{32,64}',request_id)
+                        or not isinstance(confirmed,str) or not re.fullmatch(r'[a-f0-9]{64}',confirmed)
+                        or not isinstance(selections,list) or not 1<=len(selections)<=10
+                        or any(not isinstance(s,dict) or not isinstance(s.get('recipient_id'),str)
+                               or s['recipient_id'] not in allowed for s in selections)):
+                    raise Problem(400,'invalid_pilot_selection')
+                dispatch.lock_manual(c)
+                previous=c.execute("""SELECT id,sender_id,recipient_id,target_id,content_version AS version,
+                    kind,language,title,body,push_status FROM v2_manual_notifications
+                    WHERE request_id=? ORDER BY recipient_id""",(request_id,)).fetchall()
+                if previous:
+                    keys=('recipient_id','target_id','version','kind','language','title','body')
+                    if (any(r['sender_id']!=user['id'] or r['recipient_id'] not in allowed for r in previous)
+                            or dispatch.confirmation_digest([{k:r[k] for k in keys} for r in previous])!=confirmed):
+                        raise Problem(409,'request_conflict')
+                    c.commit()
+                    return respond(200,{'recorded_ids':[r['id'] for r in previous],
+                        'push':{r['id']:r['push_status'] for r in previous},'replayed':True})
+                scope=[r['id'] for r in c.execute(
+                    "SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall()]
+                try:
+                    result=notification_manual_v2.record_manual(c,sender_id=user['id'],request_id=request_id,
+                        authorised_athlete_ids=scope,kind=body.get('kind'),selections=selections,
+                        custom_copy=body.get('custom_copy'),menu_change=body.get('menu_change'),
+                        expected_digest=confirmed,now=datetime.now(ZoneInfo('Europe/Lisbon')))
+                except (ValueError,TypeError):
+                    raise Problem(409,'notification_selection_invalid_or_changed')
+                c.commit()
+                # Persist first. A gateway problem never rolls back internal notifications.
+                push={}
+                if os.environ.get('MILE_NOTIFICATIONS_PUSH_SEND','')=='1':
+                    try:
+                        push=dispatch.dispatch(c,result['recorded_ids'],dispatch.transport())
+                    except Exception:
+                        c.rollback()
+                        logging.warning('Manual v2 push unavailable; internal notifications preserved')
+                return respond(200,{'recorded_ids':result['recorded_ids'],'push':push,'replayed':False})
+
             # Confirmation preview: explicit request, no write or push.
             if path == '/api/v2/admin/notifications-prepare':
                 if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':
@@ -3400,7 +3453,11 @@ def application(env, start_response):
                         now=datetime.now(ZoneInfo('Europe/Lisbon')))
                 except (ValueError,TypeError):
                     raise Problem(400,'notification_selection_invalid_or_changed')
-                return respond(200,{'items':rows,'read_only':True})
+                import notification_dispatch_v2 as dispatch
+                send_allowed=dispatch.enabled() and 1<=len(rows)<=10 and all(
+                    r['recipient_id'] in dispatch.allowed_recipients() for r in rows)
+                return respond(200,{'items':rows,'read_only':not send_allowed,
+                    'confirmation':dispatch.confirmation_digest(rows) if send_allowed else None})
             # Read-only notification preview, disabled unless explicitly configured.
             # Never initialize schemas or dispatch notifications from this route.
             if path == '/api/v2/admin/notifications-preview':
