@@ -7,6 +7,15 @@ eligibility, and language before inserting a notification.
 """
 
 SCHEMA = (
+    """CREATE TABLE IF NOT EXISTS v2_notification_content_changes (
+        recipient_id TEXT NOT NULL REFERENCES users(id),
+        kind TEXT NOT NULL CHECK(kind IN (\'document\',\'assessment\',\'menu\')),
+        target_id TEXT NOT NULL,
+        content_version TEXT NOT NULL,
+        change_kind TEXT NOT NULL CHECK(change_kind IN (\'new\',\'updated\')),
+        changed_at BIGINT NOT NULL,
+        PRIMARY KEY(recipient_id,kind,target_id,content_version)
+    )""",
     """CREATE TABLE IF NOT EXISTS v2_manual_notifications (
         id TEXT PRIMARY KEY,
         request_id TEXT NOT NULL,
@@ -64,3 +73,25 @@ def content_notified(c, *, recipient_id, kind, target_id, version):
            WHERE recipient_id=? AND kind=? AND target_id=? AND content_version=?""",
         (recipient_id, kind, target_id, version),
     ).fetchone() is not None
+
+
+def record_content_change(c, *, recipient_id, kind, target_id, previous_version,
+                          current_version, changed_at):
+    """Record a confirmed publication/change within an explicit caller transaction.
+
+    previous_version=None is valid only for an actual first publication, not
+    for an unknown historical version. Caller must establish that fact.
+    Nothing is sent. No changes to existing content tables.
+    """
+    if kind not in ("document", "assessment", "menu"):
+        raise ValueError("invalid_kind")
+    if not current_version or previous_version == current_version:
+        return False
+    result = c.execute("""
+        INSERT INTO v2_notification_content_changes
+            (recipient_id,kind,target_id,content_version,change_kind,changed_at)
+        VALUES(?,?,?,?,?,?)
+        ON CONFLICT(recipient_id,kind,target_id,content_version) DO NOTHING
+    """, (recipient_id,kind,target_id,current_version,
+          "new" if previous_version is None else "updated",changed_at))
+    return result.rowcount == 1
