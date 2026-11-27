@@ -780,7 +780,7 @@ def application(env, start_response):
             # Chef accounts have a separate, session-scoped API. No legacy
             # player/admin/document endpoints are exposed to professional users.
             if user and user['role']=='chef' and path.startswith('/api/'):
-                if path not in ('/api/me','/api/login','/api/logout','/api/change-password') and not path.startswith('/api/v2/chef/'):
+                if path not in ('/api/me','/api/login','/api/logout','/api/change-password', '/api/v2/notifications/inbox','/api/v2/notifications/open','/api/v2/notifications/activation') and not path.startswith('/api/v2/chef/'):
                     raise Problem(403,'forbidden')
 
             # Players can reschedule ordinary events, but cannot change nutrition or games.
@@ -2517,6 +2517,7 @@ def application(env, start_response):
             if path == '/api/v2/notifications/activation':
                 if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_PUSH','') != '1':
                     raise Problem(404,'not_found')
+                if preview_session:raise Problem(403,'admin_preview_read_only')
                 public_key=os.environ.get('MILE_VAPID_PUBLIC_KEY','')
                 if not public_key or not os.environ.get('MILE_VAPID_PRIVATE_KEY_B64',''):
                     raise Problem(404,'not_found')
@@ -2558,6 +2559,7 @@ def application(env, start_response):
             if path in ('/api/v2/notifications/inbox','/api/v2/notifications/open'):
                 if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_INBOX','') != '1':
                     raise Problem(404,'not_found')
+                if preview_session:raise Problem(403,'admin_preview_read_only')
                 if not user or user['role'] not in ('player','chef'):
                     raise Problem(403,'forbidden')
                 if user['role']=='chef':
