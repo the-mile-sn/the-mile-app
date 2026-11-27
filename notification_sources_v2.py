@@ -111,6 +111,18 @@ def weekly_menu_snapshot(c, *, athlete_id, week_start, authorised_athlete_ids):
                            for r in recipients]}
 
 
+def document_version(row):
+    return content_version({"folder":row["folder"],"title":row["title"],
+                            "pdf_sha256":hashlib.sha256(bytes(row["data"])).hexdigest()})
+
+
+def assessment_version(row):
+    return content_version({"assessed_on":row["assessed_on"],
+                            "measurements":json.loads(row["measurements"]),
+                            "averages":json.loads(row["averages"]),
+                            "formula_note":row["formula_note"]})
+
+
 def document_assessment_inventory(c, *, authorised_athlete_ids):
     """Current visible content only; do not infer publication from old timestamps.
 
@@ -135,10 +147,7 @@ def document_assessment_inventory(c, *, authorised_athlete_ids):
                        or (folder == "anthropometry" and bool(account["anthropometry_enabled"])))
             if not allowed:
                 continue
-            version = content_version({
-                "folder": folder, "title": row["title"],
-                "pdf_sha256": hashlib.sha256(bytes(row["data"])).hexdigest(),
-            })
+            version = document_version(row)
             result.append({**player, "kind": "document", "target_id": row["id"],
                            "folder": folder, "label": row["title"], "version": version})
         rows = c.execute("""
@@ -148,12 +157,7 @@ def document_assessment_inventory(c, *, authorised_athlete_ids):
             ORDER BY assessed_on DESC,id
         """, (aid,)).fetchall()
         for row in rows:
-            version = content_version({
-                "assessed_on": row["assessed_on"],
-                "measurements": json.loads(row["measurements"]),
-                "averages": json.loads(row["averages"]),
-                "formula_note": row["formula_note"],
-            })
+            version = assessment_version(row)
             result.append({**player, "kind": "assessment", "target_id": row["id"],
                            "folder": None, "label": row["assessed_on"], "version": version})
     return result
