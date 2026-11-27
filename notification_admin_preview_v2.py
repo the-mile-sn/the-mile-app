@@ -1,13 +1,36 @@
 """Read-only Admin preview. No send or schema installation endpoint."""
 from datetime import date, timedelta
 from notification_sources_v2 import (
-    form_candidates, birthday_candidates, custom_recipients,
+    form_candidates, birthday_candidates, custom_recipients, active_players,
     weekly_menu_snapshot, document_assessment_inventory,
     recent_document_assessment_candidates,
 )
 
 
-def preview(c, *, authorised_athlete_ids, kind, now):
+def manual_content(c, scope, kind, recipient_id, target_id=None):
+    """Explicit historical selection; never mislabel as a new publication."""
+    if kind not in ("document","assessment"):raise ValueError("invalid_kind")
+    player=next((p for p in active_players(c,authorised_athlete_ids=scope)
+                 if p["recipient_id"]==recipient_id),None)
+    if not player:return []
+    if target_id is not None:
+        targets={(recipient_id,kind):[target_id]}
+    else:
+        # IDs only: avoid loading PDFs belonging to another kind or player.
+        if kind=="document":
+            rows=c.execute("SELECT id FROM documents WHERE user_id=? AND folder<>'weekly' ORDER BY id",(recipient_id,)).fetchall()
+        else:
+            rows=c.execute("""SELECT id FROM v2_body_assessments WHERE athlete_id=?
+                AND status='published' ORDER BY assessed_on DESC,id""",(player["athlete_id"],)).fetchall()
+        targets={(recipient_id,kind):[r["id"] for r in rows]}
+    from notification_store_v2 import content_notified
+    items=document_assessment_inventory(c,authorised_athlete_ids=[player["athlete_id"]],targets=targets)
+    return [{**i,"change_kind":"available","manual":True} for i in items
+            if i["recipient_id"]==recipient_id and i["kind"]==kind and not content_notified(c,
+               recipient_id=recipient_id,kind=kind,target_id=i["target_id"],version=i["version"])]
+
+
+def preview(c, *, authorised_athlete_ids, kind, now, historical_recipient=None):
     scope = set(authorised_athlete_ids)
     if kind in ("game", "weight"):
         return {"items": form_candidates(c, authorised_athlete_ids=scope, kind=kind, now=now)}
@@ -18,7 +41,19 @@ def preview(c, *, authorised_athlete_ids, kind, now):
     if kind in ("document", "assessment"):
         items = recent_document_assessment_candidates(c, authorised_athlete_ids=scope,
                     since=now-timedelta(days=7), now=now)
-        return {"items": [i for i in items if i["kind"] == kind]}
+        players=active_players(c,authorised_athlete_ids=scope)
+        recent=[i for i in items if i["kind"] == kind]
+        if historical_recipient is None:
+            return {"items":recent,"players":players}
+        if not isinstance(historical_recipient,str):
+            raise ValueError("invalid_recipient")
+        selected=next((p for p in players if p["recipient_id"]==historical_recipient),None)
+        if not selected:raise ValueError("invalid_recipient")
+        # Load historical content only for the explicitly chosen player.
+        historical=manual_content(c,scope,kind,selected["recipient_id"])
+        recent_by_key={(i["recipient_id"],i["target_id"],i["version"]):i for i in recent}
+        return {"items":[recent_by_key.get((i["recipient_id"],i["target_id"],i["version"]),i)
+                         for i in historical],"players":players}
     if kind == "menu":
         monday = now.date()-timedelta(days=now.date().weekday())
         cutoff = int((now-timedelta(days=7)).timestamp())
