@@ -71,16 +71,18 @@ def dispatch(c,ids,send,*,deadline_seconds=8):
         c.commit()
         if not claimed:
             continue
-        subs=c.execute("""SELECT device_id,endpoint,p256dh,auth FROM v2_notification_devices
-            WHERE user_id=? ORDER BY device_id""",(uid,)).fetchall()
+        subs=c.execute("""SELECT d.device_id,d.endpoint,d.p256dh,d.auth,d.session_token
+            FROM v2_notification_devices d JOIN sessions s ON s.token=d.session_token AND s.user_id=d.user_id
+            WHERE d.user_id=? AND s.expires>? ORDER BY d.device_id""",(uid,int(time.time()))).fetchall()
         outcomes=[]
         for sub in subs:
             if time.monotonic()>=deadline:
                 outcomes.append("unknown");break
             # Recheck device ownership immediately before contacting the gateway.
-            current=c.execute("""SELECT 1 FROM v2_notification_devices
-                WHERE device_id=? AND user_id=? AND endpoint=?""",
-                (sub["device_id"],uid,sub["endpoint"])).fetchone()
+            current=c.execute("""SELECT 1 FROM v2_notification_devices d
+                JOIN sessions s ON s.token=d.session_token AND s.user_id=d.user_id
+                WHERE d.device_id=? AND d.user_id=? AND d.endpoint=? AND d.session_token=? AND s.expires>?""",
+                (sub["device_id"],uid,sub["endpoint"],sub["session_token"],int(time.time()))).fetchone()
             if current:
                 try: outcomes.append(send(sub,{"version":2,"id":nid,"language":row["language"]}))
                 except Exception: outcomes.append("unknown")
