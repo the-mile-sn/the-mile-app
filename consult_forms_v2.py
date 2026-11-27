@@ -322,6 +322,8 @@ def _screens():
 
 STEPS = _screens()
 CARE_FIELDS = ("allergies", "intolerances", "medication", "conditions")
+# Respostas de versões anteriores do formulário: guardam-se e mostram-se, mas já não se perguntam.
+LEGACY_TEXT = {"supplements_detail": "Marca e dose"}
 
 
 def initialize(c):
@@ -460,6 +462,9 @@ def readable(answers):
                     parts = [info.get(key, {}).get(c, "") for c, _ in f["columns"]]
                     text = " · ".join(p for p in parts if p) or "—"
                     rows.append({"type": "text", "key": f["id"] + "." + key, "label": name, "value": text})
+                for legacy, label in LEGACY_TEXT.items():
+                    if answers.get(legacy):
+                        rows.append({"type": "text", "key": legacy, "label": label, "value": answers[legacy]})
                 continue
             if value in (None, "", []):
                 continue
@@ -615,6 +620,10 @@ def clean_answers(payload):
         raise ValueError("invalid_answers")
     out = {}
     for key, value in payload.items():
+        if key in LEGACY_TEXT:
+            if isinstance(value, str) and value.strip() and len(value) <= 2000:
+                out[key] = value.strip()
+            continue
         f = FIELDS.get(key)
         if not f:
             raise ValueError("invalid_answers")
@@ -651,6 +660,10 @@ def save(c, token, payload, now=None):
     if not isinstance(payload, dict):
         raise ValueError("invalid_request")
     answers = clean_answers(payload.get("answers") or {})
+    previous = json.loads(row["answers_json"] or "{}")
+    for legacy in LEGACY_TEXT:
+        if legacy in previous and legacy not in answers:
+            answers[legacy] = previous[legacy]
     step = payload.get("step", row["step"])
     if type(step) is not int or not (0 <= step < len(STEPS)):
         step = row["step"]
