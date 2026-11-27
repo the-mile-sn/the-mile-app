@@ -3379,6 +3379,28 @@ def application(env, start_response):
                 except LookupError: raise Problem(404,'audit_not_found')
                 except (ValueError,TypeError): raise Problem(400,'invalid_review')
                 return respond(200,result)
+            # Confirmation preview: explicit request, no write or push.
+            if path == '/api/v2/admin/notifications-prepare':
+                if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':
+                    raise Problem(404,'not_found')
+                if method != 'POST':
+                    raise Problem(405,'method_not_allowed')
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                import notification_manual_v2
+                scope=[r['id'] for r in c.execute(
+                    "SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall()]
+                try:
+                    rows=notification_manual_v2.prepare(c,
+                        authorised_athlete_ids=scope,kind=body.get('kind'),
+                        selections=body.get('selections'),custom_copy=body.get('custom_copy'),
+                        menu_change=body.get('menu_change'),
+                        now=datetime.now(ZoneInfo('Europe/Lisbon')))
+                except (ValueError,TypeError):
+                    raise Problem(400,'notification_selection_invalid_or_changed')
+                return respond(200,{'items':rows,'read_only':True})
             # Read-only notification preview, disabled unless explicitly configured.
             # Never initialize schemas or dispatch notifications from this route.
             if path == '/api/v2/admin/notifications-preview':
