@@ -34,3 +34,18 @@
 #tm-notify-translate-controls[hidden]{display:none!important}
 #tm-notify-translate-controls{display:flex;flex-direction:column;gap:6px}
 #tm-notify-translation-status:empty{display:none}
+
+/* Match the existing recent-forms geometry and complete-row scroll cap. */
+#tm-dashboard #tm-notify-recent{display:flex;flex-direction:column;gap:3px;min-height:0;margin:0 17px 14px;scrollbar-width:thin}
+#tm-dashboard #tm-notify-recent.is-scrollable{max-height:var(--tm-notify-recent-max-height);overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:auto;scroll-snap-type:y proximity;-webkit-overflow-scrolling:touch}
+#tm-dashboard #tm-notify-recent.is-scrollable:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
+#tm-dashboard #tm-notify-recent .tm-notify-recent-row{appearance:none;width:100%;min-width:0;margin:0;flex-shrink:0;scroll-snap-align:start;border:0;border-radius:8px;background:transparent;color:var(--tm-ui-text);text-align:left;cursor:pointer}
+#tm-dashboard #tm-notify-recent .tm-db-form-icon{background:var(--tm-ui-subcard);color:var(--tm-ui-text)}
+#tm-dashboard #tm-notify-recent .tm-db-form-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tm-dashboard #tm-notify-recent .tm-db-form-player{color:var(--tm-ui-text);overflow-wrap:anywhere}
+#tm-dashboard #tm-notify-recent :is(.tm-db-form-sub,.tm-db-form-time){color:var(--tm-ui-muted)}
+#tm-dashboard #tm-notify-recent .tm-db-form-sub{overflow-wrap:anywhere}
+#tm-dashboard #tm-notify-recent .tm-db-none{margin:0 5px 2px}
+#tm-dashboard #tm-notify-recent-more{margin:0 auto 10px}
+@media(hover:hover){#tm-dashboard #tm-notify-recent .tm-notify-recent-row:hover{background:var(--tm-ui-hover)}}
+@media(max-width:800px){#tm-dashboard #tm-notify-recent{margin:0 14px 12px}}
