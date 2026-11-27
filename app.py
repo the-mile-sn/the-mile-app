@@ -742,6 +742,8 @@ def application(env, start_response):
                     raise Problem(404,'preview_account_unavailable')
                 if target['role']=='chef' and not chef_accounts_v2.assigned_athlete(c,target['id']):
                     raise Problem(404,'chef_not_linked')
+                if os.environ.get('MILE_NOTIFICATIONS_PUSH')=='1' and token:
+                    c.execute('DELETE FROM sessions WHERE token=?',(digest(token),))
                 preview_token=secrets.token_urlsafe(32)
                 csrf_preview=secrets.token_urlsafe(24)
                 expires=now+3600
@@ -2309,6 +2311,11 @@ def application(env, start_response):
                     c.execute('DELETE FROM activations WHERE user_id=?', (a['id'],))
                     c.execute('DELETE FROM sessions WHERE user_id=?', (a['id'],))
                     u = a
+                # A successful app login replaces the current browser session.
+                # When the pilot is enabled, revoke the replaced session, which
+                # also revokes its v2 push subscriptions via the foreign key.
+                if SITE_ROLE in ('player','both') and os.environ.get('MILE_NOTIFICATIONS_PUSH')=='1' and token:
+                    c.execute('DELETE FROM sessions WHERE token=?',(digest(token),))
                 session_token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
                 c.execute('DELETE FROM sessions WHERE expires<=?', (now,))
                 session_seconds = PLAYER_SESSION_SECONDS if u['role'] == 'player' else ADMIN_SESSION_SECONDS
@@ -2534,7 +2541,7 @@ def application(env, start_response):
                 try:
                     if method=='GET':
                         device=(parse_qs(env.get('QUERY_STRING','')).get('device') or [''])[0]
-                        return respond(200,{**activation.state(c,user_id=user['id'],device=device),
+                        return respond(200,{**activation.state(c,user_id=user['id'],device=device,session_token=digest(token),now=now),
                                             'publicKey':public_key})
                     if method=='POST':
                         body=read_json(env)
@@ -2545,12 +2552,12 @@ def application(env, start_response):
                             activation.acknowledge(c,user_id=user['id'],now=now)
                         elif action=='activate':
                             activation.activate(c,user_id=user['id'],device=device,
-                                                subscription=body.get('subscription'),now=now)
+                                                subscription=body.get('subscription'),session_token=digest(token),now=now)
                         elif action=='deactivate':
                             activation.deactivate(c,user_id=user['id'],device=device)
                         else:raise Problem(400,'invalid_action')
                         c.commit()
-                        return respond(200,activation.state(c,user_id=user['id'],device=device))
+                        return respond(200,activation.state(c,user_id=user['id'],device=device,session_token=digest(token),now=now))
                     raise Problem(405,'method_not_allowed')
                 except (ValueError,TypeError):
                     raise Problem(400,'invalid_activation')
