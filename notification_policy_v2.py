@@ -28,3 +28,25 @@ def weight_reminder_eligible(*, active: bool, last_weigh_date: date | None,
         if elapsed < WEIGHT_REMINDER_INTERVAL:
             return False
     return True
+
+
+def latest_pending_match(*, active: bool, matches, answered_match_ids,
+                         local_day: date):
+    """Return only the most recent past match if unanswered and in the app window.
+
+    The current player API exposes matches up to 30 days old. It does not
+    confirm that today's match has finished. Exclude today's matches until
+    a reliable completion signal is available. No writes or side effects.
+    """
+    if not active:
+        return None
+    past = [(date.fromisoformat(m["match_date"]), m["id"]) for m in matches
+            if date.fromisoformat(m["match_date"]) < local_day]
+    if not past:
+        return None
+    match_day, match_id = max(past)
+    if (local_day - match_day).days > 30:
+        return None
+    if match_id in set(answered_match_ids):
+        return None
+    return match_id
