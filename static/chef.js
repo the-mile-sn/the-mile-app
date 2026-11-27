@@ -136,6 +136,8 @@ async function init(){
     show("chef");
     await loadWeek();
     if(!previewReadOnly){
+     const pending=window.tmNotificationInbox?.consumePendingId();
+     if(pending)await openChefNotificationLink(pending);
      const actor=sessionUser;
      window.tmNotificationActivation?.start({
       language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
@@ -1112,6 +1114,34 @@ function chefProfileHeader(page,title){
  heading.append(back,node("h2","",title));
  page.append(heading);
 }
+let chefNotificationInitialId=null;
+async function navigateChefNotification(target){
+ const actor=sessionUser;
+ if(!actor||previewReadOnly||target?.kind!=="menu")return false;
+ const week=target.week;
+ if(typeof week==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(week)){
+  const date=new Date(week+"T12:00:00");
+  if(!Number.isNaN(date.getTime()))selectedDay=date;
+ }
+ chefWeekSelection=null;
+ await loadWeek();
+ if(sessionUser!==actor||previewReadOnly)return false;
+ changeChefTab("menus");
+ window.scrollTo?.(0,0);
+ return true;
+}
+async function openChefNotificationLink(id){
+ const actor=sessionUser;
+ try{
+  const response=await request("/api/v2/notifications/open","POST",{id});
+  if(sessionUser!==actor||previewReadOnly)return;
+  if(response.destination&&await navigateChefNotification(response.destination))return;
+ }catch(_){}
+ if(sessionUser===actor&&!previewReadOnly){
+  changeChefTab("profile");chefNotificationInitialId=id;
+  chefProfileOpenSubpage("notifications");
+ }
+}
 function renderChefNotifications(page){
  const section=node("section","profile-subpage");
  chefProfileHeader(section,txt().notifications);
@@ -1121,10 +1151,11 @@ function renderChefNotifications(page){
  const actor=sessionUser;
  if(!previewReadOnly)window.tmNotificationActivation?.mount(section);
  if(!previewReadOnly)window.tmNotificationInbox?.mount({
-  container:section,language:()=>lang,
+  container:section,language:()=>lang,navigate:navigateChefNotification,initialId:chefNotificationInitialId,
   active:()=>!!actor&&sessionUser===actor&&chefProfileSubpage==="notifications"&&!previewReadOnly,
   request
  });
+ chefNotificationInitialId=null;
 
 }
 function renderChefPassword(page){
