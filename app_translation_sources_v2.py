@@ -43,11 +43,21 @@ def _put(fields,path,value,label,legacy=""):
             "legacy_en":legacy if isinstance(legacy,str) else ""
         })
 
+def rows_for(c,kind):
+    if kind=="notification":
+        from notification_templates_v2 import source_rows
+        return source_rows()
+    return c.execute(SQL[kind]).fetchall()
+
+
 def fields_for(kind,row):
     """Only fields used in player/chef presentation, never food internal notes."""
     data=dict(row)
     fields=[]
-    if kind=="food":
+    if kind=="notification":
+        _put(fields,"title",data["title"],"Título",data["title_en"])
+        _put(fields,"body",data["body"],"Mensagem",data["body_en"])
+    elif kind=="food":
         _put(fields,"display_name",data["display_name"],"Nome do alimento")
     elif kind=="dish":
         _put(fields,"name_pt",data["name_pt"],"Nome do prato",data.get("name_en") or "")
@@ -93,6 +103,10 @@ def fields_for(kind,row):
     return fields
 
 def record(c,kind,entity_id):
+    if kind=="notification":
+        row=next((r for r in rows_for(c,kind) if r["id"]==entity_id),None)
+        if row is None:raise LookupError("content_not_found")
+        return row
     if kind not in KINDS or not isinstance(entity_id,str) or len(entity_id)>160:
         raise ValueError("invalid_translation_field")
     row=c.execute(SINGLE[kind],(entity_id,)).fetchone()
