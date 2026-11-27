@@ -20,3 +20,7 @@
 
 #tm-notify-history-recipient-field[hidden],#tm-notify-copy-pt[hidden],#tm-notify-copy-en[hidden]{display:none!important}
 #tm-notify-custom-copy{display:flex;flex-direction:column;gap:10px}
+
+#tm-notify-translate-controls[hidden]{display:none!important}
+#tm-notify-translate-controls{display:flex;flex-direction:column;gap:6px}
+#tm-notify-translation-status:empty{display:none}
