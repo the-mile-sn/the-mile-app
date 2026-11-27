@@ -7,7 +7,7 @@ import time
 from notification_activation_v2 import _endpoint
 
 def confirmation_digest(rows):
-    return hashlib.sha256(json.dumps(rows,sort_keys=True,ensure_ascii=False,
+    return hashlib.sha256(json.dumps(sorted(rows,key=lambda r:r['recipient_id']),sort_keys=True,ensure_ascii=False,
         separators=(",",":")).encode()).hexdigest()
 
 def lock_manual(c):
