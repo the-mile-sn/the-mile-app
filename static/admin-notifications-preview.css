@@ -17,3 +17,6 @@
 #tm-notify-confirm-result{display:flex;flex-direction:column;gap:5px;max-height:30dvh;overflow:auto}
 #tm-notify-confirm-result .tm-chat-inbox-row{padding:9px 11px;border-radius:10px;background:var(--tm-ui-search)}
 #tm-notify-confirm-result .tm-chat-inbox-details{display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+
+#tm-notify-history-recipient-field[hidden],#tm-notify-copy-pt[hidden],#tm-notify-copy-en[hidden]{display:none!important}
+#tm-notify-custom-copy{display:flex;flex-direction:column;gap:10px}
