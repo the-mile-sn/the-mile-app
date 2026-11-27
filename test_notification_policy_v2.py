@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 import unittest
-from notification_policy_v2 import weight_reminder_eligible
+from notification_policy_v2 import weight_reminder_eligible, latest_pending_match
 
 
 class WeightReminderPolicyTests(unittest.TestCase):
@@ -40,6 +40,38 @@ class WeightReminderPolicyTests(unittest.TestCase):
     def test_naive_timestamp_rejected(self):
         with self.assertRaises(ValueError):
             self.eligible(reminder=self.now.replace(tzinfo=None))
+
+
+class MatchReminderPolicyTests(unittest.TestCase):
+    today = date(2026, 11, 27)
+    matches = [
+        {"id": "older", "match_date": "2026-11-21"},
+        {"id": "latest", "match_date": "2026-11-25"},
+        {"id": "today", "match_date": "2026-11-27"},
+        {"id": "future", "match_date": "2026-11-29"},
+    ]
+
+    def select(self, answered=(), active=True, matches=None):
+        return latest_pending_match(active=active,
+                                    matches=self.matches if matches is None else matches,
+                                    answered_match_ids=answered, local_day=self.today)
+
+    def test_latest_only(self):
+        self.assertEqual(self.select(), "latest")
+
+    def test_no_fallback_when_latest_answered(self):
+        self.assertIsNone(self.select(answered=("latest",)))
+
+    def test_older_answer_does_not_hide_latest(self):
+        self.assertEqual(self.select(answered=("older",)), "latest")
+
+    def test_no_today_or_future_only(self):
+        self.assertIsNone(self.select(matches=self.matches[2:]))
+
+    def test_window_and_inactive(self):
+        self.assertIsNone(self.select(active=False))
+        self.assertIsNone(self.select(matches=[{"id": "old", "match_date": "2026-10-27"}]))
+        self.assertEqual(self.select(matches=[{"id": "edge", "match_date": "2026-10-28"}]), "edge")
 
 
 if __name__ == "__main__":
