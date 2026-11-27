@@ -14,7 +14,7 @@
  };
  const displayKind={
    food:"Alimentos",dish:"Pratos",recipe:"Receitas",
-   recipe_category:"Categorias de receitas",supplement:"Suplementação",plan:"Planos"
+   recipe_category:"Categorias de receitas",supplement:"Suplementação",plan:"Planos",notification:"Notificações"
  };
  const embedded=!!document.getElementById("tm-admin-translations-page");
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
@@ -110,6 +110,7 @@
      card.setAttribute("aria-pressed",String(card.dataset.kind===state.kind));
    }
    $("i18n-library-link").dataset.libraryKind=state.kind;
+   $("i18n-library-link").hidden=state.kind==="notification";
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
  const batchKinds=["food","dish","recipe","supplement"];
@@ -360,7 +361,7 @@
      for(const entry of result.items){
        const b=create("div","i18n-result");
        const fields=entry.fields?.length?entry.fields:[entry];
-       const expandable=["recipe","supplement"].includes(state.kind)&&fields.length>1;
+       const expandable=["recipe","supplement","notification"].includes(state.kind)&&fields.length>1;
        const recordKey=JSON.stringify([state.kind,entry.entity_id]);
        const main=create("span","i18n-result-portuguese");
        const name=create(expandable?"button":"strong",expandable?"i18n-record-toggle":"",entry.source_text);
@@ -509,7 +510,7 @@
      $("i18n-target-text").value=detail.candidate?.text||state.legacy||"";
      const stateLabel=detail.candidate ?
        (translations[detail.candidate.status]||detail.candidate.status) :
-       (state.legacy?"Inglês existente na biblioteca · por rever":"Ainda sem tradução");
+       (state.legacy?(key.entity_kind==="notification"?"Tradução sugerida · por rever":"Inglês existente na biblioteca · por rever"):"Ainda sem tradução");
      $("i18n-translation-state").textContent=stateLabel;
      $("i18n-approve").disabled=!detail.candidate||
        detail.candidate.status!=="pending";
@@ -646,6 +647,7 @@
      if(!leaveReview()){event.preventDefault();return;}
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;
+     if(library==="notification")return;
      if(library==="food")window.tmOpenAdminFoodLibrary?.("foods");
      else if(library==="supplement")window.tmOpenAdminFoodLibrary?.("supplements");
      else if(library==="dish")window.tmOpenAdminMenusRecipes?.();
