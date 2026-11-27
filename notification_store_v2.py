@@ -90,11 +90,21 @@ def record_content_change(c, *, recipient_id, kind, target_id, previous_version,
         raise ValueError("invalid_kind")
     if not current_version or previous_version == current_version:
         return False
+    change_kind = "new" if previous_version is None else "updated"
+    if previous_version is not None:
+        prior = c.execute("""SELECT change_kind FROM v2_notification_content_changes
+            WHERE recipient_id=? AND kind=? AND target_id=? AND content_version=?""",
+            (recipient_id,kind,target_id,previous_version)).fetchone()
+        sent = c.execute("""SELECT 1 FROM v2_manual_notifications
+            WHERE recipient_id=? AND kind=? AND target_id=? LIMIT 1""",
+            (recipient_id,kind,target_id)).fetchone()
+        if prior and prior[0 if isinstance(prior,tuple) else "change_kind"]=="new" and not sent:
+            change_kind="new"
     result = c.execute("""
         INSERT INTO v2_notification_content_changes
             (recipient_id,kind,target_id,content_version,change_kind,changed_at)
         VALUES(?,?,?,?,?,?)
         ON CONFLICT(recipient_id,kind,target_id,content_version) DO NOTHING
     """, (recipient_id,kind,target_id,current_version,
-          "new" if previous_version is None else "updated",changed_at))
+          change_kind,changed_at))
     return result.rowcount == 1
