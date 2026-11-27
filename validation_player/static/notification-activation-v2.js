@@ -21,7 +21,26 @@ window.tmNotificationActivation=(()=>{
  }
  const supported=()=>typeof Notification!=="undefined"&&"serviceWorker" in navigator&&"PushManager" in window;
  const valid=(token)=>token===generation&&!!ctx&&ctx.active();
- function closePrompt(){if(dialog){dialog.close();dialog.remove();dialog=null;}}
+ let lockedScroll=null;
+ function lockBackground(){
+  if(lockedScroll!==null)return;
+  lockedScroll=window.scrollY||0;
+  const root=document.documentElement;
+  root.style.setProperty("--tm-notification-scroll-top",(-lockedScroll)+"px");
+  root.classList.add("tm-notification-sheet-locked");
+ }
+ function unlockBackground(){
+  if(lockedScroll===null)return;
+  const y=lockedScroll;lockedScroll=null;
+  const root=document.documentElement;
+  root.classList.remove("tm-notification-sheet-locked");
+  root.style.removeProperty("--tm-notification-scroll-top");
+  window.scrollTo(0,y);
+ }
+ function closePrompt(){
+  try{if(dialog){dialog.close();dialog.remove();dialog=null;}}
+  finally{unlockBackground();}
+ }
  function reset(){
   generation++;closePrompt();profile?.remove();profile=null;ctx=null;state=null;loading=null;busy=false;promptedHere=false;
  }
@@ -70,17 +89,19 @@ window.tmNotificationActivation=(()=>{
   const d=make("dialog","tm-notification-activation-dialog");
   d.setAttribute("aria-labelledby","tm-notification-activation-title");
   const title=make("h2","",t("Ativar notificações","Enable notifications"));title.id="tm-notification-activation-title";title.tabIndex=-1;title.setAttribute("autofocus","");
+  const icon=make("div","tm-notification-sheet-icon");icon.setAttribute("aria-hidden","true");
+  icon.innerHTML='<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9ZM10 21h4"/></svg>';
   const body=make("p","",t("Recebe informações importantes e atualizações sobre o teu acompanhamento.","Receive important information and updates about your ongoing support."));
   const actions=make("div","tm-notification-activation-actions");
   const yes=make("button","is-primary",t("Ativar notificações","Enable notifications"));yes.type="button";
   const no=make("button","",t("Agora não","Not now"));no.type="button";
   const feedback=make("p","tm-notification-activation-feedback");feedback.setAttribute("role","status");
-  actions.append(yes,no);d.append(title,body,actions,feedback);
+  actions.append(yes,no);d.append(icon,title,body,actions,feedback);
   yes.onclick=()=>change(true);
   no.onclick=()=>dismiss();
   d.addEventListener("cancel",e=>{e.preventDefault();dismiss();});
   document.body.append(d);dialog=d;
-  try{d.showModal();title.focus({preventScroll:true});}catch(_){closePrompt();}
+  try{lockBackground();d.showModal();title.focus({preventScroll:true});}catch(_){closePrompt();}
  }
  async function dismiss(){
   if(!ctx||busy)return;
