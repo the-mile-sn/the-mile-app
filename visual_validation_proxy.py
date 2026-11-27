@@ -67,8 +67,9 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             if self.command!="HEAD": self.wfile.write(b"Validation startup not ready.")
             return
-        if self.path in ("/__validation/admin","/__validation/app"):
-            mode=self.path.rsplit("/",1)[-1]
+        route=urlsplit(self.path).path
+        if route in ("/__validation/admin","/__validation/app"):
+            mode=route.rsplit("/",1)[-1]
             self.send_response(303)
             self.send_header("Set-Cookie","mile_validation_mode="+mode+"; Path=/; Secure; HttpOnly; SameSite=Lax")
             self.send_header("Set-Cookie","mile_session=; Path=/; Secure; HttpOnly; Max-Age=0; SameSite=Lax")
