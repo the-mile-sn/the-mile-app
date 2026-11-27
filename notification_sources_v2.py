@@ -123,7 +123,7 @@ def assessment_version(row):
                             "formula_note":row["formula_note"]})
 
 
-def document_assessment_inventory(c, *, authorised_athlete_ids):
+def document_assessment_inventory(c, *, authorised_athlete_ids, targets=None):
     """Current visible content only; do not infer publication from old timestamps.
 
     Document PDF bytes are hashed without being returned. Assessment drafts and
@@ -136,10 +136,15 @@ def document_assessment_inventory(c, *, authorised_athlete_ids):
         account = c.execute("""
             SELECT menus_enabled,anthropometry_enabled FROM users WHERE id=?
         """, (uid,)).fetchone()
-        docs = c.execute("""
-            SELECT id,folder,title,data FROM documents WHERE user_id=?
-            ORDER BY id
-        """, (uid,)).fetchall()
+        if targets is None:
+            docs = c.execute("""SELECT id,folder,title,data FROM documents
+                WHERE user_id=? ORDER BY id""",(uid,)).fetchall()
+        else:
+            docs=[]
+            for did in targets.get((uid,"document"),()):
+                row=c.execute("""SELECT id,folder,title,data FROM documents
+                    WHERE user_id=? AND id=?""",(uid,did)).fetchone()
+                if row:docs.append(row)
         for row in docs:
             folder = row["folder"]
             allowed = (folder in ("nutrition", "other")
@@ -150,12 +155,17 @@ def document_assessment_inventory(c, *, authorised_athlete_ids):
             version = document_version(row)
             result.append({**player, "kind": "document", "target_id": row["id"],
                            "folder": folder, "label": row["title"], "version": version})
-        rows = c.execute("""
-            SELECT id,assessed_on,measurements,averages,formula_note
-            FROM v2_body_assessments
-            WHERE athlete_id=? AND status='published'
-            ORDER BY assessed_on DESC,id
-        """, (aid,)).fetchall()
+        if targets is None:
+            rows=c.execute("""SELECT id,assessed_on,measurements,averages,formula_note
+                FROM v2_body_assessments WHERE athlete_id=? AND status='published'
+                ORDER BY assessed_on DESC,id""",(aid,)).fetchall()
+        else:
+            rows=[]
+            for aid_record in targets.get((uid,"assessment"),()):
+                row=c.execute("""SELECT id,assessed_on,measurements,averages,formula_note
+                    FROM v2_body_assessments WHERE athlete_id=? AND id=? AND status='published'""",
+                    (aid,aid_record)).fetchone()
+                if row:rows.append(row)
         for row in rows:
             version = assessment_version(row)
             result.append({**player, "kind": "assessment", "target_id": row["id"],
@@ -169,16 +179,25 @@ def recent_document_assessment_candidates(c, *, authorised_athlete_ids, since, n
     Old content without a verified change event is available in the manual
     inventory only. Neither reading the inventory nor this function writes.
     """
-    inventory = document_assessment_inventory(c, authorised_athlete_ids=authorised_athlete_ids)
+    scope=set(authorised_athlete_ids)
+    allowed={r["recipient_id"] for r in active_players(c,authorised_athlete_ids=scope)}
+    if not allowed:return []
+    events={}
+    targets={}
+    for row in c.execute("""SELECT recipient_id,kind,target_id,content_version,change_kind,changed_at
+        FROM v2_notification_content_changes WHERE kind IN ('document','assessment')
+        AND changed_at BETWEEN ? AND ?""",(int(since.timestamp()),int(now.timestamp()))).fetchall():
+        uid,kind,target=row["recipient_id"],row["kind"],row["target_id"]
+        if uid not in allowed:continue
+        events[(uid,kind,target,row["content_version"])]=row
+        targets.setdefault((uid,kind),set()).add(target)
+    if not events:return []
+    inventory = document_assessment_inventory(c, authorised_athlete_ids=scope, targets=targets)
     candidates, notified, details = [], set(), {}
     for item in inventory:
         key = (item["recipient_id"], item["kind"], item["target_id"], item["version"])
         details[key] = item
-        event = c.execute("""
-            SELECT change_kind,changed_at FROM v2_notification_content_changes
-            WHERE recipient_id=? AND kind=? AND target_id=? AND content_version=?
-            ORDER BY changed_at DESC LIMIT 1
-        """, key).fetchone()
+        event=events.get(key)
         if not event:
             continue
         candidates.append(ContentCandidate(
