@@ -1,5 +1,5 @@
 "use strict";
-/* Read-only development preview and confirmation. No timer, polling or delivery. */
+/* Manual pilot confirmation. No timer, polling or automatic delivery. */
 (()=>{
  const workspace=document.getElementById("admin-workspace");
  const card=document.getElementById("tm-notify-preview-card");
@@ -13,7 +13,7 @@
  const confirmation=$("tm-notify-confirm-controls"),prepareButton=$("tm-notify-prepare");
  const confirmationResult=$("tm-notify-confirm-result"),menuChange=$("tm-notify-menu-change");
  const customFields=$("tm-notify-custom-copy");
- let checked=false,checking=false,generation=0,tab="new",selectionRevision=0;
+ let checked=false,checking=false,generation=0,tab="new",selectionRevision=0,sending=false;
  const selected=new Map();
  function clearConfirmation(){
   selectionRevision++;
@@ -30,6 +30,10 @@
  async function confirmSelection(){
   if(!selected.size||tab!=="new")return;
   const revision=++selectionRevision, type=kind.value;
+  const payload={kind:type,selections:[...selected.values()].map(item=>({
+   recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null
+  })),custom_copy:type==="custom"?customCopy():null,menu_change:type==="menu"?menuChange.value:null};
+
   prepareButton.disabled=true;
   confirmationResult.replaceChildren(make("p","tm-chat-empty","A validar seleção…"));
   try{
@@ -39,9 +43,7 @@
    const res=await fetch("/api/v2/admin/notifications-prepare",{
     method:"POST",credentials:"same-origin",cache:"no-store",
     headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},
-    body:JSON.stringify({kind:type,selections:[...selected.values()].map(item=>({
-     recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null
-    })),custom_copy:type==="custom"?customCopy():null,menu_change:type==="menu"?menuChange.value:null})
+    body:JSON.stringify(payload)
    });
    if(!res.ok)throw Error(String(res.status));
    const data=await res.json();
@@ -53,6 +55,45 @@
     details.append(make("strong","",selected.get(item.recipient_id)?.name||"Destinatário"),
      make("span","",item.language+" · "+item.title),make("span","",item.body));
     row.append(details);confirmationResult.append(row);
+   }
+   if(!data.read_only&&/^[a-f0-9]{64}$/.test(data.confirmation||"")){
+    const requestId=crypto.randomUUID?.()||Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toString(16).padStart(2,"0")).join("");
+    const action=make("div","tm-work-dialog-actions");
+    const send=make("button","tm-work-save","Confirmar envio");send.type="button";
+    const feedback=make("p","tm-chat-empty","Envio limitado às contas de teste autorizadas.");
+    action.append(send);confirmationResult.append(action,feedback);
+    send.onclick=async()=>{
+     if(sending||revision!==selectionRevision||!dialog.open)return;
+     sending=true;
+     const locked=[...dialog.querySelectorAll("button,input,select,textarea")].map(el=>[el,el.disabled]);
+     for(const [el] of locked)el.disabled=true;
+     feedback.textContent="A registar notificações…";
+     let success=false;
+     try{
+      const res=await fetch("/api/v2/admin/notifications-send",{
+       method:"POST",credentials:"same-origin",cache:"no-store",
+       headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},
+       body:JSON.stringify({...payload,request_id:requestId,confirmation:data.confirmation})
+      });
+      if(res.status===409){
+       feedback.textContent="A seleção mudou. Valida novamente antes de enviar.";
+       success=true;return;
+      }
+      if(!res.ok)throw Error(String(res.status));
+      const result=await res.json();
+      if(!Array.isArray(result.recorded_ids))throw Error("invalid_response");
+      const accepted=Object.values(result.push||{}).filter(x=>x==="accepted").length;
+      feedback.textContent=result.recorded_ids.length+" notificação(ões) registada(s). "+accepted+" com push aceite pelo serviço.";
+      send.textContent="Registado";success=true;
+     }catch(_){
+      feedback.textContent="Não foi possível confirmar o resultado. Podes repetir este mesmo pedido sem duplicar o envio, ou consultar o histórico.";
+      send.textContent="Verificar / repetir pedido";
+     }finally{
+      sending=false;
+      for(const [el,disabled] of locked)el.disabled=disabled;
+      if(success)send.disabled=true;
+     }
+    };
    }
   }catch(_){
    if(revision===selectionRevision)confirmationResult.replaceChildren(make("p","tm-chat-empty","Não foi possível validar a seleção. Atualiza os destinatários e verifica os textos."));
@@ -125,7 +166,8 @@
   load();
  }
  open.addEventListener("click",()=>{dialog.showModal();setTab("new");});
- close.addEventListener("click",()=>dialog.close());
+ close.addEventListener("click",()=>{if(!sending)dialog.close();});
+ dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{generation++;resetSelection();list.replaceChildren();status.textContent="";});
  kind.addEventListener("change",load);
  prepareButton.addEventListener("click",confirmSelection);
