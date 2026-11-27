@@ -19,6 +19,7 @@
   selectionRevision++;
   confirmationResult.replaceChildren();
   prepareButton.disabled=!selected.size;
+  $("tm-notify-menu-change-field").hidden=kind.value!=="menu"||![...selected.values()].some(item=>!item.change_kind);
  }
  function resetSelection(){
   selected.clear();clearConfirmation();
@@ -124,13 +125,13 @@
   const token=++generation,type=tab==="history"?"history":kind.value;
   resetSelection();list.replaceChildren();status.textContent="A consultar…";
   controls.hidden=tab==="history";confirmation.hidden=tab==="history";
-  customFields.hidden=type!=="custom";$("tm-notify-menu-change-field").hidden=type!=="menu";
+  customFields.hidden=type!=="custom";$("tm-notify-menu-change-field").hidden=true;
   try{
    const data=await request(type);
    if(token!==generation||!dialog.open)return;
    status.textContent="";
    if(!data.items?.length){list.append(make("p","tm-chat-empty","Sem resultados."));return;}
-   if(data.manual_selection)status.textContent="Seleção manual da semana atual e seguinte.";
+   if(data.manual_selection)status.textContent="Os menus sem alteração confirmada estão identificados como seleção manual.";
    for(const item of data.items){
     const row=make("div","tm-chat-inbox-row");
     const details=make("div","tm-chat-inbox-details");
@@ -142,6 +143,10 @@
     }else{
      const label=item.label||item.match_date||item.last_weigh_date||item.role||"";
      if(label)details.append(make("span","",label));
+     if(type==="menu"||type==="document"||type==="assessment"){
+      if(item.change_kind)details.append(make("span","",item.change_kind==="new"?"Novo":"Atualizado"));
+      else if(type==="menu")details.append(make("span","","Seleção manual"));
+     }
      const select=make("input");select.type="checkbox";
      select.setAttribute("aria-label","Selecionar "+item.name);
      select.addEventListener("change",()=>{
