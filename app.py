@@ -780,7 +780,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css', '/admin-work.js': 'admin-work.js', '/admin-work.css': 'admin-work.css',
-            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-translations-shortcuts.js': 'admin-translations-shortcuts.js', '/admin-translations-shortcuts.css': 'admin-translations-shortcuts.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/admin-consult-clients.js': 'admin-consult-clients.js', '/admin-consult-clients.css': 'admin-consult-clients.css', '/admin-consultas': 'admin-consultations.html', '/admin-consultations.js': 'admin-consultations.js', '/admin-consultations.css': 'admin-consultations.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-notifications-preview.js': 'admin-notifications-preview.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-translations-shortcuts.js': 'admin-translations-shortcuts.js', '/admin-translations-shortcuts.css': 'admin-translations-shortcuts.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/admin-consult-clients.js': 'admin-consult-clients.js', '/admin-consult-clients.css': 'admin-consult-clients.css', '/admin-consultas': 'admin-consultations.html', '/admin-consultations.js': 'admin-consultations.js', '/admin-consultations.css': 'admin-consultations.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -3378,6 +3378,31 @@ def application(env, start_response):
                         c,body.get('id'),user['id'],body.get('decision'),body.get('dish_id'))
                 except LookupError: raise Problem(404,'audit_not_found')
                 except (ValueError,TypeError): raise Problem(400,'invalid_review')
+                return respond(200,result)
+            # Read-only notification preview, disabled unless explicitly configured.
+            # Never initialize schemas or dispatch notifications from this route.
+            if path == '/api/v2/admin/notifications-preview':
+                if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':
+                    raise Problem(404,'not_found')
+                if method != 'GET':
+                    raise Problem(405,'method_not_allowed')
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                kind=(parse_qs(env.get('QUERY_STRING','')).get('kind') or ['config'])[0]
+                # Readiness checks: the staging schema must have been installed explicitly.
+                c.execute("SELECT id FROM v2_manual_notifications LIMIT 0")
+                c.execute("SELECT recipient_id FROM v2_notification_content_changes LIMIT 0")
+                if kind=='config':
+                    return respond(200,{'enabled':True,'read_only':True})
+                import notification_admin_preview_v2
+                scope=[r['id'] for r in c.execute(
+                    "SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall()]
+                try:
+                    result=notification_admin_preview_v2.preview(c,
+                        authorised_athlete_ids=scope,kind=kind,
+                        now=datetime.now(ZoneInfo('Europe/Lisbon')))
+                except ValueError:
+                    raise Problem(400,'invalid_notification_kind')
                 return respond(200,result)
             if path == '/api/v2/admin/dashboard/activity' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
