@@ -283,6 +283,7 @@ function animateDailySwipeEntry(){
  ],{duration:320,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
 }
 function revokePlayerView(){
+ window.tmNotificationActivation?.reset();
  pendingDailySwipeDirection=0;
  dailySwipeEntryAnimation?.cancel();
  dailySwipeEntryAnimation=null;
@@ -769,6 +770,14 @@ async function session(){
  $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
  if(epoch===playerSessionEpoch)await finishPlayerLoading(epoch);
+ if(epoch===playerSessionEpoch&&me){
+  window.tmNotificationActivation?.start({
+   language:()=>playerUiLanguage,
+   active:()=>epoch===playerSessionEpoch&&!!me&&!$("player-panel").hidden,
+   request:(path,method,body)=>api(path,method==="GET"?{}:{method,
+    headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
+  });
+ }
 }
 /* Adaptive navigation: hysteresis prevents flicker on short scroll gestures. */
 let mileLastScrollY=0,mileScrollAccum=0,mileScrollDirection=0,mileScrollFrame=0;
@@ -3440,6 +3449,7 @@ function resetProfilePassword(){
 function resetProfileSubpage(){
  resetProfilePassword();
  window.tmNotificationInbox?.clear($("profile-notifications-page"));
+ window.tmNotificationActivation?.clearProfile($("profile-notifications-page"));
  $("profile-main").hidden=false;
  $("profile-notifications-page").hidden=true;
  $("profile-password-page").hidden=true;
@@ -3451,13 +3461,17 @@ function openProfileSubpage(page){
  $("profile-password-page").hidden=page!=="password";
  if(page==="notifications"){
   const epoch=playerSessionEpoch;
+  window.tmNotificationActivation?.mount($("profile-notifications-page"));
   window.tmNotificationInbox?.mount({
    container:$("profile-notifications-page"),language:()=>playerUiLanguage,
    active:()=>epoch===playerSessionEpoch&&!!me&&!$("profile-notifications-page").hidden&&!$("player-panel").hidden,
    request:(path,method,body)=>api(path,method==="GET"?{}:{method,
     headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
   });
- }else window.tmNotificationInbox?.clear($("profile-notifications-page"));
+ }else{
+  window.tmNotificationInbox?.clear($("profile-notifications-page"));
+  window.tmNotificationActivation?.clearProfile($("profile-notifications-page"));
+ }
  window.scrollTo?.(0,0);
 }
 $("profile-notifications-open").onclick=()=>openProfileSubpage("notifications");
