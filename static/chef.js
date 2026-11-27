@@ -1112,6 +1112,13 @@ function renderChefNotifications(page){
  const empty=node("div","profile-notifications-empty");
  empty.append(node("p","",txt().notificationsEmpty));
  section.append(empty);page.append(section);
+ const actor=sessionUser;
+ if(!previewReadOnly)window.tmNotificationInbox?.mount({
+  container:section,language:()=>lang,
+  active:()=>!!actor&&sessionUser===actor&&chefProfileSubpage==="notifications"&&!previewReadOnly,
+  request
+ });
+
 }
 function renderChefPassword(page){
  const section=node("section","profile-subpage");
