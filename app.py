@@ -688,7 +688,7 @@ def application(env, start_response):
             '/consumption-preview': 'consumption-preview.html',
             '/consumption-preview.css': 'consumption-preview.css',
             '/consumption-preview.js': 'consumption-preview.js',
-            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css', '/notification-inbox-v2.js': 'notification-inbox-v2.js', '/notification-inbox-v2.css': 'notification-inbox-v2.css',
+            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css', '/notification-inbox-v2.js': 'notification-inbox-v2.js', '/notification-inbox-v2.css': 'notification-inbox-v2.css', '/notification-activation-v2.js': 'notification-activation-v2.js', '/notification-activation-v2.css': 'notification-activation-v2.css',
             '/chef-chat-demo.js': 'chef-chat-demo.js', '/chef-chat-demo.css': 'chef-chat-demo.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
             '/player-consumption.css': 'player-consumption.css',
@@ -2512,6 +2512,47 @@ def application(env, start_response):
                     c.commit()
                     return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
+
+            # Explicit activation only. Legacy push endpoints remain unchanged.
+            if path == '/api/v2/notifications/activation':
+                if SITE_ROLE not in ('player','both') or os.environ.get('MILE_NOTIFICATIONS_PUSH','') != '1':
+                    raise Problem(404,'not_found')
+                public_key=os.environ.get('MILE_VAPID_PUBLIC_KEY','')
+                if not public_key or not os.environ.get('MILE_VAPID_PRIVATE_KEY_B64',''):
+                    raise Problem(404,'not_found')
+                if not user or user['role'] not in ('player','chef'):
+                    raise Problem(403,'forbidden')
+                if user['role']=='chef':
+                    if not chef_accounts_v2.assigned_athlete(c,user['id']):
+                        raise Problem(403,'forbidden')
+                elif not c.execute("""SELECT 1 FROM v2_player_links l
+                    JOIN v2_athletes a ON a.id=l.athlete_id
+                    WHERE l.user_id=? AND a.archived_at IS NULL""",(user['id'],)).fetchone():
+                    raise Problem(403,'forbidden')
+                import notification_activation_v2 as activation
+                try:
+                    if method=='GET':
+                        device=(parse_qs(env.get('QUERY_STRING','')).get('device') or [''])[0]
+                        return respond(200,{**activation.state(c,user_id=user['id'],device=device),
+                                            'publicKey':public_key})
+                    if method=='POST':
+                        body=read_json(env)
+                        if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                        device=activation.device_id(body.get('device'))
+                        action=body.get('action')
+                        if action=='acknowledge':
+                            activation.acknowledge(c,user_id=user['id'],now=now)
+                        elif action=='activate':
+                            activation.activate(c,user_id=user['id'],device=device,
+                                                subscription=body.get('subscription'),now=now)
+                        elif action=='deactivate':
+                            activation.deactivate(c,user_id=user['id'],device=device)
+                        else:raise Problem(400,'invalid_action')
+                        c.commit()
+                        return respond(200,activation.state(c,user_id=user['id'],device=device))
+                    raise Problem(405,'method_not_allowed')
+                except (ValueError,TypeError):
+                    raise Problem(400,'invalid_activation')
 
             # New notification inbox, isolated and disabled by default.
             if path in ('/api/v2/notifications/inbox','/api/v2/notifications/open'):
