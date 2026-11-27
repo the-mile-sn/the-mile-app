@@ -12,3 +12,5 @@
 .tm-notification-open[aria-expanded="true"] .tm-notification-arrow{transform:rotate(90deg)}
 .tm-notification-detail{padding:0 16px 16px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
 .tm-notification-detail p{margin:0;white-space:pre-wrap}
+
+.tm-notification-destination{appearance:none;display:block;width:100%;min-height:44px;margin:12px 0 0;border:0;border-radius:10px;background:rgba(255,255,255,.06);color:inherit;font:inherit;cursor:pointer}
