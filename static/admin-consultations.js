@@ -134,6 +134,7 @@
    hero.append(el("p", "tm-cq-muted", "Sem consultas marcadas. As novas marcações aparecem aqui automaticamente."));
   }
   host.append(hero);
+  host.append(formCard(view.form, p.id, false));
 
   const stats = el("div", "tm-cq-stats");
   const last = view.history[0];
@@ -170,7 +171,7 @@
  async function startConsultation(kind, bookingId) {
   try {
    const s = await api(`${API}/bookings/${kind}/${encodeURIComponent(bookingId)}/start`, {method: "POST", body: "{}"});
-   focus = {...s, step: "note"};
+   focus = {...s, step: s.booking.first_visit ? "form" : "note"};
    renderFocus();
   } catch (e) { feedback(e.message, true); }
  }
@@ -251,9 +252,86 @@
   if (focus.step === "note") renderNote(content, closed);
   else if (focus.step === "close") renderClose(content, closed);
   else if (focus.step === "assessment") renderAssessment(content, closed);
-  else renderSoon(content, "Formulário", "As respostas do formulário pré-consulta aparecem aqui quando o novo formulário estiver ativo.");
+  else renderForm(content);
   body.append(nav, content);
   host.append(body);
+ }
+
+ /* ---------- formulário pré-consulta ---------- */
+ function formStatus(form) {
+  if (!form) return el("span", "tm-cq-pill", "Link ainda não criado");
+  if (form.status === "submitted") return el("span", "tm-cq-pill is-positive", "Recebido " + dayLabel(new Date(form.submitted_at * 1000).toISOString().slice(0, 10)));
+  return el("span", "tm-cq-pill is-pending", "Por preencher");
+ }
+ async function copyFormLink(clientId, button) {
+  try {
+   const r = await api(`${API}/clients/${encodeURIComponent(clientId)}/form`, {method: "POST", body: "{}"});
+   let copied = false;
+   try { await navigator.clipboard.writeText(r.form.link); copied = true; } catch (_) { /* sem permissão */ }
+   if (copied) feedback("Link do formulário copiado. Envia-o ao cliente por email ou WhatsApp.");
+   else window.prompt("Copia o link do formulário:", r.form.link);
+   if (focus && focus.booking && focus.booking.client_id === clientId) focus.form = r.form;
+   return r.form;
+  } catch (e) { feedback(e.message, true); }
+ }
+ function formCard(form, clientId, inFocus) {
+  const card = el("section", "tm-cq-card tm-cq-form-card");
+  const head = el("div", "tm-cq-section-head");
+  const title = el("div", "tm-cq-form-title"); title.append(el("h3", "", "Formulário pré-consulta"), formStatus(form));
+  const copy = el("button", "tm-cq-ghost", form ? "Copiar link" : "Criar e copiar link"); copy.type = "button";
+  copy.addEventListener("click", async () => {
+   const f = await copyFormLink(clientId, copy);
+   if (!f) return;
+   if (inFocus) renderFocus(); else { const v = await api(`${API}/clients/${encodeURIComponent(clientId)}`); renderDetail(v); }
+  });
+  const actions = el("div", "tm-cq-form-actions"); actions.append(copy);
+  if (!inFocus && form && form.status === "submitted") {
+   const see = el("button", "tm-cq-ghost", "Ver respostas"); see.type = "button";
+   see.addEventListener("click", () => { const open = card.classList.toggle("is-open"); see.textContent = open ? "Esconder respostas" : "Ver respostas"; });
+   actions.append(see);
+  }
+  head.append(title, actions); card.append(head);
+  if (!form) card.append(el("p", "tm-cq-muted", "Cria o link e envia-o ao cliente. As respostas ficam aqui e na consulta."));
+  else if (form.status !== "submitted") card.append(el("p", "tm-cq-muted", "O cliente ainda não enviou o formulário. O link abre uma página do site, só acessível com este código."));
+  if (!inFocus && form && form.status === "submitted") { const body = el("div", "tm-cq-form-answers"); formAnswers(body, form); card.append(body); }
+  return card;
+ }
+ function formAnswers(host, form) {
+  if (form.care && form.care.length) {
+   const care = el("section", "tm-cq-card tm-cq-form-care");
+   care.append(el("h3", "", "A ter em conta"));
+   for (const item of form.care) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", item.label), el("strong", "", item.value)); care.append(r); }
+   host.append(care);
+  }
+  const grid = el("div", "tm-cq-form-grid");
+  (form.sections || []).forEach((sec, i) => {
+   const card = el("section", "tm-cq-card");
+   const h = el("h3"); h.append(el("span", "tm-cq-muted", String(i + 1) + " "), sec.title); card.append(h);
+   const before = card.childElementCount;
+   for (const row of sec.rows) {
+    if (row.type === "text") {
+     const r = el("div", "tm-cq-kv"); r.append(el("span", "tm-cq-muted", row.label), el("span", "", row.value)); card.append(r);
+    } else if (row.type === "meals") {
+     if (!row.items.length) continue;
+     const tl = el("div", "tm-cq-meals");
+     for (const m of row.items) {
+      const r = el("div", "tm-cq-meal"); r.append(el("span", "tm-cq-muted", m.time || "—"));
+      const c = el("div"); c.append(el("strong", "", m.label), el("p", "", m.text || "")); r.append(c); tl.append(r);
+     }
+     card.append(tl);
+    }
+   }
+   if (card.childElementCount === before) card.append(el("p", "tm-cq-muted", "Sem respostas."));
+   grid.append(card);
+  });
+  host.append(grid);
+ }
+ function renderForm(host) {
+  host.append(el("h2", "", "Formulário"));
+  const form = focus.form;
+  host.append(formCard(form, focus.booking.client_id, true));
+  if (form && form.status === "submitted") formAnswers(host, form);
+  host.append(nextButton("Seguir para a nota →", "note"));
  }
  function renderSoon(host, title, text) {
   host.append(el("p", "tm-cq-muted", "Passo"), el("h2", "", title));
@@ -299,7 +377,12 @@
   const care = el("section", "tm-cq-card tm-cq-aside");
   care.append(el("h3", "", "A ter em conta"));
   const notes = (focus.profile_notes || "").trim();
-  care.append(el("p", "tm-cq-muted", notes || "As alergias, intolerâncias e medicação do formulário aparecem aqui quando o formulário estiver ativo."));
+  const fromForm = (focus.form && focus.form.care) || [];
+  for (const item of fromForm) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", item.label), el("strong", "", item.value)); care.append(r); }
+  if (notes) care.append(el("p", "", notes));
+  if (!fromForm.length && !notes) care.append(el("p", "tm-cq-muted", focus.form && focus.form.status === "submitted"
+   ? "Sem alergias, intolerâncias, medicação ou problemas de saúde indicados no formulário."
+   : "As alergias, intolerâncias e medicação aparecem aqui quando o cliente enviar o formulário."));
   aside.append(care);
   if (prev && prev.objectives && prev.objectives.length) {
    const o = el("section", "tm-cq-card tm-cq-aside"); o.append(el("h3", "", "Objetivos da consulta anterior"));

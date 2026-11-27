@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from appointments_catalog_v2 import ORG_ID
 import consult_clients_v2 as clients
 import consult_body_comp_v2 as body
+import consult_forms_v2 as forms
 
 INDICATORS = ("adherence", "energy", "sleep", "digestion", "hunger", "hydration")
 NEXT_ACTIONS = ("", "link", "book")
@@ -237,7 +238,7 @@ def client_view(c, client_id, today=None, org_id=ORG_ID):
     trend = [{"date": a["assessed_on"], "weight_kg": a["measures"].get("weight_kg"),
               "fat_pct": a["results"].get("fat_pct"), "muscle_kg": a["results"].get("muscle_kg")}
              for a in series]
-    return {"profile": profile, "assessments": trend, "next": upcoming[0] if upcoming else None,
+    return {"profile": profile, "assessments": trend, "form": forms.for_client(c, client_id, org_id), "next": upcoming[0] if upcoming else None,
             "upcoming": upcoming, "history": history,
             "total": len(items), "closed": len(history)}
 
@@ -292,7 +293,8 @@ def session(c, kind, booking_id, org_id=ORG_ID):
             "client": {**basics, "age": body.age_on(basics.get("birth_date"), b["day"])},
             "assessment": _assessment_public(assessment),
             "previous_assessment": _assessment_public(prev_assessment),
-            "equations": _equation_list(basics.get("sex"))}
+            "equations": _equation_list(basics.get("sex")),
+            "form": forms.for_client(c, b["client_id"], org_id)}
 
 
 def _text(value, field, limit=TEXT_LIMIT):

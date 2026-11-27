@@ -35,6 +35,7 @@ import appointments_shopify_paid_booking_smoke_v2
 import appointments_storefront_preview_v2
 import consult_clients_v2
 import consult_sessions_v2
+import consult_forms_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -319,6 +320,7 @@ def initialize():
         if SITE_ROLE != 'player':
             consult_clients_v2.initialize(c)
             consult_sessions_v2.initialize(c)
+            consult_forms_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -849,6 +851,40 @@ def application(env, start_response):
                 raise Problem(403,'invalid_shopify_proxy')
             return respond(200,{'ok':True,'app_proxy_verified':True,
                                 'checkout_enabled':appointments_shopify_bridge_v2.checkout_enabled()})
+
+        if path.startswith('/api/v2/shopify/app-proxy/formulario'):
+            # Formulário pré-consulta, servido em themile.pt através do app proxy
+            # Shopify (assinado). Nunca no admin nem na app dos jogadores.
+            if SITE_ROLE == 'player':
+                raise Problem(404, 'not_found')
+            sub = path[len('/api/v2/shopify/app-proxy/formulario'):]
+            assets = {'.js': ('consult-form.js', 'text/javascript; charset=utf-8'),
+                      '.css': ('consult-form.css', 'text/css; charset=utf-8')}
+            if method == 'GET' and sub in assets:
+                name, mime = assets[sub]
+                return respond(200, (ROOT / 'static' / name).read_bytes(), mime)
+            try:
+                appointments_shopify_bridge_v2.verify_proxy_signature(env.get('QUERY_STRING', ''))
+            except appointments_shopify_bridge_v2.ShopifyBridgeError:
+                raise Problem(403, 'invalid_shopify_proxy')
+            if method == 'GET' and sub == '':
+                headers.append(('X-Robots-Tag', 'noindex, nofollow'))
+                return respond(200, (ROOT / 'static' / 'consult-form.html').read_bytes(), 'text/html; charset=utf-8')
+            token = (parse_qs(env.get('QUERY_STRING', '')).get('t') or [''])[0]
+            try:
+                with connect() as form_c:
+                    if method == 'GET' and sub == '/dados':
+                        today = datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                        return respond(200, consult_forms_v2.public_view(form_c, token, today=today))
+                    if method == 'POST' and sub == '/guardar':
+                        return respond(200, consult_forms_v2.save(form_c, token, read_json(env)))
+                    if method == 'POST' and sub == '/enviar':
+                        return respond(200, consult_forms_v2.submit(form_c, token, read_json(env)))
+            except LookupError:
+                raise Problem(404, 'form_not_found')
+            except ValueError as exc:
+                raise Problem(400, str(exc)[:200])
+            raise Problem(404, 'not_found')
 
         if path == '/api/v2/shopify/app-proxy/hold' and method == 'POST':
             if SITE_ROLE == 'player' or not appointments_shopify_bridge_v2.checkout_enabled():
@@ -1552,6 +1588,8 @@ def application(env, start_response):
                         return respond(200, consult_sessions_v2.workspace(c, lisbon_today))
                     if len(parts) == 2 and parts[0] == 'clients' and method == 'GET':
                         return respond(200, consult_sessions_v2.client_view(c, parts[1], lisbon_today))
+                    if len(parts) == 3 and parts[0] == 'clients' and parts[2] == 'form' and method == 'POST':
+                        return respond(200, {'form': consult_forms_v2.ensure(c, parts[1], user['id'])})
                     if len(parts) == 3 and parts[0] == 'bookings' and method == 'GET':
                         return respond(200, consult_sessions_v2.session(c, parts[1], parts[2]))
                     if len(parts) == 4 and parts[0] == 'bookings' and parts[3] == 'start' and method == 'POST':
