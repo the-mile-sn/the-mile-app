@@ -2576,8 +2576,9 @@ def application(env, start_response):
                     item=notification_inbox_v2.open_notification(c,recipient_id=user['id'],
                         notification_id=body.get('id'),now=now)
                     if not item:raise Problem(404,'not_found')
+                    target=notification_inbox_v2.destination(c,user=user,item=item)
                     c.commit()
-                    return respond(200,{'item':item})
+                    return respond(200,{'item':item,'destination':target})
                 raise Problem(405,'method_not_allowed')
 
             if path == '/api/push/config' and method == 'GET':
