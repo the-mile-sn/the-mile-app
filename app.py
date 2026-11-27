@@ -3077,6 +3077,9 @@ def application(env, start_response):
                 except (ValueError,TypeError,AttributeError):
                     raise Problem(400,'invalid_menu_batch')
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
+                import notification_capture_v2 as capture
+                menu_days=[v[0] for v in validated]
+                before_notification=capture.before(c,lambda:capture.menu(c,aid,menu_days))
                 for date,meal,kind,value,dish_id in validated:
                     prior_row=c.execute("""SELECT kind,value,dish_id FROM v2_weekly_menus
                         WHERE athlete_id=? AND menu_date=? AND meal=?""",(aid,date,meal)).fetchone()
@@ -3088,6 +3091,7 @@ def application(env, start_response):
                     microcycles_v2.record_menu_history(c,aid,date,meal,kind,value,dish_id)
                     chef_collaboration_v2.record_admin_menu(c,aid,user['id'],date,meal,
                         previous,{'kind':kind,'value':value,'dish_id':dish_id})
+                capture.after(c,before_notification,lambda:capture.menu(c,aid,menu_days))
                 c.commit()
                 return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/history') and method == 'GET':
@@ -4381,11 +4385,13 @@ def application(env, start_response):
                     blob = read_body(env, MAX_PDF)
                     if not blob.startswith(b'%PDF-') or b'%%EOF' not in blob[-4096:]:
                         raise Problem(400, 'pdf_only')
+                    import notification_capture_v2 as capture
                     did = secrets.token_hex(16)
                     c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
                               (did, uid, folder, title, len(blob), now, user['id'], blob))
+                    capture.after(c,{} if capture.enabled() else None,lambda:capture.document(c,did))
                     document_push=None
-                    if qs.get('notify', ['0'])[0] == '1':
+                    if not capture.enabled() and qs.get('notify', ['0'])[0] == '1':
                         labels = {'weekly':'Plano semanal', 'nutrition':'Plano alimentar', 'menus':'Menu', 'other':'Documento', 'anthropometry':'Avaliação antropométrica'}
                         nid=secrets.token_hex(16)
                         msg=labels.get(folder,'Documento') + ': ' + title
@@ -4413,7 +4419,10 @@ def application(env, start_response):
                     title = str(payload.get('title', '')).strip()
                     if not title or len(title) > 180 or any(ord(ch) < 32 for ch in title):
                         raise Problem(400, 'document_fields')
+                    import notification_capture_v2 as capture
+                    before_notification=capture.before(c,lambda:capture.document(c,did))
                     c.execute('UPDATE documents SET title=?,updated=? WHERE id=?', (title, now, d['id']))
+                    capture.after(c,before_notification,lambda:capture.document(c,did))
                     c.commit()
                     return respond(200, {'ok': True})
                 if method == 'PUT':
@@ -4421,7 +4430,10 @@ def application(env, start_response):
                     blob = read_body(env, MAX_PDF)
                     if not blob.startswith(b'%PDF-') or b'%%EOF' not in blob[-4096:]:
                         raise Problem(400, 'pdf_only')
+                    import notification_capture_v2 as capture
+                    before_notification=capture.before(c,lambda:capture.document(c,did))
                     c.execute('UPDATE documents SET size=?,updated=?,uploaded_by=?,data=? WHERE id=?', (len(blob), now, user['id'], blob, d['id']))
+                    capture.after(c,before_notification,lambda:capture.document(c,did))
                     c.commit()
                     return respond(200, {'ok': True})
                 if method == 'GET':
