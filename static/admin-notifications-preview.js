@@ -14,14 +14,53 @@
  const confirmationResult=$("tm-notify-confirm-result"),menuChange=$("tm-notify-menu-change");
  const customFields=$("tm-notify-custom-copy");
  const historyRecipient=$("tm-notify-history-recipient"),historyField=$("tm-notify-history-recipient-field");
+ const translateButton=$("tm-notify-translate"),translateControls=$("tm-notify-translate-controls");
+ const translationStatus=$("tm-notify-translation-status");
+ let translating=false,translatedSource=null,reviewNeeded=false;
+ const fieldCopy=lang=>({title:$("tm-notify-title-"+lang).value.trim(),body:$("tm-notify-body-"+lang).value.trim()});
+ const sourceKey=()=>JSON.stringify(fieldCopy("pt"));
+ const needsEnglish=()=>kind.value==="custom"&&[...selected.values()].some(item=>item.language==="en-GB");
+ async function translateDraft(){
+  if(translating||!needsEnglish()||!dialog.open)return;
+  const revision=selectionRevision,source=fieldCopy("pt"),key=sourceKey();
+  if(!source.title||!source.body){translationStatus.textContent="Preenche o título e a mensagem.";return;}
+  if(!window.tmNotificationTranslation?.supported()){
+   translationStatus.textContent="Tradução local indisponível neste navegador. Preenche a versão inglesa.";return;
+  }
+  translating=true;translateButton.disabled=true;prepareButton.disabled=true;
+  translationStatus.textContent="A preparar tradução…";
+  try{
+   const translated=await window.tmNotificationTranslation.translate(source,"pt-PT","en-GB",progress=>{
+    if(dialog.open&&revision===selectionRevision)translationStatus.textContent="A preparar modelo local · "+progress+"%";
+   });
+   if(!dialog.open||revision!==selectionRevision||key!==sourceKey())return;
+   $("tm-notify-title-en").value=translated.title;
+   $("tm-notify-body-en").value=translated.body;
+   translatedSource=key;reviewNeeded=false;
+   translationStatus.textContent="Revê a versão inglesa antes de confirmar.";
+   clearConfirmation();
+  }catch(_){
+   if(dialog.open&&revision===selectionRevision)translationStatus.textContent="Não foi possível traduzir localmente. Podes preencher a versão inglesa.";
+  }finally{
+   translating=false;
+   if(dialog.open)syncCustomFields();
+  }
+ }
+
  function syncCustomFields(){
   const locales=new Set([...selected.values()].map(item=>item.language));
   const custom=tab==="new"&&kind.value==="custom";
   customFields.hidden=!custom||!locales.size;
   for(const [code,language,label] of [["pt","pt-PT","Português"],["en","en-GB","Inglês"]]){
-   $("tm-notify-copy-"+code).hidden=!custom||!locales.has(language);
-   $("tm-notify-caption-"+code).textContent=locales.size>1?"· "+label:"";
+   $("tm-notify-copy-"+code).hidden=!custom||!locales.size||(code==="en"&&!locales.has(language));
+   $("tm-notify-caption-"+code).textContent=locales.has("en-GB")?"· "+label:"";
   }
+  translateControls.hidden=!custom||!locales.has("en-GB");
+  translateButton.disabled=translating||!window.tmNotificationTranslation?.supported();
+  if(!translateControls.hidden&&!window.tmNotificationTranslation?.supported()){
+   translationStatus.textContent="Tradução local indisponível neste navegador. Podes preencher a versão inglesa.";
+  }
+  prepareButton.disabled=!selected.size||translating||(needsEnglish()&&reviewNeeded);
  }
  let checked=false,checking=false,generation=0,tab="new",selectionRevision=0,sending=false;
  const selected=new Map();
@@ -41,7 +80,7 @@
   return [locale,{title:$("tm-notify-title-"+lang).value,body:$("tm-notify-body-"+lang).value}];
  }));
  async function confirmSelection(){
-  if(!selected.size||tab!=="new")return;
+  if(!selected.size||tab!=="new"||translating||(needsEnglish()&&reviewNeeded))return;
   const revision=++selectionRevision, type=kind.value;
   const payload={kind:type,selections:[...selected.values()].map(item=>({
    recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null,manual:item.manual===true
@@ -197,14 +236,26 @@
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{
-  generation++;resetSelection();list.replaceChildren();status.textContent="";
+  generation++;translatedSource=null;reviewNeeded=false;translationStatus.textContent="";resetSelection();list.replaceChildren();status.textContent="";
   for(const lang of ["pt","en"]){$("tm-notify-title-"+lang).value="";$("tm-notify-body-"+lang).value="";}
  });
  kind.addEventListener("change",()=>{historyRecipient.value="";load();});
  historyRecipient.addEventListener("change",load);
  prepareButton.addEventListener("click",confirmSelection);
  menuChange.addEventListener("change",clearConfirmation);
- customFields.addEventListener("input",clearConfirmation);
+ customFields.addEventListener("input",e=>{
+  if(e.target.id==="tm-notify-title-pt"||e.target.id==="tm-notify-body-pt"){
+   if(translatedSource!==null&&translatedSource!==sourceKey()){
+    reviewNeeded=needsEnglish();
+    translationStatus.textContent="O original mudou. Atualiza ou revê a tradução inglesa.";
+   }
+  }else if(e.target.id==="tm-notify-title-en"||e.target.id==="tm-notify-body-en"){
+   translatedSource=sourceKey();reviewNeeded=false;
+   translationStatus.textContent="Revê a versão inglesa antes de confirmar.";
+  }
+  clearConfirmation();
+ });
+ translateButton.addEventListener("click",translateDraft);
  for(const b of tabs)b.addEventListener("click",()=>setTab(b.dataset.notifyPreviewTab));
  const observer=new MutationObserver(check);
  observer.observe(workspace,{attributes:true,attributeFilter:["hidden"]});
