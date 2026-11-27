@@ -179,6 +179,8 @@ def save(c,athlete_id,payload,user_id):
  encoded=payload.get("pdf_base64")
  if encoded:
   pdf_data=parse_pdf(encoded)["pdf_bytes"]
+ import notification_capture_v2 as capture
+ before_notification=capture.before(c,lambda:capture.assessment(c,athlete_id,assessed_on))
  existing=c.execute("SELECT id FROM v2_body_assessments WHERE athlete_id=? AND assessed_on=?",(athlete_id,assessed_on)).fetchone()
  record_id=existing["id"] if existing else secrets.token_hex(16)
  if existing:
@@ -193,5 +195,6 @@ def save(c,athlete_id,payload,user_id):
  else:
   c.execute("""INSERT INTO v2_body_assessments(id,athlete_id,assessed_on,measurements,averages,formula_note,pdf_data,status,created_at)
         VALUES(?,?,?,?,?,?,?,?,?)""",(record_id,athlete_id,assessed_on,json.dumps(values),json.dumps(averages),formula,pdf_data,"published" if publication else "draft",int(time.time())))
+ capture.after(c,before_notification,lambda:capture.assessment(c,athlete_id,assessed_on))
  c.commit()
  return record_id
