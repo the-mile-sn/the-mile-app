@@ -776,6 +776,43 @@
   eqSel.value = equation; eqWrap.append(eqSel); head.append(eqWrap);
   host.append(head);
   const notice = el("p", "tm-cq-notice"); host.append(notice);
+  // Pontos médios do braço e da coxa: medem-se uma vez, na 1.ª avaliação; depois ficam como dados.
+  let points = null;
+  const pts = el("section", "tm-cq-card tm-cq-points");
+  function drawPoints(editing) {
+   pts.replaceChildren();
+   const have = client.arm_point_cm && client.thigh_point_cm;
+   const ph = el("div", "tm-cq-section-head");
+   ph.append(el("h3", "", "Pontos de medição"), el("span", "tm-cq-muted", have && !editing ? "medidos uma vez · usados em todas as avaliações" : "medem-se na 1.ª avaliação"));
+   pts.append(ph);
+   if (have && !editing) {
+    const row = el("div", "tm-cq-points-row");
+    row.append(el("span", "", "Braço: ponto médio a " + num(client.arm_point_cm) + " cm"), el("span", "", "Coxa: ponto médio a " + num(client.thigh_point_cm) + " cm"));
+    if (!closed) { const ed = el("button", "tm-cq-ghost", "Alterar"); ed.type = "button"; ed.addEventListener("click", () => drawPoints(true)); row.append(ed); }
+    pts.append(row); return;
+   }
+   const row = el("div", "tm-cq-points-row is-edit");
+   for (const [key, label] of [["arm_point_cm", "Distância acrómio–olecrânio"], ["thigh_point_cm", "Distância da coxa (prega inguinal–rótula)"]]) {
+    const box = el("label", "tm-cq-point");
+    box.append(el("span", "tm-cq-muted", label));
+    const input = el("input", "tm-cq-num"); input.type = "text"; input.inputMode = "decimal"; input.disabled = closed;
+    if (client[key]) input.value = num(client[key] * 2);
+    const out = el("strong", "", client[key] ? "Ponto médio: " + num(client[key]) + " cm" : "Ponto médio: —");
+    input.addEventListener("input", () => {
+     const v = Number(input.value.replace(",", ".").trim());
+     if (!input.value.trim() || !Number.isFinite(v) || v <= 0) { out.textContent = "Ponto médio: —"; return; }
+     const mid = Math.round(v / 2 * 10) / 10;
+     out.textContent = "Ponto médio: " + num(mid) + " cm";
+     client[key] = mid; points = {...(points || {}), [key]: mid}; schedule();
+    });
+    const line = el("div", "tm-cq-point-line"); line.append(input, el("span", "tm-cq-muted", "cm"));
+    box.append(line, out);
+    row.append(box);
+   }
+   pts.append(row);
+  }
+  drawPoints(false);
+  host.append(pts);
   const grid = el("div", "tm-cq-assess-grid");
   const reg = el("section", "tm-cq-card tm-cq-register");
   reg.append(el("h3", "", "Registo"));
@@ -819,25 +856,39 @@
    const names = {sex: "sexo", birth_date: "data de nascimento", height_cm: "altura"};
    notice.textContent = missing.length ? "Para os cálculos faltam no perfil: " + missing.map(x => names[x] || x).join(", ") + "." : "";
    const prevR = (prev && prev.results) || {};
-   const card = (label, value, unit, delta, sub) => {
+   // Como na página 2 dos relatórios: valor atual, anterior e variação em %.
+   const card = (label, value, unit, before, sub) => {
     const c = el("section", "tm-cq-card tm-cq-result"); c.append(el("p", "tm-cq-muted", label));
     const v = el("strong", "", value == null ? "—" : num(value)); if (value != null && unit) v.append(el("small", "", " " + unit)); c.append(v);
-    if (delta != null && value != null) c.append(el("small", "tm-cq-delta", (delta > 0 ? "+" : delta < 0 ? "−" : "") + num(Math.abs(delta))));
+    if (before != null && value != null) {
+     const pct = before ? Math.round((value - before) / before * 100) : 0;
+     c.append(el("small", "tm-cq-delta", "antes " + num(before) + (unit ? " " + unit : "") + " · " + (pct > 0 ? "+" : pct < 0 ? "−" : "") + Math.abs(pct) + "%"));
+    }
     if (sub) c.append(el("small", "tm-cq-muted", sub));
     return c;
    };
-   const d = (k) => r && r[k] != null && prevR[k] != null ? r[k] - prevR[k] : null;
+   const cur = k => r ? (k.startsWith("c.") ? (r.corrected || {})[k.slice(2)] : r[k]) ?? null : null;
+   const old = k => (k.startsWith("c.") ? (prevR.corrected || {})[k.slice(2)] : prevR[k]) ?? null;
+   const weight = m.weight_kg ?? null, weightBefore = before.weight_kg ?? null;
    results.append(
-    card("Massa gorda", r && r.fat_pct, "%", d("fat_pct"), r && r.fat_kg != null ? num(r.fat_kg) + " kg" : ""),
-    card("Massa muscular", r && r.muscle_kg, "kg", d("muscle_kg"), "Lee"),
-    card("IMC", r && r.bmi, "", d("bmi"), ""));
+    card("Peso corporal", weight, "kg", weightBefore, ""),
+    card("Gordura corporal", cur("fat_pct"), "%", old("fat_pct"), r && r.fat_kg != null ? num(r.fat_kg) + " kg" : ""),
+    card("IMC", cur("bmi"), "", old("bmi"), ""),
+    card("Massa muscular", cur("muscle_kg"), "kg", old("muscle_kg"), "Lee"),
+    card("Índice de massa muscular", cur("smi"), "kg/m²", old("smi"), ""),
+    card("Músculo do braço", cur("c.arm"), "cm", old("c.arm"), "perímetro corrigido"),
+    card("Músculo da coxa", cur("c.thigh"), "cm", old("c.thigh"), "perímetro corrigido"),
+    card("Músculo do gémeo", cur("c.calf"), "cm", old("c.calf"), "perímetro corrigido"),
+    card("Soma de 8 pregas", cur("sum8"), "mm", old("sum8"), ""),
+    card("Soma de perímetros", cur("girth_sum"), "cm", old("girth_sum"), "braço + coxa + gémeo"));
   }
   function schedule() { clearTimeout(timer); dirty = true; setSaved("Por guardar…"); timer = setTimeout(push, 700); }
   async function push() {
    if (busy) { queued = true; return; }
    busy = true; setSaved("A guardar…");
    try {
-    const r = await api(`${API}/sessions/${focus.session.id}/assessment`, {method: "PUT", body: JSON.stringify({measures: m, equation, version})});
+    const sent = points; points = null;
+    const r = await api(`${API}/sessions/${focus.session.id}/assessment`, {method: "PUT", body: JSON.stringify({measures: m, equation, version, points: sent || undefined})});
     version = r.assessment.version; focus.assessment = r.assessment; dirty = false; setSaved("Guardado");
     drawResults(r.assessment.results);
    } catch (e) { setSaved("Não guardado"); feedback(e.message, true); }

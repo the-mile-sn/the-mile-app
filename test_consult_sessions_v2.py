@@ -101,6 +101,16 @@ class ConsultSessionsTests(unittest.TestCase):
         view = self.req(f"/bookings/manual/{self.booking}")["body"]
         self.assertEqual(view["assessment"]["equation"], "durnin")
         self.assertIn("peterson", [e["key"] for e in view["equations"]])
+        self.assertIsNotNone(view["assessment"]["results"]["girth_sum"])
+        # Pontos médios: medidos na 1.ª avaliação e guardados no perfil.
+        bad_pts = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "version": view["assessment"]["version"],
+                                                                   "points": {"arm_point_cm": 500}})
+        self.assertEqual(bad_pts["status"], 400)
+        pts = self.req(f"/sessions/{sid}/assessment", "PUT", {"measures": measures, "version": view["assessment"]["version"],
+                                                               "equation": "durnin", "points": {"arm_point_cm": 16.5, "thigh_point_cm": "24,5"}})
+        self.assertEqual(pts["status"], 200, pts)
+        view = self.req(f"/bookings/manual/{self.booking}")["body"]
+        self.assertEqual((view["client"]["arm_point_cm"], view["client"]["thigh_point_cm"]), (16.5, 24.5))
         self.assertNotIn("media4", [e["key"] for e in view["equations"]])  # só homens
         trend = self.req(f"/clients/{client_id}")["body"]["assessments"]
         self.assertEqual(trend[0]["weight_kg"], 63)

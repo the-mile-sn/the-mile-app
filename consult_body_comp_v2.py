@@ -154,7 +154,7 @@ def compute(measures, sex, age, ethnic="none", equation=None):
            "bmi": round(bmi, 1) if bmi else None,
            "equation": None, "fat_pct": None, "fat_kg": None, "lean_kg": None,
            "muscle_kg": None, "muscle_pct": None, "smi": None, "ffmi": None,
-           "equations": {}, "corrected": {}, "missing": []}
+           "equations": {}, "corrected": {}, "girth_sum": None, "missing": []}
     if not sex:
         res["missing"].append("sex")
     if not age:
@@ -184,6 +184,8 @@ def compute(measures, sex, age, ethnic="none", equation=None):
                        ("calf_left", corrected_girth(m.get("calf_girth_left"), m.get("calf")))):
         if value:
             res["corrected"][key] = round(value, 1)
+    if arm and thigh and calf:
+        res["girth_sum"] = round(arm + thigh + calf, 1)
     muscle = lee_muscle_mass(height_m, sex, age, ethnic, arm, thigh, calf)
     if muscle:
         res["muscle_kg"] = round(muscle, 1)

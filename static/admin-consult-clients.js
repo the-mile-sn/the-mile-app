@@ -193,10 +193,8 @@
     const g2 = sec("Responsável", "Quando a consulta é marcada por outra pessoa (por exemplo, menores)");
     g2.append(field("Nome", "guardian_name", c.guardian_name), field("Relação", "guardian_relation", c.guardian_relation, {placeholder: "Mãe, pai…"}),
       field("Email", "guardian_email", c.guardian_email, {type: "email"}), field("Telefone", "guardian_phone", c.guardian_phone, {type: "tel"}));
-    const g3 = sec("Avaliação", "Só equipa clínica · usado nos cálculos");
-    g3.append(field("Ponto do braço (cm)", "arm_point_cm", c.arm_point_cm ?? "", {inputmode: "decimal", hint: "Metade da distância acrómio–olecrânio"}),
-      field("Ponto da coxa (cm)", "thigh_point_cm", c.thigh_point_cm ?? "", {inputmode: "decimal", hint: "Metade da distância da coxa"}),
-      field("Etnia (para a massa muscular)", "ethnicity", c.ethnicity, {options: [["none", "Caucasiana ou outra (sem ajuste)"], ["african", "Afrodescendente (+1,1 kg)"], ["asian", "Asiática (−2,0 kg)"]], hint: "Usada só na equação de Lee da massa muscular, como no estudo. Não aparece ao cliente."}));
+    const g3 = sec("Avaliação", "Só equipa clínica · os pontos de medição registam-se na 1.ª avaliação, em Consultas");
+    g3.append(field("Etnia (para a massa muscular)", "ethnicity", c.ethnicity, {options: [["none", "Caucasiana ou outra (sem ajuste)"], ["african", "Afrodescendente (+1,1 kg)"], ["asian", "Asiática (−2,0 kg)"]], hint: "Usada só na equação de Lee da massa muscular, como no estudo. Não aparece ao cliente."}));
     const g4 = sec("Notas internas");
     g4.append(field("", "notes", c.notes, {textarea: true, wide: true}));
     const save = el("div", "tm-cc-save"); const saveBtn = el("button", "tm-cc-primary", "Guardar alterações"); saveBtn.type = "submit";

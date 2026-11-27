@@ -346,3 +346,14 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 .tm-cq-an-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px 28px;margin-top:14px}
 .tm-cq-an-group h4{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--tm-brand)}
 .tm-cq-an-group .tm-cq-care span:last-child{font-size:13px;white-space:pre-wrap}
+
+/* Pontos de medição e cards de resultados */
+.tm-cq-points{margin-bottom:14px}
+.tm-cq-points-row{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;font-size:14px}
+.tm-cq-points-row .tm-cq-ghost{margin-left:auto}
+.tm-cq-points-row.is-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.tm-cq-point{display:flex;flex-direction:column;gap:6px}
+.tm-cq-point-line{display:flex;align-items:center;gap:8px}
+.tm-cq-point strong{font-size:14px}
+.tm-cq-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tm-cq-result .tm-cq-delta{display:block;margin-top:2px}
