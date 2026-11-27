@@ -246,7 +246,7 @@
  customFields.addEventListener("input",e=>{
   if(e.target.id==="tm-notify-title-pt"||e.target.id==="tm-notify-body-pt"){
    if(translatedSource!==null&&translatedSource!==sourceKey()){
-    reviewNeeded=needsEnglish();
+    reviewNeeded=true;
     translationStatus.textContent="O original mudou. Atualiza ou revê a tradução inglesa.";
    }
   }else if(e.target.id==="tm-notify-title-en"||e.target.id==="tm-notify-body-en"){
