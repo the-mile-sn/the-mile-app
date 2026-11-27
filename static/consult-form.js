@@ -443,8 +443,7 @@
     var hero = el("section", "tmf-hero tmf-welcome tmf-enter");
     var b = data.booking;
     if (b) hero.append(el("span", "tmf-pill", b.service + " · " + niceDate(b.date, b.start)));
-    var h = el("h1", "", "Olá" + firstName() + ",");
-    h.append(el("br"), document.createTextNode("vamos preparar a tua consulta."));
+    var h = el("h1", "", "Olá" + firstName());
     var who = b && b.professional ? "A " + b.professional.split(" ")[0] : "A tua nutricionista";
     var facts = el("ul", "tmf-facts");
     [[el("b", "", "15'"), "Cerca de 15 minutos, em passos curtos"],
@@ -459,7 +458,7 @@
     var foot = el("div", "tmf-welcome-foot");
     foot.append(go, el("p", "", "Não há respostas certas ou erradas. Responde como é hoje, não como gostavas que fosse."));
     hero.append(h,
-      el("p", "tmf-welcome-lead", "Antes da consulta, queremos conhecer-te um pouco melhor. " + who + " vai ler as tuas respostas para que o tempo em consulta seja dedicado ao que é importante para ti."),
+      el("p", "tmf-welcome-lead", "Antes da consulta, precisamos de algumas informações sobre a tua saúde, o teu treino e a tua alimentação. " + who + " vai lê-las para preparar a consulta e aproveitar melhor o tempo contigo."),
       facts, foot);
     app.append(hero);
     go.focus();

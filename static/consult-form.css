@@ -6,6 +6,8 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
 .tmf a{color:#3F526F}
 .tmf a:hover{color:#141416}
 .tmf button,.tmf input,.tmf textarea{font:inherit;color:inherit}
+/* 16px nos campos: abaixo disto o iPhone faz zoom ao tocar. */
+.tmf input,.tmf textarea,.tmf select{font-size:16px}
 
 .tmf-top{color:#141416;padding:22px 32px 0;display:flex;align-items:center;gap:16px;max-width:1080px;margin:0 auto}
 .tmf-top-row{display:flex;align-items:center;gap:16px;max-width:1080px;margin:0 auto}
@@ -171,7 +173,7 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
 /* Boas-vindas (conteúdo da maqueta, estética clara) */
 .tmf-welcome{gap:20px}
 .tmf-pill{align-self:flex-start;font-size:13px;color:#333;background:#F5F5F7;border-radius:999px;padding:6px 12px}
-.tmf-welcome h1{font-size:32px;line-height:1.12;font-weight:700;letter-spacing:-.6px}
+.tmf-welcome h1{font-size:26px;line-height:1.2;font-weight:600;letter-spacing:-.3px}
 .tmf-welcome-lead{margin:0;color:#333;font-size:16px}
 .tmf-fact-icon{flex:0 0 36px;height:36px;border-radius:999px;background:#3F526F;color:#fff;display:inline-flex;align-items:center;justify-content:center}
 .tmf .tmf-fact-icon b{background:none;color:#fff;min-width:0;height:auto;font-size:13px}
@@ -220,7 +222,7 @@ body.tmf{background:#F5F5F7;color:#141416;font-family:"Inter Tight",system-ui,-a
 
 @media (max-width:820px){
   .tmf-top{padding:16px 18px 0}
-  .tmf-welcome h1{font-size:28px}
+  .tmf-welcome h1{font-size:24px}
   .tmf-pair{grid-template-columns:1fr 1fr;gap:10px}
   .tmf-wheel-wrap{padding:6px 8px}
   .tmf-freq-n{display:inline}
