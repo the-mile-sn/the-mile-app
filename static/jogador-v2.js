@@ -3439,6 +3439,7 @@ function resetProfilePassword(){
 }
 function resetProfileSubpage(){
  resetProfilePassword();
+ window.tmNotificationInbox?.clear($("profile-notifications-page"));
  $("profile-main").hidden=false;
  $("profile-notifications-page").hidden=true;
  $("profile-password-page").hidden=true;
@@ -3448,6 +3449,15 @@ function openProfileSubpage(page){
  $("profile-main").hidden=true;
  $("profile-notifications-page").hidden=page!=="notifications";
  $("profile-password-page").hidden=page!=="password";
+ if(page==="notifications"){
+  const epoch=playerSessionEpoch;
+  window.tmNotificationInbox?.mount({
+   container:$("profile-notifications-page"),language:()=>playerUiLanguage,
+   active:()=>epoch===playerSessionEpoch&&!!me&&!$("profile-notifications-page").hidden&&!$("player-panel").hidden,
+   request:(path,method,body)=>api(path,method==="GET"?{}:{method,
+    headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
+  });
+ }else window.tmNotificationInbox?.clear($("profile-notifications-page"));
  window.scrollTo?.(0,0);
 }
 $("profile-notifications-open").onclick=()=>openProfileSubpage("notifications");
