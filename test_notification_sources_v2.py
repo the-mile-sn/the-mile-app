@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone, date
 from notification_store_v2 import initialize, record_content_change
 from notification_sources_v2 import (
     document_assessment_inventory, recent_document_assessment_candidates,
-    form_candidates, weekly_menu_snapshot,
+    form_candidates, weekly_menu_snapshot, birthday_candidates, custom_recipients,
 )
 
 
@@ -93,6 +93,23 @@ class SourceTests(unittest.TestCase):
         self.c.execute("INSERT INTO v2_daily_weighins VALUES ('a','2026-11-26')")
         self.assertEqual(form_candidates(self.c,authorised_athlete_ids=["a"],
                                          kind="weight",now=self.now),[])
+
+    def test_birthday_and_custom_scope(self):
+        self.c.execute("ALTER TABLE users ADD COLUMN birth_date TEXT")
+        self.c.execute("UPDATE users SET birth_date='2000-11-27' WHERE id IN ('p','q')")
+        def birthdays():
+            return birthday_candidates(self.c,authorised_athlete_ids=["a"],now=self.now)
+        self.assertEqual([(r["recipient_id"],r["first_name"],r["target_id"])
+                          for r in birthdays()], [("p","Player","birthday:2026")])
+        self.c.execute("""INSERT INTO v2_manual_notifications
+            (id,request_id,recipient_id,sender_id,kind,language,title,body,target_id,created_at)
+            VALUES('b1','r1','p','admin','birthday','pt-PT','Title','Body','birthday:2026',100)""")
+        self.assertEqual(birthdays(),[])
+        self.assertEqual({r["recipient_id"] for r in custom_recipients(
+            self.c,authorised_athlete_ids=["a"])},{"p","chef"})
+        self.c.execute("UPDATE v2_chef_links SET archived_at=100 WHERE user_id='chef'")
+        self.assertEqual({r["recipient_id"] for r in custom_recipients(
+            self.c,authorised_athlete_ids=["a"])},{"p"})
 
     def test_menu_week_and_linked_recipients(self):
         def snapshot():
