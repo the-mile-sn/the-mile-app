@@ -71,6 +71,44 @@ class ManualNotificationTests(unittest.TestCase):
         args["now"]=self.now+timedelta(days=3)
         self.assertEqual(len(record_manual(self.c,request_id="req3",**args)["recorded_ids"]),1)
 
+    def test_historical_document_requires_explicit_selection_and_current_version(self):
+        from notification_admin_preview_v2 import preview
+        args=dict(authorised_athlete_ids=["a"],kind="document",now=self.now)
+        self.assertEqual(preview(self.c,**args)["items"],[])
+        data=preview(self.c,**args,historical_recipient="p")
+        self.assertEqual({x["target_id"] for x in data["items"]},{"d"})
+        item=data["items"][0]
+        selected={"recipient_id":"p","target_id":"d","version":item["version"]}
+        with self.assertRaisesRegex(ValueError,"selection_no_longer_eligible"):
+            prepare(self.c,**args,selections=[selected])
+        selected["manual"]=True
+        rows=prepare(self.c,**args,selections=[selected])
+        self.assertEqual(rows[0]["title"],"Documento disponível")
+        self.c.execute("UPDATE documents SET title='Changed' WHERE id='d'")
+        with self.assertRaisesRegex(ValueError,"selection_no_longer_eligible"):
+            prepare(self.c,**args,selections=[selected])
+
+    def test_historical_scope_draft_and_duplicate_exclusion(self):
+        from notification_admin_preview_v2 import preview
+        args=dict(authorised_athlete_ids=["a"],kind="assessment",now=self.now)
+        with self.assertRaises(ValueError):
+            preview(self.c,**args,historical_recipient="q")
+        data=preview(self.c,**args,historical_recipient="p")
+        self.assertEqual({i["target_id"] for i in data["items"]},{"s"})
+        item=data["items"][0]
+        selected={"recipient_id":"p","target_id":"s","version":item["version"],"manual":True}
+        result=record_manual(self.c,**args,sender_id="admin",request_id="history1",selections=[selected])
+        self.assertEqual(len(result["recorded_ids"]),1)
+        self.assertEqual(preview(self.c,**args,historical_recipient="p")["items"],[])
+        with self.assertRaisesRegex(ValueError,"selection_no_longer_eligible"):
+            prepare(self.c,**args,selections=[selected])
+
+    def test_single_language_requires_only_that_copy(self):
+        rows=prepare(self.c,authorised_athlete_ids=["a"],kind="custom",now=self.now,
+                     selections=[{"recipient_id":"chef"}],
+                     custom_copy={"en-GB":{"title":"Hello","body":"Message"}})
+        self.assertEqual([(r["language"],r["title"]) for r in rows],[("en-GB","Hello")])
+
     def test_non_admin_cannot_record(self):
         with self.assertRaises(PermissionError):
             record_manual(self.c,sender_id="p",request_id="r",
