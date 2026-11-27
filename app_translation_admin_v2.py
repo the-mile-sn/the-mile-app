@@ -92,6 +92,9 @@ def propose(c, session_user, body):
     source = _source(c, b["entity_kind"], b["entity_id"], b["field_path"])
     if b["expected_source_hash"] != _fingerprint(source):
         raise ValueError("translation_source_changed")
+    if b["entity_kind"]=="notification":
+        from notification_templates_v2 import validate_translation
+        validate_translation(b["entity_id"],b["field_path"],b["translated_text"])
     result = translations.submit(
         c, entity_kind=b["entity_kind"], entity_id=b["entity_id"],
         field_path=b["field_path"], source_text=source,
@@ -115,6 +118,13 @@ def approve(c, session_user, body):
         raise ValueError("translation_source_changed")
     if not isinstance(b["expected_candidate_hash"], str):
         raise ValueError("invalid_translation_candidate")
+    if b["entity_kind"]=="notification":
+        from notification_templates_v2 import validate_translation
+        candidate=c.execute("""SELECT translated_text FROM v2_content_translations
+            WHERE entity_kind=? AND entity_id=? AND field_path=? AND language='en'""",
+            (b["entity_kind"],b["entity_id"],b["field_path"])).fetchone()
+        if not candidate:raise ValueError("translation_missing")
+        validate_translation(b["entity_id"],b["field_path"],candidate["translated_text"])
     return translations.approve(
         c, entity_kind=b["entity_kind"], entity_id=b["entity_id"],
         field_path=b["field_path"], source_text=source,
