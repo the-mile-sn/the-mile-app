@@ -703,7 +703,8 @@ async function session(){
   return;
  }
  if(sessionData.user.role==="chef"){
-  window.location.replace("/chef");
+  const id=window.tmNotificationInbox?.pendingId();
+  window.location.replace("/chef"+(id?"?notification="+encodeURIComponent(id):""));
   return;
  }
  if(sessionData.user.role!=="player"){
@@ -770,6 +771,7 @@ async function session(){
  $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
  if(epoch===playerSessionEpoch)await finishPlayerLoading(epoch);
+ if(epoch===playerSessionEpoch&&me){const id=window.tmNotificationInbox?.consumePendingId();if(id)await openPlayerNotificationLink(id); }
  if(epoch===playerSessionEpoch&&me){
   window.tmNotificationActivation?.start({
    language:()=>playerUiLanguage,
@@ -3454,7 +3456,56 @@ function resetProfileSubpage(){
  $("profile-notifications-page").hidden=true;
  $("profile-password-page").hidden=true;
 }
-function openProfileSubpage(page){
+async function navigatePlayerNotification(target){
+ const epoch=playerSessionEpoch;
+ const active=()=>epoch===playerSessionEpoch&&!!me;
+ const validDay=value=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(new Date(value+"T12:00:00").getTime());
+ if(!active()||!target)return false;
+ if(target.kind==="weight"||target.kind==="game"){
+  const key=target.kind==="weight"?iso(new Date()):target.date;
+  day=validDay(key)?new Date(key+"T12:00:00"):new Date();
+  overviewMode="day";weeklySelection=null;
+  await show("overview");
+  if(!active()||tab!=="overview")return false;
+  if(target.kind==="weight"){
+   await cachedOverviewRead("/api/v2/player/weight?date="+iso(day)).catch(()=>null);
+   if(!active()||tab!=="overview")return false;
+   const button=$("day-details").querySelector(".daily-weight-action");
+   if(button&&!button.disabled){button.click();button.scrollIntoView({block:"nearest"});}
+  }else{
+   await loadPlayerPostMatch();
+   if(!active()||tab!=="overview")return false;
+   const card=[...$("day-details").querySelectorAll(".post-match-inline")].find(x=>x.dataset.matchId===target.id);
+   const button=card?.querySelector(".post-match-edit");
+   if(button){button.click();card.scrollIntoView({block:"nearest"});}
+  }
+  return true;
+ }
+ if(target.kind==="menu"){
+  menuWeek=validDay(target.week)?new Date(target.week+"T12:00:00"):new Date();
+  menuSelectedDate=iso(menuWeek);
+  document.querySelector('#menus-recipe-switch [data-menu-mode="menus"]')?.click();
+  await show("menus");return active();
+ }
+ if(target.kind==="assessment"){
+  assessmentGroup="resumo";await show("assessments");return active();
+ }
+ if(target.kind==="document"&&typeof target.id==="string"&&/^[a-f0-9]{32}$/.test(target.id)){
+  location.assign("/pdf-open.html?id="+encodeURIComponent(target.id));return true;
+ }
+ return false;
+}
+async function openPlayerNotificationLink(id){
+ const epoch=playerSessionEpoch;
+ try{
+  const response=await api("/api/v2/notifications/open",{method:"POST",
+   headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify({id})});
+  if(epoch!==playerSessionEpoch||!me)return;
+  if(response.destination&&await navigatePlayerNotification(response.destination))return;
+ }catch(_){}
+ if(epoch===playerSessionEpoch&&me){await show("profile");openProfileSubpage("notifications",id);}
+}
+function openProfileSubpage(page,initialId=null){
  resetProfilePassword();
  $("profile-main").hidden=true;
  $("profile-notifications-page").hidden=page!=="notifications";
@@ -3463,7 +3514,7 @@ function openProfileSubpage(page){
   const epoch=playerSessionEpoch;
   window.tmNotificationActivation?.mount($("profile-notifications-page"));
   window.tmNotificationInbox?.mount({
-   container:$("profile-notifications-page"),language:()=>playerUiLanguage,
+   container:$("profile-notifications-page"),language:()=>playerUiLanguage,navigate:navigatePlayerNotification,initialId,
    active:()=>epoch===playerSessionEpoch&&!!me&&!$("profile-notifications-page").hidden&&!$("player-panel").hidden,
    request:(path,method,body)=>api(path,method==="GET"?{}:{method,
     headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
