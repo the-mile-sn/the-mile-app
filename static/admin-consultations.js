@@ -4,6 +4,15 @@
 (() => {
  const $ = id => document.getElementById(id);
  const root = $("tm-cq-root"), auth = $("tm-cq-auth");
+ // Menu principal recolhido (ícones) como no Início; abre ao passar o rato.
+ root.classList.add("tm-sidebar-hover-enabled");
+ setTimeout(() => {
+  for (const a of root.querySelectorAll(".tm-admin-nav-link")) {
+   const label = a.querySelector("span:not(.tm-admin-nav-icon)")?.textContent?.trim();
+   if (label && !a.hasAttribute("title")) a.setAttribute("title", label);
+   if (label && !a.hasAttribute("aria-label")) a.setAttribute("aria-label", label);
+  }
+ }, 0);
  if (!root || !auth) return;
  const API = "/api/v2/admin/consultations";
  const MONTHS = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -134,7 +143,7 @@
    hero.append(el("p", "tm-cq-muted", "Sem consultas marcadas. As novas marcações aparecem aqui automaticamente."));
   }
   host.append(hero);
-  host.append(formCard(view.form, p.id, false));
+  host.append(formCard(view.form, p.id));
 
   const stats = el("div", "tm-cq-stats");
   const last = view.history[0];
@@ -171,7 +180,7 @@
  async function startConsultation(kind, bookingId) {
   try {
    const s = await api(`${API}/bookings/${kind}/${encodeURIComponent(bookingId)}/start`, {method: "POST", body: "{}"});
-   focus = {...s, step: "note"};
+   focus = {...s, step: s.booking.first_visit ? "anamnesis" : "note"};
    renderFocus();
   } catch (e) { feedback(e.message, true); }
  }
@@ -228,10 +237,10 @@
    el("small", "tm-cq-muted", (b.date === (data && data.date) ? "Hoje " : dayLabel(b.date) + " ") + b.start + " · " + (b.mode === "online" ? "online" : "presencial") + " · " + b.professional_name));
   who.append(t);
   bar.append(exit, who, el("span", "tm-cq-focus-saved tm-cq-muted", closed ? "Fechada" : "Guardado"));
-  if (focus.form && focus.form.status === "submitted") {
-   const see = el("button", "tm-cq-ghost", "Formulário"); see.type = "button";
-   see.title = "Consultar as respostas do formulário pré-consulta";
-   see.addEventListener("click", () => openFormDrawer(focus.form, b.client_name));
+  if (!b.first_visit) {
+   const see = el("button", "tm-cq-ghost", "Anamnese"); see.type = "button";
+   see.title = "Consultar ou completar a anamnese do cliente";
+   see.addEventListener("click", () => openAnamnesis(b.client_id, b.client_name, false));
    bar.append(see);
   }
   if (!closed) {
@@ -243,6 +252,7 @@
   host.append(bar);
 
   const steps = [["note", "Nota", "Indicadores e notas"], ["assessment", "Avaliação", "Medições e cálculos"], ["close", "Fecho", "Plano, objetivos, próxima"]];
+  if (b.first_visit) steps.unshift(["anamnesis", "Anamnese", "Formulário e história"]);
   const body = el("div", "tm-cq-focus-body");
   const nav = el("nav", "tm-cq-steps"); nav.setAttribute("aria-label", "Passos da consulta");
   steps.forEach(([key, label, hint], i) => {
@@ -257,9 +267,184 @@
   if (focus.step === "note") renderNote(content, closed);
   else if (focus.step === "close") renderClose(content, closed);
   else if (focus.step === "assessment") renderAssessment(content, closed);
+  else if (focus.step === "anamnesis") renderAnamnesisStep(content);
   else renderNote(content, closed);
   body.append(nav, content);
   host.append(body);
+ }
+
+
+ /* ---------- anamnese (formulário ou preenchida pela equipa) ---------- */
+ const SKIP_IN_EDITOR = new Set(["check"]);
+ function anVisible(item, a) {
+  const when = item.when || {}, not = item.when_not || {};
+  const match = (ans, v) => Array.isArray(ans) ? ans.includes(v) : ans === v;
+  if (!Object.entries(when).every(([k, v]) => match(a[k], v))) return false;
+  return Object.entries(not).every(([k, hidden]) => !hidden.some(h => JSON.stringify(a[k] ?? null) === JSON.stringify(h)));
+ }
+ function anEmpty(v) { return v == null || v === "" || (Array.isArray(v) && !v.length) || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length); }
+ function shortOpt(label) { const m = /\(([^)]+)\)\s*$/.exec(label); return m && /dia|sem/.test(m[1]) ? m[1] : label; }
+ function anamnesisStatus(form) {
+  if (!form || !form.has_answers) return el("span", "tm-cq-pill is-pending", "Por preencher");
+  if (form.status === "submitted") return el("span", "tm-cq-pill is-positive", "Preenchida pelo cliente · " + dayLabel(new Date(form.submitted_at * 1000).toISOString().slice(0, 10)));
+  return el("span", "tm-cq-pill", "Preenchida pela equipa");
+ }
+ // Editor da anamnese: as mesmas perguntas do formulário, sem obrigatórias; guarda sozinho.
+ function anamnesisEditor(host, clientId, steps, initial, onSaved) {
+  let a = JSON.parse(JSON.stringify(initial || {}));
+  let timer = null;
+  const saved = el("span", "tm-cq-muted tm-cq-an-saved", "");
+  const save = () => {
+   clearTimeout(timer); saved.textContent = "Por guardar…";
+   timer = setTimeout(async () => {
+    const out = {};
+    for (const st of steps) { if (!anVisible(st, a)) continue; for (const f of st.fields) if (anVisible(f, a) && !anEmpty(a[f.id]) && f.type !== "check") out[f.id] = a[f.id]; }
+    if (a.consent) out.consent = true;
+    for (const k of ["supplements_detail"]) if (a[k]) out[k] = a[k];
+    try { const r = await api(`${API}/clients/${encodeURIComponent(clientId)}/anamnesis`, {method: "PUT", body: JSON.stringify({answers: out})}); saved.textContent = "Guardado"; onSaved && onSaved(r.form); }
+    catch (e) { saved.textContent = "Não guardado"; feedback(e.message, true); }
+   }, 800);
+  };
+  const set = (id, v, rerender) => { if (anEmpty(v)) delete a[id]; else a[id] = v; save(); if (rerender) draw(); };
+  const wrap = el("div", "tm-cq-an");
+  const top = el("div", "tm-cq-an-top"); top.append(saved);
+  const body = el("div", "tm-cq-an-body");
+  wrap.append(top, body);
+  function pills(options, value, multi, onPick) {
+   const g = el("div", "tm-cq-an-pills");
+   for (const [k, lab] of options) {
+    const on = multi ? (value || []).includes(k) : value === k;
+    const b = el("button", "tm-cq-an-pill" + (on ? " is-on" : ""), shortOpt(lab)); b.type = "button"; b.title = lab;
+    b.setAttribute("aria-pressed", String(on));
+    b.addEventListener("click", () => {
+     if (!multi) return onPick(on ? "" : k);
+     const list = (value || []).filter(x => x !== k); if (!on) list.push(k); onPick(list);
+    });
+    g.append(b);
+   }
+   return g;
+  }
+  function input(type, value, onInput, placeholder) {
+   const i = el(type === "textarea" ? "textarea" : "input", type === "textarea" ? "tm-cq-textarea" : "tm-cq-input");
+   if (type !== "textarea") i.type = type; else i.rows = 2;
+   i.value = value ?? ""; if (placeholder) i.placeholder = placeholder;
+   i.addEventListener("input", () => onInput(i.value));
+   return i;
+  }
+  function field(f) {
+   const row = el("div", "tm-cq-an-field" + (f.other_of ? " is-other" : ""));
+   row.append(el("label", "tm-cq-an-label", f.other_of ? "Outra:" : (f.short || f.label)));
+   const v = a[f.id];
+   const box = el("div", "tm-cq-an-value");
+   if (f.type === "choice" || f.type === "multi") box.append(pills(f.options, v, f.type === "multi", x => set(f.id, x, true)));
+   else if (f.type === "text" || f.type === "textarea") box.append(input(f.type, v, x => set(f.id, x.trim() ? x : "")));
+   else if (f.type === "date") box.append(input("date", v, x => set(f.id, x)));
+   else if (f.type === "number") box.append(input("text", v == null ? "" : String(v).replace(".", ","), x => {
+     const n = Number(String(x).replace(",", ".")); if (!x.trim()) set(f.id, ""); else if (Number.isFinite(n) && n >= f.min && n <= f.max) set(f.id, n);
+    }, f.unit));
+   else if (f.type === "freq") {
+    const list = el("div", "tm-cq-an-freq");
+    const g = {...(v || {})};
+    for (const [k, lab, , opts] of f.rows) {
+     const r = el("div", "tm-cq-an-freq-row"); r.append(el("span", "", lab));
+     r.append(pills(opts, g[k], false, x => { const n = {...(a[f.id] || {})}; if (x) n[k] = x; else delete n[k]; set(f.id, n, true); }));
+     list.append(r);
+    }
+    box.append(list);
+   } else if (f.type === "meals") {
+    const meals = {...(v || {})};
+    const chosen = f.rows.filter(([k]) => meals[k]).map(([k]) => k);
+    box.append(pills(f.rows, chosen, true, list => { const n = {}; for (const k of list) n[k] = meals[k] || {time: "", text: "", qty: "", on: true}; set(f.id, n, true); }));
+    for (const [k, lab] of f.rows) {
+     if (!meals[k]) continue;
+     const m = meals[k]; const r = el("div", "tm-cq-an-meal");
+     const up = (part, x) => { const n = {...(a[f.id] || {})}; n[k] = {...(n[k] || {on: true}), [part]: x}; set(f.id, n); };
+     r.append(el("strong", "", lab), input("time", m.time, x => up("time", x)), input("text", m.text, x => up("text", x), "O que come"), input("text", m.qty, x => up("qty", x), "Quantidades"));
+     box.append(r);
+    }
+   } else if (f.type === "details") {
+    const parent = steps.flatMap(st => st.fields).find(x => x.id === f.of);
+    const labels = Object.fromEntries(parent.options);
+    for (const key of (a[f.of] || []).filter(k => k !== "none")) {
+     const r = el("div", "tm-cq-an-meal");
+     const cur = (a[f.id] || {})[key] || {};
+     const up = (col, x) => { const n = {...(a[f.id] || {})}; const row2 = {...(n[key] || {})}; if (x.trim()) row2[col] = x; else delete row2[col]; if (Object.keys(row2).length) n[key] = row2; else delete n[key]; set(f.id, n); };
+     r.append(el("strong", "", key === "other" ? (a[f.of + "_other"] || "Outro") : labels[key]));
+     for (const [col, lab] of f.columns) r.append(input("text", cur[col], x => up(col, x), lab));
+     box.append(r);
+    }
+   }
+   row.append(box);
+   return row;
+  }
+  function draw() {
+   const y = window.scrollY, active = document.activeElement;
+   body.replaceChildren();
+   steps.forEach((st, i) => {
+    if (!anVisible(st, a)) return;
+    const card = el("section", "tm-cq-card tm-cq-an-section");
+    const h = el("h3"); h.append(el("span", "tm-cq-muted", String(i + 1) + " "), st.title); card.append(h);
+    for (const f of st.fields) if (!SKIP_IN_EDITOR.has(f.type) && anVisible(f, a)) card.append(field(f));
+    body.append(card);
+   });
+   window.scrollTo(0, y);
+   if (active && active.isConnected) active.focus({preventScroll: true});
+  }
+  draw();
+  host.append(wrap);
+ }
+ async function openAnamnesis(clientId, name, startEditing) {
+  document.querySelector(".tm-cq-drawer")?.remove();
+  let data;
+  try { data = await api(`${API}/clients/${encodeURIComponent(clientId)}/anamnesis`); } catch (e) { feedback(e.message, true); return; }
+  const drawer = el("aside", "tm-cq-drawer"); drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-label", "Anamnese");
+  const head = el("div", "tm-cq-drawer-head");
+  const t = el("div"); t.append(el("h2", "", "Anamnese"), el("p", "tm-cq-muted", name || ""));
+  const tools = el("div", "tm-cq-form-actions");
+  const edit = el("button", "tm-cq-ghost", startEditing ? "Ver resumo" : "Editar"); edit.type = "button";
+  const close = el("button", "tm-cq-ghost", "Fechar"); close.type = "button";
+  tools.append(edit, close);
+  const done = () => { drawer.remove(); document.removeEventListener("keydown", onKey); if (!focus) reloadDetail(clientId); };
+  const onKey = e => { if (e.key === "Escape") done(); };
+  close.addEventListener("click", done); document.addEventListener("keydown", onKey);
+  head.append(t, tools);
+  const body = el("div", "tm-cq-drawer-body");
+  let editing = !!startEditing, form = data.form;
+  const paint = () => {
+   body.replaceChildren();
+   const status = el("div", "tm-cq-an-status"); status.append(anamnesisStatus(form)); body.append(status);
+   if (editing) anamnesisEditor(body, clientId, data.steps, form ? form.answers : {}, f => { form = f; if (focus && focus.booking.client_id === clientId) focus.form = f; });
+   else if (form && form.has_answers) formAnswers(body, form);
+   else body.append(el("p", "tm-cq-muted", "Ainda sem respostas. Envia o link do formulário ao cliente ou carrega em «Editar» para preencher aqui."));
+   edit.textContent = editing ? "Ver resumo" : "Editar";
+  };
+  edit.addEventListener("click", () => { editing = !editing; paint(); });
+  paint();
+  drawer.append(head, body);
+  document.body.append(drawer);
+  close.focus();
+ }
+ async function reloadDetail(clientId) {
+  try { const v = await api(`${API}/clients/${encodeURIComponent(clientId)}`); renderDetail(v); } catch (_) { /* mantém */ }
+ }
+ async function renderAnamnesisStep(host) {
+  const b = focus.booking;
+  host.append(el("h2", "", "Anamnese"));
+  const info = el("section", "tm-cq-card tm-cq-an-intro");
+  const line = el("div", "tm-cq-form-title"); line.append(el("strong", "", "Formulário pré-consulta"), anamnesisStatus(focus.form));
+  const copy = el("button", "tm-cq-ghost", focus.form ? "Copiar link" : "Criar e copiar link"); copy.type = "button";
+  copy.addEventListener("click", () => copyFormLink(b.client_id, copy));
+  const top = el("div", "tm-cq-section-head"); top.append(line, copy);
+  info.append(top, el("p", "tm-cq-muted", focus.form && focus.form.status === "submitted"
+   ? "Respostas do cliente. Completa ou corrige o que for preciso; fica registado que foi a equipa."
+   : "O cliente ainda não enviou o formulário. Podes preencher a anamnese aqui durante a consulta."));
+  host.append(info);
+  const slot = el("div"); host.append(slot);
+  try {
+   const data = await api(`${API}/clients/${encodeURIComponent(b.client_id)}/anamnesis`);
+   anamnesisEditor(slot, b.client_id, data.steps, data.form ? data.form.answers : {}, f => { focus.form = f; });
+  } catch (e) { slot.append(el("p", "tm-cq-empty", e.message)); }
+  host.append(nextButton("Seguir para a nota →", "note"));
  }
 
  /* ---------- formulário pré-consulta ---------- */
@@ -279,26 +464,22 @@
    return r.form;
   } catch (e) { feedback(e.message, true); }
  }
- function formCard(form, clientId, inFocus) {
+ function formCard(form, clientId) {
   const card = el("section", "tm-cq-card tm-cq-form-card");
   const head = el("div", "tm-cq-section-head");
-  const title = el("div", "tm-cq-form-title"); title.append(el("h3", "", "Formulário pré-consulta"), formStatus(form));
-  const copy = el("button", "tm-cq-ghost", form ? "Copiar link" : "Criar e copiar link"); copy.type = "button";
-  copy.addEventListener("click", async () => {
-   const f = await copyFormLink(clientId, copy);
-   if (!f) return;
-   if (inFocus) renderFocus(); else { const v = await api(`${API}/clients/${encodeURIComponent(clientId)}`); renderDetail(v); }
-  });
-  const actions = el("div", "tm-cq-form-actions"); actions.append(copy);
-  if (!inFocus && form && form.status === "submitted") {
-   const see = el("button", "tm-cq-ghost", "Ver respostas"); see.type = "button";
-   see.addEventListener("click", () => { const open = card.classList.toggle("is-open"); see.textContent = open ? "Esconder respostas" : "Ver respostas"; });
-   actions.append(see);
-  }
+  const title = el("div", "tm-cq-form-title"); title.append(el("h3", "", "Anamnese"), anamnesisStatus(form));
+  const copy = el("button", "tm-cq-ghost", form ? "Copiar link do formulário" : "Criar link do formulário"); copy.type = "button";
+  copy.addEventListener("click", async () => { if (await copyFormLink(clientId, copy)) reloadDetail(clientId); });
+  const name = (document.querySelector(".tm-cq-person h2") || {}).textContent || "";
+  const see = el("button", "tm-cq-ghost", form && form.has_answers ? "Ver" : "Preencher"); see.type = "button";
+  see.addEventListener("click", () => openAnamnesis(clientId, name, !(form && form.has_answers)));
+  const actions = el("div", "tm-cq-form-actions"); actions.append(copy, see);
   head.append(title, actions); card.append(head);
-  if (!form) card.append(el("p", "tm-cq-muted", "Cria o link e envia-o ao cliente. As respostas ficam aqui e na consulta."));
-  else if (form.status !== "submitted") card.append(el("p", "tm-cq-muted", "O cliente ainda não enviou o formulário. O link abre uma página do site, só acessível com este código."));
-  if (!inFocus && form && form.status === "submitted") { const body = el("div", "tm-cq-form-answers"); formAnswers(body, form); card.append(body); }
+  if (form && form.care && form.care.length) {
+   const care = el("div", "tm-cq-an-care");
+   for (const item of form.care) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", item.label), el("strong", "", item.value)); care.append(r); }
+   card.append(care);
+  } else if (!form || !form.has_answers) card.append(el("p", "tm-cq-muted", "Envia o link do formulário ao cliente ou preenche a anamnese aqui."));
   return card;
  }
  function formAnswers(host, form) {
@@ -315,7 +496,9 @@
    const before = card.childElementCount;
    for (const row of sec.rows) {
     if (row.type === "text") {
-     const r = el("div", "tm-cq-kv"); r.append(el("span", "tm-cq-muted", row.label), el("span", "", row.value)); card.append(r);
+     const r = el("div", "tm-cq-kv"); const val = el("span", "", row.value);
+     if (row.team) { val.append(" ", el("small", "tm-cq-team", "equipa")); }
+     r.append(el("span", "tm-cq-muted", row.label), val); card.append(r);
     } else if (row.type === "meals") {
      if (!row.items.length) continue;
      const tl = el("div", "tm-cq-meals");
@@ -333,22 +516,7 @@
   });
   host.append(grid);
  }
- // Respostas do formulário para consultar durante a consulta (não é um passo).
- function openFormDrawer(form, name) {
-  document.querySelector(".tm-cq-drawer")?.remove();
-  const drawer = el("aside", "tm-cq-drawer"); drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-label", "Formulário pré-consulta");
-  const head = el("div", "tm-cq-drawer-head");
-  const t = el("div"); t.append(el("h2", "", "Formulário pré-consulta"), el("p", "tm-cq-muted", name || ""));
-  const close = el("button", "tm-cq-ghost", "Fechar"); close.type = "button";
-  const done = () => { drawer.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = e => { if (e.key === "Escape") done(); };
-  close.addEventListener("click", done); document.addEventListener("keydown", onKey);
-  head.append(t, close);
-  const body = el("div", "tm-cq-drawer-body"); formAnswers(body, form);
-  drawer.append(head, body);
-  document.body.append(drawer);
-  close.focus();
- }
+
 
  function renderSoon(host, title, text) {
   host.append(el("p", "tm-cq-muted", "Passo"), el("h2", "", title));

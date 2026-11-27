@@ -1593,6 +1593,10 @@ def application(env, start_response):
                         return respond(200, consult_sessions_v2.workspace(c, lisbon_today))
                     if len(parts) == 2 and parts[0] == 'clients' and method == 'GET':
                         return respond(200, consult_sessions_v2.client_view(c, parts[1], lisbon_today))
+                    if len(parts) == 3 and parts[0] == 'clients' and parts[2] == 'anamnesis' and method == 'GET':
+                        return respond(200, consult_forms_v2.anamnesis(c, parts[1]))
+                    if len(parts) == 3 and parts[0] == 'clients' and parts[2] == 'anamnesis' and method == 'PUT':
+                        return respond(200, {'form': consult_forms_v2.save_anamnesis(c, parts[1], read_json(env), user['id'])})
                     if len(parts) == 3 and parts[0] == 'clients' and parts[2] == 'form' and method == 'POST':
                         return respond(200, {'form': consult_forms_v2.ensure(c, parts[1], user['id'])})
                     if len(parts) == 3 and parts[0] == 'bookings' and method == 'GET':

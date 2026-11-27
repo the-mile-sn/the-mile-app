@@ -219,3 +219,127 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 .tm-cq-drawer-head p{margin:2px 0 0}
 .tm-cq-drawer-body{overflow-y:auto;padding:0 24px 24px}
 .tm-cq-drawer-body .tm-cq-form-grid{grid-template-columns:1fr}
+
+/* Menu principal recolhido em Consultas (igual ao Início): abre ao passar o rato. */
+@media (min-width:831px) and (hover:hover) and (pointer:fine){
+ #tm-cq-root:not([hidden]).tm-sidebar-hover-enabled{
+  grid-template-columns:72px minmax(0,1fr)!important;
+  transition:grid-template-columns .18s ease!important;
+ }
+ /* The expanded rail claims its own grid column; it never obscures text,
+    filters or cards in the workspace. */
+ #tm-cq-root:not([hidden]).tm-sidebar-hover-enabled:has(>.tm-admin-sidebar:is(:hover,:has(:focus-visible))){
+  grid-template-columns:226px minmax(0,1fr)!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar{
+  box-sizing:border-box!important;position:sticky!important;top:0!important;
+  width:72px!important;min-width:72px!important;max-width:none!important;
+  height:100vh!important;min-height:640px!important;
+  padding:24px 10px!important;overflow:visible!important;
+  isolation:isolate!important;z-index:200!important;
+  transition:width .18s ease,padding .18s ease!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)){
+  width:226px!important;min-width:226px!important;
+  padding-left:13px!important;padding-right:13px!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand{
+  box-sizing:border-box!important;position:relative!important;display:flex!important;
+  align-items:center!important;justify-content:center!important;
+  height:71px!important;min-height:71px!important;margin:0!important;padding:10px 0!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand::before{content:none!important;display:none!important;}
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-home{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:none!important;width:44px!important;height:44px!important;margin:0 auto!important;padding:0!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-monogram{
+  display:block!important;width:30px!important;height:auto!important;flex:none!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-wordmark{display:none!important;}
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-home{
+  display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;height:44px!important;margin:0!important;padding:0 0 0 14px!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-monogram{display:none!important;}
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-wordmark{
+  display:block!important;width:min(147px,100%)!important;max-width:100%!important;height:auto!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-side-nav{
+  box-sizing:border-box!important;min-width:0!important;gap:3px!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-nav-link{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 auto!important;gap:0!important;
+  width:44px!important;min-width:44px!important;max-width:44px!important;
+  height:44px!important;min-height:44px!important;max-height:44px!important;
+  margin:0 auto!important;padding:9px!important;border-radius:11px!important;
+  white-space:nowrap!important;overflow:hidden!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-nav-link>.tm-admin-nav-icon{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 23px!important;width:23px!important;min-width:23px!important;height:23px!important;
+  margin:0!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-nav-link>span:not(.tm-admin-nav-icon),
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-nav-link>.tm-admin-nav-chevron{
+  display:none!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-recipes-subnav:not([hidden]){
+  display:none!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-nav-link{
+  justify-content:flex-start!important;gap:11px!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:10px 12px!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+  display:inline!important;font-weight:500!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-nav-link>.tm-admin-nav-chevron{
+  display:block!important;width:15px!important;height:15px!important;flex:none!important;margin-left:auto!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-recipes-subnav:not([hidden]){
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  position:static!important;width:auto!important;max-width:none!important;min-width:0!important;
+  margin:0 3px 5px 32px!important;padding:2px 0 2px 9px!important;gap:3px!important;
+  border-left:1px solid var(--tm-ui-divider)!important;
+  border-top:0!important;border-right:0!important;border-bottom:0!important;
+  border-radius:0!important;background:transparent!important;box-shadow:none!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-recipes-subnav:not([hidden])>.tm-admin-subnav-link{
+  box-sizing:border-box!important;display:flex!important;
+  width:100%!important;min-height:36px!important;height:auto!important;
+  padding:8px 9px!important;margin:0!important;border:0!important;border-radius:9px!important;
+  font-size:12px!important;text-align:left!important;
+ }
+ #tm-cq-root.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-sidebar-spacer{
+  flex:1 1 auto!important;min-height:0!important;
+ }
+}
+
+/* Anamnese */
+.tm-cq-an{display:flex;flex-direction:column;gap:12px}
+.tm-cq-an-top{display:flex;justify-content:flex-end;min-height:18px;font-size:12px}
+.tm-cq-an-body{display:flex;flex-direction:column;gap:12px}
+.tm-cq-an-section h3{margin:0 0 6px;font-size:15px}
+.tm-cq-an-field{display:grid;grid-template-columns:minmax(140px,28%) 1fr;gap:12px;padding:8px 0;border-top:1px solid var(--tm-ui-divider);align-items:start}
+.tm-cq-an-field:first-of-type{border-top:0}
+.tm-cq-an-field.is-other{border-top:0;padding-top:0}
+.tm-cq-an-label{font-size:13px;color:var(--tm-ui-muted);padding-top:6px}
+.tm-cq-an-value{display:flex;flex-direction:column;gap:8px;min-width:0}
+.tm-cq-an-pills{display:flex;flex-wrap:wrap;gap:6px}
+.tm-cq-an-pill{border:1px solid var(--tm-ui-divider);background:transparent;color:var(--tm-ui-text);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;cursor:pointer}
+.tm-cq-an-pill:hover{background:var(--tm-ui-hover)}
+.tm-cq-an-pill.is-on{background:var(--tm-brand);border-color:var(--tm-brand);color:#fff}
+.tm-cq-an-freq{display:flex;flex-direction:column;gap:8px}
+.tm-cq-an-freq-row{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;font-size:13px}
+.tm-cq-an-meal{display:grid;grid-template-columns:140px 110px 1fr 1fr;gap:8px;align-items:center}
+.tm-cq-an-meal strong{font-size:13px}
+.tm-cq-input{box-sizing:border-box;width:100%;min-height:36px;border-radius:10px;border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);color:var(--tm-ui-text);padding:0 10px;font:inherit;font-size:13px}
+.tm-cq-an .tm-cq-textarea{min-height:60px}
+.tm-cq-an-status{margin-bottom:12px}
+.tm-cq-an-care{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+.tm-cq-team{font-size:10px;color:var(--tm-state-pending-fg);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.8}
+.tm-cq-an-intro p{margin:8px 0 0}
+@media (max-width:900px){.tm-cq-an-field,.tm-cq-an-freq-row,.tm-cq-an-meal{grid-template-columns:1fr}}
