@@ -171,7 +171,7 @@
  async function startConsultation(kind, bookingId) {
   try {
    const s = await api(`${API}/bookings/${kind}/${encodeURIComponent(bookingId)}/start`, {method: "POST", body: "{}"});
-   focus = {...s, step: s.booking.first_visit ? "form" : "note"};
+   focus = {...s, step: "note"};
    renderFocus();
   } catch (e) { feedback(e.message, true); }
  }
@@ -228,6 +228,12 @@
    el("small", "tm-cq-muted", (b.date === (data && data.date) ? "Hoje " : dayLabel(b.date) + " ") + b.start + " · " + (b.mode === "online" ? "online" : "presencial") + " · " + b.professional_name));
   who.append(t);
   bar.append(exit, who, el("span", "tm-cq-focus-saved tm-cq-muted", closed ? "Fechada" : "Guardado"));
+  if (focus.form && focus.form.status === "submitted") {
+   const see = el("button", "tm-cq-ghost", "Formulário"); see.type = "button";
+   see.title = "Consultar as respostas do formulário pré-consulta";
+   see.addEventListener("click", () => openFormDrawer(focus.form, b.client_name));
+   bar.append(see);
+  }
   if (!closed) {
    const drop = el("button", "tm-cq-ghost tm-cq-danger", "Descartar"); drop.type = "button";
    drop.title = "Apaga o que foi escrito nesta consulta e volta ao estado normal";
@@ -237,7 +243,6 @@
   host.append(bar);
 
   const steps = [["note", "Nota", "Indicadores e notas"], ["assessment", "Avaliação", "Medições e cálculos"], ["close", "Fecho", "Plano, objetivos, próxima"]];
-  if (b.first_visit) steps.unshift(["form", "Formulário", "Respostas do cliente"]);
   const body = el("div", "tm-cq-focus-body");
   const nav = el("nav", "tm-cq-steps"); nav.setAttribute("aria-label", "Passos da consulta");
   steps.forEach(([key, label, hint], i) => {
@@ -252,7 +257,7 @@
   if (focus.step === "note") renderNote(content, closed);
   else if (focus.step === "close") renderClose(content, closed);
   else if (focus.step === "assessment") renderAssessment(content, closed);
-  else renderForm(content);
+  else renderNote(content, closed);
   body.append(nav, content);
   host.append(body);
  }
@@ -316,7 +321,9 @@
      const tl = el("div", "tm-cq-meals");
      for (const m of row.items) {
       const r = el("div", "tm-cq-meal"); r.append(el("span", "tm-cq-muted", m.time || "—"));
-      const c = el("div"); c.append(el("strong", "", m.label), el("p", "", m.text || "")); r.append(c); tl.append(r);
+      const c = el("div"); c.append(el("strong", "", m.label), el("p", "", m.text || ""));
+      if (m.qty) c.append(el("p", "tm-cq-muted", m.qty));
+      r.append(c); tl.append(r);
      }
      card.append(tl);
     }
@@ -326,13 +333,23 @@
   });
   host.append(grid);
  }
- function renderForm(host) {
-  host.append(el("h2", "", "Formulário"));
-  const form = focus.form;
-  host.append(formCard(form, focus.booking.client_id, true));
-  if (form && form.status === "submitted") formAnswers(host, form);
-  host.append(nextButton("Seguir para a nota →", "note"));
+ // Respostas do formulário para consultar durante a consulta (não é um passo).
+ function openFormDrawer(form, name) {
+  document.querySelector(".tm-cq-drawer")?.remove();
+  const drawer = el("aside", "tm-cq-drawer"); drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-label", "Formulário pré-consulta");
+  const head = el("div", "tm-cq-drawer-head");
+  const t = el("div"); t.append(el("h2", "", "Formulário pré-consulta"), el("p", "tm-cq-muted", name || ""));
+  const close = el("button", "tm-cq-ghost", "Fechar"); close.type = "button";
+  const done = () => { drawer.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") done(); };
+  close.addEventListener("click", done); document.addEventListener("keydown", onKey);
+  head.append(t, close);
+  const body = el("div", "tm-cq-drawer-body"); formAnswers(body, form);
+  drawer.append(head, body);
+  document.body.append(drawer);
+  close.focus();
  }
+
  function renderSoon(host, title, text) {
   host.append(el("p", "tm-cq-muted", "Passo"), el("h2", "", title));
   const card = el("section", "tm-cq-card"); card.append(el("p", "tm-cq-muted", text)); host.append(card);

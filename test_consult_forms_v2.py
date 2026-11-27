@@ -26,7 +26,7 @@ ANSWERS = {
     "diet_pattern": "omnivore", "shopping": "me", "supermarkets": ["lidl", "continente"], "cooking": "me",
     "weighs_food": "never", "water": "1_2", "urine_color": "3", "coffee": "1_2", "alcohol": "2",
     "frequency": FREQ_ALL, "meal_drinks": ["water"], "motivation": "8",
-    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre"}, "lunch": {"time": "", "text": ""}},
+    "meals": {"breakfast": {"time": "08:30", "text": "Pão com fiambre", "qty": "2 fatias"}, "lunch": {"time": "", "text": ""}},
     "protein_portion": "120", "carb_portion": "150", "supplements": ["none"], "athlete": "no",
     "consent": True,
 }
@@ -116,7 +116,16 @@ class ConsultFormsTests(unittest.TestCase):
         self.assertEqual(rows["goals"], "Emagrecimento · Outra: Dormir melhor")
         self.assertEqual(rows["supermarkets"], "Continente · Lidl")
         self.assertEqual(rows["frequency.soup"], "Às vezes (1–2 dias)")
-        self.assertNotIn("supplements_detail", rows)
+        self.assertNotIn("supplements_info", rows)
+        with_sup = dict(ANSWERS, supplements=["creatine", "other"], supplements_other="Magnésio",
+                        supplements_info={"creatine": {"brand": "Marca X", "dose": "5 g", "when": "antes do treino"}})
+        self.assertEqual(self.call("/enviar", token, "POST", {"answers": with_sup})["status"], 200)
+        bad_sup = dict(with_sup, supplements_info={"none": {"brand": "x"}})
+        self.assertEqual(self.call("/guardar", token, "POST", {"answers": bad_sup})["status"], 400)
+        form2 = self.admin.request(f"/api/v2/admin/consultations/bookings/manual/{self.booking}")["body"]["form"]
+        rows2 = {r.get("key"): (r.get("label"), r.get("value")) for sec in form2["sections"] for r in sec["rows"]}
+        self.assertEqual(rows2["supplements_info.creatine"], ("Creatina", "Marca X · 5 g · antes do treino"))
+        self.assertEqual(rows2["supplements_info.other"], ("Magnésio", "—"))
         # Frequências: têm de estar todas respondidas.
         partial = dict(ANSWERS, frequency={"soup": "never"})
         self.assertEqual(self.call("/enviar", token, "POST", {"answers": partial})["status"], 400)
@@ -151,3 +160,23 @@ class ConsultFormsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConsultFormPortionPhotosTests(ConsultFormsTests):
+    def test_portion_photos_need_valid_link(self):
+        import base64
+        with app.connect() as c:
+            c.execute("INSERT INTO v2_visual_portion_images(sha256,data_base64) VALUES('abc',?)",
+                      (base64.b64encode(b"RIFFfakewebp").decode(),))
+            c.execute("""INSERT INTO v2_visual_portions(id,source_row,category,total_g,image_sha256,active,created_at,updated_at)
+                VALUES('aaaaaaaaaaaaaaaaaaaaaaaa',1,'Carne / Peixe',120,'abc',1,1,1),
+                      ('bbbbbbbbbbbbbbbbbbbbbbbb',2,'Massa',120,'abc',1,1,1)""")
+        token = parse_qs(urlparse(self.link()["link"]).query)["t"][0]
+        view = self.call("/dados", token)["body"]
+        self.assertEqual(view["portions"]["protein_portion"], {"120": "aaaaaaaaaaaaaaaaaaaaaaaa"})
+        ok = self.public.request(PROXY + "/porcao?" + self.signed(t=token, id="aaaaaaaaaaaaaaaaaaaaaaaa"), csrf=False)
+        self.assertEqual((ok["status"], ok["headers"]["Content-Type"]), (200, "image/webp"))
+        other = self.public.request(PROXY + "/porcao?" + self.signed(t=token, id="bbbbbbbbbbbbbbbbbbbbbbbb"), csrf=False)
+        self.assertEqual(other["status"], 404)
+        no_token = self.public.request(PROXY + "/porcao?" + self.signed(t="x" * 43, id="aaaaaaaaaaaaaaaaaaaaaaaa"), csrf=False)
+        self.assertEqual(no_token["status"], 404)

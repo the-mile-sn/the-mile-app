@@ -179,7 +179,7 @@ STEPS = [
         {"id": "alcohol", "short": "Bebidas alcoólicas/semana", "type": "choice", "compact": True, "unit": "copos/bebidas",
          "label": "Bebidas alcoólicas por semana", "required": True, "options": _scale(0, 10)},
         {"id": "frequency", "type": "freq", "label": "Com que frequência incluis…", "required": True,
-         "hint": "Por semana ou por dia. Escolhe a opção mais próxima de uma semana normal.", "rows": [
+         "hint": "Numa semana normal, em quantos dias comes cada alimento?", "rows": [
              ["soup", "Sopa", "", F_DAY2], ["vegetables", "Legumes no prato", "", F_DAY2],
              ["fruit", "Fruta", "", F_DAY5],
              ["legumes", "Leguminosas", "feijão, grão, lentilhas, ervilhas…", F_DAY2],
@@ -200,19 +200,19 @@ STEPS = [
          "ends": ["Nenhuma", "Total"], "options": _scale(0, 10)},
     ]},
     {"id": "diary", "title": "Diário alimentar", "fields": [
-        {"id": "meals", "type": "meals", "label": "Descreve um dia alimentar típico",
-         "hint": "Indica a hora e o que comes. Ex.: 8h00, pão com queijo magro e leite com café. Se não fazes alguma das refeições, deixa em branco.",
+        {"id": "meals", "type": "meals", "label": "Que refeições fazes num dia normal?",
+         "hint": "Escolhe as refeições que fazes. Em cada uma, diz-nos a hora, o que comes e as quantidades.",
          "rows": [["breakfast", "Pequeno-almoço"], ["morning_snack", "Lanche da manhã"], ["lunch", "Almoço"],
                   ["afternoon_snack", "Lanche da tarde"], ["dinner", "Jantar"], ["supper", "Ceia"],
-                  ["other", "Outra refeição importante (ex.: pós-treino)"]]},
-        {"id": "protein_portion", "short": "Porção de proteína", "type": "choice", "compact": True, "required": True,
+                  ["post_workout", "Pós-treino"], ["other", "Outra"]]},
+        {"id": "protein_portion", "short": "Porção de proteína", "type": "choice", "photos": "Carne / Peixe", "required": True,
          "label": "Qual é a porção de proteína que comes nas refeições principais?",
-         "hint": "Exemplo: carne, peixe, alternativas vegetais.",
-         "options": [[g, g + " g"] for g in ("80", "100", "120", "125", "160", "180", "200", "220")]},
-        {"id": "carb_portion", "short": "Porção de hidratos", "type": "choice", "compact": True, "required": True,
+         "hint": "Exemplo: carne, peixe, alternativas vegetais. Escolhe a fotografia mais parecida com o teu prato.",
+         "options": [[g, g + " g"] for g in ("80", "100", "120", "140", "160", "180", "200", "220")]},
+        {"id": "carb_portion", "short": "Porção de hidratos", "type": "choice", "photos": "Arroz", "required": True,
          "label": "Qual é a porção de hidratos que comes nas refeições principais?",
-         "hint": "Exemplo: arroz, massa, batata, quinoa.",
-         "options": [[g, g + " g"] for g in ("50", "75", "100", "125", "150", "175", "200", "220", "250")]},
+         "hint": "Exemplo: arroz, massa, batata, quinoa. Escolhe a fotografia mais parecida com o teu prato.",
+         "options": [[g, g + " g"] for g in ("50", "70", "100", "120", "150", "180", "200", "220", "250")]},
     ]},
     {"id": "changes", "title": "Mudanças na tua alimentação", "fields": [
         {"id": "alternatives", "short": "Opções que aceita", "type": "multi", "other": True,
@@ -233,9 +233,10 @@ STEPS = [
          "options": [["none", "Não faço"], ["creatine", "Creatina"], ["beta_alanine", "Beta-alanina"],
                      ["omega3", "Ómega-3"], ["tart_cherry", "Tart Cherry"], ["multivitamin", "Multivitamínico"],
                      ["vit_d", "Vitamina D"], ["vit_b12", "Vitamina B12"], ["whey", "Proteína whey"], OTHER]},
-        {"id": "supplements_detail", "short": "Marca e dose", "type": "textarea", "max": 1500,
-         "label": "Diz-nos a marca e a dose dos suplementos que tomas.",
-         "placeholder": "Ex.: Creatina, marca X, 5 g antes do treino. Ómega-3, marca Y, 1 cápsula ao jantar.",
+        {"id": "supplements_info", "short": "Marca, dose e quando", "type": "details", "of": "supplements",
+         "label": "Para cada suplemento, diz-nos a marca, a dose e quando tomas.",
+         "columns": [["brand", "Marca"], ["dose", "Dose"], ["when", "Quando"]],
+         "placeholders": ["Ex.: marca X", "Ex.: 5 g", "Ex.: antes do treino"],
          "when_not": {"supplements": [None, ["none"]]}},
         {"id": "athlete", "short": "Tem jogos ou competições", "type": "choice", "options": YES_NO,
          "label": "És atleta ou tens jogos ou competições?"},
@@ -294,7 +295,7 @@ LAYOUT = [
     ("Diário alimentar", ["meals"]),
     ("Diário alimentar", ["protein_portion", "carb_portion"]),
     ("Mudanças", ["alternatives", "motivation"]),
-    ("Suplementação", ["supplements", "supplements_detail", "athlete"]),
+    ("Suplementação", ["supplements", "supplements_info", "athlete"]),
     ("Dia de jogo", ["day_before_change", "day_before_what", "game_day_change", "game_day_what"]),
     ("Dia de jogo", ["before_game", "during_game"]),
     ("Notas", ["notes", "consent"]),
@@ -321,6 +322,8 @@ def _screens():
 
 STEPS = _screens()
 CARE_FIELDS = ("allergies", "intolerances", "medication", "conditions")
+# Respostas de versões anteriores do formulário: guardam-se e mostram-se, mas já não se perguntam.
+LEGACY_TEXT = {"supplements_detail": "Marca e dose"}
 
 
 def initialize(c):
@@ -444,9 +447,25 @@ def readable(answers):
                 items = []
                 for k, lab in f["rows"]:
                     m = meals.get(k) or {}
-                    if m.get("time") or m.get("text"):
-                        items.append({"key": k, "label": lab, "time": m.get("time", ""), "text": m.get("text", "")})
+                    if m.get("time") or m.get("text") or m.get("qty") or m.get("on"):
+                        items.append({"key": k, "label": lab, "time": m.get("time", ""), "text": m.get("text", ""),
+                                      "qty": m.get("qty", "")})
                 rows.append({"type": "meals", "label": f["label"], "items": items})
+                continue
+            if f["type"] == "details":
+                info = value if isinstance(value, dict) else {}
+                for key in answers.get(f["of"]) or []:
+                    if key == "none":
+                        continue
+                    name = _option_label(f["of"], key)
+                    if key == "other":
+                        name = (answers.get(f["of"] + "_other") or "Outro").strip()
+                    parts = [info.get(key, {}).get(c, "") for c, _ in f["columns"]]
+                    text = " · ".join(p for p in parts if p) or "—"
+                    rows.append({"type": "text", "key": f["id"] + "." + key, "label": name, "value": text})
+                for legacy, label in LEGACY_TEXT.items():
+                    if answers.get(legacy):
+                        rows.append({"type": "text", "key": legacy, "label": label, "value": answers[legacy]})
                 continue
             if value in (None, "", []):
                 continue
@@ -499,10 +518,40 @@ def public_view(c, token, now=None, today=None):
     client = c.execute("SELECT name FROM consult_clients WHERE org_id=? AND id=?",
                        (row["org_id"], row["client_id"])).fetchone()
     first = ((client["name"] if client else "") or "").split(" ")[0]
-    return {"first_name": first, "status": row["status"], "step": row["step"],
+    return {"first_name": first, "status": row["status"], "step": row["step"], "portions": portion_photos(c),
             "answers": json.loads(row["answers_json"] or "{}"),
             "booking": _next_booking(c, row, today or date.today().isoformat()),
             "steps": STEPS}
+
+
+def portion_photos(c):
+    """Fotografias da biblioteca Porções visuais para as perguntas de porções: {campo: {gramas: id}}."""
+    out = {}
+    for f in FIELDS.values():
+        if not f.get("photos"):
+            continue
+        grams = {int(k) for k, _ in f["options"]}
+        rows = c.execute("""SELECT id,total_g FROM v2_visual_portions WHERE category=? AND active=1
+            ORDER BY total_g,source_row""", (f["photos"],)).fetchall()
+        photos = {}
+        for r in rows:
+            if r["total_g"] in grams and str(r["total_g"]) not in photos:
+                photos[str(r["total_g"])] = r["id"]
+        out[f["id"]] = photos
+    return out
+
+
+def portion_image(c, token, image_id, now=None):
+    """Só serve fotografias usadas no formulário e só com um link válido."""
+    _by_token(c, token, now or int(time.time()))
+    allowed = {i for photos in portion_photos(c).values() for i in photos.values()}
+    if image_id not in allowed:
+        raise LookupError("photo_not_found")
+    import visual_portions_v2
+    data = visual_portions_v2.get_image(c, image_id)
+    if not data:
+        raise LookupError("photo_not_found")
+    return data
 
 
 def _clean_value(f, value):
@@ -537,6 +586,24 @@ def _clean_value(f, value):
             if v:
                 out[k] = v
         return out or None
+    if kind == "details":
+        if not isinstance(value, dict):
+            raise ValueError("invalid_" + f["id"])
+        keys = {k for k, _ in FIELDS[f["of"]]["options"]} - {"none"}
+        cols = {k for k, _ in f["columns"]}
+        out = {}
+        for k, row in value.items():
+            if k not in keys or not isinstance(row, dict) or any(c not in cols for c in row):
+                raise ValueError("invalid_" + f["id"])
+            clean = {}
+            for c, v in row.items():
+                if not isinstance(v, str) or len(v) > 120:
+                    raise ValueError("invalid_" + f["id"])
+                if v.strip():
+                    clean[c] = " ".join(v.split())
+            if clean:
+                out[k] = clean
+        return out or None
     if kind == "check":
         if value is not True:
             raise ValueError("invalid_" + f["id"])
@@ -569,12 +636,15 @@ def _clean_value(f, value):
                 raise ValueError("invalid_" + f["id"])
             t = v.get("time") or ""
             text = v.get("text") or ""
+            qty = v.get("qty") or ""
             if not isinstance(t, str) or (t and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", t)):
                 raise ValueError("invalid_" + f["id"])
-            if not isinstance(text, str) or len(text) > 600:
+            if not isinstance(text, str) or len(text) > 600 or not isinstance(qty, str) or len(qty) > 300:
                 raise ValueError("invalid_" + f["id"])
-            if t or text.strip():
-                out[k] = {"time": t, "text": text.strip()}
+            if any(x not in ("time", "text", "qty", "on") for x in v):
+                raise ValueError("invalid_" + f["id"])
+            if t or text.strip() or qty.strip() or v.get("on") is True:
+                out[k] = {"time": t, "text": text.strip(), "qty": qty.strip(), "on": True}
         return out or None
     raise ValueError("invalid_" + f["id"])
 
@@ -584,6 +654,10 @@ def clean_answers(payload):
         raise ValueError("invalid_answers")
     out = {}
     for key, value in payload.items():
+        if key in LEGACY_TEXT:
+            if isinstance(value, str) and value.strip() and len(value) <= 2000:
+                out[key] = value.strip()
+            continue
         f = FIELDS.get(key)
         if not f:
             raise ValueError("invalid_answers")
@@ -620,6 +694,10 @@ def save(c, token, payload, now=None):
     if not isinstance(payload, dict):
         raise ValueError("invalid_request")
     answers = clean_answers(payload.get("answers") or {})
+    previous = json.loads(row["answers_json"] or "{}")
+    for legacy in LEGACY_TEXT:
+        if legacy in previous and legacy not in answers:
+            answers[legacy] = previous[legacy]
     step = payload.get("step", row["step"])
     if type(step) is not int or not (0 <= step < len(STEPS)):
         step = row["step"]

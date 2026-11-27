@@ -13,13 +13,14 @@
   var errors = {};
   var dailyPending = {};    // alimentos com «Todos» à espera de «quantas vezes por dia»
   var scrollTarget = null;
+  var lastRendered = null;  // só anima quando muda de ecrã
 
   var WEEK = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
   var MONTH = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   var ADDRESS = "Largo das Hortas 220 N, Guimarães";
   var URINE = ["#fbf6d9", "#f7eeaa", "#f1df74", "#e9cc45", "#d9b22a", "#c4951c", "#a87a14"];
   // Frequência: primeiro os dias por semana; «Todos» abre «quantas vezes por dia» quando há mais do que uma opção.
-  var WEEKLY = [["never", "Nunca"], ["d1_2", "1–2"], ["d3_4", "3–4"], ["d5_6", "5–6"], ["all", "Todos"]];
+  var WEEKLY = [["never", "Nunca", ""], ["d1_2", "1–2", "dias"], ["d3_4", "3–4", "dias"], ["d5_6", "5–6", "dias"], ["all", "Todos", "os dias"]];
   var SECONDS_PER_SCREEN = 40;
 
   function el(tag, cls, text) {
@@ -141,18 +142,20 @@
     if (!empty(answers[f.id]) && !errors[f.id]) box.classList.add("is-answered");
     var id = "tmf-" + f.id;
     if (f.type !== "check" && f.type !== "freq") {
-      var block = f.type === "choice" || f.type === "multi" || f.type === "freq" || f.type === "meals";
+      var block = f.type === "choice" || f.type === "multi" || f.type === "freq" || f.type === "meals" || f.type === "details";
       var label = el(block ? "div" : "label", "tmf-label", f.label);
       if (label.tagName === "LABEL") label.htmlFor = id;
       if (f.type === "multi") label.append(" ", el("small", "", "(podes escolher várias)"));
-      else if (!f.required && f.type !== "meals" && f.type !== "freq" && !f.other_of) label.append(" ", el("small", "", "(opcional)"));
+      else if (!f.required && f.type !== "meals" && f.type !== "freq" && f.type !== "details" && !f.other_of) label.append(" ", el("small", "", "(opcional)"));
       if (f.other_of) box.classList.add("is-other");
       box.append(label);
     }
-    var hint = f.type === "freq" ? "" : f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
+    var hint = f.hint || (f.hint_other && answers.for_whom === "other" ? f.hint_other : "");
     if (hint) box.append(el("div", "tmf-hint", hint));
     var v = answers[f.id];
-    if (f.type === "choice" || f.type === "multi") {
+    if (f.type === "choice" && f.photos && data.portions && Object.keys(data.portions[f.id] || {}).length) {
+      box.append(photoChoices(f, v));
+    } else if (f.type === "choice" || f.type === "multi") {
       box.append(choiceGroup(f.options, v, function (x) {
         setAnswer(f.id, x, true, f.type === "choice" && x ? f.id : null);
       }, f.label, {multi: f.type === "multi", compact: f.compact, swatches: f.swatches, ends: f.ends}));
@@ -209,6 +212,8 @@
       lab.append(c, txt);
       box.append(lab);
       if (answers.for_whom === "other") box.append(el("div", "tmf-note", "Se a pessoa que vai à consulta for menor de 18 anos, és tu que dás este consentimento, como responsável."));
+    } else if (f.type === "details") {
+      box.append(detailsNode(f));
     } else if (f.type === "freq") {
       box.append(freqNode(f));
     } else if (f.type === "meals") {
@@ -306,8 +311,8 @@
     var head = el("div", "tmf-freq-head");
     var bar = el("span", "tmf-freq-bar"); var fill = el("i"); bar.append(fill);
     fill.style.setProperty("width", Math.round(done / f.rows.length * 100) + "%");
-    head.append(el("span", "tmf-freq-count", "Dias por semana · " + done + " de " + f.rows.length + " alimentos"), bar);
-    wrap.append(el("div", "tmf-hint", "Pensa numa semana normal. Se for todos os dias, perguntamos quantas vezes."), head);
+    head.append(el("span", "tmf-freq-count", done + " de " + f.rows.length + " alimentos"), bar);
+    wrap.append(head);
     f.rows.forEach(function (r) {
       var key = r[0], opts = r[3], value = g[key];
       var row = el("div", "tmf-freq-row");
@@ -322,7 +327,9 @@
       var scale = el("div", "tmf-freq-scale");
       scale.setAttribute("role", "group"); scale.setAttribute("aria-label", r[1] + ", dias por semana");
       WEEKLY.forEach(function (o) {
-        var b = el("button", "tmf-dot", o[1]);
+        var b = el("button", "tmf-dot");
+        b.append(el("strong", "", o[1]));
+        if (o[2]) b.append(el("small", "", o[2]));
         b.type = "button";
         b.setAttribute("aria-pressed", String(week === o[0]));
         b.setAttribute("aria-label", r[1] + ": " + (o[0] === "never" ? "nunca" : o[0] === "all" ? "todos os dias" : o[1] + " dias por semana"));
@@ -363,31 +370,100 @@
     return wrap;
   }
 
+  // Porções com fotografias da biblioteca Porções visuais.
+  function photoChoices(f, value) {
+    var wrap = el("div", "tmf-photos");
+    wrap.setAttribute("role", "group"); wrap.setAttribute("aria-label", f.label);
+    var photos = data.portions[f.id] || {};
+    f.options.forEach(function (o) {
+      var b = el("button", "tmf-photo");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(value === o[0]));
+      if (photos[o[0]]) {
+        var img = el("img");
+        img.src = "formulario/porcao?t=" + encodeURIComponent(token) + "&id=" + photos[o[0]];
+        img.alt = o[1]; img.loading = "lazy";
+        b.append(img);
+      }
+      b.append(el("span", "", o[1]));
+      b.addEventListener("click", function () { setAnswer(f.id, value === o[0] ? "" : o[0], true, value === o[0] ? null : f.id); });
+      wrap.append(b);
+    });
+    return wrap;
+  }
+
+  // Uma linha por suplemento escolhido: marca, dose e quando.
+  function detailsNode(f) {
+    var wrap = el("div", "tmf-details");
+    var parent = data.steps.map(function (st) { return st.fields; }).reduce(function (a, b) { return a.concat(b); })
+      .filter(function (x) { return x.id === f.of; })[0];
+    var labels = {};
+    parent.options.forEach(function (o) { labels[o[0]] = o[1]; });
+    var info = Object.assign({}, answers[f.id] || {});
+    (answers[f.of] || []).filter(function (k) { return k !== "none"; }).forEach(function (key) {
+      var row = el("div", "tmf-detail-row");
+      var name = key === "other" ? (answers[f.of + "_other"] || "Outro") : labels[key];
+      row.append(el("div", "tmf-detail-name", name));
+      var cells = el("div", "tmf-detail-cells");
+      f.columns.forEach(function (c, i) {
+        var lab = el("label", "tmf-detail-cell");
+        var inp = el("input", "tmf-input");
+        inp.type = "text"; inp.maxLength = 120; inp.id = "tmf-" + f.id + "-" + key + "-" + c[0];
+        inp.placeholder = (f.placeholders || [])[i] || "";
+        inp.value = ((info[key] || {})[c[0]]) || "";
+        inp.addEventListener("input", function () {
+          var cur = Object.assign({}, info[key] || {});
+          if (inp.value.trim()) cur[c[0]] = inp.value; else delete cur[c[0]];
+          if (Object.keys(cur).length) info[key] = cur; else delete info[key];
+          setAnswer(f.id, Object.assign({}, info));
+        });
+        lab.append(el("span", "", c[1]), inp);
+        cells.append(lab);
+      });
+      row.append(cells);
+      wrap.append(row);
+    });
+    return wrap;
+  }
+
+  // Diário: primeiro escolhem-se as refeições; cada uma abre hora, o que come e quantidades.
   function mealsNode(f) {
     var wrap = el("div", "tmf-meals");
     var meals = Object.assign({}, answers[f.id] || {});
-    function update(key, part, value, card) {
-      var cur = Object.assign({time: "", text: ""}, meals[key] || {});
+    var chosen = f.rows.filter(function (r) { return meals[r[0]]; }).map(function (r) { return r[0]; });
+    wrap.append(choiceGroup(f.rows, chosen, function (list) {
+      var next = {};
+      (list || []).forEach(function (k) { next[k] = meals[k] || {time: "", text: "", qty: "", on: true}; });
+      setAnswer(f.id, next, true);
+    }, f.label, {multi: true, compact: true}));
+    function update(key, part, value) {
+      var cur = Object.assign({time: "", text: "", qty: "", on: true}, meals[key] || {});
       cur[part] = value;
-      if (!cur.time && !cur.text.trim()) delete meals[key]; else meals[key] = cur;
-      card.classList.toggle("is-done", !!meals[key]);
+      meals[key] = cur;
       setAnswer(f.id, Object.assign({}, meals));
     }
     f.rows.forEach(function (r) {
+      if (!meals[r[0]]) return;
+      var m = meals[r[0]];
       var card = el("div", "tmf-meal");
-      var m = meals[r[0]] || {};
-      if (meals[r[0]]) card.classList.add("is-done");
       var head = el("div", "tmf-meal-head");
       var time = el("input", "tmf-input tmf-time");
       time.type = "time"; time.value = m.time || ""; time.setAttribute("aria-label", r[1] + " – hora");
-      time.addEventListener("input", function () { update(r[0], "time", time.value, card); });
-      head.append(el("div", "tmf-meal-name", r[1]), time);
+      time.addEventListener("input", function () { update(r[0], "time", time.value); });
+      var tl = el("label", "tmf-time-label");
+      tl.append(el("span", "", "Hora"), time);
+      head.append(el("div", "tmf-meal-name", r[1]), tl);
       var text = el("textarea", "tmf-textarea");
       text.maxLength = 600; text.value = m.text || ""; text.rows = 2;
-      text.placeholder = "O que costumas comer e beber (deixa em branco se não fazes)";
+      text.placeholder = "O que comes e bebes";
       text.setAttribute("aria-label", r[1] + " – o que comes");
-      text.addEventListener("input", function () { update(r[0], "text", text.value, card); });
-      card.append(head, text);
+      text.addEventListener("input", function () { update(r[0], "text", text.value); });
+      var qty = el("input", "tmf-input");
+      qty.type = "text"; qty.maxLength = 300; qty.value = m.qty || "";
+      qty.placeholder = "Quantidades (ex.: 2 fatias de pão, 1 iogurte)";
+      qty.setAttribute("aria-label", r[1] + " – quantidades");
+      qty.addEventListener("input", function () { update(r[0], "qty", qty.value); });
+      card.append(head, text, qty);
       wrap.append(card);
     });
     return wrap;
@@ -443,8 +519,7 @@
     var hero = el("section", "tmf-hero tmf-welcome tmf-enter");
     var b = data.booking;
     if (b) hero.append(el("span", "tmf-pill", b.service + " · " + niceDate(b.date, b.start)));
-    var h = el("h1", "", "Olá" + firstName() + ",");
-    h.append(el("br"), document.createTextNode("vamos preparar a tua consulta."));
+    var h = el("h1", "", "Olá" + firstName());
     var who = b && b.professional ? "A " + b.professional.split(" ")[0] : "A tua nutricionista";
     var facts = el("ul", "tmf-facts");
     [[el("b", "", "15'"), "Cerca de 15 minutos, em passos curtos"],
@@ -459,7 +534,7 @@
     var foot = el("div", "tmf-welcome-foot");
     foot.append(go, el("p", "", "Não há respostas certas ou erradas. Responde como é hoje, não como gostavas que fosse."));
     hero.append(h,
-      el("p", "tmf-welcome-lead", "Antes da consulta, queremos conhecer-te um pouco melhor. " + who + " vai ler as tuas respostas para que o tempo em consulta seja dedicado ao que é importante para ti."),
+      el("p", "tmf-welcome-lead", "Antes da consulta, precisamos de algumas informações sobre a tua saúde, o teu treino e a tua alimentação. " + who + " vai lê-las para preparar a consulta e aproveitar melhor o tempo contigo."),
       facts, foot);
     app.append(hero);
     go.focus();
@@ -557,7 +632,8 @@
       nav.append(b);
     });
     var main = el("main", "tmf-main");
-    var card = el("section", "tmf-card" + (scrollTarget ? "" : " tmf-enter"));
+    var card = el("section", "tmf-card" + (lastRendered !== current ? " tmf-enter" : ""));
+    lastRendered = current;
     var head = el("div");
     head.append(el("h1", "", step.group));
     card.append(head);

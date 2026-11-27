@@ -213,3 +213,9 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 .tm-cq-meal p{margin:2px 0 0;white-space:pre-wrap}
 .tm-cq-form-care h3{margin:0 0 10px}
 .tm-cq-aside .tm-cq-care:first-of-type{margin-top:8px}
+.tm-cq-drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100vw);z-index:60;background:var(--tm-ui-bg);border-left:1px solid var(--tm-ui-divider);box-shadow:-12px 0 32px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.tm-cq-drawer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 12px}
+.tm-cq-drawer-head h2{margin:0;font-size:20px}
+.tm-cq-drawer-head p{margin:2px 0 0}
+.tm-cq-drawer-body{overflow-y:auto;padding:0 24px 24px}
+.tm-cq-drawer-body .tm-cq-form-grid{grid-template-columns:1fr}
