@@ -90,7 +90,7 @@ def prepare(c, *, authorised_athlete_ids, kind, selections, now, custom_copy=Non
                 if change not in ("new","updated","available"):
                     raise ValueError("missing_content_change")
                 key += "_" + change
-            title, body = render_template(key,locale,first_name=item.get("first_name"))
+            title, body = render_template(key,locale,first_name=item.get("first_name"),c=c)
         if not 1<=len(title)<=120 or not 1<=len(body)<=1000:
             raise ValueError("invalid_message_length")
         result.append({"recipient_id":uid,"target_id":target,"version":version,
