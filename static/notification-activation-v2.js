@@ -40,7 +40,7 @@ window.tmNotificationActivation=(()=>{
     if(valid(token)&&typeof data.publicKey==="string"&&data.publicKey)state=data;
    }catch(_){/* Optional functionality never blocks the app. */}
    return valid(token)?state:null;
-  })();
+  })().finally(()=>{if(valid(token))loading=null;});
   return loading;
  }
  async function save(action,subscription){
@@ -146,7 +146,7 @@ window.tmNotificationActivation=(()=>{
  async function mount(container){
   if(!container||!ctx||!ctx.active())return;
   const token=generation;
-  if(!await configure()||!valid(token)||!container.isConnected)return;
+  if(!await configure()||!valid(token)||!container.isConnected||container.hidden)return;
   container.querySelector(".tm-notification-activation")?.remove();
   profile=make("div","tm-notification-activation");
   const header=container.querySelector(".profile-subpage-header");
