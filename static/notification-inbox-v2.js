@@ -5,7 +5,7 @@ window.tmNotificationInbox = (() => {
   const el=document.createElement(tag);if(cls)el.className=cls;
   if(value!==undefined)el.textContent=value;return el;
  }
- async function mount({container,request,language,active}){
+ async function mount({container,request,language,active,navigate,initialId}){
   if(!container||!active())return;
   const original=container.querySelector(".profile-notifications-empty");
   const previous=container.querySelector(".tm-notification-inbox");
@@ -50,12 +50,24 @@ window.tmNotificationInbox = (() => {
      const response=await request("/api/v2/notifications/open","POST",{id:item.id});
      if(!valid())return;
      detail.replaceChildren(make("p","",response.item.body));
+    if(response.destination&&navigate){
+     const go=make("button","tm-notification-destination",t("Abrir conteúdo","Open content"));
+     go.type="button";
+     go.onclick=async()=>{
+      if(!valid())return;
+      go.disabled=true;
+      try{await navigate(response.destination);}catch(_){if(valid())detail.append(make("p","",fail()));}
+      finally{go.disabled=false;}
+     };
+     detail.append(go);
+    }
      detail.hidden=false;dot.hidden=true;button.setAttribute("aria-expanded","true");
     }catch(_){
      if(valid()){detail.replaceChildren(make("p","",fail()));detail.hidden=false;button.setAttribute("aria-expanded","true");}
     }finally{button.disabled=false;}
    };
    card.append(button,detail);root.append(card);
+   if(item.id===initialId)button.click();
   }
  }
  function clear(container){
@@ -64,5 +76,16 @@ window.tmNotificationInbox = (() => {
   const original=container.querySelector(".profile-notifications-empty");
   if(original)original.hidden=false;
  }
- return {mount,clear};
+ function pendingId(){
+  const url=new URL(location.href);
+  const id=url.searchParams.get("notification");
+  return /^[a-f0-9]{32}$/.test(id||"")?id:null;
+ }
+ function consumePendingId(){
+  const id=pendingId();if(!id)return null;
+  const url=new URL(location.href);url.searchParams.delete("notification");
+  history.replaceState(history.state,"",url.pathname+url.search+url.hash);
+  return id;
+ }
+ return {mount,clear,pendingId,consumePendingId};
 })();
