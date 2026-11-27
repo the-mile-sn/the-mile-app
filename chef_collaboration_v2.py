@@ -161,6 +161,8 @@ def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=Non
     updated={"kind":kind,"value":canonical,"dish_id":resolved_id}
     if previous==updated:
         return {"menu_date":day,"meal":meal,**updated,"changed":False}
+    import notification_capture_v2 as capture
+    before_notification=capture.before(c,lambda:capture.menu(c,athlete_id,[day]))
     c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
         VALUES(?,?,?,?,?,?)
         ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
@@ -168,6 +170,7 @@ def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=Non
         (athlete_id,day,meal,kind,canonical,resolved_id))
     _record_menu_history(c,athlete_id,day,meal,kind,canonical,resolved_id)
     _audit(c,athlete_id,day,meal,actor_id,"plan_updated",previous,updated,"pending_review")
+    capture.after(c,before_notification,lambda:capture.menu(c,athlete_id,[day]))
     c.commit()
     return {"menu_date":day,"meal":meal,**updated,"changed":True}
 
@@ -308,6 +311,8 @@ def review(c, audit_id, admin_id, decision, approved_dish_id=None):
             if current!=previous:
                 raise ValueError("menu_changed_since_proposal")
             after={"kind":"dish","value":dish["name_pt"],"dish_id":dish["id"]}
+            import notification_capture_v2 as capture
+            before_notification=capture.before(c,lambda:capture.menu(c,event["athlete_id"],[event["menu_date"]]))
             c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
                 VALUES(?,?,?,?,?,?)
                 ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
@@ -318,6 +323,7 @@ def review(c, audit_id, admin_id, decision, approved_dish_id=None):
                          event["meal"],"dish",dish["name_pt"],dish["id"])
             _audit(c,event["athlete_id"],event["menu_date"],event["meal"],
                    admin_id,"proposal_approved",current,after,"recorded")
+            capture.after(c,before_notification,lambda:capture.menu(c,event["athlete_id"],[event["menu_date"]]))
     c.execute("""UPDATE v2_chef_menu_audit SET status=?,resolved_by=?,resolved_at=?
         WHERE id=? AND status=?""",
         (decision,admin_id,int(time.time()),audit_id,event["status"]))
