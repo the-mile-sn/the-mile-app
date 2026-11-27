@@ -1,0 +1,6 @@
+FROM postgres:18-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/validation && /opt/validation/bin/pip install --no-cache-dir 'psycopg[binary]==3.2.10'
+WORKDIR /validation
+COPY notification_*_v2.py content_translations_v2.py chef_collaboration_v2.py calendar_v2.py validate_notifications_postgres.py run_notifications_validation.sh ./
+ENTRYPOINT ["/bin/sh","/validation/run_notifications_validation.sh"]
