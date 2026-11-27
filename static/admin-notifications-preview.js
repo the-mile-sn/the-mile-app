@@ -142,7 +142,8 @@
        body:JSON.stringify({...payload,request_id:requestId,confirmation:data.confirmation})
       });
       if(res.status===409){
-       feedback.textContent="A seleção mudou. Valida novamente antes de enviar.";
+       clearConfirmation();
+       confirmationResult.replaceChildren(make("p","tm-chat-empty","A seleção mudou. Valida novamente antes de enviar."));
        success=true;return;
       }
       if(!res.ok)throw Error(String(res.status));
@@ -158,6 +159,7 @@
       sending=false;
       for(const [el,disabled] of locked)el.disabled=disabled;
       if(success)send.disabled=true;
+      if(revision!==selectionRevision)syncCustomFields();
      }
     };
    }
