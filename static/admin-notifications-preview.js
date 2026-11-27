@@ -64,9 +64,16 @@
  }
  let checked=false,checking=false,generation=0,tab="new",selectionRevision=0,sending=false;
  const selected=new Map();
+ const recipientDetails=new Map();
+ const dateLabel=value=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(value)?value.split("-").reverse().join("/"):value;
+ function removePreview(){
+  for(const node of list.querySelectorAll(".tm-notify-inline-preview"))node.remove();
+  prepareButton.parentElement.hidden=false;
+ }
  function clearConfirmation(){
   selectionRevision++;
   confirmationResult.replaceChildren();
+  removePreview();
   prepareButton.disabled=!selected.size;
   syncCustomFields();
   $("tm-notify-menu-change-field").hidden=kind.value!=="menu"||![...selected.values()].some(item=>!item.change_kind);
@@ -86,6 +93,7 @@
    recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null,manual:item.manual===true
   })),custom_copy:type==="custom"?customCopy():null,menu_change:type==="menu"?menuChange.value:null};
 
+  removePreview();
   prepareButton.disabled=true;
   confirmationResult.replaceChildren(make("p","tm-chat-empty","A validar seleção…"));
   try{
@@ -100,19 +108,25 @@
    const data=await res.json();
    if(!res.ok)throw Error(data.error||String(res.status));
    if(revision!==selectionRevision||!dialog.open)return;
-   confirmationResult.replaceChildren(make("p","tm-chat-empty",data.items.length+" destinatário(s) validado(s)."));
+   confirmationResult.replaceChildren();
+   if(!Array.isArray(data.items)||data.items.length!==selected.size)throw Error("invalid_preview");
    for(const item of data.items){
-    const row=make("div","tm-chat-inbox-row");
-    const details=make("div","tm-chat-inbox-details");
-    details.append(make("strong","",selected.get(item.recipient_id)?.name||"Destinatário"),
-     make("span","",item.language+" · "+item.title),make("span","",item.body));
-    row.append(details);confirmationResult.append(row);
+    const details=recipientDetails.get(selected.get(item.recipient_id));
+    if(!details)throw Error("missing_recipient");
+    const preview=make("div","tm-notify-inline-preview");
+    const language=item.language==="en-GB"?"Inglês":"Português";
+    preview.append(make("span","tm-notify-preview-language",language),
+     make("strong","tm-notify-preview-message-title",item.title),
+     make("p","tm-notify-preview-message-body",item.body));
+    details.append(preview);
    }
+   prepareButton.parentElement.hidden=true;
+   if(data.read_only)confirmationResult.append(make("p","tm-chat-empty","Pré-visualização · envio indisponível."));
    if(!data.read_only&&/^[a-f0-9]{64}$/.test(data.confirmation||"")){
     const requestId=crypto.randomUUID?.()||Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toString(16).padStart(2,"0")).join("");
     const action=make("div","tm-work-dialog-actions");
     const send=make("button","tm-work-save","Confirmar envio");send.type="button";
-    const feedback=make("p","tm-chat-empty","Envio limitado às contas de teste autorizadas.");
+    const feedback=make("p","tm-chat-empty");
     action.append(send);confirmationResult.append(action,feedback);
     send.onclick=async()=>{
      if(sending||revision!==selectionRevision||!dialog.open)return;
@@ -149,6 +163,7 @@
    }
   }catch(error){
    if(revision===selectionRevision){
+    removePreview();
     if(error.message==="notification_translation_requires_review"){
      const link=make("a","i18n-link","Rever traduções");
      link.href="/?nav=translations&entity_kind=notification";
@@ -182,7 +197,7 @@
  }
  async function load(){
   const token=++generation,type=tab==="history"?"history":kind.value;
-  resetSelection();list.replaceChildren();status.textContent="A consultar…";
+  resetSelection();recipientDetails.clear();list.replaceChildren();status.textContent="A consultar…";
   controls.hidden=tab==="history";confirmation.hidden=tab==="history";
   customFields.hidden=true;$("tm-notify-menu-change-field").hidden=true;
   const historical=type==="document"||type==="assessment";
@@ -209,7 +224,7 @@
        make("span","",item.sender_name+" · "+(item.read_at?"Lida":"Por ler")+" · Push: "+item.push_status));
     }else{
      const label=item.label||item.match_date||item.last_weigh_date||item.role||"";
-     if(label)details.append(make("span","",label));
+     if(label)details.append(make("span","",dateLabel(label)));
      if(type==="custom"&&item.language)details.append(make("span","",item.language==="en-GB"?"Inglês":"Português"));
      if(type==="menu"||type==="document"||type==="assessment"){
       if(item.change_kind)details.append(make("span","",({new:"Novo",updated:"Atualizado",available:"Disponível"})[item.change_kind]||"Seleção manual"));
@@ -230,6 +245,7 @@
      row.append(select);
     }
     row.append(details);list.append(row);
+    if(type!=="history")recipientDetails.set(item,details);
    }
   }catch(_){if(token===generation)status.textContent="Não foi possível consultar as notificações.";}
  }
@@ -242,7 +258,7 @@
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{
-  generation++;translatedSource=null;reviewNeeded=false;translationStatus.textContent="";resetSelection();list.replaceChildren();status.textContent="";
+  generation++;translatedSource=null;reviewNeeded=false;translationStatus.textContent="";resetSelection();recipientDetails.clear();list.replaceChildren();status.textContent="";
   for(const lang of ["pt","en"]){$("tm-notify-title-"+lang).value="";$("tm-notify-body-"+lang).value="";}
  });
  kind.addEventListener("change",()=>{historyRecipient.value="";load();});
