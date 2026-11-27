@@ -35,10 +35,11 @@
  function resetSelection(){
   selected.clear();clearConfirmation();
  }
- const customCopy=()=>Object.fromEntries(["pt","en"].map(lang=>[
-  lang==="pt"?"pt-PT":"en-GB",
-  {title:$("tm-notify-title-"+lang).value,body:$("tm-notify-body-"+lang).value}
- ]));
+ const customCopy=()=>Object.fromEntries([...new Set([...selected.values()].map(i=>i.language))]
+ .filter(locale=>locale==="pt-PT"||locale==="en-GB").map(locale=>{
+  const lang=locale==="en-GB"?"en":"pt";
+  return [locale,{title:$("tm-notify-title-"+lang).value,body:$("tm-notify-body-"+lang).value}];
+ }));
  async function confirmSelection(){
   if(!selected.size||tab!=="new")return;
   const revision=++selectionRevision, type=kind.value;
@@ -195,7 +196,10 @@
  open.addEventListener("click",()=>{dialog.showModal();setTab("new");});
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
- dialog.addEventListener("close",()=>{generation++;resetSelection();list.replaceChildren();status.textContent="";});
+ dialog.addEventListener("close",()=>{
+  generation++;resetSelection();list.replaceChildren();status.textContent="";
+  for(const lang of ["pt","en"]){$("tm-notify-title-"+lang).value="";$("tm-notify-body-"+lang).value="";}
+ });
  kind.addEventListener("change",()=>{historyRecipient.value="";load();});
  historyRecipient.addEventListener("change",load);
  prepareButton.addEventListener("click",confirmSelection);
