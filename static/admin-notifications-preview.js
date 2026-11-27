@@ -13,12 +13,23 @@
  const confirmation=$("tm-notify-confirm-controls"),prepareButton=$("tm-notify-prepare");
  const confirmationResult=$("tm-notify-confirm-result"),menuChange=$("tm-notify-menu-change");
  const customFields=$("tm-notify-custom-copy");
+ const historyRecipient=$("tm-notify-history-recipient"),historyField=$("tm-notify-history-recipient-field");
+ function syncCustomFields(){
+  const locales=new Set([...selected.values()].map(item=>item.language));
+  const custom=tab==="new"&&kind.value==="custom";
+  customFields.hidden=!custom||!locales.size;
+  for(const [code,language,label] of [["pt","pt-PT","Português"],["en","en-GB","Inglês"]]){
+   $("tm-notify-copy-"+code).hidden=!custom||!locales.has(language);
+   $("tm-notify-caption-"+code).textContent=locales.size>1?"· "+label:"";
+  }
+ }
  let checked=false,checking=false,generation=0,tab="new",selectionRevision=0,sending=false;
  const selected=new Map();
  function clearConfirmation(){
   selectionRevision++;
   confirmationResult.replaceChildren();
   prepareButton.disabled=!selected.size;
+  syncCustomFields();
   $("tm-notify-menu-change-field").hidden=kind.value!=="menu"||![...selected.values()].some(item=>!item.change_kind);
  }
  function resetSelection(){
@@ -32,7 +43,7 @@
   if(!selected.size||tab!=="new")return;
   const revision=++selectionRevision, type=kind.value;
   const payload={kind:type,selections:[...selected.values()].map(item=>({
-   recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null
+   recipient_id:item.recipient_id,target_id:item.target_id??null,version:item.version??null,manual:item.manual===true
   })),custom_copy:type==="custom"?customCopy():null,menu_change:type==="menu"?menuChange.value:null};
 
   prepareButton.disabled=true;
@@ -108,8 +119,10 @@
   if(text!==undefined)el.textContent=text;
   return el;
  };
- async function request(type){
-  const res=await fetch("/api/v2/admin/notifications-preview?kind="+encodeURIComponent(type),
+ async function request(type,recipient=null){
+  const query=new URLSearchParams({kind:type});
+  if(recipient)query.set("recipient",recipient);
+  const res=await fetch("/api/v2/admin/notifications-preview?"+query.toString(),
    {credentials:"same-origin",headers:{Accept:"application/json"},cache:"no-store"});
   if(!res.ok)throw Error(String(res.status));
   return res.json();
@@ -125,11 +138,19 @@
   const token=++generation,type=tab==="history"?"history":kind.value;
   resetSelection();list.replaceChildren();status.textContent="A consultar…";
   controls.hidden=tab==="history";confirmation.hidden=tab==="history";
-  customFields.hidden=type!=="custom";$("tm-notify-menu-change-field").hidden=true;
+  customFields.hidden=true;$("tm-notify-menu-change-field").hidden=true;
+  const historical=type==="document"||type==="assessment";
+  historyField.hidden=!historical;
+  const chosen=historical?historyRecipient.value:null;
   try{
-   const data=await request(type);
+   const data=await request(type,chosen);
    if(token!==generation||!dialog.open)return;
    status.textContent="";
+   if(historical){
+    historyRecipient.replaceChildren(new Option("Alterações recentes",""));
+    for(const player of data.players||[])historyRecipient.append(new Option(player.name,player.recipient_id));
+    historyRecipient.value=chosen||"";
+   }
    if(!data.items?.length){list.append(make("p","tm-chat-empty","Sem resultados."));return;}
    if(data.manual_selection)status.textContent="Os menus sem alteração confirmada estão identificados como seleção manual.";
    for(const item of data.items){
@@ -143,8 +164,9 @@
     }else{
      const label=item.label||item.match_date||item.last_weigh_date||item.role||"";
      if(label)details.append(make("span","",label));
+     if(type==="custom"&&item.language)details.append(make("span","",item.language==="en-GB"?"Inglês":"Português"));
      if(type==="menu"||type==="document"||type==="assessment"){
-      if(item.change_kind)details.append(make("span","",item.change_kind==="new"?"Novo":"Atualizado"));
+      if(item.change_kind)details.append(make("span","",({new:"Novo",updated:"Atualizado",available:"Disponível"})[item.change_kind]||"Seleção manual"));
       else if(type==="menu")details.append(make("span","","Seleção manual"));
      }
      const select=make("input");select.type="checkbox";
@@ -166,7 +188,7 @@
   }catch(_){if(token===generation)status.textContent="Não foi possível consultar as notificações.";}
  }
  function setTab(next){
-  tab=next;
+  tab=next;historyRecipient.value="";
   for(const b of tabs){const on=b.dataset.notifyPreviewTab===next;b.classList.toggle("is-selected",on);b.setAttribute("aria-pressed",String(on));}
   load();
  }
@@ -174,7 +196,8 @@
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{generation++;resetSelection();list.replaceChildren();status.textContent="";});
- kind.addEventListener("change",load);
+ kind.addEventListener("change",()=>{historyRecipient.value="";load();});
+ historyRecipient.addEventListener("change",load);
  prepareButton.addEventListener("click",confirmSelection);
  menuChange.addEventListener("change",clearConfirmation);
  customFields.addEventListener("input",clearConfirmation);
