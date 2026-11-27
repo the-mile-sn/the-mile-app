@@ -15,6 +15,7 @@ SCHEMA = (
     """CREATE TABLE IF NOT EXISTS v2_notification_devices (
         device_id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id),
+        session_token TEXT NOT NULL REFERENCES sessions(token) ON UPDATE CASCADE ON DELETE CASCADE,
         endpoint TEXT NOT NULL UNIQUE,
         p256dh TEXT NOT NULL,
         auth TEXT NOT NULL,
@@ -36,12 +37,14 @@ def device_id(value):
     return value
 
 
-def state(c, *, user_id, device):
+def state(c, *, user_id, device, session_token, now):
     device = device_id(device)
     prompted = c.execute("SELECT 1 FROM v2_notification_activation WHERE user_id=?",
                          (user_id,)).fetchone()
-    active = c.execute("SELECT 1 FROM v2_notification_devices WHERE user_id=? AND device_id=?",
-                       (user_id,device)).fetchone()
+    active = c.execute("""SELECT 1 FROM v2_notification_devices d
+                       JOIN sessions s ON s.token=d.session_token AND s.user_id=d.user_id
+                       WHERE d.user_id=? AND d.device_id=? AND s.token=? AND s.expires>?""",
+                       (user_id,device,session_token,now)).fetchone()
     return {"prompted":bool(prompted),"active":bool(active)}
 
 
@@ -71,18 +74,21 @@ def _endpoint(value):
     return value
 
 
-def activate(c, *, user_id, device, subscription, now):
+def activate(c, *, user_id, device, subscription, session_token, now):
     device=device_id(device)
     if not isinstance(subscription,dict) or not isinstance(subscription.get("keys"),dict):
         raise ValueError("invalid_subscription")
     endpoint=_endpoint(subscription.get("endpoint"))
     p256dh=_key(subscription["keys"].get("p256dh"),65)
     auth=_key(subscription["keys"].get("auth"),16)
+    if not c.execute("SELECT 1 FROM sessions WHERE token=? AND user_id=? AND expires>?",
+                     (session_token,user_id,now)).fetchone():
+        raise ValueError("invalid_session")
     # One browser subscription belongs to exactly one explicitly activating account.
     c.execute("DELETE FROM v2_notification_devices WHERE device_id=? OR endpoint=?",(device,endpoint))
     c.execute("""INSERT INTO v2_notification_devices
-                 (device_id,user_id,endpoint,p256dh,auth,created_at) VALUES(?,?,?,?,?,?)""",
-              (device,user_id,endpoint,p256dh,auth,now))
+                 (device_id,user_id,session_token,endpoint,p256dh,auth,created_at) VALUES(?,?,?,?,?,?,?)""",
+              (device,user_id,session_token,endpoint,p256dh,auth,now))
     acknowledge(c,user_id=user_id,now=now)
 
 
