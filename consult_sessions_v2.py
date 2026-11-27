@@ -159,14 +159,14 @@ def _linked_bookings(c, org_id, client_id=None):
     extra = " AND l.client_id=?" if client_id else ""
     args = (org_id, client_id) if client_id else (org_id,)
     manual = c.execute(f"""SELECT l.client_id,'manual' AS kind,b.id,b.day,b.start_minute,b.end_minute,
-            b.mode,s.name AS service_name,p.name AS professional_name,b.professional_id
+            b.mode,s.name AS service_name,p.name AS professional_name,b.professional_id,b.service_id
         FROM consult_client_bookings l
         JOIN appt_bookings b ON b.org_id=l.org_id AND b.id=l.booking_id
         JOIN appt_services s ON s.org_id=b.org_id AND s.id=b.service_id
         JOIN appt_professionals p ON p.org_id=b.org_id AND p.id=b.professional_id
         WHERE l.org_id=? AND l.booking_kind='manual' AND b.status='scheduled'{extra}""", args).fetchall()
     paid = c.execute(f"""SELECT l.client_id,'shopify' AS kind,h.id,h.day,h.start_minute,h.end_minute,
-            h.mode,s.name AS service_name,p.name AS professional_name,h.professional_id
+            h.mode,s.name AS service_name,p.name AS professional_name,h.professional_id,h.service_id
         FROM consult_client_bookings l
         JOIN appt_checkout_holds h ON h.org_id=l.org_id AND h.id=l.booking_id
         JOIN appt_services s ON s.org_id=h.org_id AND s.id=h.service_id
@@ -182,6 +182,17 @@ def _sessions_by_booking(c, org_id, client_id=None):
     return {(r["booking_kind"], r["booking_id"]): dict(r) for r in rows}
 
 
+def _followup_service(c, service_id, org_id=ORG_ID):
+    """Serviço da próxima consulta: a variante de seguimento quando existe (ex.: …-first → …-followup)."""
+    if not service_id:
+        return None
+    if service_id.endswith("-first"):
+        candidate = service_id[:-len("-first")] + "-followup"
+        if c.execute("SELECT 1 FROM appt_services WHERE org_id=? AND id=? AND active=1", (org_id, candidate)).fetchone():
+            return candidate
+    return service_id
+
+
 def _first_visit(service_name):
     name = (service_name or "").lower()
     return "primeira" in name
@@ -194,6 +205,7 @@ def _item(b, names, session):
         "start": _hhmm(b["start_minute"]), "end": _hhmm(b["end_minute"]),
         "mode": b["mode"], "service_name": b["service_name"],
         "professional_name": b["professional_name"], "professional_id": b["professional_id"],
+        "service_id": b.get("service_id"),
         "first_visit": _first_visit(b["service_name"]),
         "session_id": session["id"] if session else None,
         "session_status": session["status"] if session else None,
@@ -299,7 +311,7 @@ def session(c, kind, booking_id, org_id=ORG_ID):
     previous = c.execute("""SELECT * FROM consult_sessions
         WHERE org_id=? AND client_id=? AND status='closed' AND NOT (booking_kind=? AND booking_id=?)
         ORDER BY closed_at DESC LIMIT 1""", (org_id, b["client_id"], kind, booking_id)).fetchone()
-    client = c.execute("SELECT name,notes FROM consult_clients WHERE org_id=? AND id=?",
+    client = c.execute("SELECT name,notes,email,phone FROM consult_clients WHERE org_id=? AND id=?",
                        (org_id, b["client_id"])).fetchone()
     names = {b["client_id"]: client["name"] if client else ""}
     basics = _basics(c, b["client_id"], org_id)
@@ -310,6 +322,8 @@ def session(c, kind, booking_id, org_id=ORG_ID):
                                 (org_id, b["client_id"], row["id"] if row else "")).fetchone()
     return {"booking": _item(b, names, row), "session": _public(row), "previous": _public(previous),
             "profile_notes": client["notes"] if client else "",
+            "contact": {"name": client["name"], "email": client["email"], "phone": client["phone"]} if client else None,
+            "followup_service_id": _followup_service(c, b.get("service_id"), org_id),
             "client": {**basics, "age": body.age_on(basics.get("birth_date"), b["day"])},
             "assessment": _assessment_public(assessment),
             "previous_assessment": _assessment_public(prev_assessment),
