@@ -7,6 +7,9 @@
  if(!workspace||!card||!dialog)return;
  const $=id=>document.getElementById(id);
  const open=$("tm-notify-preview-open"),close=$("tm-notify-preview-close");
+ const recent=$("tm-notify-recent");
+ let recentRevision=0,recentMeasureQueued=false,recentFocusId=null;
+ const recentObserver=typeof ResizeObserver==="function"?new ResizeObserver(scheduleRecentMeasure):null;
  const kind=$("tm-notify-preview-kind"),list=$("tm-notify-preview-list");
  const controls=$("tm-notify-preview-controls"),status=$("tm-notify-preview-status");
  const tabs=[...dialog.querySelectorAll("[data-notify-preview-tab]")];
@@ -152,6 +155,7 @@
       const accepted=Object.values(result.push||{}).filter(x=>x==="accepted").length;
       feedback.textContent=result.recorded_ids.length+" notificação(ões) registada(s). "+accepted+" com push aceite pelo serviço.";
       send.textContent="Registado";success=true;
+      refreshRecent();
      }catch(_){
       feedback.textContent="Não foi possível confirmar o resultado. Podes repetir este mesmo pedido sem duplicar o envio, ou consultar o histórico.";
       send.textContent="Verificar / repetir pedido";
@@ -190,12 +194,81 @@
   if(!res.ok)throw Error(String(res.status));
   return res.json();
  }
+ function resetRecentScroll(){
+  recent.classList.remove("is-scrollable");
+  recent.style.removeProperty("--tm-notify-recent-max-height");
+  recent.removeAttribute("tabindex");recent.removeAttribute("role");recent.removeAttribute("aria-label");
+ }
+ function scheduleRecentMeasure(){
+  if(recentMeasureQueued)return;
+  recentMeasureQueued=true;
+  requestAnimationFrame(()=>{
+   recentMeasureQueued=false;
+   if(!recent.offsetWidth)return;
+   const rows=[...recent.children].filter(node=>node.classList.contains("tm-db-form-answer"));
+   const count=window.matchMedia("(max-width:650px)").matches?2:4;
+   resetRecentScroll();
+   if(rows.length<=count)return;
+   const heights=rows.slice(0,count).map(node=>node.getBoundingClientRect().height);
+   if(heights.some(h=>h<=0))return;
+   const gap=Number.parseFloat(getComputedStyle(recent).rowGap)||0;
+   recent.style.setProperty("--tm-notify-recent-max-height",Math.ceil(heights.reduce((a,b)=>a+b,0)+(count-1)*gap+1)+"px");
+   recent.classList.add("is-scrollable");
+   recent.tabIndex=0;recent.setAttribute("role","region");recent.setAttribute("aria-label","Notificações recentes; desliza para consultar as restantes");
+  });
+ }
+ window.addEventListener("resize",scheduleRecentMeasure,{passive:true});
+ document.fonts?.ready.then(scheduleRecentMeasure);
+ async function refreshRecent(){
+  if(workspace.hidden||card.hidden)return;
+  const rev=++recentRevision;
+  try{
+   const data=await request("history");
+   if(rev!==recentRevision||workspace.hidden||card.hidden)return;
+   recentObserver?.disconnect();resetRecentScroll();recent.replaceChildren();recent.scrollTop=0;
+   const items=Array.isArray(data.items)?data.items:[];
+   if(!items.length)recent.append(make("p","tm-db-none","Sem notificações enviadas."));
+   for(const item of items){
+    const row=make("button","tm-db-event tm-db-form-answer tm-notify-recent-row");row.type="button";
+    const icon=make("span","tm-db-form-icon");
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d","M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4");
+    svg.append(p);icon.append(svg);
+    const details=make("span","tm-db-form-details");
+    details.append(make("span","tm-db-form-player",item.name),make("small","tm-db-form-sub",item.title));
+    const date=new Date(item.created_at*1000);
+    const time=make("time","tm-db-form-time",date.toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit"}));
+    time.dateTime=date.toISOString();
+    row.setAttribute("aria-label",item.name+" · "+item.title+" · "+time.textContent+" · Ver histórico");
+    row.append(icon,details,time);
+    row.addEventListener("click",()=>{recentFocusId=item.id;dialog.showModal();setTab("history");});
+    recent.append(row);recentObserver?.observe(row);
+   }
+   scheduleRecentMeasure();
+  }catch(_){
+   if(rev===recentRevision&&!workspace.hidden&&!card.hidden){
+    recentObserver?.disconnect();resetRecentScroll();recent.replaceChildren(make("p","tm-db-none","Não foi possível consultar as notificações."));
+   }
+  }
+ }
+ let configRevision=0;
  async function check(){
-  if(checked||checking||workspace.hidden)return;
-  checking=true;
-  try{const data=await request("config");checked=true;card.hidden=data.enabled!==true;}
-  catch(_){card.hidden=true;}
-  finally{checking=false;}
+  if(workspace.hidden){
+   configRevision++;recentRevision++;checked=false;checking=false;card.hidden=true;
+   recentFocusId=null;recentObserver?.disconnect();resetRecentScroll();recent.replaceChildren();
+   return;
+  }
+  if(checked||checking)return;
+  checking=true;const rev=++configRevision;
+  try{
+   const data=await request("config");
+   if(rev!==configRevision||workspace.hidden)return;
+   checked=true;card.hidden=data.enabled!==true;
+   if(!card.hidden)refreshRecent();
+  }catch(_){if(rev===configRevision)card.hidden=true;}
+  finally{if(rev===configRevision)checking=false;}
  }
  async function load(){
   const token=++generation,type=tab==="history"?"history":kind.value;
@@ -221,6 +294,7 @@
     const details=make("div","tm-chat-inbox-details");
     details.append(make("strong","",item.name));
     if(type==="history"){
+     row.dataset.notificationId=item.id;
      const time=new Date(item.created_at*1000).toLocaleString("pt-PT");
      details.append(make("span","",item.title+" · "+time),
        make("span","",item.sender_name+" · "+(item.read_at?"Lida":"Por ler")+" · Push: "+item.push_status));
@@ -249,10 +323,16 @@
     row.append(details);list.append(row);
     if(type!=="history")recipientDetails.set(item,details);
    }
+   if(type==="history"&&recentFocusId){
+    const focused=[...list.children].find(row=>row.dataset.notificationId===recentFocusId);
+    recentFocusId=null;
+    focused?.scrollIntoView({block:"nearest"});
+   }
   }catch(_){if(token===generation)status.textContent="Não foi possível consultar as notificações.";}
  }
  function setTab(next){
   tab=next;historyRecipient.value="";
+  if(next!=="history")recentFocusId=null;
   for(const b of tabs){const on=b.dataset.notifyPreviewTab===next;b.classList.toggle("is-selected",on);b.setAttribute("aria-pressed",String(on));}
   load();
  }
@@ -260,7 +340,7 @@
  close.addEventListener("click",()=>{if(!sending)dialog.close();});
  dialog.addEventListener("cancel",e=>{if(sending)e.preventDefault();});
  dialog.addEventListener("close",()=>{
-  generation++;translatedSource=null;reviewNeeded=false;translationStatus.textContent="";resetSelection();recipientDetails.clear();list.replaceChildren();status.textContent="";
+  generation++;recentFocusId=null;refreshRecent();translatedSource=null;reviewNeeded=false;translationStatus.textContent="";resetSelection();recipientDetails.clear();list.replaceChildren();status.textContent="";
   for(const lang of ["pt","en"]){$("tm-notify-title-"+lang).value="";$("tm-notify-body-"+lang).value="";}
  });
  kind.addEventListener("change",()=>{historyRecipient.value="";load();});

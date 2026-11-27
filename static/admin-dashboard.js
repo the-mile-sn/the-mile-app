@@ -1817,7 +1817,8 @@ function ensurePlanningOnlyView(){
 (()=>{
  const pairs=[
   ["tm-db-miniagenda-bookings","tm-db-miniagenda-more"],
-  ["tm-db-recent","tm-db-recent-more"]
+  ["tm-db-recent","tm-db-recent-more"],
+  ["tm-notify-recent","tm-notify-recent-more"]
  ];
  for(const [listId,hintId] of pairs){
   const list=document.getElementById(listId);
