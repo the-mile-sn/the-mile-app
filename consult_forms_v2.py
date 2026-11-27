@@ -397,7 +397,66 @@ def for_client(c, client_id, org_id=ORG_ID):
     return {"status": row["status"], "link": _link(row["token"]), "submitted_at": row["submitted_at"],
             "updated_at": row["updated_at"], "answers": answers, "team_fields": team,
             "team_updated_at": row["team_updated_at"], "has_answers": bool(answers),
-            "sections": sections, "care": care(answers)}
+            "sections": sections, "care": care(answers), "summary": summary(answers)}
+
+
+def summary(answers):
+    """Resumo da anamnese por tema (o essencial de cada secção, em frases curtas)."""
+    rows = {}
+    for sec in readable(answers):
+        for r in sec["rows"]:
+            if r["type"] == "text":
+                rows[r["key"]] = r["value"]
+    def v(key):
+        return rows.get(key, "")
+    def item(label, value):
+        return {"label": label, "value": value} if value else None
+    groups = []
+    def add(title, items):
+        items = [i for i in items if i]
+        if items:
+            groups.append({"title": title, "items": items})
+    motivation = answers.get("motivation")
+    add("Objetivos", [item("Objetivos", v("goals")),
+                      item("Motivação para mudar", f"{motivation}/10" if motivation not in (None, "") else ""),
+                      item("Acompanhamento anterior", v("previous_nutrition"))])
+    body_line = " · ".join(x for x in (v("height_cm"), v("weight_kg")) if x)
+    sleep = " · ".join(x for x in (v("sleep_hours"), ("qualidade " + str(answers["sleep_quality"]) + "/5") if answers.get("sleep_quality") else "") if x)
+    add("Saúde", [item("Altura e peso", body_line), item("Patologias", v("conditions")), item("Medicação", v("medication")),
+                  item("Alergias", v("allergies")), item("Intolerâncias", v("intolerances")),
+                  item("Fuma", v("smoking") if answers.get("smoking") not in (None, "no") else ""),
+                  item("Sono", sleep), item("Pesa-se diariamente", v("weighs_daily"))])
+    if answers.get("sex") == "F":
+        cycle = v("cycle") + (" — " + v("amenorrhea_since") if v("amenorrhea_since") else "")
+        pill = v("pill_which") or v("pill")
+        add("Saúde feminina", [item("Ciclo", cycle), item("Pílula", pill), item("Sintomas no período", v("cycle_symptoms")),
+                               item("Sintomas pré-menstruais", v("pms")), item("Fluxo intenso", v("heavy_flow"))])
+    add("Treino", [item("Atividade", v("activity")), item("Desportos", v("sports")), item("Nível", v("sport_level")),
+                   item("Semana de treino", v("weekly_routine")), item("Monitorização", v("devices"))])
+    freq = answers.get("frequency") or {}
+    f = FIELDS["frequency"]
+    labels = {k: lab for k, lab, _, _ in f["rows"]}
+    daily = [labels[k] for k, val in freq.items() if str(val).startswith("x") or val == "daily"]
+    never = [labels[k] for k, val in freq.items() if val == "never"]
+    add("Alimentação", [item("Padrão alimentar", v("diet_pattern")), item("Faz as compras", v("shopping")), item("Cozinha", v("cooking")),
+                        item("Pesa a comida", v("weighs_food")), item("Água", v("water")), item("Cafés por dia", v("coffee")),
+                        item("Álcool por semana", v("alcohol")), item("Todos os dias", ", ".join(daily)),
+                        item("Nunca", ", ".join(never)), item("Às refeições bebe", v("meal_drinks")),
+                        item("Não gosta de", v("disliked_foods"))])
+    meals = answers.get("meals") or {}
+    meal_labels = dict(FIELDS["meals"]["rows"])
+    add("Dia alimentar", [item("Refeições", ", ".join(meal_labels[k] for k in meal_labels if k in meals)),
+                          item("Porções", " · ".join(x for x in (("proteína " + v("protein_portion")) if v("protein_portion") else "",
+                                                                 ("hidratos " + v("carb_portion")) if v("carb_portion") else "") if x))])
+    sup_parts = []
+    for key in [k.split(".", 1)[1] for k in rows if k.startswith("supplements_info.")]:
+        name = (answers.get("supplements_other") or "Outro") if key == "other" else _option_label("supplements", key)
+        detail = rows["supplements_info." + key]
+        sup_parts.append(name + (" (" + detail + ")" if detail != "—" else ""))
+    sup_text = "; ".join(sup_parts) or ("Não toma" if answers.get("supplements") == ["none"] else "")
+    add("Suplementação", [item("Suplementos", sup_text), item("Jogos ou competições", v("athlete"))])
+    add("Notas do cliente", [item("Notas", v("notes"))])
+    return groups
 
 
 def anamnesis(c, client_id, org_id=ORG_ID):
