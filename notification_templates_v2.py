@@ -13,6 +13,14 @@ TEMPLATES = {
         "pt-PT": ("Formulário de peso", "Faz o registo do teu peso."),
         "en-GB": ("Weight log", "Record your weight."),
     },
+    "document_available": {
+        "pt-PT": ("Documento disponível", "Tens um documento disponível para consulta."),
+        "en-GB": ("Document available", "A document is available to view."),
+    },
+    "assessment_available": {
+        "pt-PT": ("Avaliação disponível", "Tens uma avaliação disponível para consulta."),
+        "en-GB": ("Assessment available", "An assessment is available to view."),
+    },
     "document_new": {
         "pt-PT": ("Novo documento", "Tens um novo documento disponível para consulta."),
         "en-GB": ("New document", "A new document is available to view."),
