@@ -3471,7 +3471,9 @@ def application(env, start_response):
                     raise Problem(405,'method_not_allowed')
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
-                kind=(parse_qs(env.get('QUERY_STRING','')).get('kind') or ['config'])[0]
+                query=parse_qs(env.get('QUERY_STRING',''))
+                kind=(query.get('kind') or ['config'])[0]
+                historical=(query.get('recipient') or [None])[0]
                 # Readiness checks: the staging schema must have been installed explicitly.
                 c.execute("SELECT id FROM v2_manual_notifications LIMIT 0")
                 c.execute("SELECT recipient_id FROM v2_notification_content_changes LIMIT 0")
@@ -3483,7 +3485,11 @@ def application(env, start_response):
                 try:
                     result=notification_admin_preview_v2.preview(c,
                         authorised_athlete_ids=scope,kind=kind,
-                        now=datetime.now(ZoneInfo('Europe/Lisbon')))
+                        now=datetime.now(ZoneInfo('Europe/Lisbon')),historical_recipient=historical)
+                    if kind=='custom':
+                        import notification_manual_v2
+                        for item in result['items']:
+                            item['language']=notification_manual_v2.recipient_locale(c,item['recipient_id'])
                 except ValueError:
                     raise Problem(400,'invalid_notification_kind')
                 return respond(200,result)
