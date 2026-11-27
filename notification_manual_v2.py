@@ -96,7 +96,7 @@ def prepare(c, *, authorised_athlete_ids, kind, selections, now, custom_copy=Non
 
 
 def record_manual(c, *, sender_id, request_id, authorised_athlete_ids, kind,
-                  selections, now, custom_copy=None, menu_change=None):
+                  selections, now, custom_copy=None, menu_change=None, expected_digest=None):
     """Record confirmed selections atomically in the caller's transaction.
 
     A repeated request ID fails closed (no new rows). Caller must roll back
@@ -113,6 +113,10 @@ def record_manual(c, *, sender_id, request_id, authorised_athlete_ids, kind,
     rows = prepare(c,authorised_athlete_ids=authorised_athlete_ids,kind=kind,
                    selections=selections,now=now,custom_copy=custom_copy,
                    menu_change=menu_change)
+    if expected_digest is not None:
+        from notification_dispatch_v2 import confirmation_digest
+        if confirmation_digest(rows)!=expected_digest:
+            raise ValueError('confirmation_changed')
     ids=[]
     for row in rows:
         nid=secrets.token_hex(16)
