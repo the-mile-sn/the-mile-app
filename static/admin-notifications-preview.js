@@ -97,8 +97,8 @@
     headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},
     body:JSON.stringify(payload)
    });
-   if(!res.ok)throw Error(String(res.status));
    const data=await res.json();
+   if(!res.ok)throw Error(data.error||String(res.status));
    if(revision!==selectionRevision||!dialog.open)return;
    confirmationResult.replaceChildren(make("p","tm-chat-empty",data.items.length+" destinatário(s) validado(s)."));
    for(const item of data.items){
@@ -147,8 +147,14 @@
      }
     };
    }
-  }catch(_){
-   if(revision===selectionRevision)confirmationResult.replaceChildren(make("p","tm-chat-empty","Não foi possível validar a seleção. Atualiza os destinatários e verifica os textos."));
+  }catch(error){
+   if(revision===selectionRevision){
+    if(error.message==="notification_translation_requires_review"){
+     const link=make("a","i18n-link","Rever traduções");
+     link.href="/?nav=translations&entity_kind=notification";
+     confirmationResult.replaceChildren(make("p","tm-chat-empty","A tradução inglesa desta notificação precisa de aprovação na Central de Traduções."),link);
+    }else confirmationResult.replaceChildren(make("p","tm-chat-empty","Não foi possível validar a seleção. Atualiza os destinatários e verifica os textos."));
+   }
   }finally{
    if(revision===selectionRevision)prepareButton.disabled=!selected.size;
   }
