@@ -11,3 +11,9 @@
 #tm-notify-preview-list .tm-chat-inbox-details span,
 #tm-notify-preview-dialog .tm-chat-empty{font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;color:var(--tm-ui-muted);overflow-wrap:anywhere}
 #tm-notify-preview-list input[type="checkbox"]{flex:none;width:18px;height:18px;margin:0}
+
+#tm-notify-confirm-controls[hidden],#tm-notify-custom-copy[hidden],#tm-notify-menu-change-field[hidden]{display:none!important}
+#tm-notify-confirm-controls{display:flex;flex-direction:column;gap:10px}
+#tm-notify-confirm-result{display:flex;flex-direction:column;gap:5px;max-height:30dvh;overflow:auto}
+#tm-notify-confirm-result .tm-chat-inbox-row{padding:9px 11px;border-radius:10px;background:var(--tm-ui-search)}
+#tm-notify-confirm-result .tm-chat-inbox-details{display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
