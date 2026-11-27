@@ -3,15 +3,19 @@
 .tm-notification-activation-button{appearance:none;display:block;width:100%;min-height:44px;border:0;border-radius:10px;background:rgba(255,255,255,.06);color:inherit;font:inherit;font-size:16px;text-align:center;cursor:pointer}
 .tm-notification-activation-button:disabled{opacity:.5}
 .tm-notification-activation-caption{margin:9px 0 0;color:#aaaab3;font-size:12px;line-height:1.45;text-align:center}
-/* Centred, shared by Player and Chef. Existing primary pill from Login. */
-.tm-notification-activation-dialog{box-sizing:border-box;width:min(340px,calc(100vw - 48px));max-height:calc(100dvh - 40px);margin:auto;padding:26px 22px 16px;border:0;border-radius:24px;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto}
-.tm-notification-activation-dialog::backdrop{background:rgba(0,0,0,.65)}
+/* Shared activation sheet: existing app surfaces and login-style primary pill. */
+.tm-notification-activation-dialog{position:fixed;inset:auto 0 0;box-sizing:border-box;width:min(100%,480px);max-width:100%;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);margin:0 auto;padding:28px 24px calc(12px + env(safe-area-inset-bottom,0px));border:0;border-radius:28px 28px 0 0;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto;overscroll-behavior:contain}
+.tm-notification-activation-dialog[open]{animation:tm-notification-sheet-in 320ms cubic-bezier(.2,.7,.2,1) both}
+.tm-notification-activation-dialog::backdrop{background:rgba(0,0,0,.55)}
 .tm-notification-activation-dialog h2{margin:0 0 10px;font-size:21px;font-weight:600;line-height:1.25}
-.tm-notification-activation-dialog>p{margin:0;font-size:14px;line-height:1.5;color:#aaaab3}
-.tm-notification-activation-actions{display:flex;flex-direction:column;gap:5px;margin:23px 0 0;background:transparent}
+.tm-notification-activation-dialog h2:focus{outline:none}
+.tm-notification-activation-dialog>p{margin:0 auto;max-width:320px;font-size:14px;line-height:1.5;color:#aaaab3}
+.tm-notification-activation-actions{display:flex;flex-direction:column;gap:4px;margin:24px 0 0;background:transparent}
 .tm-notification-activation-actions button{appearance:none;box-sizing:border-box;width:100%;min-height:44px;padding:10px 14px;margin:0;border:0;border-radius:999px;background:transparent;color:#aaaab3;font:inherit;font-size:15px;font-weight:500;line-height:1.35;cursor:pointer;box-shadow:none;-webkit-tap-highlight-color:transparent}
-.tm-notification-activation-actions button.is-primary{min-height:50px;background:#f5f5f7;color:#16161a;font-size:16px;font-weight:600}
+.tm-notification-activation-actions button.is-primary{min-height:48px;background:#f5f5f7;color:#16161a;font-size:16px;font-weight:600}
 .tm-notification-activation-actions button:active:not(:disabled){opacity:.78}
 .tm-notification-activation-actions button:focus-visible{outline:2px solid #aaaab3;outline-offset:3px}
 .tm-notification-activation-actions button:disabled{opacity:.5;cursor:default}
 .tm-notification-activation-dialog .tm-notification-activation-feedback:not(:empty){margin-top:10px;font-size:12px}
+@keyframes tm-notification-sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.tm-notification-activation-dialog[open]{animation:none}}
