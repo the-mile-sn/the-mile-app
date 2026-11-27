@@ -49,7 +49,9 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; } catch (_) {}
-  if (payload.version === 2 && /^[a-f0-9]{32}$/.test(payload.id || '')) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return;
+  if (payload?.version === 2) {
+    if (typeof payload.id !== 'string' || !/^[a-f0-9]{32}$/.test(payload.id)) return;
     const body = payload.language === 'en-GB' ? 'You have a new notification.' : 'Tens uma nova notificação.';
     event.waitUntil(self.registration.showNotification('The Mile', {
       body, icon:'/icon-192.png', badge:'/icon-192.png',
