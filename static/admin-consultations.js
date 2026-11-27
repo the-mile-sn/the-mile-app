@@ -118,8 +118,8 @@
   const meta = [ageOf(p.birth_date), p.email, p.phone].filter(Boolean).join(" · ");
   who.append(el("p", "tm-cq-muted", meta || "Sem dados de contacto"));
   head.append(who);
-  const profileLink = el("a", "tm-cq-ghost", "Perfil"); profileLink.href = "/?nav=players";
-  profileLink.title = "Abre Clientes → Consultas para editar dados pessoais";
+  const profileLink = el("a", "tm-cq-ghost", "Acessos"); profileLink.href = "/?nav=players";
+  profileLink.title = "Dados pessoais e acessos (Clientes → Consultas)";
   head.append(profileLink);
   host.append(head);
 
@@ -464,6 +464,20 @@
    return r.form;
   } catch (e) { feedback(e.message, true); }
  }
+ // «A ter em conta» na consulta: o essencial da anamnese para ter à vista.
+ function careItems(form) {
+  if (!form || !form.summary) return [];
+  const pick = {"Objetivos": ["Objetivos", "Motivação para mudar"],
+   "Saúde": ["Patologias", "Medicação", "Alergias", "Intolerâncias", "Fuma", "Sono"],
+   "Saúde feminina": ["Ciclo", "Pílula", "Sintomas no período"],
+   "Treino": ["Atividade", "Desportos"],
+   "Alimentação": ["Padrão alimentar", "Não gosta de"],
+   "Suplementação": ["Suplementos"], "Notas do cliente": ["Notas"]};
+  const out = [];
+  for (const g of form.summary) for (const it of g.items) if ((pick[g.title] || []).includes(it.label))
+   out.push({label: it.label === "Notas" ? "Notas do cliente" : it.label, value: it.value});
+  return out;
+ }
  function formCard(form, clientId) {
   const card = el("section", "tm-cq-card tm-cq-form-card");
   const head = el("div", "tm-cq-section-head");
@@ -475,11 +489,15 @@
   see.addEventListener("click", () => openAnamnesis(clientId, name, !(form && form.has_answers)));
   const actions = el("div", "tm-cq-form-actions"); actions.append(copy, see);
   head.append(title, actions); card.append(head);
-  if (form && form.care && form.care.length) {
-   const care = el("div", "tm-cq-an-care");
-   for (const item of form.care) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", item.label), el("strong", "", item.value)); care.append(r); }
-   card.append(care);
-  } else if (!form || !form.has_answers) card.append(el("p", "tm-cq-muted", "Envia o link do formulário ao cliente ou preenche a anamnese aqui."));
+  if (form && form.summary && form.summary.length) {
+   const grid = el("div", "tm-cq-an-summary");
+   for (const g of form.summary) {
+    const col = el("section", "tm-cq-an-group"); col.append(el("h4", "", g.title));
+    for (const it of g.items) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", it.label), el("span", "", it.value)); col.append(r); }
+    grid.append(col);
+   }
+   card.append(grid);
+  } else card.append(el("p", "tm-cq-muted", "Envia o link do formulário ao cliente ou preenche a anamnese aqui."));
   return card;
  }
  function formAnswers(host, form) {
@@ -562,12 +580,10 @@
   const care = el("section", "tm-cq-card tm-cq-aside");
   care.append(el("h3", "", "A ter em conta"));
   const notes = (focus.profile_notes || "").trim();
-  const fromForm = (focus.form && focus.form.care) || [];
+  const fromForm = careItems(focus.form);
   for (const item of fromForm) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", item.label), el("strong", "", item.value)); care.append(r); }
-  if (notes) care.append(el("p", "", notes));
-  if (!fromForm.length && !notes) care.append(el("p", "tm-cq-muted", focus.form && focus.form.status === "submitted"
-   ? "Sem alergias, intolerâncias, medicação ou problemas de saúde indicados no formulário."
-   : "As alergias, intolerâncias e medicação aparecem aqui quando o cliente enviar o formulário."));
+  if (notes) { const r = el("p", "tm-cq-care"); r.append(el("span", "tm-cq-muted", "Notas do perfil"), el("strong", "", notes)); care.append(r); }
+  if (!fromForm.length && !notes) care.append(el("p", "tm-cq-muted", "Ainda sem anamnese. O que for preenchido (pelo cliente ou pela equipa) aparece aqui."));
   aside.append(care);
   if (prev && prev.objectives && prev.objectives.length) {
    const o = el("section", "tm-cq-card tm-cq-aside"); o.append(el("h3", "", "Objetivos da consulta anterior"));

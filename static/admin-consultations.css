@@ -343,3 +343,6 @@ html[data-admin-theme="light"] .tm-cq-body{--tm-cq-fig:#d9d9de;--tm-cq-fig-line:
 .tm-cq-team{font-size:10px;color:var(--tm-state-pending-fg);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.8}
 .tm-cq-an-intro p{margin:8px 0 0}
 @media (max-width:900px){.tm-cq-an-field,.tm-cq-an-freq-row,.tm-cq-an-meal{grid-template-columns:1fr}}
+.tm-cq-an-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px 28px;margin-top:14px}
+.tm-cq-an-group h4{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--tm-brand)}
+.tm-cq-an-group .tm-cq-care span:last-child{font-size:13px;white-space:pre-wrap}
