@@ -58,7 +58,7 @@ def dispatch(c,ids,send,*,deadline_seconds=8):
         if time.monotonic()>=deadline:
             result[nid]="not_attempted"
             continue
-        row=c.execute("""SELECT n.recipient_id,n.language FROM v2_manual_notifications n
+        row=c.execute("""SELECT n.recipient_id,n.language,n.kind,n.title,n.body FROM v2_manual_notifications n
             JOIN users u ON u.id=n.recipient_id
             WHERE n.id=? AND n.push_status='not_attempted' AND u.active=1""",(nid,)).fetchone()
         if not row:
@@ -74,6 +74,10 @@ def dispatch(c,ids,send,*,deadline_seconds=8):
         subs=c.execute("""SELECT d.device_id,d.endpoint,d.p256dh,d.auth,d.session_token
             FROM v2_notification_devices d JOIN sessions s ON s.token=d.session_token AND s.user_id=d.user_id
             WHERE d.user_id=? AND s.expires>? ORDER BY d.device_id""",(uid,int(time.time()))).fetchall()
+        payload={"version":2,"id":nid,"language":row["language"]}
+        # Custom notifications remain opaque on the lock screen.
+        if row["kind"] in ("game","weight","birthday","document","assessment","menu"):
+            payload.update(kind=row["kind"],title=row["title"],body=row["body"])
         outcomes=[]
         for sub in subs:
             if time.monotonic()>=deadline:
@@ -84,7 +88,7 @@ def dispatch(c,ids,send,*,deadline_seconds=8):
                 WHERE d.device_id=? AND d.user_id=? AND d.endpoint=? AND d.session_token=? AND s.expires>?""",
                 (sub["device_id"],uid,sub["endpoint"],sub["session_token"],int(time.time()))).fetchone()
             if current:
-                try: outcomes.append(send(sub,{"version":2,"id":nid,"language":row["language"]}))
+                try: outcomes.append(send(sub,payload))
                 except Exception: outcomes.append("unknown")
         status=("accepted" if "accepted" in outcomes else "unknown" if "unknown" in outcomes
                 else "failed" if outcomes else "not_subscribed")
