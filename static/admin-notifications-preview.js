@@ -270,11 +270,83 @@
   }catch(_){if(rev===configRevision)card.hidden=true;}
   finally{if(rev===configRevision)checking=false;}
  }
+ async function loadTemplates(token){
+  const url="/api/v2/admin/notifications-templates";
+  const response=await fetch(url,{credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}});
+  if(!response.ok)throw Error("templates");
+  const data=await response.json();
+  if(token!==generation||!dialog.open||tab!=="texts")return;
+  if(!Array.isArray(data.items)||!data.items.length)throw Error("templates");
+  status.textContent="";
+  const form=make("form","tm-notify-template-form");
+  const selector=make("select");selector.setAttribute("aria-label","Modelo de notificação");
+  for(const item of data.items)selector.append(new Option(item.label,item.id));
+  const label=make("label","tm-work-field");label.append(make("span","","Tipo de notificação"),selector);
+  const fields=make("div","tm-notify-template-form");
+  const feedback=make("p","tm-chat-empty");feedback.setAttribute("role","status");
+  const actions=make("div","tm-work-dialog-actions");
+  const save=make("button","tm-work-save","Guardar e aprovar textos");save.type="submit";
+  actions.append(save);form.append(label,fields,make("p","tm-chat-empty","Os textos dos modelos aparecem também nas notificações push. Não incluas dados clínicos ou privados."),feedback,actions);
+  list.append(form);
+  let current=null,inputs={};
+  function populate(){
+   current=data.items.find(item=>item.id===selector.value);
+   fields.replaceChildren();inputs={};
+   if(!current)return;
+   for(const [lang,name] of [["pt","Português"],["en","Inglês"]]){
+    fields.append(make("p","tm-notify-template-language",name));
+    const group=make("div","tm-work-dialog-fields");
+    inputs[lang]={};
+    for(const [field,title] of [["title","Título"],["body","Mensagem"]]){
+     const fieldLabel=make("label","tm-work-field tm-work-wide");
+     const input=make(field==="title"?"input":"textarea");
+     if(field==="body")input.rows=3;
+     input.required=true;input.maxLength=field==="title"?120:1000;
+     input.value=current.fields[field][lang];inputs[lang][field]=input;
+     fieldLabel.append(make("span","",title),input);group.append(fieldLabel);
+    }
+    fields.append(group);
+   }
+   if(current.id==="birthday")fields.append(make("p","tm-chat-empty","Mantém {first_name} no título para inserir automaticamente o primeiro nome."));
+   feedback.textContent=Object.values(current.fields).every(f=>f.status==="approved")?"":"Revê o inglês antes de guardar.";
+  }
+  selector.onchange=populate;populate();
+  form.onsubmit=async event=>{
+   event.preventDefault();
+   if(sending||!current||token!==generation||!dialog.open||tab!=="texts")return;
+   const payload={id:current.id,revision:current.revision};
+   for(const lang of ["pt","en"])payload[lang]={title:inputs[lang].title.value,body:inputs[lang].body.value};
+   sending=true;const locked=[...dialog.querySelectorAll("button,input,select,textarea")].map(el=>[el,el.disabled]);
+   for(const [el] of locked)el.disabled=true;
+   feedback.textContent="A guardar…";
+   try{
+    const session=await fetch("/api/me",{credentials:"same-origin",cache:"no-store"});
+    if(!session.ok)throw Error("session");
+    const auth=await session.json();
+    const res=await fetch(url,{method:"POST",credentials:"same-origin",cache:"no-store",
+     headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},body:JSON.stringify(payload)});
+    if(res.status===409){feedback.textContent="O modelo foi alterado noutra sessão. Volta a abrir Textos.";return;}
+    if(!res.ok)throw Error("save");
+    const result=await res.json();
+    if(token!==generation||!dialog.open)return;
+    const index=data.items.findIndex(item=>item.id===result.item.id);
+    if(index<0)throw Error("response");
+    data.items[index]=result.item;current=result.item;
+    feedback.textContent="Textos guardados.";
+   }catch(_){if(token===generation)feedback.textContent="Não foi possível guardar. Verifica os textos e os campos obrigatórios.";}
+   finally{sending=false;for(const [el,disabled] of locked)el.disabled=disabled;}
+  };
+ }
  async function load(){
   const token=++generation,type=tab==="history"?"history":kind.value;
   resetSelection();recipientDetails.clear();list.replaceChildren();status.textContent="A consultar…";
-  controls.hidden=tab==="history";confirmation.hidden=tab==="history";
+  controls.hidden=tab!=="new";confirmation.hidden=tab!=="new";
+  list.classList.toggle("is-template-editor",tab==="texts");
   customFields.hidden=true;$("tm-notify-menu-change-field").hidden=true;
+  if(tab==="texts"){
+   try{await loadTemplates(token);}catch(_){if(token===generation)status.textContent="Não foi possível consultar os textos.";}
+   return;
+  }
   const historical=type==="document"||type==="assessment";
   historyField.hidden=!historical;
   const chosen=historical?historyRecipient.value:null;
@@ -331,6 +403,7 @@
   }catch(_){if(token===generation)status.textContent="Não foi possível consultar as notificações.";}
  }
  function setTab(next){
+  if(sending)return;
   tab=next;historyRecipient.value="";
   if(next!=="history")recentFocusId=null;
   for(const b of tabs){const on=b.dataset.notifyPreviewTab===next;b.classList.toggle("is-selected",on);b.setAttribute("aria-pressed",String(on));}

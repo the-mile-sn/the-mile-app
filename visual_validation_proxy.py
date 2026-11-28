@@ -36,6 +36,7 @@ def smoke(port, identifier, role, path):
 def verify():
     for port,identifier,role,path in (
         (10001,"validation-admin@example.invalid","admin","/api/v2/admin/i18n/overview"),
+        (10001,"validation-admin@example.invalid","admin","/api/v2/admin/notifications-templates"),
         (10002,"validationplayer","player","/api/v2/notifications/inbox"),
         (10002,"validationchef","chef","/api/v2/notifications/activation?device="+"b"*32),
     ):

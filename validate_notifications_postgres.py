@@ -133,6 +133,25 @@ class PostgreSQLTests(unittest.TestCase):
         self.assertFalse(activation.state(self.c,user_id="chef",device="a"*32,session_token="renewed",now=103)["active"])
         self.assertTrue(activation.state(self.c,user_id="chef",device="a"*32,session_token="renewed",now=103)["prompted"])
 
+    def test_edit_bilingual_template_and_future_send(self):
+        from notification_templates_v2 import editable_template, save_template, render_template
+        old=editable_template(self.c,"weight")
+        data={"id":"weight","revision":old["revision"],
+              "pt":{"title":"Peso","body":"Regista o teu peso hoje."},
+              "en":{"title":"Weight","body":"Record your weight today."}}
+        before=inbox.inbox(self.c,"p")
+        save_template(self.c,actor_id="admin",payload=data)
+        self.assertEqual(render_template("weight","pt-PT",c=self.c),("Peso","Regista o teu peso hoje."))
+        self.assertEqual(render_template("weight","en-GB",c=self.c),("Weight","Record your weight today."))
+        rows=manual.prepare(self.c,authorised_athlete_ids=["a"],kind="weight",
+            selections=[{"recipient_id":"p"}],now=self.now)
+        self.assertEqual((rows[0]["title"],rows[0]["body"]),("Peso","Regista o teu peso hoje."))
+        self.assertEqual(inbox.inbox(self.c,"p"),before)
+        with self.assertRaisesRegex(ValueError,"template_changed"):
+            save_template(self.c,actor_id="admin",payload=data)
+        with self.assertRaises(PermissionError):
+            save_template(self.c,actor_id="p",payload=data)
+
     def test_capture_savepoint_does_not_abort_primary_write(self):
         with patch.dict(os.environ,{"MILE_NOTIFICATIONS_CAPTURE":"1"}), patch.object(capture.time,"time",return_value=self.now.timestamp()):
             self.c.execute("INSERT INTO documents VALUES(?,?,?,?,?)",("doc","p","nutrition","Synthetic",b"pdf"))

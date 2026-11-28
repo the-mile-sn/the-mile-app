@@ -4,6 +4,10 @@ The approved Portuguese wording for game, weight, birthday and activation
 is preserved. Other copy and English translations remain subject to review.
 No sending, language lookup or scheduling is performed here.
 """
+import hashlib
+import json
+import time
+
 TEMPLATES = {
     "game": {
         "pt-PT": ("Formulário de jogo", "Não te esqueças de preencher o formulário do teu último jogo."),
@@ -59,11 +63,87 @@ ACTIVATION = {
 }
 
 
-def source_rows():
-    """Canonical PT templates and review-only EN suggestions."""
-    return [{"id":key,"title":copies["pt-PT"][0],"body":copies["pt-PT"][1],
-             "title_en":copies["en-GB"][0],"body_en":copies["en-GB"][1]}
-            for key,copies in TEMPLATES.items()]
+def _has_sources(c):
+    if c is None:
+        return False
+    if hasattr(c, "conn"):
+        return c.execute("""SELECT 1 FROM information_schema.tables
+            WHERE table_schema=current_schema() AND table_name='v2_notification_template_sources'""").fetchone() is not None
+    return c.execute("""SELECT 1 FROM sqlite_master
+        WHERE type='table' AND name='v2_notification_template_sources'""").fetchone() is not None
+
+
+def source_copy(key, c=None):
+    default = TEMPLATES[key]["pt-PT"]
+    if not _has_sources(c):
+        return default
+    row = c.execute("SELECT title,body FROM v2_notification_template_sources WHERE template_key=?", (key,)).fetchone()
+    return (row["title"],row["body"]) if row else default
+
+
+def source_rows(c=None):
+    """Canonical current PT templates and review-only EN suggestions."""
+    rows=[]
+    for key,copies in TEMPLATES.items():
+        title,body=source_copy(key,c)
+        rows.append({"id":key,"title":title,"body":body,
+                     "title_en":copies["en-GB"][0],"body_en":copies["en-GB"][1]})
+    return rows
+
+
+def editable_template(c,key):
+    from content_translations_v2 import resolve
+    pt=source_copy(key,c)
+    fields={}
+    for index,field in enumerate(("title","body")):
+        candidate=c.execute("""SELECT translated_text,source_hash,status FROM v2_content_translations
+            WHERE entity_kind='notification' AND entity_id=? AND field_path=? AND language='en'""",(key,field)).fetchone()
+        resolved=resolve(c,entity_kind="notification",entity_id=key,field_path=field,source_text=pt[index],language="en")
+        fields[field]={"pt":pt[index],"en":candidate["translated_text"] if candidate else TEMPLATES[key]["en-GB"][index],
+                       "status":resolved["status"],"source_hash":candidate["source_hash"] if candidate else None}
+    revision=hashlib.sha256(json.dumps(fields,sort_keys=True,ensure_ascii=False).encode("utf-8")).hexdigest()
+    return {"id":key,"label":TEMPLATES[key]["pt-PT"][0],"fields":fields,"revision":revision}
+
+
+def editable_templates(c):
+    return [editable_template(c,key) for key in TEMPLATES]
+
+
+def save_template(c, *, actor_id, payload):
+    """Explicit bilingual review; same translation approval store, no send."""
+    from content_translations_v2 import submit, approve
+    if not isinstance(payload,dict) or set(payload)!={"id","revision","pt","en"}:
+        raise ValueError("invalid_template")
+    key=payload["id"]
+    if not isinstance(key,str) or key not in TEMPLATES:
+        raise ValueError("invalid_template")
+    actor=c.execute("SELECT role,active FROM users WHERE id=?", (actor_id,)).fetchone()
+    if not actor or actor["role"]!="admin" or not actor["active"]:
+        raise PermissionError("forbidden")
+    if not _has_sources(c):
+        raise ValueError("template_store_unavailable")
+    if editable_template(c,key)["revision"]!=payload["revision"]:
+        raise ValueError("template_changed")
+    copies={}
+    for lang in ("pt","en"):
+        data=payload[lang]
+        if not isinstance(data,dict) or set(data)!={"title","body"}:
+            raise ValueError("invalid_template")
+        copies[lang]={}
+        for field in ("title","body"):
+            text=data[field]
+            validate_translation(key,field,text)
+            copies[lang][field]=text.strip()
+    pt=copies["pt"]
+    c.execute("""INSERT INTO v2_notification_template_sources(template_key,title,body,updated_at,updated_by)
+        VALUES(?,?,?,?,?) ON CONFLICT(template_key) DO UPDATE SET title=excluded.title,body=excluded.body,
+        updated_at=excluded.updated_at,updated_by=excluded.updated_by""",(key,pt["title"],pt["body"],int(time.time()),actor_id))
+    for field in ("title","body"):
+        args=dict(entity_kind="notification",entity_id=key,field_path=field,source_text=pt[field],language="en")
+        text=copies["en"][field]
+        submit(c,**args,translated_text=text,actor_id=actor_id)
+        approve(c,**args,reviewer_id=actor_id,expected_candidate_hash=hashlib.sha256(text.encode("utf-8")).hexdigest())
+    return editable_template(c,key)
 
 
 def validate_translation(key, field, text):
@@ -82,7 +162,7 @@ def validate_translation(key, field, text):
 
 def render_template(key, language, *, first_name=None, c=None):
     """PT canonical; EN only from the shared approved translation store."""
-    title,body=TEMPLATES[key]["pt-PT"]
+    title,body=source_copy(key,c)
     if language=="en-GB":
         if c is None:
             raise ValueError("notification_translation_unavailable")
