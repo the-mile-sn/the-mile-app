@@ -10,6 +10,7 @@ fi
 : "${MILE_VALIDATION_PASSWORD:?Set a synthetic account password}"
 # Persistent mode is optional and restricted to a dedicated, explicitly mounted test disk.
 persistent="${MILE_VALIDATION_PERSIST:-0}"
+unset MILE_VALIDATION_KEY_FILE
 if [ "$persistent" = 1 ]; then
   mountpoint -q /var/data || { echo "Dedicated validation disk /var/data required" >&2; exit 1; }
   storage="/var/data/the-mile-notification-validation"
@@ -23,6 +24,12 @@ if [ "$persistent" = 1 ]; then
   chown postgres:postgres "$storage" "$storage/postgres"
   chmod 700 "$storage/postgres" "$storage/keys"
   export MILE_VALIDATION_KEY_FILE="$storage/keys/vapid.pem"
+  if [ -f "$storage/postgres/PG_VERSION" ] && [ ! -s "$MILE_VALIDATION_KEY_FILE" ]; then
+    echo "Existing validation database without its VAPID key; refusing silent rotation" >&2; exit 1
+  fi
+  # Create the initial key before initializing PostgreSQL, so an interrupted first boot can resume.
+  key_exports="$(python /srv/admin/visual_validation_keys.py)"
+  unset key_exports
 elif [ "$persistent" != 0 ]; then
   echo "Invalid MILE_VALIDATION_PERSIST" >&2; exit 1
 fi

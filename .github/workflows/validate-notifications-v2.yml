@@ -1,0 +1,32 @@
+name: Notifications v2 synthetic checks
+on:
+  push:
+    branches: [validation/notifications-pg-20261127]
+jobs:
+  notifications:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r requirements.txt -r validation_player/requirements.txt
+      - run: sh -n run_visual_validation.sh
+      - run: python -m py_compile migrate_notifications_v2.py notification_vapid_check.py visual_validation_keys.py visual_validation_wsgi.py
+      - run: python -m unittest discover -p 'test_notification_*_v2.py' -v
+      - run: node --test test_notification_translation_v2.cjs
+      - working-directory: validation_player
+        run: python -m unittest discover -p 'test_notification_*_v2.py' -v
+      - working-directory: validation_player
+        run: |
+          node --check static/notification-activation-v2.js
+          node --check static/notification-inbox-v2.js
+          node --check static/jogador-v2.js
+          node --check static/chef.js
+          node --check static/sw.js
+          node --test test_notification_activation_browser_v2.cjs test_notification_worker_v2.cjs
