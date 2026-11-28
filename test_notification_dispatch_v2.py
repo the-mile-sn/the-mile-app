@@ -50,6 +50,14 @@ class DispatchTests(unittest.TestCase):
         self.assertEqual(dispatch(self.c,["n1"],self.send),{})
         self.assertEqual(len(self.calls),1)
 
+    def test_template_payload(self):
+        for kind in ("game","weight","birthday","document","assessment","menu"):
+            with self.subTest(kind=kind):
+                self.c.execute("UPDATE v2_manual_notifications SET kind=?,title='Template title',body='Template body',push_status='not_attempted' WHERE id='n1'",(kind,))
+                self.c.commit()
+                self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"accepted"})
+                self.assertEqual(self.calls[-1],{"version":2,"id":"n1","language":"pt-PT","kind":kind,"title":"Template title","body":"Template body"})
+
     def test_no_subscription_preserves_notification(self):
         self.c.execute("DELETE FROM v2_notification_devices")
         self.c.commit()
