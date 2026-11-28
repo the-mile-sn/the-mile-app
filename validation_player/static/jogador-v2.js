@@ -284,6 +284,7 @@ function animateDailySwipeEntry(){
 }
 function revokePlayerView(){
  window.tmNotificationActivation?.reset();
+ window.tmNotificationInbox?.reset();
  pendingDailySwipeDirection=0;
  dailySwipeEntryAnimation?.cancel();
  dailySwipeEntryAnimation=null;
@@ -773,6 +774,11 @@ async function session(){
  if(epoch===playerSessionEpoch)await finishPlayerLoading(epoch);
  if(epoch===playerSessionEpoch&&me){const id=window.tmNotificationInbox?.consumePendingId();if(id)await openPlayerNotificationLink(id); }
  if(epoch===playerSessionEpoch&&me){
+  window.tmNotificationInbox?.start({
+   language:()=>playerUiLanguage,
+   active:()=>epoch===playerSessionEpoch&&!!me&&!$("player-panel").hidden,
+   request:(path,method,body)=>api(path,method==="GET"?{}:{method,headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
+  });
   window.tmNotificationActivation?.start({
    language:()=>playerUiLanguage,
    active:()=>epoch===playerSessionEpoch&&!!me&&!$("player-panel").hidden,
@@ -804,6 +810,7 @@ window.addEventListener("scroll",()=>{
  if(!mileScrollFrame)mileScrollFrame=window.requestAnimationFrame(updateAdaptiveNav);
 },{passive:true});
 async function show(t){
+ if(t==="profile")window.tmNotificationInbox?.refresh();
  // Leaving through the tab bar closes an open plan page (no scroll restore: the tab is re-shown fresh).
  if(document.body.classList.contains("plan-page-open")){document.body.classList.remove("plan-page-open");planPageReturn=null;$("plans-prescriptions").querySelector(".plan-page-head")?.remove();}
  if(t!=="overview")pendingDailySwipeDirection=0;
@@ -3501,6 +3508,7 @@ async function openPlayerNotificationLink(id){
   const response=await api("/api/v2/notifications/open",{method:"POST",
    headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify({id})});
   if(epoch!==playerSessionEpoch||!me)return;
+  window.tmNotificationInbox?.accept(response);
   if(response.destination&&await navigatePlayerNotification(response.destination))return;
  }catch(_){}
  if(epoch===playerSessionEpoch&&me){await show("profile");openProfileSubpage("notifications",id);}

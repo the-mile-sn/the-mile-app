@@ -69,19 +69,27 @@ window.tmNotificationActivation=(()=>{
   state={...state,...data};return true;
  }
  function paintProfile(message=""){
-  if(!profile?.isConnected||!ctx||!state)return;
+  if(!profile?.isConnected||!ctx)return;
   profile.replaceChildren();
-  const button=make("button","tm-notification-activation-button",
-   state.active?t("Desativar notificações","Disable notifications"):t("Ativar notificações","Enable notifications"));
-  button.type="button";button.disabled=busy;
-  button.onclick=()=>state.active?change(false):change(true);
-  profile.append(button);
+  const available=supported()&&!!state;
+  const enabled=available&&state.active&&Notification.permission==="granted";
+  const row=make("div","tm-notification-switch-row");
+  const copy=make("div","tm-notification-switch-copy",t("Notificações push","Push notifications"));
+  copy.append(make("small","",t("Receber notificações neste dispositivo","Receive notifications on this device")));
+  const button=make("button","tm-notification-switch");
+  button.type="button";button.setAttribute("role","switch");
+  button.setAttribute("aria-label",t("Notificações push","Push notifications"));
+  button.setAttribute("aria-checked",String(!!enabled));
+  button.disabled=busy||!available||Notification.permission==="denied";
+  button.onclick=()=>change(!enabled);
+  row.append(copy,button);profile.append(row);
+  if(!available){profile.append(make("p","tm-notification-activation-caption",t("Push indisponível neste dispositivo. As notificações na app continuam disponíveis.","Push unavailable on this device. In-app notifications remain available.")));return;}
   const caption=message||(state.active&&Notification.permission==="granted"
    ?t("Notificações ativas neste dispositivo.","Notifications enabled on this device.")
    :Notification.permission==="denied"
     ?t("Permissão bloqueada. Podes alterá-la nas definições do dispositivo.","Permission blocked. You can change it in your device settings.")
     :t("Notificações desativadas neste dispositivo.","Notifications disabled on this device."));
-  profile.append(make("p","tm-notification-activation-caption",caption));
+  if(message||Notification.permission==="denied")profile.append(make("p","tm-notification-activation-caption",caption));
  }
  function showPrompt(){
   if(!ctx||!state||state.prompted||promptedHere||state.active||Notification.permission==="denied"||!ctx.active())return;
@@ -167,7 +175,7 @@ window.tmNotificationActivation=(()=>{
  async function mount(container){
   if(!container||!ctx||!ctx.active())return;
   const token=generation;
-  if(!await configure()||!valid(token)||!container.isConnected||container.hidden)return;
+  await configure();if(!valid(token)||!container.isConnected||container.hidden)return;
   container.querySelector(".tm-notification-activation")?.remove();
   profile=make("div","tm-notification-activation");
   const header=container.querySelector(".profile-subpage-header");

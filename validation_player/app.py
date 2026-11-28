@@ -2578,16 +2578,20 @@ def application(env, start_response):
                     raise Problem(403,'forbidden')
                 import notification_inbox_v2
                 if path.endswith('/inbox') and method=='GET':
-                    return respond(200,{'items':notification_inbox_v2.inbox(c,user['id'])})
+                    return respond(200,{'items':notification_inbox_v2.inbox(c,user['id']),'unread_count':notification_inbox_v2.unread_count(c,user['id'])})
                 if path.endswith('/open') and method=='POST':
                     body=read_json(env)
                     if not isinstance(body,dict):raise Problem(400,'invalid_request')
+                    if body == {'action':'mark_all_read'}:
+                        notification_inbox_v2.mark_all_read(c,user['id'],now)
+                        c.commit()
+                        return respond(200,{'unread_count':notification_inbox_v2.unread_count(c,user['id'])})
                     item=notification_inbox_v2.open_notification(c,recipient_id=user['id'],
                         notification_id=body.get('id'),now=now)
                     if not item:raise Problem(404,'not_found')
                     target=notification_inbox_v2.destination(c,user=user,item=item)
                     c.commit()
-                    return respond(200,{'item':item,'destination':target})
+                    return respond(200,{'item':item,'destination':target,'unread_count':notification_inbox_v2.unread_count(c,user['id'])})
                 raise Problem(405,'method_not_allowed')
 
             if path == '/api/push/config' and method == 'GET':
