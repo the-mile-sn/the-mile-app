@@ -4,11 +4,11 @@
 .tm-notification-activation-button:disabled{opacity:.5}
 .tm-notification-activation-caption{margin:9px 0 0;color:#aaaab3;font-size:12px;line-height:1.45;text-align:center}
 /* Shared activation sheet: existing app surfaces and login-style primary pill. */
-.tm-notification-activation-dialog{position:fixed;inset:auto 0 0;box-sizing:border-box;width:min(100%,480px);max-width:100%;min-height:min(47dvh,calc(100dvh - env(safe-area-inset-top,0px) - 16px));max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);margin:0 auto;padding:30px 24px calc(24px + env(safe-area-inset-bottom,0px));border:0;border-radius:28px 28px 0 0;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto;overscroll-behavior:contain}
+.tm-notification-activation-dialog{position:fixed;inset:auto 0 0;box-sizing:border-box;width:min(100%,480px);max-width:100%;min-height:min(41dvh,calc(100dvh - env(safe-area-inset-top,0px) - 16px));max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);margin:0 auto;padding:clamp(38px,5dvh,48px) 24px calc(24px + env(safe-area-inset-bottom,0px));border:0;border-radius:28px 28px 0 0;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto;overscroll-behavior:contain}
 .tm-notification-activation-dialog[open]{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;animation:tm-notification-sheet-in 320ms cubic-bezier(.2,.7,.2,1) both}
 .tm-notification-activation-dialog[open]>*{flex-shrink:0}
 .tm-notification-activation-dialog::backdrop{background:rgba(0,0,0,.55)}
-.tm-notification-activation-dialog .tm-notification-sheet-icon{display:grid;place-items:center;width:36px;height:36px;margin:0 auto 12px;background:transparent;color:#f5f5f7}
+.tm-notification-activation-dialog .tm-notification-sheet-icon{display:grid;place-items:center;width:36px;height:36px;margin:0 auto 22px;background:transparent;color:#f5f5f7}
 .tm-notification-sheet-icon svg{width:32px;height:32px;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 html.tm-notification-sheet-locked{overflow:hidden!important;overscroll-behavior:none}
 html.tm-notification-sheet-locked body{position:fixed!important;top:var(--tm-notification-scroll-top,0px)!important;left:0;right:0;width:100%;overflow:hidden!important;overscroll-behavior:none}
@@ -24,3 +24,14 @@ html.tm-notification-sheet-locked body{position:fixed!important;top:var(--tm-not
 .tm-notification-activation-dialog .tm-notification-activation-feedback:not(:empty){margin-top:10px;font-size:12px}
 @keyframes tm-notification-sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.tm-notification-activation-dialog[open]{animation:none}}
+
+.tm-notification-switch-row{display:flex;align-items:center;gap:14px;min-height:44px}
+.tm-notification-switch-copy{flex:1;min-width:0;text-align:left;font-size:16px;line-height:1.35}
+.tm-notification-switch-copy small{display:block;color:#aaaab3;font-size:12px;margin-top:4px;line-height:1.4}
+.tm-notification-activation button.tm-notification-switch{appearance:none;display:block;flex:0 0 46px;width:46px;height:28px;padding:3px;border:0;border-radius:999px;background:#48484e;box-shadow:none;cursor:pointer;position:relative}
+.tm-notification-switch:before{content:"";display:block;width:22px;height:22px;border-radius:50%;background:#e5e5ea;transition:transform .18s}
+.tm-notification-switch[aria-checked="true"]{background:#e5e5ea}
+.tm-notification-switch[aria-checked="true"]:before{transform:translateX(18px);background:#242429}
+.tm-notification-switch:disabled{opacity:.5;cursor:default}
+.tm-notification-activation-caption{text-align:left}
+@media(prefers-reduced-motion:reduce){.tm-notification-switch:before{transition:none}}

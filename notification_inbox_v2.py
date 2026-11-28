@@ -14,6 +14,14 @@ def inbox(c, recipient_id):
     """,(recipient_id,)).fetchall()]
 
 
+def unread_count(c, recipient_id):
+    return int(c.execute("SELECT COUNT(*) AS n FROM v2_manual_notifications WHERE recipient_id=? AND read_at IS NULL",(recipient_id,)).fetchone()["n"])
+
+
+def mark_all_read(c, recipient_id, now):
+    c.execute("UPDATE v2_manual_notifications SET read_at=? WHERE recipient_id=? AND read_at IS NULL",(now,recipient_id))
+
+
 def open_notification(c, *, recipient_id, notification_id, now):
     if not isinstance(notification_id,str) or not re.fullmatch(r"[0-9a-f]{32}",notification_id):
         return None

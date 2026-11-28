@@ -1,6 +1,32 @@
 "use strict";
 /* Shared player/chef inbox. No polling, no automatic permission prompts. */
 window.tmNotificationInbox = (() => {
+ let context=null,count=0,generation=0,revision=0;
+ function paint(){
+  const n=context&&context.active()?count:0;
+  const en=context?.language()==="en";
+  for(const card of document.querySelectorAll(".profile-notifications-card")){
+   let badge=card.querySelector(".tm-notification-count");
+   if(!badge){badge=make("span","tm-notification-count");card.querySelector(".profile-action-chevron")?.before(badge);}
+   badge.hidden=!n;badge.textContent=n>99?"99+":String(n);
+   badge.setAttribute("aria-label",n+(en?" unread notifications":" notificações por ler"));
+  }
+  for(const avatar of document.querySelectorAll("#tabs [data-tab='profile'] .profile-tab-avatar,#chef-nav [data-tab='profile'] .chef-profile-tab-avatar")){
+   avatar.classList.toggle("tm-notification-has-unread",n>0);
+   const button=avatar.closest("button");
+   if(button){if(n)button.setAttribute("aria-label",(en?"Profile":"Perfil")+", "+n+(en?" unread notifications":" notificações por ler"));else button.removeAttribute("aria-label");}
+  }
+ }
+ function accept(data){if(Number.isInteger(data?.unread_count)&&data.unread_count>=0){revision++;count=data.unread_count;paint();}}
+ async function refresh(){
+  const c=context,g=generation,r=revision;
+  if(!c||!c.active()||document.hidden)return;
+  try{const d=await c.request("/api/v2/notifications/inbox","GET");if(g===generation&&r===revision&&c.active())accept(d);}catch(_){}
+ }
+ function reset(){generation++;revision++;context=null;count=0;paint();}
+ function start(options){reset();context=options;refresh();}
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
+ window.addEventListener("focus",refresh);
  function make(tag,cls,value){
   const el=document.createElement(tag);if(cls)el.className=cls;
   if(value!==undefined)el.textContent=value;return el;
@@ -16,7 +42,7 @@ window.tmNotificationInbox = (() => {
   const valid=()=>root.isConnected&&active();
   const t=(pt,en)=>language()==="en"?en:pt;
   const fail=()=>t("Não foi possível carregar as notificações.","Unable to load notifications.");
-  let data;
+  let data;const rev=revision;
   try{data=await request("/api/v2/notifications/inbox","GET");}
   catch(e){
    if(valid()&&e.status!==404){
@@ -27,16 +53,32 @@ window.tmNotificationInbox = (() => {
   }
   if(!valid())return;
   if(original)original.hidden=true;
+  if(rev===revision)accept(data);
   const items=Array.isArray(data.items)?data.items:[];
   if(!items.length){
    root.append(make("p","tm-notification-status",t("Ainda não existem notificações.","No notifications yet.")));return;
   }
+  const bar=make("div","tm-notification-list-heading");
+  const countLabel=make("span","");
+  const all=make("button","tm-notification-mark-all",t("Marcar todas como lidas","Mark all as read"));all.type="button";
+  const sync=()=>{countLabel.textContent=count+" "+t("por ler","unread");all.hidden=!count;};
+  sync();bar.append(countLabel,all);root.append(bar);
+  all.onclick=async()=>{
+   if(!valid())return;all.disabled=true;
+   try{const result=await request("/api/v2/notifications/open","POST",{action:"mark_all_read"});
+    if(!valid())return;accept(result);
+    await mount({container,request,language,active,navigate});
+   }catch(_){if(valid())root.prepend(make("p","tm-notification-status",fail()));}
+   finally{all.disabled=false;}
+  };
+  const list=make("div","tm-notification-list");root.append(list);
   for(const item of items){
    const card=make("article","tm-notification-item");
    const button=make("button","tm-notification-open");
    button.type="button";button.setAttribute("aria-expanded","false");
    const copy=make("span","tm-notification-copy");
-   copy.append(make("strong","",item.title),make("small","",new Date(item.created_at*1000).toLocaleDateString(language()==="en"?"en-GB":"pt-PT")));
+   card.classList.toggle("is-unread",!item.read_at);
+   copy.append(make("strong","",item.title),make("span","tm-notification-body",item.body),make("small","",new Date(item.created_at*1000).toLocaleDateString(language()==="en"?"en-GB":"pt-PT")));
    const dot=make("span","tm-notification-unread");
    dot.hidden=!!item.read_at;dot.setAttribute("aria-label",t("Por ler","Unread"));
    const arrow=make("span","tm-notification-arrow","›");arrow.setAttribute("aria-hidden","true");
@@ -49,7 +91,10 @@ window.tmNotificationInbox = (() => {
     try{
      const response=await request("/api/v2/notifications/open","POST",{id:item.id});
      if(!valid())return;
-     detail.replaceChildren(make("p","",response.item.body));
+     accept(response);sync();dot.hidden=true;card.classList.remove("is-unread");
+     if(response.destination&&navigate&&await navigate(response.destination))return;
+     if(!valid())return;
+     detail.replaceChildren();
     if(response.destination&&navigate){
      const go=make("button","tm-notification-destination",t("Abrir conteúdo","Open content"));
      go.type="button";
@@ -66,7 +111,7 @@ window.tmNotificationInbox = (() => {
      if(valid()){detail.replaceChildren(make("p","",fail()));detail.hidden=false;button.setAttribute("aria-expanded","true");}
     }finally{button.disabled=false;}
    };
-   card.append(button,detail);root.append(card);
+   card.append(button,detail);list.append(card);
    if(item.id===initialId)button.click();
   }
  }
@@ -87,5 +132,5 @@ window.tmNotificationInbox = (() => {
   history.replaceState(history.state,"",url.pathname+url.search+url.hash);
   return id;
  }
- return {mount,clear,pendingId,consumePendingId};
+ return {mount,clear,pendingId,consumePendingId,start,reset,refresh,paint,accept};
 })();

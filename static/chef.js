@@ -139,6 +139,7 @@ async function init(){
      const pending=window.tmNotificationInbox?.consumePendingId();
      if(pending)await openChefNotificationLink(pending);
      const actor=sessionUser;
+     window.tmNotificationInbox?.start({language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request});
      window.tmNotificationActivation?.start({
       language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
      });
@@ -1135,6 +1136,7 @@ async function openChefNotificationLink(id){
  try{
   const response=await request("/api/v2/notifications/open","POST",{id});
   if(sessionUser!==actor||previewReadOnly)return;
+  window.tmNotificationInbox?.accept(response);
   if(response.destination&&await navigateChefNotification(response.destination))return;
  }catch(_){}
  if(sessionUser===actor&&!previewReadOnly){
@@ -1267,6 +1269,7 @@ async function chefLogout(button){
  try{
   await request("/api/logout","POST",{});
   window.tmNotificationActivation?.reset();
+  window.tmNotificationInbox?.reset();
   csrf="";sessionUser=null;chef=null;player=null;
   location.replace("/");
  }catch(error){
@@ -1346,6 +1349,7 @@ function render(){
   window.themileChefChatDemo?.setLanguage(lang);
   syncChefSelection(el("chef-view-mode"));
   syncChefSelection(nav);
+  window.tmNotificationInbox?.paint();
   animateChefSwipeEntry();
 }
 /* The Player's 500ms directional page entry, not an unapproved
@@ -1363,7 +1367,7 @@ function changeChefTab(next){
  // A pending scroll frame belongs to the old page and must not repaint this tab.
  if(chefScrollFrame){window.cancelAnimationFrame(chefScrollFrame);chefScrollFrame=0;}
  chefScrollAccum=0;chefScrollDirection=0;chefLastScrollY=Math.max(0,window.scrollY||0);
- activeTab=next;render();
+ activeTab=next;render();if(next==="profile")window.tmNotificationInbox?.refresh();
  if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches&&typeof screen.animate==="function")
   screen.animate([
    {transform:"translateX("+(direction*24)+"px)",opacity:.55},
