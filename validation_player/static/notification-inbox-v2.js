@@ -72,6 +72,7 @@ window.tmNotificationInbox = (() => {
    finally{all.disabled=false;}
   };
   const list=make("div","tm-notification-list");root.append(list);
+  let highlighted=null;
   for(const item of items){
    const card=make("article","tm-notification-item");
    const button=make("button","tm-notification-open");
@@ -87,6 +88,7 @@ window.tmNotificationInbox = (() => {
    button.onclick=async()=>{
     if(!valid())return;
     if(!detail.hidden){detail.hidden=true;button.setAttribute("aria-expanded","false");return;}
+    card.classList.remove("is-push-target");
     button.disabled=true;
     try{
      const response=await request("/api/v2/notifications/open","POST",{id:item.id});
@@ -112,7 +114,14 @@ window.tmNotificationInbox = (() => {
     }finally{button.disabled=false;}
    };
    card.append(button,detail);list.append(card);
-   if(item.id===initialId)button.click();
+   if(item.id===initialId){card.classList.add("is-push-target");highlighted=card;}
+  }
+  if(highlighted){
+   requestAnimationFrame(()=>{
+    if(!valid()||!highlighted.isConnected)return;
+    highlighted.scrollIntoView({block:"center",behavior:"auto"});
+    setTimeout(()=>highlighted.classList.remove("is-push-target"),6000);
+   });
   }
  }
  function clear(container){

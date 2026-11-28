@@ -136,13 +136,13 @@ async function init(){
     show("chef");
     await loadWeek();
     if(!previewReadOnly){
-     const pending=window.tmNotificationInbox?.consumePendingId();
-     if(pending)await openChefNotificationLink(pending);
      const actor=sessionUser;
      window.tmNotificationInbox?.start({language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request});
      window.tmNotificationActivation?.start({
       language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
      });
+     const pending=window.tmNotificationInbox?.consumePendingId();
+     if(pending)await openChefNotificationLink(pending);
     }
   }catch(err){
     if(err.status===401){location.replace("/");}
@@ -1133,12 +1133,6 @@ async function navigateChefNotification(target){
 }
 async function openChefNotificationLink(id){
  const actor=sessionUser;
- try{
-  const response=await request("/api/v2/notifications/open","POST",{id});
-  if(sessionUser!==actor||previewReadOnly)return;
-  window.tmNotificationInbox?.accept(response);
-  if(response.destination&&await navigateChefNotification(response.destination))return;
- }catch(_){}
  if(sessionUser===actor&&!previewReadOnly){
   changeChefTab("profile");chefNotificationInitialId=id;
   chefProfileOpenSubpage("notifications");

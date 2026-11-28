@@ -772,7 +772,6 @@ async function session(){
  $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
  if(epoch===playerSessionEpoch)await finishPlayerLoading(epoch);
- if(epoch===playerSessionEpoch&&me){const id=window.tmNotificationInbox?.consumePendingId();if(id)await openPlayerNotificationLink(id); }
  if(epoch===playerSessionEpoch&&me){
   window.tmNotificationInbox?.start({
    language:()=>playerUiLanguage,
@@ -785,6 +784,7 @@ async function session(){
    request:(path,method,body)=>api(path,method==="GET"?{}:{method,
     headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify(body)})
   });
+  const id=window.tmNotificationInbox?.consumePendingId();if(id)await openPlayerNotificationLink(id);
  }
 }
 /* Adaptive navigation: hysteresis prevents flicker on short scroll gestures. */
@@ -3504,13 +3504,6 @@ async function navigatePlayerNotification(target){
 }
 async function openPlayerNotificationLink(id){
  const epoch=playerSessionEpoch;
- try{
-  const response=await api("/api/v2/notifications/open",{method:"POST",
-   headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:JSON.stringify({id})});
-  if(epoch!==playerSessionEpoch||!me)return;
-  window.tmNotificationInbox?.accept(response);
-  if(response.destination&&await navigatePlayerNotification(response.destination))return;
- }catch(_){}
  if(epoch===playerSessionEpoch&&me){await show("profile");openProfileSubpage("notifications",id);}
 }
 function openProfileSubpage(page,initialId=null){

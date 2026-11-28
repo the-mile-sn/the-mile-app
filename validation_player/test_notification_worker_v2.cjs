@@ -32,3 +32,15 @@ test('v2 click accepts only own-origin identifier link',async()=>{
  t.handlers.notificationclick({notification:{close(){},data:{notificationId:id,url:'https://other.invalid/'}},waitUntil(p){pending=p;}});
  await pending;assert.deepEqual(t.windows,['https://example.invalid/?notification='+id]);
 });
+
+test('template copy visible, custom remains private',()=>{
+ const t=setup(),id='c'.repeat(32);
+ for(const kind of ["game","weight","birthday","document","assessment","menu"]){
+  t.push({version:2,id,kind,language:'pt-PT',title:'Modelo',body:'Texto'});
+  assert.equal(t.notifications.at(-1).title,'Modelo');
+  assert.equal(t.notifications.at(-1).options.body,'Texto');
+ }
+ t.push({version:2,id,kind:'custom',language:'pt-PT',title:'Private',body:'Sensitive'});
+ assert.equal(t.notifications.at(-1).title,'The Mile');
+ assert.equal(t.notifications.at(-1).options.body,'Tens uma nova notificação.');
+});

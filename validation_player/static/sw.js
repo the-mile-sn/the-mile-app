@@ -52,8 +52,12 @@ self.addEventListener('push', event => {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return;
   if (payload?.version === 2) {
     if (typeof payload.id !== 'string' || !/^[a-f0-9]{32}$/.test(payload.id)) return;
-    const body = payload.language === 'en-GB' ? 'You have a new notification.' : 'Tens uma nova notificação.';
-    event.waitUntil(self.registration.showNotification('The Mile', {
+    const template = ["game","weight","birthday","document","assessment","menu"].includes(payload.kind) &&
+      typeof payload.title === 'string' && payload.title.trim() && payload.title.length <= 120 &&
+      typeof payload.body === 'string' && payload.body.trim() && payload.body.length <= 1000;
+    const title = template ? payload.title : 'The Mile';
+    const body = template ? payload.body : (payload.language === 'en-GB' ? 'You have a new notification.' : 'Tens uma nova notificação.');
+    event.waitUntil(self.registration.showNotification(title, {
       body, icon:'/icon-192.png', badge:'/icon-192.png',
       tag:'mile-v2-'+payload.id, data:{notificationId:payload.id}
     }));
