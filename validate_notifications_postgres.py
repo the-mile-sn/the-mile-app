@@ -122,7 +122,8 @@ class PostgreSQLTests(unittest.TestCase):
         with patch.dict(os.environ,{"MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS":"p,chef"}):
             self.assertEqual(dispatch.dispatch(self.c,sent["recorded_ids"],fake),{p["id"]:"not_subscribed",ch["id"]:"accepted"})
             self.assertEqual(dispatch.dispatch(self.c,sent["recorded_ids"],fake),{})
-        self.assertEqual(calls,[{"version":2,"id":ch["id"],"language":"en-GB"}])
+        self.assertEqual(calls,[{"version":2,"id":ch["id"],"language":"en-GB",
+                                 "kind":"menu","title":"New menu","body":"A new menu is available to view."}])
         self.assertIsNone(inbox.open_notification(self.c,recipient_id="p",notification_id=ch["id"],now=101))
         self.assertIsNone(inbox.inbox(self.c,"chef")[0]["read_at"])
         item=inbox.open_notification(self.c,recipient_id="chef",notification_id=ch["id"],now=102)
