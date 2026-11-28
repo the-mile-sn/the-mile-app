@@ -4,19 +4,20 @@
 .tm-notification-activation-button:disabled{opacity:.5}
 .tm-notification-activation-caption{margin:9px 0 0;color:#aaaab3;font-size:12px;line-height:1.45;text-align:center}
 /* Shared activation sheet: existing app surfaces and login-style primary pill. */
-.tm-notification-activation-dialog{position:fixed;inset:auto 0 0;box-sizing:border-box;width:min(100%,480px);max-width:100%;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);margin:0 auto;padding:clamp(36px,6dvh,56px) 24px calc(30px + env(safe-area-inset-bottom,0px));border:0;border-radius:28px 28px 0 0;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto;overscroll-behavior:contain}
-.tm-notification-activation-dialog[open]{animation:tm-notification-sheet-in 320ms cubic-bezier(.2,.7,.2,1) both}
+.tm-notification-activation-dialog{position:fixed;inset:auto 0 0;box-sizing:border-box;width:min(100%,480px);max-width:100%;min-height:min(54dvh,calc(100dvh - env(safe-area-inset-top,0px) - 16px));max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);margin:0 auto;padding:30px 24px calc(24px + env(safe-area-inset-bottom,0px));border:0;border-radius:28px 28px 0 0;background:#242429;color:#f5f5f7;font:inherit;text-align:center;overflow-y:auto;overscroll-behavior:contain}
+.tm-notification-activation-dialog[open]{display:flex;flex-direction:column;align-items:center;justify-content:safe center;animation:tm-notification-sheet-in 320ms cubic-bezier(.2,.7,.2,1) both}
+.tm-notification-activation-dialog[open]>*{flex-shrink:0}
 .tm-notification-activation-dialog::backdrop{background:rgba(0,0,0,.55)}
-.tm-notification-activation-dialog .tm-notification-sheet-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 24px;border-radius:20px;background:#303035;color:#f5f5f7}
-.tm-notification-sheet-icon svg{width:34px;height:34px;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tm-notification-activation-dialog .tm-notification-sheet-icon{display:grid;place-items:center;width:36px;height:36px;margin:0 auto 18px;background:transparent;color:#f5f5f7}
+.tm-notification-sheet-icon svg{width:32px;height:32px;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 html.tm-notification-sheet-locked{overflow:hidden!important;overscroll-behavior:none}
 html.tm-notification-sheet-locked body{position:fixed!important;top:var(--tm-notification-scroll-top,0px)!important;left:0;right:0;width:100%;overflow:hidden!important;overscroll-behavior:none}
 .tm-notification-activation-dialog h2{margin:0 0 10px;font-size:21px;font-weight:600;line-height:1.25}
 .tm-notification-activation-dialog h2:focus{outline:none}
 .tm-notification-activation-dialog>p{margin:0 auto;max-width:320px;font-size:14px;line-height:1.5;color:#aaaab3}
-.tm-notification-activation-actions{display:flex;flex-direction:column;gap:10px;margin:34px 0 0;background:transparent}
+.tm-notification-activation-actions{display:flex;flex-direction:column;gap:8px;width:100%;margin:28px 0 0;background:transparent}
 .tm-notification-activation-actions button{appearance:none;box-sizing:border-box;width:100%;min-height:44px;padding:10px 14px;margin:0;border:0;border-radius:999px;background:transparent;color:#aaaab3;font:inherit;font-size:15px;font-weight:500;line-height:1.35;cursor:pointer;box-shadow:none;-webkit-tap-highlight-color:transparent}
-.tm-notification-activation-actions button.is-primary{min-height:44px;width:min(100%,260px);align-self:center;background:#f5f5f7;color:#16161a;font-size:15px;font-weight:600}
+.tm-notification-activation-actions button.is-primary{min-height:44px;width:fit-content;max-width:100%;padding:10px 20px;align-self:center;background:#f5f5f7;color:#16161a;font-size:15px;font-weight:600}
 .tm-notification-activation-actions button:active:not(:disabled){opacity:.78}
 .tm-notification-activation-actions button:focus-visible{outline:2px solid #aaaab3;outline-offset:3px}
 .tm-notification-activation-actions button:disabled{opacity:.5;cursor:default}
