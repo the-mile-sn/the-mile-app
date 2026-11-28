@@ -101,7 +101,7 @@ printf "%s\n" "seed" > "$MILE_VALIDATION_STAGE_FILE"
 timeout 60s /usr/bin/env MILE_SITE_ROLE=admin python visual_validation_wsgi.py seed
 echo "VISUAL_BOOT_GUNICORN" >&2
 printf "%s\n" "workers" > "$MILE_VALIDATION_STAGE_FILE"
-MILE_SITE_ROLE=admin gunicorn --workers 1 --threads 2 --bind 127.0.0.1:10001 visual_validation_wsgi:application &
+env -u MILE_VAPID_PUBLIC_KEY -u MILE_VAPID_PRIVATE_KEY_B64 MILE_SITE_ROLE=admin gunicorn --workers 1 --threads 2 --bind 127.0.0.1:10001 visual_validation_wsgi:application &
 admin_pid=$!
 cd /srv/admin/validation_player
 PYTHONPATH=/srv/admin MILE_SITE_ROLE=player gunicorn --chdir /srv/admin/validation_player --workers 1 --threads 2 --bind 127.0.0.1:10002 visual_validation_wsgi:application &
