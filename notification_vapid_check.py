@@ -5,9 +5,11 @@ import os
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 
-def check():
-    private=os.environ.get("MILE_VAPID_PRIVATE_KEY_B64","")
-    public=os.environ.get("MILE_VAPID_PUBLIC_KEY","")
+def check(prefix=None):
+    if prefix is None:
+        prefix="MILE_NOTIFICATIONS_VAPID" if os.environ.get("MILE_SITE_ROLE")=="admin" else "MILE_VAPID"
+    private=os.environ.get(prefix+"_PRIVATE_KEY_B64","")
+    public=os.environ.get(prefix+"_PUBLIC_KEY","")
     if not private or not public:raise ValueError("VAPID configuration missing")
     key=serialization.load_pem_private_key(base64.b64decode(private,validate=True),password=None)
     if not isinstance(key,ec.EllipticCurvePrivateKey) or not isinstance(key.curve,ec.SECP256R1):

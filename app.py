@@ -2530,6 +2530,8 @@ def application(env, start_response):
                     raise Problem(404,'not_found')
                 if not user or user['role'] not in ('player','chef'):
                     raise Problem(403,'forbidden')
+                from notification_activation_v2 import pilot_allowed
+                if not pilot_allowed(user['id']):raise Problem(404,'not_found')
                 if user['role']=='chef':
                     if not chef_accounts_v2.assigned_athlete(c,user['id']):
                         raise Problem(403,'forbidden')
@@ -2569,6 +2571,8 @@ def application(env, start_response):
                 if preview_session:raise Problem(403,'admin_preview_read_only')
                 if not user or user['role'] not in ('player','chef'):
                     raise Problem(403,'forbidden')
+                from notification_activation_v2 import pilot_allowed
+                if not pilot_allowed(user['id']):raise Problem(404,'not_found')
                 if user['role']=='chef':
                     if not chef_accounts_v2.assigned_athlete(c,user['id']):
                         raise Problem(403,'forbidden')

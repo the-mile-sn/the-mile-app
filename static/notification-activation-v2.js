@@ -211,7 +211,7 @@ window.tmNotificationActivation=(()=>{
  async function mount(container){
   if(!container||!ctx||!ctx.active())return;
   const token=generation;
-  await configure();if(!valid(token)||!container.isConnected||container.hidden)return;
+  await configure();if(!valid(token)||!state||!container.isConnected||container.hidden)return;
   container.querySelector(".tm-notification-activation")?.remove();
   profile=make("div","tm-notification-activation");
   const header=container.querySelector(".profile-subpage-header");
