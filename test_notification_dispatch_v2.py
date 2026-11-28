@@ -53,7 +53,9 @@ class DispatchTests(unittest.TestCase):
     def test_template_payload(self):
         for kind in ("game","weight","birthday","document","assessment","menu"):
             with self.subTest(kind=kind):
-                self.c.execute("UPDATE v2_manual_notifications SET kind=?,title='Template title',body='Template body',push_status='not_attempted' WHERE id='n1'",(kind,))
+                target="synthetic-target" if kind!="weight" else None
+                version="synthetic-version" if kind in ("document","assessment","menu") else None
+                self.c.execute("UPDATE v2_manual_notifications SET kind=?,target_id=?,content_version=?,title='Template title',body='Template body',push_status='not_attempted' WHERE id='n1'",(kind,target,version))
                 self.c.commit()
                 self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"accepted"})
                 self.assertEqual(self.calls[-1],{"version":2,"id":"n1","language":"pt-PT","kind":kind,"title":"Template title","body":"Template body"})

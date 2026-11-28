@@ -61,7 +61,8 @@ class LifecycleTests(unittest.TestCase):
             outcomes=dispatch(self.c,result['recorded_ids'],fake_send)
             self.assertEqual(outcomes,{p['id']:'not_subscribed',chef['id']:'accepted'})
             self.assertEqual(dispatch(self.c,result['recorded_ids'],fake_send),{})
-        self.assertEqual(calls,[{'version':2,'id':chef['id'],'language':'en-GB'}])
+        self.assertEqual(calls,[{'version':2,'id':chef['id'],'language':'en-GB','kind':'menu',
+                                 'title':'New menu','body':'A new menu is available to view.'}])
         self.assertIsNone(inbox(self.c,'chef')[0]['read_at'])
         self.assertIsNone(open_notification(self.c,recipient_id='p',notification_id=chef['id'],now=101))
         opened=open_notification(self.c,recipient_id='chef',notification_id=chef['id'],now=102)
