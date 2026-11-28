@@ -48,3 +48,10 @@
 #tm-dashboard #tm-notify-recent-more{margin:0 auto 10px}
 @media(hover:hover){#tm-dashboard #tm-notify-recent .tm-notify-recent-row:hover{background:var(--tm-ui-hover)}}
 @media(max-width:800px){#tm-dashboard #tm-notify-recent{margin:0 14px 12px}}
+
+/* Template editor shares the existing dialog fields and surface tokens. */
+#tm-notify-preview-list.is-template-editor{max-height:none;overflow:visible}
+#tm-notify-preview-list .tm-notify-template-form{display:flex;flex-direction:column;gap:12px;min-width:0}
+#tm-notify-preview-list .tm-notify-template-form .tm-work-dialog-fields{min-width:0}
+#tm-notify-preview-list .tm-notify-template-form textarea{resize:vertical}
+#tm-notify-preview-list .tm-notify-template-language{font:600 14px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;color:var(--tm-ui-text);margin:0}

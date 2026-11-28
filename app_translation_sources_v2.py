@@ -46,7 +46,7 @@ def _put(fields,path,value,label,legacy=""):
 def rows_for(c,kind):
     if kind=="notification":
         from notification_templates_v2 import source_rows
-        return source_rows()
+        return source_rows(c)
     return c.execute(SQL[kind]).fetchall()
 
 

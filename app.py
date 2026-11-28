@@ -3383,6 +3383,27 @@ def application(env, start_response):
                 except LookupError: raise Problem(404,'audit_not_found')
                 except (ValueError,TypeError): raise Problem(400,'invalid_review')
                 return respond(200,result)
+            # Explicit administrative text editing, separate from notification sending.
+            if path == '/api/v2/admin/notifications-templates':
+                if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':
+                    raise Problem(404,'not_found')
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                import notification_templates_v2 as templates
+                if method=='GET':
+                    return respond(200,{'items':templates.editable_templates(c)})
+                if method!='POST':raise Problem(405,'method_not_allowed')
+                import notification_dispatch_v2 as dispatch
+                dispatch.lock_manual(c)
+                try:
+                    item=templates.save_template(c,actor_id=user['id'],payload=read_json(env))
+                except PermissionError:
+                    raise Problem(403,'forbidden')
+                except ValueError as exc:
+                    if str(exc)=='template_changed':raise Problem(409,'template_changed')
+                    raise Problem(400,'invalid_notification_template')
+                c.commit()
+                return respond(200,{'item':item})
             # Explicit manual pilot send. No startup, scheduler or automatic retry.
             if path == '/api/v2/admin/notifications-send':
                 if SITE_ROLE != 'admin' or os.environ.get('MILE_NOTIFICATIONS_PREVIEW','') != '1':

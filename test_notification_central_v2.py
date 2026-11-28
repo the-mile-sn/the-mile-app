@@ -82,6 +82,23 @@ class NotificationCentralTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             review.inspect(self.c,{"id":"p","role":"player"},entity_kind="notification",entity_id="birthday",field_path="title")
 
+    def test_edit_bilingual_template_uses_shared_store(self):
+        from notification_store_v2 import initialize
+        from notification_templates_v2 import editable_template, save_template
+        initialize(self.c)
+        old=editable_template(self.c,"game")
+        data={"id":"game","revision":old["revision"],"pt":{"title":"Jogo","body":"Preenche o formulário."},
+              "en":{"title":"Match","body":"Complete the questionnaire."}}
+        saved=save_template(self.c,actor_id="admin",payload=data)
+        self.assertEqual(render_template("game","pt-PT",c=self.c),("Jogo","Preenche o formulário."))
+        self.assertEqual(render_template("game","en-GB",c=self.c),("Match","Complete the questionnaire."))
+        self.assertEqual(sources.canonical_field(self.c,"notification","game","title"),"Jogo")
+        self.assertNotEqual(old["revision"],saved["revision"])
+        with self.assertRaisesRegex(ValueError,"template_changed"):
+            save_template(self.c,actor_id="admin",payload=data)
+        with self.assertRaises(PermissionError):
+            save_template(self.c,actor_id="p",payload=data)
+
     def test_notification_limits(self):
         with self.assertRaisesRegex(ValueError,"invalid_notification_translation"):
             self.propose("game","title","X"*121)

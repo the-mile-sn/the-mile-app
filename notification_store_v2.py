@@ -7,6 +7,13 @@ eligibility, and language before inserting a notification.
 """
 
 SCHEMA = (
+    """CREATE TABLE IF NOT EXISTS v2_notification_template_sources (
+        template_key TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        updated_by TEXT NOT NULL
+    )""",
     """CREATE TABLE IF NOT EXISTS v2_notification_content_changes (
         recipient_id TEXT NOT NULL REFERENCES users(id),
         kind TEXT NOT NULL CHECK(kind IN (\'document\',\'assessment\',\'menu\')),
