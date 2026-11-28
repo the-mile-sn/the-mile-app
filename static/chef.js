@@ -1133,12 +1133,6 @@ async function navigateChefNotification(target){
 }
 async function openChefNotificationLink(id){
  const actor=sessionUser;
- try{
-  const response=await request("/api/v2/notifications/open","POST",{id});
-  if(sessionUser!==actor||previewReadOnly)return;
-  window.tmNotificationInbox?.accept(response);
-  if(response.destination&&await navigateChefNotification(response.destination))return;
- }catch(_){}
  if(sessionUser===actor&&!previewReadOnly){
   changeChefTab("profile");chefNotificationInitialId=id;
   chefProfileOpenSubpage("notifications");

@@ -28,3 +28,6 @@
 .tm-notification-body{font-size:14px;line-height:1.45;color:#aaaab3;white-space:pre-wrap}
 .tm-notification-unread{background:#f5f5f7}
 .tm-notification-arrow{display:none}
+
+/* Push target tint only; unread marker remains independent. */
+.tm-notification-list .tm-notification-item.is-push-target{background:rgba(255,255,255,.06)}
