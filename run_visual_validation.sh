@@ -8,7 +8,31 @@ if [ -n "${DATABASE_URL:-}" ]; then
     exit 1
 fi
 : "${MILE_VALIDATION_PASSWORD:?Set a synthetic account password}"
+# Persistent mode is optional and restricted to a dedicated, explicitly mounted test disk.
+persistent="${MILE_VALIDATION_PERSIST:-0}"
+if [ "$persistent" = 1 ]; then
+  mountpoint -q /var/data || { echo "Dedicated validation disk /var/data required" >&2; exit 1; }
+  storage="/var/data/the-mile-notification-validation"
+  if [ -e "$storage" ] && [ ! -f "$storage/.synthetic-only-v1" ]; then
+    echo "Unrecognized validation disk contents; refusing to reuse" >&2; exit 1
+  fi
+  mkdir -p "$storage"
+  chmod 700 "$storage"
+  touch "$storage/.synthetic-only-v1"
+  mkdir -p "$storage/postgres" "$storage/portal" "$storage/keys"
+  chown postgres:postgres "$storage" "$storage/postgres"
+  chmod 700 "$storage/postgres" "$storage/keys"
+  export MILE_VALIDATION_KEY_FILE="$storage/keys/vapid.pem"
+elif [ "$persistent" != 0 ]; then
+  echo "Invalid MILE_VALIDATION_PERSIST" >&2; exit 1
+fi
 root="$(mktemp -d /tmp/mile-notify-pg-XXXXXXXX)"
+pgdata="$root/data"
+portal="$root/portal"
+if [ "$persistent" = 1 ]; then
+  pgdata="$storage/postgres"
+  portal="$storage/portal"
+fi
 export MILE_VALIDATION_READY_FILE="$root/ready"
 export MILE_VALIDATION_STAGE_FILE="$root/stage"
 printf "%s\n" "database" > "$MILE_VALIDATION_STAGE_FILE"
@@ -23,7 +47,7 @@ cleanup() {
     if [ -n "$pid" ]; then kill "$pid" 2>/dev/null || true; fi
   done
   if [ -f "$root/postgres.log" ] && [ "$status" -ne 0 ]; then tail -n 30 "$root/postgres.log" >&2; fi
-  runuser -u postgres -- pg_ctl -D "$root/data" -m fast -w stop >/dev/null 2>&1 || true
+  runuser -u postgres -- pg_ctl -D "$pgdata" -m fast -w stop >/dev/null 2>&1 || true
   rm -rf "$root"
   exit "$status"
 }
@@ -34,20 +58,26 @@ mkdir "$root/socket"
 chown -R postgres:postgres "$root"
 chmod 700 "$root" "$root/socket"
 echo "VISUAL_BOOT_DATABASE_INIT" >&2
-runuser -u postgres -- initdb -D "$root/data" -A trust --no-locale -E UTF8 >/dev/null
-runuser -u postgres -- pg_ctl -D "$root/data" -l "$root/postgres.log" -o "-h '' -k $root/socket -c shared_buffers=16MB -c max_connections=20" -w -t 30 start
+if [ ! -f "$pgdata/PG_VERSION" ]; then
+  runuser -u postgres -- initdb -D "$pgdata" -A trust --no-locale -E UTF8 >/dev/null
+fi
+runuser -u postgres -- pg_ctl -D "$pgdata" -l "$root/postgres.log" -o "-h '' -k $root/socket -c shared_buffers=16MB -c max_connections=20" -w -t 30 start
 echo "VISUAL_BOOT_DATABASE_READY" >&2
-runuser -u postgres -- createdb -h "$root/socket" mile_notification_validation
+if [ "$(runuser -u postgres -- psql -h "$root/socket" -d postgres -tA -c "SELECT 1 FROM pg_database WHERE datname='mile_notification_validation'")" != 1 ]; then
+  runuser -u postgres -- createdb -h "$root/socket" mile_notification_validation
+fi
 export MILE_VALIDATION_SOCKET="$root/socket"
 runuser -u postgres --preserve-environment -- /opt/validation/bin/python /srv/admin/validate_notifications_postgres.py
 export DATABASE_URL="dbname=mile_notification_validation user=postgres host=$root/socket"
-export MILE_DATA_DIR="$root/portal"
+export MILE_DATA_DIR="$portal"
 export MILE_BASE_URL="https://the-mile-notifications-pg-validation.onrender.com"
 export MILE_NOTIFICATIONS_PREVIEW=1 MILE_NOTIFICATIONS_CAPTURE=1 MILE_NOTIFICATIONS_SEND=1 MILE_NOTIFICATIONS_PUSH_SEND=1 MILE_NOTIFICATIONS_INBOX=1 MILE_NOTIFICATIONS_PUSH=1
 export MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS="validation-player,validation-chef"
 export MILE_BACKOFFICE_TRANSLATIONS_ENABLED=1
-# Generated exclusively for this temporary instance. No production credentials.
-eval "$(python /srv/admin/visual_validation_keys.py)"
+# Never reuse production keys. On persistent validation, load the same test pair.
+key_exports="$(python /srv/admin/visual_validation_keys.py)"
+eval "$key_exports"
+unset key_exports
 cd /srv/admin
 echo "VISUAL_BOOT_ADMIN_INIT" >&2
 printf "%s\n" "admin-init" > "$MILE_VALIDATION_STAGE_FILE"

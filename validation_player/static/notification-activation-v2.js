@@ -21,7 +21,7 @@ window.tmNotificationActivation=(()=>{
  }
  const supported=()=>typeof Notification!=="undefined"&&"serviceWorker" in navigator&&"PushManager" in window;
  const valid=(token)=>token===generation&&!!ctx&&ctx.active();
- let lockedScroll=null;
+ let lockedScroll=null,browserReady=null,replacementKey=null;
  function lockBackground(){
   if(lockedScroll!==null)return;
   lockedScroll=window.scrollY||0;
@@ -42,11 +42,25 @@ window.tmNotificationActivation=(()=>{
   finally{unlockBackground();}
  }
  function reset(){
-  generation++;closePrompt();profile?.remove();profile=null;ctx=null;state=null;loading=null;busy=false;promptedHere=false;
+  generation++;closePrompt();profile?.remove();profile=null;ctx=null;state=null;loading=null;busy=false;promptedHere=false;browserReady=null;replacementKey=null;
  }
  function decode(value){
   const s=value.replace(/-/g,"+").replace(/_/g,"/");
   return Uint8Array.from(atob(s+"=".repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
+ }
+ function subscriptionKey(subscription){
+  const key=subscription?.options?.applicationServerKey;
+  return key?Array.from(new Uint8Array(key)).join(","):null;
+ }
+ async function inspectSubscription(token){
+  if(!state?.active||Notification.permission!=="granted")return;
+  try{
+   const registration=await navigator.serviceWorker.getRegistration();
+   const subscription=await registration?.pushManager?.getSubscription();
+   if(!valid(token))return;
+   const key=subscriptionKey(subscription);
+   browserReady=!!subscription&&(!key||key===Array.from(decode(state.publicKey)).join(","));
+  }catch(_){/* Unknown browser state must not change account preferences. */}
  }
  async function configure(){
   if(!ctx||!ctx.active()||!supported()||!ctx.device)return null;
@@ -56,7 +70,7 @@ window.tmNotificationActivation=(()=>{
   loading=(async()=>{
    try{
     const data=await request(path+"?device="+encodeURIComponent(id),"GET");
-    if(valid(token)&&typeof data.publicKey==="string"&&data.publicKey)state=data;
+    if(valid(token)&&typeof data.publicKey==="string"&&data.publicKey){state=data;await inspectSubscription(token);}
    }catch(_){/* Optional functionality never blocks the app. */}
    return valid(token)?state:null;
   })().finally(()=>{if(valid(token))loading=null;});
@@ -72,11 +86,12 @@ window.tmNotificationActivation=(()=>{
   if(!profile?.isConnected||!ctx)return;
   profile.replaceChildren();
   const available=supported()&&!!state;
-  const enabled=available&&state.active&&Notification.permission==="granted";
+  const enabled=available&&state.active&&browserReady!==false&&Notification.permission==="granted";
   const row=make("div","tm-notification-switch-row");
   const copy=make("div","tm-notification-switch-copy",t("Notificações push","Push notifications"));
   const statusText=!available?t("Indisponíveis neste dispositivo","Unavailable on this device")
    :Notification.permission==="denied"?t("Permissão bloqueada","Permission blocked")
+   :state.active&&browserReady===false?t("Subscrição a atualizar","Subscription needs updating")
    :enabled?t("Ativas neste dispositivo","Enabled on this device")
    :t("Desativadas neste dispositivo","Disabled on this device");
   copy.append(make("small","",statusText));
@@ -118,7 +133,7 @@ window.tmNotificationActivation=(()=>{
  async function dismiss(){
   if(!ctx||busy)return;
   const token=generation;
-  closePrompt();
+  closePrompt();replacementKey=null;
   try{await save("acknowledge");}catch(_){/* Keep the app available; retry through Profile. */}
   if(valid(token))paintProfile();
  }
@@ -147,18 +162,35 @@ window.tmNotificationActivation=(()=>{
     const applicationServerKey=decode(state.publicKey);
     let subscription=await registration.pushManager.getSubscription();
     if(!valid(token))return;
-    if(subscription){
-     const existing=subscription.options?.applicationServerKey;
-     if(existing&&Array.from(new Uint8Array(existing)).join(",")!==Array.from(applicationServerKey).join(","))throw Error("subscription_key_mismatch");
-    }else{
+    const existing=subscriptionKey(subscription);
+    if(existing&&existing!==Array.from(applicationServerKey).join(",")){
+     browserReady=false;
+     // A subscription may predate v2. Never unsubscribe in the background.
+     // A second explicit activation confirms replacement of the specific old key.
+     if(replacementKey!==existing){
+      replacementKey=existing;
+      message=t("Existe uma subscrição anterior. Volta a ativar para a substituir.","An earlier subscription exists. Enable again to replace it.");
+      promptFeedback(message);return;
+     }
+     replacementKey=null;
+     if(!valid(token))return;
+     if(!await subscription.unsubscribe()){
+      subscription=await registration.pushManager.getSubscription();
+      if(subscription)throw Error("subscription_replacement_failed");
+     }else subscription=null;
+     if(!valid(token))return;
+    }
+    if(!subscription){
      subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
     }
     if(!valid(token))return;
-    if(await save("activate",subscription.toJSON()))closePrompt();
+    if(await save("activate",subscription.toJSON())){
+     browserReady=true;replacementKey=null;closePrompt();
+    }
    }else{
     // Disable delivery for this account/device in the new store only.
     // Do not revoke the browser permission or touch the legacy subscription.
-    await save("deactivate");
+    replacementKey=null;await save("deactivate");
    }
   }catch(_){
    message=t("Não foi possível alterar as notificações. Tenta novamente no Perfil.","Unable to change notifications. Try again in Profile.");

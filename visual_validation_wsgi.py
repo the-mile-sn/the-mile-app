@@ -26,10 +26,21 @@ def seed():
         raise RuntimeError("Synthetic password too short")
     now=int(time.time())
     with app.connect() as c:
-        # Empty database only; never copy or reuse a roster.
-        for table in ("users","v2_athletes"):
-            if c.execute("SELECT COUNT(*) AS n FROM "+table).fetchone()["n"]:
-                raise RuntimeError("Validation fixture requires empty roster")
+        # Resume only an exact synthetic roster on the dedicated persistent disk.
+        users=[(r["id"],r["role"],r["email"]) for r in c.execute("SELECT id,role,email FROM users").fetchall()]
+        athletes={r["id"] for r in c.execute("SELECT id FROM v2_athletes").fetchall()}
+        if users or athletes:
+            expected={("validation-admin","admin","validation-admin@example.invalid"),
+                      ("validation-player","player","validation-player@example.invalid"),
+                      ("validation-chef","chef","validation-chef@example.invalid")}
+            if (os.environ.get("MILE_VALIDATION_PERSIST")!="1" or set(users)!=expected
+                    or athletes!={"validation-athlete"}):
+                raise RuntimeError("Unexpected validation roster; refusing to proceed")
+            for initializer in (notification_store_v2.initialize,notification_activation_v2.initialize,content_translations_v2.initialize):
+                initializer(c)
+            c.commit()
+            print("SYNTHETIC_VISUAL_FIXTURES_REUSED",flush=True)
+            return
         for initializer in (notification_store_v2.initialize,notification_activation_v2.initialize,content_translations_v2.initialize):
             initializer(c)
         for uid,name,email,username,kind,enabled in (
