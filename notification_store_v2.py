@@ -15,7 +15,7 @@ SCHEMA = (
         updated_by TEXT NOT NULL
     )""",
     """CREATE TABLE IF NOT EXISTS v2_notification_content_changes (
-        recipient_id TEXT NOT NULL REFERENCES users(id),
+        recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         kind TEXT NOT NULL CHECK(kind IN (\'document\',\'assessment\',\'menu\')),
         target_id TEXT NOT NULL,
         content_version TEXT NOT NULL,
@@ -26,7 +26,7 @@ SCHEMA = (
     """CREATE TABLE IF NOT EXISTS v2_manual_notifications (
         id TEXT PRIMARY KEY,
         request_id TEXT NOT NULL,
-        recipient_id TEXT NOT NULL REFERENCES users(id),
+        recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         sender_id TEXT NOT NULL REFERENCES users(id),
         kind TEXT NOT NULL CHECK(kind IN ('game','weight','document','assessment','menu','birthday','custom')),
         language TEXT NOT NULL CHECK(language IN ('pt-PT','en-GB')),

@@ -58,7 +58,7 @@ class LifecycleTests(unittest.TestCase):
             calls.append(payload)
             return 'accepted'
         with patch.dict('os.environ',{'MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS':'p,chef'}):
-            outcomes=dispatch(self.c,result['recorded_ids'],fake_send)
+            outcomes=dispatch(self.c,result['recorded_ids'],fake_send,public_copy_confirmed=True)
             self.assertEqual(outcomes,{p['id']:'not_subscribed',chef['id']:'accepted'})
             self.assertEqual(dispatch(self.c,result['recorded_ids'],fake_send),{})
         self.assertEqual(calls,[{'version':2,'id':chef['id'],'language':'en-GB','kind':'menu',

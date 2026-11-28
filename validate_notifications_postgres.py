@@ -120,7 +120,7 @@ class PostgreSQLTests(unittest.TestCase):
             calls.append(payload)
             return "accepted"
         with patch.dict(os.environ,{"MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS":"p,chef"}):
-            self.assertEqual(dispatch.dispatch(self.c,sent["recorded_ids"],fake),{p["id"]:"not_subscribed",ch["id"]:"accepted"})
+            self.assertEqual(dispatch.dispatch(self.c,sent["recorded_ids"],fake,public_copy_confirmed=True),{p["id"]:"not_subscribed",ch["id"]:"accepted"})
             self.assertEqual(dispatch.dispatch(self.c,sent["recorded_ids"],fake),{})
         self.assertEqual(calls,[{"version":2,"id":ch["id"],"language":"en-GB",
                                  "kind":"menu","title":"New menu","body":"A new menu is available to view."}])

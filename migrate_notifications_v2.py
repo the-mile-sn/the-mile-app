@@ -59,6 +59,13 @@ def verify_layout(c):
         AND confrelid='public.sessions'::regclass AND contype='f'
         AND confupdtype='c' AND confdeltype='c'""").fetchone()
     if row["n"]!=1:raise RuntimeError("Session cascade constraint missing")
+    for table,column in (("v2_notification_devices","user_id"),("v2_notification_activation","user_id"),
+                         ("v2_manual_notifications","recipient_id"),("v2_notification_content_changes","recipient_id")):
+        row=c.execute("""SELECT count(*) AS n FROM pg_constraint f
+          JOIN pg_attribute a ON a.attrelid=f.conrelid AND a.attnum=ANY(f.conkey)
+          WHERE f.conrelid=?::regclass AND f.confrelid='public.users'::regclass
+          AND f.contype='f' AND f.confdeltype='c' AND a.attname=?""",("public."+table,column)).fetchone()
+        if row["n"]!=1:raise RuntimeError("Recipient deletion cascade missing: "+table)
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)

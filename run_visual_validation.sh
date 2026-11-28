@@ -85,6 +85,8 @@ export MILE_BACKOFFICE_TRANSLATIONS_ENABLED=1
 key_exports="$(python /srv/admin/visual_validation_keys.py)"
 eval "$key_exports"
 unset key_exports
+export MILE_NOTIFICATIONS_VAPID_PUBLIC_KEY="$MILE_VAPID_PUBLIC_KEY"
+export MILE_NOTIFICATIONS_VAPID_PRIVATE_KEY_B64="$MILE_VAPID_PRIVATE_KEY_B64"
 cd /srv/admin
 echo "VISUAL_BOOT_ADMIN_INIT" >&2
 printf "%s\n" "admin-init" > "$MILE_VALIDATION_STAGE_FILE"

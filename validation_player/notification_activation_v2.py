@@ -4,17 +4,18 @@ No startup hooks, sending, scheduling or implicit subscriptions. Schema must
 be installed explicitly in an isolated environment before enabling the API.
 """
 import base64
+import os
 import re
 from urllib.parse import urlsplit
 
 SCHEMA = (
     """CREATE TABLE IF NOT EXISTS v2_notification_activation (
-        user_id TEXT PRIMARY KEY REFERENCES users(id),
+        user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         prompted_at BIGINT NOT NULL
     )""",
     """CREATE TABLE IF NOT EXISTS v2_notification_devices (
         device_id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id),
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         session_token TEXT NOT NULL REFERENCES sessions(token) ON UPDATE CASCADE ON DELETE CASCADE,
         endpoint TEXT NOT NULL UNIQUE,
         p256dh TEXT NOT NULL,
@@ -29,6 +30,12 @@ SCHEMA = (
 def initialize(c):
     for sql in SCHEMA:
         c.execute(sql)
+
+
+def pilot_allowed(user_id):
+    """Fail closed unless this exact account was explicitly authorized."""
+    allowed={x.strip() for x in os.environ.get("MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS","").split(",") if x.strip()}
+    return isinstance(user_id,str) and user_id in allowed
 
 
 def device_id(value):

@@ -2,7 +2,8 @@
 import base64
 import sqlite3
 import unittest
-from notification_activation_v2 import initialize,state,acknowledge,activate,deactivate
+from unittest.mock import patch
+from notification_activation_v2 import initialize,state,acknowledge,activate,deactivate,pilot_allowed
 
 
 def key(raw):
@@ -34,6 +35,23 @@ class ActivationTests(unittest.TestCase):
     def enable(self,user="p",device=None,subscription=None):
         activate(self.c,user_id=user,device=device or self.device,
                  subscription=subscription if subscription is not None else self.subscription,session_token=user+"-session",now=100)
+
+    def test_pilot_is_fail_closed_and_exact(self):
+        with patch.dict("os.environ",{"MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS":""}):
+            self.assertFalse(pilot_allowed("p"))
+        with patch.dict("os.environ",{"MILE_NOTIFICATIONS_TEST_RECIPIENT_IDS":"p, chef"}):
+            self.assertTrue(pilot_allowed("p"))
+            self.assertTrue(pilot_allowed("chef"))
+            self.assertFalse(pilot_allowed("p2"))
+            self.assertFalse(pilot_allowed(None))
+
+    def test_account_deletion_clears_own_activation_only(self):
+        self.enable()
+        acknowledge(self.c,user_id="chef",now=99)
+        self.c.execute("DELETE FROM sessions WHERE user_id='p'")
+        self.c.execute("DELETE FROM users WHERE id='p'")
+        self.assertEqual(self.c.execute("SELECT user_id FROM v2_notification_activation").fetchall(),[("chef",)])
+        self.assertEqual(self.c.execute("SELECT count(*) FROM v2_notification_devices").fetchone()[0],0)
 
     def test_dismissal_never_subscribes_and_is_account_specific(self):
         self.assertEqual(self.current(),{"prompted":False,"active":False})
