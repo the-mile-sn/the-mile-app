@@ -3418,6 +3418,8 @@ def application(env, start_response):
                 request_id=body.get('request_id')
                 confirmed=body.get('confirmation')
                 selections=body.get('selections')
+                public_copy_confirmed=body.get('public_copy_confirmed',False)
+                if not isinstance(public_copy_confirmed,bool):raise Problem(400,'invalid_public_copy_confirmation')
                 allowed=dispatch.allowed_recipients()
                 if (not isinstance(request_id,str) or not re.fullmatch(r'[a-zA-Z0-9-]{32,64}',request_id)
                         or not isinstance(confirmed,str) or not re.fullmatch(r'[a-f0-9]{64}',confirmed)
@@ -3451,7 +3453,7 @@ def application(env, start_response):
                 push={}
                 if os.environ.get('MILE_NOTIFICATIONS_PUSH_SEND','')=='1':
                     try:
-                        push=dispatch.dispatch(c,result['recorded_ids'],dispatch.transport())
+                        push=dispatch.dispatch(c,result['recorded_ids'],dispatch.transport(),public_copy_confirmed=public_copy_confirmed)
                     except Exception:
                         c.rollback()
                         logging.warning('Manual v2 push unavailable; internal notifications preserved')

@@ -130,6 +130,12 @@
     const action=make("div","tm-work-dialog-actions");
     const send=make("button","tm-work-save","Confirmar envio");send.type="button";
     const feedback=make("p","tm-chat-empty");
+    const publicCopy=make("input","");publicCopy.type="checkbox";
+    if(type!=="custom"){
+     const review=make("label","tm-chat-empty");
+     review.append(publicCopy,document.createTextNode(" Confirmo que os textos podem aparecer no ecrã bloqueado. Sem dados clínicos ou privados."));
+     confirmationResult.append(review);
+    }
     action.append(send);confirmationResult.append(action,feedback);
     send.onclick=async()=>{
      if(sending||revision!==selectionRevision||!dialog.open)return;
@@ -142,7 +148,7 @@
       const res=await fetch("/api/v2/admin/notifications-send",{
        method:"POST",credentials:"same-origin",cache:"no-store",
        headers:{Accept:"application/json","Content-Type":"application/json","X-CSRF-Token":auth.csrf||""},
-       body:JSON.stringify({...payload,request_id:requestId,confirmation:data.confirmation})
+       body:JSON.stringify({...payload,request_id:requestId,confirmation:data.confirmation,public_copy_confirmed:type!=="custom"&&publicCopy.checked})
       });
       if(res.status===409){
        clearConfirmation();
@@ -286,7 +292,7 @@
   const feedback=make("p","tm-chat-empty");feedback.setAttribute("role","status");
   const actions=make("div","tm-work-dialog-actions");
   const save=make("button","tm-work-save","Guardar e aprovar textos");save.type="submit";
-  actions.append(save);form.append(label,fields,make("p","tm-chat-empty","Os textos dos modelos aparecem também nas notificações push. Não incluas dados clínicos ou privados."),feedback,actions);
+  actions.append(save);form.append(label,fields,make("p","tm-chat-empty","Os textos podem aparecer nas notificações push após confirmação no envio. Não incluas dados clínicos ou privados."),feedback,actions);
   list.append(form);
   let current=null,inputs={};
   function populate(){

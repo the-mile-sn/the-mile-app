@@ -31,6 +31,15 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.c.execute("SELECT read_at,push_status FROM v2_manual_notifications").fetchone(),
                          (102,"not_attempted"))
 
+    def test_legacy_recipient_deletion_preserves_other_users(self):
+        self.add()
+        self.add(nid="n2",recipient="chef")
+        self.c.execute("""INSERT INTO v2_notification_content_changes
+          VALUES('player','menu','week1','v1','new',100)""")
+        self.c.execute("DELETE FROM users WHERE id='player'")
+        self.assertEqual(self.c.execute("SELECT recipient_id FROM v2_manual_notifications").fetchall(),[("chef",)])
+        self.assertEqual(self.c.execute("SELECT count(*) FROM v2_notification_content_changes").fetchone()[0],0)
+
     def test_content_version_unique_per_recipient(self):
         self.add()
         with self.assertRaises(sqlite3.IntegrityError):

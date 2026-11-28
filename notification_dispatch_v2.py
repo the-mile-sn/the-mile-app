@@ -27,8 +27,10 @@ def enabled():
 def transport():
     from pywebpush import webpush, WebPushException
     from cryptography.hazmat.primitives import serialization
+    from notification_vapid_check import check
+    check(prefix="MILE_NOTIFICATIONS_VAPID")
     key=serialization.load_pem_private_key(base64.b64decode(
-        os.environ["MILE_VAPID_PRIVATE_KEY_B64"]),password=None)
+        os.environ["MILE_NOTIFICATIONS_VAPID_PRIVATE_KEY_B64"]),password=None)
     der=key.private_bytes(serialization.Encoding.DER,serialization.PrivateFormat.PKCS8,
                           serialization.NoEncryption())
     private=base64.urlsafe_b64encode(der).rstrip(b"=").decode("ascii")
@@ -48,7 +50,7 @@ def transport():
             return "unknown"
     return send
 
-def dispatch(c,ids,send,*,deadline_seconds=8):
+def dispatch(c,ids,send,*,deadline_seconds=8,public_copy_confirmed=False):
     """Only newly committed IDs. Claim each notification once; never retry.
     A crash or timeout leaves unknown/not_attempted, never a false success.
     """
@@ -75,8 +77,8 @@ def dispatch(c,ids,send,*,deadline_seconds=8):
             FROM v2_notification_devices d JOIN sessions s ON s.token=d.session_token AND s.user_id=d.user_id
             WHERE d.user_id=? AND s.expires>? ORDER BY d.device_id""",(uid,int(time.time()))).fetchall()
         payload={"version":2,"id":nid,"language":row["language"]}
-        # Custom notifications remain opaque on the lock screen.
-        if row["kind"] in ("game","weight","birthday","document","assessment","menu"):
+        # Never expose custom or unreviewed text on the lock screen.
+        if public_copy_confirmed is True and row["kind"] in ("game","weight","birthday","document","assessment","menu"):
             payload.update(kind=row["kind"],title=row["title"],body=row["body"])
         outcomes=[]
         for sub in subs:

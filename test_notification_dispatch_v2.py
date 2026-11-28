@@ -57,8 +57,18 @@ class DispatchTests(unittest.TestCase):
                 version="synthetic-version" if kind in ("document","assessment","menu") else None
                 self.c.execute("UPDATE v2_manual_notifications SET kind=?,target_id=?,content_version=?,title='Template title',body='Template body',push_status='not_attempted' WHERE id='n1'",(kind,target,version))
                 self.c.commit()
-                self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"accepted"})
+                self.assertEqual(dispatch(self.c,["n1"],self.send,public_copy_confirmed=True),{"n1":"accepted"})
                 self.assertEqual(self.calls[-1],{"version":2,"id":"n1","language":"pt-PT","kind":kind,"title":"Template title","body":"Template body"})
+
+    def test_unconfirmed_template_and_confirmed_custom_remain_opaque(self):
+        self.c.execute("UPDATE v2_manual_notifications SET kind='weight' WHERE id='n1'")
+        self.c.commit()
+        self.assertEqual(dispatch(self.c,["n1"],self.send),{"n1":"accepted"})
+        self.assertEqual(self.calls[-1],{"version":2,"id":"n1","language":"pt-PT"})
+        self.c.execute("UPDATE v2_manual_notifications SET kind='custom',push_status='not_attempted' WHERE id='n1'")
+        self.c.commit()
+        self.assertEqual(dispatch(self.c,["n1"],self.send,public_copy_confirmed=True),{"n1":"accepted"})
+        self.assertEqual(self.calls[-1],{"version":2,"id":"n1","language":"pt-PT"})
 
     def test_no_subscription_preserves_notification(self):
         self.c.execute("DELETE FROM v2_notification_devices")
