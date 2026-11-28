@@ -103,7 +103,7 @@ window.tmNotificationActivation=(()=>{
   const title=make("h2","",t("Ativar notificações","Enable notifications"));title.id="tm-notification-activation-title";title.tabIndex=-1;title.setAttribute("autofocus","");
   const icon=make("div","tm-notification-sheet-icon");icon.setAttribute("aria-hidden","true");
   icon.innerHTML='<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9ZM10 21h4"/></svg>';
-  const body=make("p","",t("Recebe informações importantes e atualizações sobre o teu acompanhamento.","Receive important information and updates about your ongoing support."));
+  const body=make("p","",ctx.audience==="chef"?t("Recebe informações importantes e atualizações.","Receive important information and updates."):t("Recebe informações importantes e atualizações sobre o teu acompanhamento.","Receive important information and updates about your ongoing support."));
   const actions=make("div","tm-notification-activation-actions");
   const yes=make("button","is-primary",t("Ativar notificações","Enable notifications"));yes.type="button";
   const no=make("button","",t("Agora não","Not now"));no.type="button";

@@ -139,7 +139,7 @@ async function init(){
      const actor=sessionUser;
      window.tmNotificationInbox?.start({language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request});
      window.tmNotificationActivation?.start({
-      language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
+      audience:"chef",language:()=>lang,active:()=>!!actor&&sessionUser===actor&&!previewReadOnly&&!el("chef-view").hidden,request
      });
      const pending=window.tmNotificationInbox?.consumePendingId();
      if(pending)await openChefNotificationLink(pending);
