@@ -30,7 +30,7 @@ html.tm-notification-sheet-locked body{position:fixed!important;top:var(--tm-not
 .tm-notification-switch-copy small{display:block;color:#aaaab3;font-size:12px;margin-top:4px;line-height:1.4}
 .tm-notification-activation button.tm-notification-switch{appearance:none;display:block;flex:0 0 46px;width:46px;height:28px;padding:3px;border:0;border-radius:999px;background:#48484e;box-shadow:none;cursor:pointer;position:relative}
 .tm-notification-switch:before{content:"";display:block;width:22px;height:22px;border-radius:50%;background:#e5e5ea;transition:transform .18s}
-.tm-notification-switch[aria-checked="true"]{background:#e5e5ea}
+.tm-notification-activation button.tm-notification-switch[aria-checked="true"]{background:#e5e5ea}
 .tm-notification-switch[aria-checked="true"]:before{transform:translateX(18px);background:#242429}
 .tm-notification-switch:disabled{opacity:.5;cursor:default}
 .tm-notification-activation-caption{text-align:left}

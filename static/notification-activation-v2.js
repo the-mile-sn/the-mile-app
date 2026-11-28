@@ -75,7 +75,11 @@ window.tmNotificationActivation=(()=>{
   const enabled=available&&state.active&&Notification.permission==="granted";
   const row=make("div","tm-notification-switch-row");
   const copy=make("div","tm-notification-switch-copy",t("Notificações push","Push notifications"));
-  copy.append(make("small","",t("Receber notificações neste dispositivo","Receive notifications on this device")));
+  const statusText=!available?t("Indisponíveis neste dispositivo","Unavailable on this device")
+   :Notification.permission==="denied"?t("Permissão bloqueada","Permission blocked")
+   :enabled?t("Ativas neste dispositivo","Enabled on this device")
+   :t("Desativadas neste dispositivo","Disabled on this device");
+  copy.append(make("small","",statusText));
   const button=make("button","tm-notification-switch");
   button.type="button";button.setAttribute("role","switch");
   button.setAttribute("aria-label",t("Notificações push","Push notifications"));
